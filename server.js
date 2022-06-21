@@ -4,7 +4,7 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const path = require("path");
-const port = args.port || 3000;
+const port = args.port || 8080;
 
 app.use(express.static(path.join(__dirname, "public")));
 
