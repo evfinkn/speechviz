@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Peaks.js Demo Page</title>
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+
+<body>
+	<fieldset id="file-selection">
+		<legend>Select an audio file:</legend>
+	</fieldset>	
+	<div class="row">
+		<div id="column" class="column">
+			<ul>
+				<li><input type="checkbox" data-action="toggle-segment" data-id="Segments" checked autocomplete="off">Segments
+					<ul id="Segments-nested" class="nested active"></ul>
+				</li>
+			</ul>
+		</div>
+		<div id="column2" class="column2">
+			<div id="waveform-container">
+				<div id="zoomview-container"></div>
+				<div id="overview-container"></div>
+				<div id="demo-controls">
+					<audio id="audio" controls="controls">
+						Your browser does not support the audio element.
+					</audio>
+			
+					<div id="controls">
+						<div>
+							<button data-action="zoom-in">Zoom in</button>
+							<button data-action="zoom-out">Zoom out</button>
+							<label for="amplitude-scale">Amplitude scale</label>
+							<input type="range" id="amplitude-scale" min="0" max="10" step="1">
+						</div>
+						<div>
+							<input type="checkbox" id="auto-scroll" checked>
+							<label for="auto-scroll">Auto-scroll</label>
+							<input type="checkbox" id="enable-seek" checked>
+							<label for="enable-seek">Enable click to seek</label>
+							<input type="text" id="seek-time" value="0.0">
+							<button data-action="seek">Seek</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="log" class="log">
+		<h2><input data-action="toggle-segment" type="checkbox" data-id="Segments" checked autocomplete="off">Segments</h2>
+		<table id="Segments">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Start time</th>
+					<th>End time</th>
+					<th></th>
+				</tr>
+			</thead>
+		</table>
+	</div>
+	<script type="text/javascript" src="js/main.js"></script>
+</body>
+</html>

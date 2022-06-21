@@ -1,0 +1,44 @@
+diff --git a/node_modules/peaks.js/.DS_Store b/node_modules/peaks.js/.DS_Store
+new file mode 100644
+index 0000000..613d92a
+Binary files /dev/null and b/node_modules/peaks.js/.DS_Store differ
+diff --git a/node_modules/peaks.js/dist/peaks.esm.js b/node_modules/peaks.js/dist/peaks.esm.js
+index 70847f9..bd3f2b5 100644
+--- a/node_modules/peaks.js/dist/peaks.esm.js
++++ b/node_modules/peaks.js/dist/peaks.esm.js
+@@ -1737,7 +1737,14 @@ WaveformSegments.prototype.add = function
+   var arrayArgs = Array.isArray(arguments[0]);
+   var segments = arrayArgs ? arguments[0] : Array.prototype.slice.call(arguments);
+   segments = segments.map(function (segmentOptions) {
+-    var segment = self._createSegment(segmentOptions);
++    var segment;
++
++    if (segmentOptions instanceof Segment) {
++      segment = segmentOptions;
++    }
++    else {
++      segment = self._createSegment(segmentOptions);
++    }
+ 
+     if (objectHasProperty(self._segmentsById, segment.id)) {
+       throw new Error('peaks.segments.add(): duplicate id');
+diff --git a/node_modules/peaks.js/dist/peaks.js b/node_modules/peaks.js/dist/peaks.js
+index 5206c82..1a2f2a5 100644
+--- a/node_modules/peaks.js/dist/peaks.js
++++ b/node_modules/peaks.js/dist/peaks.js
+@@ -2020,7 +2020,14 @@
+     var arrayArgs = Array.isArray(arguments[0]);
+     var segments = arrayArgs ? arguments[0] : Array.prototype.slice.call(arguments);
+     segments = segments.map(function (segmentOptions) {
+-      var segment = self._createSegment(segmentOptions);
++      var segment;
++
++      if (segmentOptions instanceof Segment) {
++        segment = segmentOptions;
++      }
++      else {
++        segment = self._createSegment(segmentOptions);
++      }
+ 
+       if (objectHasProperty(self._segmentsById, segment.id)) {
+         throw new Error('peaks.segments.add(): duplicate id');
