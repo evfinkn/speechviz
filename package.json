@@ -4,7 +4,7 @@
   "description": "",
   "private": true,
   "scripts": {
-    "postinstall": "patch-package && mkdir public && mkdir public/{css,js,audio,waveforms,segments}",
+    "postinstall": "patch-package && mkdir public \"public/css\" \"public/js\" \"public/audio\" \"public/waveforms\" \"public/segments\"",
     "build": "webpack",
     "postbuild": "cp src/style.css public/css/ && cp src/index.html public/",
     "test": "echo \"Error: no test specified\" && exit 1",
