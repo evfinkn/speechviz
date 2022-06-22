@@ -232,37 +232,99 @@ var runPeaks = async function (fileName) {
       overview.enableSeek(this.checked);
     });
 
-    // Auto-scroll
-    document.getElementById('auto-scroll').addEventListener('change', function () { zoomview.enableAutoScroll(this.checked); });
+    var segmentCounter = 1;
+
+    // Add (custom) segment
+    document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
+      const segName = 'Test segment' + segmentCounter++;
+      var segment = {
+        startTime: peaksInstance.player.getCurrentTime(),
+        endTime: peaksInstance.player.getCurrentTime() + 10,
+        labelText: segName,
+        editable: true
+      };
+      segment = peaksInstance.segments.add(segment);
+
+      // make it visible in tree and table (path???)
+      const li = document.createElement("li");
+      li.id = segment.id;
+      li.style.fontSize = "12px";
+      li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" checked autocomplete="off">${segment.id}`;
+      document.getElementById("Custom-Segments-nested").append(li);
+
+      // create the table item for the segment
+      const row = tbody.insertRow(-1);
+      row.id = segment.id;
+      row.innerHTML = `<td><input data-action="toggle-segment" type="checkbox" data-id="${segment.id}" checked>${segment.id}</td><td>${segment.startTime.toFixed(3)}</td><td>${segment.endTime.toFixed(3)}</td><td><a href="#${segment.id}" data-action="play-segment" data-id="${segment.id}">Play</a></td><td><a href="#${segment.id}" data-action="loop-segment" data-id="${segment.id}">Loop</a></td>`;
+      
+      // add the checkboxes for the segment to the segment and add event listeners to them
+      const treeCheckbox = li.firstChild;
+      const tableCheckbox = row.firstChild.firstChild;
+      segment.treeCheckbox = treeCheckbox;
+      segment.tableCheckbox = tableCheckbox;
+      treeCheckbox.addEventListener("click", function() { toggleSegments(peaks, this.dataset.id, this.checked); });
+      tableCheckbox.addEventListener("click", function() { toggleSegments(peaks, this.dataset.id, this.checked); });
+      
+      // add segment to visible segments and segmentsByID
+      visibleSegments["Custom-Segments"][segment.id] = segment;
+      segmentsByID[segment.id] = segment;
     
-    // Amplitude
-    const amplitudeScales = {
-      "0": 0.0,
-      "1": 0.1,
-      "2": 0.25,
-      "3": 0.5,
-      "4": 0.75,
-      "5": 1.0,
-      "6": 1.5,
-      "7": 2.0,
-      "8": 3.0,
-      "9": 4.0,
-      "10": 5.0
-    };
-    document.getElementById('amplitude-scale').addEventListener('input', function () {
-      const scale = amplitudeScales[this.value];
-      zoomview.setAmplitudeScale(scale);
-      overview.setAmplitudeScale(scale);
-    });
+      });
+
+      // Auto-scroll
+      document.getElementById('auto-scroll').addEventListener('change', function () { zoomview.enableAutoScroll(this.checked); });
+      
+      // Amplitude
+      const amplitudeScales = {
+        "0": 0.0,
+        "1": 0.1,
+        "2": 0.25,
+        "3": 0.5,
+        "4": 0.75,
+        "5": 1.0,
+        "6": 1.5,
+        "7": 2.0,
+        "8": 3.0,
+        "9": 4.0,
+        "10": 5.0
+      };
+      document.getElementById('amplitude-scale').addEventListener('input', function () {
+        const scale = amplitudeScales[this.value];
+        zoomview.setAmplitudeScale(scale);
+        overview.setAmplitudeScale(scale);
+      });
 
     // Context menus
     peaksInstance.on('segments.contextmenu', function (event) { event.evt.preventDefault(); });
     peaksInstance.on('overview.contextmenu', function (event) { event.evt.preventDefault(); });
 
-    
+    // generate Custom-Segments branch of tree
 
+    // add custom segments to table
+    const tbody = segmentsTable.createTBody();
+    tbody.id = "Custom-Segments";
+    const head = tbody.insertRow(-1);
+    head.innerHTML = `<th><input data-action="toggle-segment" type="checkbox" data-id="Custom-Segments" checked>Custom Segments</th>`;
+
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // generate the tree and the table
     for (let segmentsGroup of importedSegments) { renderGroup(peaksInstance, segmentsGroup, "Segments"); }
+
+    // add custom segments to tree
+    const customSeg = document.createElement("li");
+    customSeg.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="Custom-Segments" checked autocomplete="off">Custom-Segments<ul id="Custom-Segments-nested" class="nested active"></ul>`;
+    segmentsTree.append(customSeg);
+
+    // initialize hidden/visible segments
+    hiddenSegments["Custom-Segments"] = {};
+    visibleSegments["Custom-Segments"] = {};
+    
+    // add inputs for customSeg and add event listeners to them
+    const treeInput = customSeg.firstChild
+    const tableInput = head.firstChild.firstChild;
+    groupsInputs["Custom-Segments"] = [treeInput, tableInput];
+    treeInput.addEventListener("click", function() { toggleSegments(peaksInstance, "Custom-Segments", this.checked); });
+    tableInput.addEventListener("click", function() { toggleSegments(peaksInstance, "Custom-Segments", this.checked); });
 
     // Event listeners for Segments checkboxes
     groupsInputs.Segments[0].addEventListener("click", function() { toggleSegments(peaksInstance, "Segments", this.checked); })
