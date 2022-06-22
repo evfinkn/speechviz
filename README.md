@@ -1,6 +1,6 @@
 # Speech Visualization
 
-DESCRIPTION
+This will take an audio file and visualize various characteristics. Currently, you can see when speakers speak in the file and when there is voice activity (and conversely no voice activity). Additionally, you can play any given segment of speech by a given speaker by pressing the play button. If you press the loop button right next to it, the segment will play on repeat.
 
 ## Installation
 
