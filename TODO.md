@@ -9,7 +9,7 @@
  - [ ] Add users (make it so you need auth to view files, only give us accounts)
  - [x] Add support for multiple files
 ### Interface
- - [ ] Re-add custom segments
+ - [x] Re-add custom segments
  - [ ] Make custom segments save-able
  - [x] Add play buttons for segments in tree  <sub>Add loop buttons in tree as well??</sub>
  - [x] Add duration for each segment group
