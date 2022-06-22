@@ -11,8 +11,8 @@
 ### Interface
  - [ ] Re-add custom segments
  - [ ] Make custom segments save-able
- - [ ] Add play buttons for segments in tree  <sub>Add loop buttons in tree as well??</sub>
- - [ ] Add duration for each segment group
+ - [x] Add play buttons for segments in tree  <sub>Add loop buttons in tree as well??</sub>
+ - [x] Add duration for each segment group
  - [ ] Add renderGroup case for when Segments group is a group of segments
 ### Pipeline
  - [ ] Fix?
