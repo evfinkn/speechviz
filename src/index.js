@@ -2,10 +2,11 @@ import Peaks from "peaks.js";
 const mime = require("mime/lite");
 
 const filesFieldset = document.getElementById("file-selection");
-const audio = document.getElementById("audio");
+const audioControls = document.getElementById("audio-controls");
 const segmentsTree = document.getElementById("Segments-nested");
 const segmentsTable = document.getElementById("Segments");
 const thead = segmentsTable.thead;
+let currentInstance;
 
 // removes all children from an HTML element
 const removeAllChildren = function (element) {
@@ -14,16 +15,42 @@ const removeAllChildren = function (element) {
 
 // reset the HTML (remove any segments from the table and tree and remove the audio file)
 const resetHTML = function () {
-  removeAllChildren(audio);
+  removeAllChildren(audioControls);
   removeAllChildren(segmentsTree);
   removeAllChildren(segmentsTable);
 
-  audio.append("Your browser does not support the audio element.");
+  audioControls.innerHTML = `<div>
+      <button data-action="zoom-in">Zoom in</button>
+      <button data-action="zoom-out">Zoom out</button>
+      <label for="amplitude-scale">Amplitude scale</label>
+      <input type="range" id="amplitude-scale" min="0" max="10" step="1">
+    </div>
+    <div>
+      <input type="checkbox" id="auto-scroll" checked>
+      <label for="auto-scroll">Auto-scroll</label>
+      <input type="checkbox" id="enable-seek" checked>
+      <label for="enable-seek">Enable click to seek</label>
+      <input type="text" id="seek-time" value="0.0">
+      <button data-action="seek">Seek</button>
+    </div>
+    <div>
+      <button data-action="add-segment">Add Segment</button>
+      <!--<button data-action="add-point">Add Point</button>-->
+    </div>`
   segmentsTable.thead = thead;
 };
 
 var runPeaks = async function (fileName) {
+  if (currentInstance) { currentInstance.destroy(); }
   resetHTML();
+  // audio element to play audio file
+  const audio = document.createElement("audio");
+  audio.id = "audio";
+  audio.controls = "controls";
+  audio.innerHTML = `<source src="audio/${fileName}" type="${mime.getType(fileName)}">
+                      Your browser does not support the audio element.`;
+  audioControls.prepend(audio);  // prepend so it goes before the div for the controls
+
 
   const name = fileName.replace(/\.[^/.]+$/, "");  // name of the file without the extension
 
@@ -42,12 +69,6 @@ var runPeaks = async function (fileName) {
     ["Non-VAD", [{...}, {...}]]
   ] */
   const importedSegments = await fetch(`/segments/${name}-segments.json`).then(response => response.json());
-
-  // audio element to play audio file
-  const audioSource = document.createElement("source");
-  audioSource.src = `audio/${fileName}`;
-  audioSource.type = mime.getType(fileName);  // get the mime type of the audio (i.e. "audio/mpeg")
-  audio.prepend(audioSource);  // prepend so it goes before "Your browser does not..."
 
   // object containing ALL segments (hidden and visible)
   // {id: segment}
@@ -208,8 +229,7 @@ var runPeaks = async function (fileName) {
       console.error(err.message);
       return;
     }
-
-    console.log("Peaks instance ready");
+    currentInstance = peaksInstance;
 
     // Event listeners for the utilities underneath peaks
     
