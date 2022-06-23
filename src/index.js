@@ -177,7 +177,7 @@ var runPeaks = async function (fileName) {
         const li = document.createElement("li");
         li.id = segment.id;
         li.style.fontSize = "12px";
-        li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" checked autocomplete="off">${segment.id.replace("peaks.", "")} <a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segment.id}">&#x1f501;</a><ul id="${group[0]}-nested" class="nested active">${"Duration: " + (parseFloat(segment.endTime.toFixed(3), 10) - parseFloat(segment.startTime.toFixed(3), 10)).toFixed(2)}</ul>`;
+        li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" checked autocomplete="off">${segment.id.replace("peaks.", "")} <a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segment.id}">&#x1f501;</a><ul id="${group[0]}-nested" class="nested active">${"Duration: " + (parseFloat(segment.endTime) - parseFloat(segment.startTime)).toFixed(2)}</ul>`;
         document.getElementById(`${group[0]}-nested`).append(li);
 
         // create the table item for the segment
