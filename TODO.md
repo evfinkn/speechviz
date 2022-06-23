@@ -14,11 +14,11 @@
  - [x] Add play buttons for segments in tree  <sub>Add loop buttons in tree as well??</sub>
  - [x] Add duration for each segment group
  - [ ] Add renderGroup case for when Segments group is a group of segments
- - [ ] Add snr to speakers
+ - [ ] Add SNR to speakers
 ### Pipeline
  - [ ] Fix?
- - [ ] Export segments as json for GET request
- - [ ] Save segments as name-segments.json and waveform as name-waveform.json
+ - [x] Export segments as json for GET request
+ - [x] Save segments as name-segments.json and waveform as name-waveform.json
  - [ ] Make "help" more informative
  - [ ] Add to GitLab
- - [ ] Try different speaker seperation
+ - [ ] Try different speaker separation
