@@ -1,0 +1,21 @@
+doctype html
+html(lang="en")
+body
+  h1 Speechviz
+  if retry
+    p="Invalid user/password combination. Please try again"
+
+  p="Please login"
+  form(action="/login/credentials")
+    table
+      tr
+        td="User:"
+        td
+          input(type="text",name="user")
+      tr
+        td="Password:"
+        td
+          input(type="text",name="password")
+      tr
+        td
+          input(type="submit",name="Login")
