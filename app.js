@@ -1,5 +1,6 @@
 var express = require('express');
 var path = require('path');
+var fs = require("fs");
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
@@ -27,19 +28,10 @@ app.set('view engine', 'pug');
  */
 function checkAuthentification(req, res, next) {
   let req_url = req.url.toString();
-
-  if (req_url.startsWith('/login')) {
-      console.log('this is a login page', req_url);
-      next();
-  } else {
-    if (!req.session || !req.session.authenticated) {
-      console.log(req.session);
-      console.log('Redirecting to login page');
-      res.redirect('/login');
-    } else {
-      console.log('Session authenticated', req.session.user);
-      next();
-    }
+  if (req_url.startsWith('/login')) { next(); }
+  else {
+    if (!req.session || !req.session.authenticated) { res.redirect('/login'); }
+    else { next(); }  // authenticated
   }
 }
 
@@ -54,10 +46,12 @@ app.use('/', index);
 app.use('/login', login);
 
 app.get("/filelist", (req, res) => {
-  console.log("getting filelist");
-  console.error(res.err)
-  res.send(fs.readdirSync("/Users/evan/Programming/speechviz/audio").filter(fileName => fileName != ".DS_Store"));
+  res.send(fs.readdirSync("data/audio").filter(fileName => fileName != ".DS_Store"));
 });
+
+app.get(/\/audio/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
+app.get(/\/segments/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
+app.get(/\/waveforms/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

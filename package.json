@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "patch-package && mkdir public \"public/css\" \"public/js\" \"public/audio\" \"public/waveforms\" \"public/segments\"",
+    "postinstall": "patch-package && mkdir public \"public/css\" \"public/js\" data \"data/audio\" \"data/waveforms\" \"data/segments\"",
     "build": "webpack",
     "postbuild": "cp src/style.css public/css/",
     "test": "echo \"Error: no test specified\" && exit 1",
