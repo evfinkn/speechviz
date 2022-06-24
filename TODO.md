@@ -2,23 +2,31 @@
 
 
 ### Node
+ - [ ] Add HTTPS
  - [x] Get own server working
  - [x] Upload to GitLab
  - [x] Add instructions to README
- - [ ] Add HTTPS
- - [ ] Add users (make it so you need auth to view files, only give us accounts)
+ - [x] Add users (make it so you need auth to view files, only give us accounts)
  - [x] Add support for multiple files
+
 ### Interface
- - [x] Re-add custom segments
  - [ ] Make custom segments save-able
- - [x] Add play buttons for segments in tree  <sub>Add loop buttons in tree as well??</sub>
- - [x] Add duration for each segment group
  - [ ] Add renderGroup case for when Segments group is a group of segments
  - [ ] Add SNR to speakers
+ - [ ] Custom labeling
+ - [ ] Duration on segment groups
+ - [ ] Play/loop button on segment groups
+ - [ ] Intro page with file selection, not on main page
+ - [ ] Merge-able segments
+ - [x] Re-add custom segments
+ - [x] Add play buttons for segments in tree  <sub>Add loop buttons in tree as well??</sub>
+ - [x] Add duration for segments
+
 ### Pipeline
  - [ ] Fix?
- - [x] Export segments as json for GET request
- - [x] Save segments as name-segments.json and waveform as name-waveform.json
  - [ ] Make "help" more informative
  - [ ] Add to GitLab
  - [ ] Try different speaker separation
+ - [ ] Calculate true speaker
+ - [x] Export segments as json for GET request
+ - [x] Save segments as name-segments.json and waveform as name-waveform.json
