@@ -1,9 +1,10 @@
 #!/usr/bin/env node
+const args = require("minimist")(process.argv.slice(2));
 
-var app = require('../app');
 var http = require('http');
+var app = require('../app');
 var forceSSL = require('express-force-ssl');
-
+app.use(forceSSL);
 
 // HTTPS setup
 // var fs = require('fs');
@@ -14,14 +15,24 @@ var forceSSL = require('express-force-ssl');
 //     requestCert: false,
 //     rejectUnauthorized: false
 // };
-app.use(forceSSL);
 
-var port = 3000;
+const port = args.port || 3000;
 app.set('port', port);
 var server = http.createServer(app);
 // var secureServer = https.createServer(ssl_options, app);
 
-server.listen(port);
+const os = require("os");
+const nets = os.networkInterfaces();
+const netIP = Object.values(nets)  // get ip accessible from other computers on the network
+  .map(net => net.filter(net => net.family === "IPv4" && !net.internal))  // get external IPv4s
+  .map(net => net?.[0]?.address)   // get the address from the the nets
+  .filter(address => address)[0];  // filter out undefined and get the 1st element
+
+server.listen(port, () => {
+  console.log("Server accessible at the addresses:")
+  console.log(`http://localhost:${port}`);
+  console.log(`http://${netIP}:${port}`);
+});
 server.on('error', onError);
 // secureServer.listen(443)
 
