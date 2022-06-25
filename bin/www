@@ -16,7 +16,7 @@ app.use(forceSSL);
 //     rejectUnauthorized: false
 // };
 
-const port = args.port || 3000;
+const port = args.port || 8080;
 app.set('port', port);
 var server = http.createServer(app);
 // var secureServer = https.createServer(ssl_options, app);
