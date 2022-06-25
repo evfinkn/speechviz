@@ -5,8 +5,9 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var index = require('./routes/index');
-var login = require('./routes/login');
+var index = require('./routes/index-route');
+var viz = require('./routes/viz-route');
+var login = require('./routes/login-route');
 var app = express();
 
 // use sessions
@@ -43,15 +44,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(checkAuthentification)
 
 app.use('/', index);
+app.use('/viz', viz);
 app.use('/login', login);
 
 app.get("/filelist", (req, res) => {
   res.send(fs.readdirSync("data/audio").filter(fileName => fileName != ".DS_Store"));
 });
 
-app.get(/\/audio/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
-app.get(/\/segments/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
-app.get(/\/waveforms/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
+app.get(/\/(audio|segments|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

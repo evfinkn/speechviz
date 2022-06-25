@@ -1,0 +1,52 @@
+doctype html 
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        title Speechviz
+        link(rel="stylesheet", type="text/css", href="css/style.css")
+    body 
+        a(href="/") Back to file selection 
+        .row 
+            .column#column
+                ul
+                    li
+                        input(type="checkbox", data-action="toggle-segment", data-id="Segments", autocomplete="off", checked)
+                        | Segments
+                        ul.nested.active#Segments-nested
+            .column2#column2
+                #waveform-container
+                    #zoomview-container
+                    #overview-container
+                    #audio-controls
+                        audio#audio(controls="controls")
+                            source(src=`audio/${audiofile}`, type=mimetype)
+                            | Your browser does not support the audio element.
+
+                        #controls
+                            div
+                                button(data-action="zoom-in") Zoom in
+                                button(data-action="zoom-out") Zoom out
+                                label(for="amplitude-scale") Amplitude scale
+                                input#amplitude-scale(type="range", min="0", max="10", step="1")
+                            div
+                                input#auto-scroll(type="checkbox", checked)
+                                label(for="auto-scroll") Auto-scroll
+                                input#enable-seek(type="checkbox", checked)
+                                label(for="enable-seek") Enable click to seek
+                                input#seek-time(type="text", value="0.0")
+                                button(data-action="seek") Seek
+                            div
+                                button(data-action="add-segment") Add Segment
+            
+        .log#log
+            h2
+                input(type="checkbox", data-action="toggle-segment", data-id="Segments" autocomplete="off" checked)
+                | Segments
+            table#Segments
+                thead
+                    tr
+                        th ID
+                        th Start time
+                        th End time
+                        th
+        script(type="application/javascript", src="js/viz.js")

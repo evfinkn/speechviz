@@ -1,57 +1,23 @@
 doctype html
 html(lang="en")
-
-head
-    meta(charset="UTF-8")
-    title Speechviz
-    link(rel="stylesheet", type="text/css", href="css/style.css")
-
-body
-    fieldset#file-selection 
-        legend Select an audio file:
-
-    .row 
-        .column#column
-            ul
-                li 
-                    input(type="checkbox", data-action="toggle-segment", data-id="Segments", autocomplete="off", checked)
-                    | Segments
-                    ul.nested.active#Segments-nested
-        .column2#column2
-            #waveform-container
-                #zoomview-container 
-                #overview-container 
-                #audio-controls
-                    audio#audio(controls="controls")
-                    #controls
-                        div 
-                            button(data-action="zoom-in")
-                            | Zoom in
-                            button(data-action="zoom-out")
-                            | Zoom out
-                            label(for="amplitude-scale") Amplitude scale
-                            input#amplitude-scale(type="range", min="0", max="10", step="1")
-                        div
-                            input#auto-scroll(type="checkbox" checked)
-                            label(for="auto-scroll") Auto-scroll
-                            input#enable-seek(type="checkbox", checked)
-                            | Enable click to seek
-                            input#seek-time(type="text", value="0.0")
-                            button(data-action="seek")
-                            | Seek
-                        div 
-                            button(data-action="add-segment")
-                            | Add Segment
-        
-        .log#log
-            h2 
-                input(type="checkbox", data-action="toggle-segment", data-id="Segments" autocomplete="off" checked)
-                | Segments
-            table#Segments 
-                thead
-                    tr
-                        th ID
-                        th Start time
-                        th End time
-                        th
-        script(type="application/javascript", src="js/main.js") 
+    head
+        title Speechviz
+    body
+        fieldset#file-selection 
+            legend Select an audio file:
+    script.
+        fieldset = document.getElementById("file-selection");
+        fetch("/filelist")
+        .then(res => {
+            if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
+            else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); } // 200 is 
+            return res.json();  // return json from response
+        })
+        // add radio buttons for each file
+        .then(fileList => fileList.forEach(function (fileName) {  // fileList is data from the json
+            const div = document.createElement("div");
+            div.innerHTML = `<input type="radio" id="${fileName}" name="file-selection" value="${fileName}"></input><label for="${fileName}">${fileName}</label>`;
+            div.firstChild.addEventListener("change", function () { window.location.replace(`/viz?audiofile=${this.value}`); });
+            fieldset.append(div);
+        }))
+        .catch(error => { console.error('Error during fetch: ', error); });  // catch err thrown by res if any
