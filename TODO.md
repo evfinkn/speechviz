@@ -23,10 +23,9 @@
  - [x] Add duration for segments
 
 ### Pipeline
- - [ ] Fix?
- - [ ] Make "help" more informative
  - [ ] Add to GitLab
  - [ ] Try different speaker separation
  - [ ] Calculate true speaker
+ - [x] Make "help" more informative
  - [x] Export segments as json for GET request
  - [x] Save segments as name-segments.json and waveform as name-waveform.json
