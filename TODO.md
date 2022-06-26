@@ -11,7 +11,6 @@
 
 ### Interface
  - [ ] Make custom segments save-able
- - [ ] Add renderGroup case for when Segments group is a group of segments
  - [ ] Add SNR to speakers
  - [ ] Custom labeling
  - [ ] Duration on segment groups
@@ -23,9 +22,9 @@
  - [x] Add duration for segments
 
 ### Pipeline
- - [ ] Add to GitLab
  - [ ] Try different speaker separation
  - [ ] Calculate true speaker
+ - [x] Add to GitLab
  - [x] Make "help" more informative
  - [x] Export segments as json for GET request
  - [x] Save segments as name-segments.json and waveform as name-waveform.json
