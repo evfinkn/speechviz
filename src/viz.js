@@ -215,32 +215,43 @@ var runPeaks = async function (fileName) {
         editable: true
       };
       segment = peaksInstance.segments.add(segment);
+      segment.path = ["Segments", "Custom-Segments", segment.id];
 
       // make it visible in tree and table (path???)
       const li = document.createElement("li");
       li.id = segment.id;
       li.style.fontSize = "12px";
-      li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" checked autocomplete="off">${segment.id}`;
+      li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" checked autocomplete="off">${segment.id.replace("peaks.", "")} <a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segment.id}">&#x1f501;</a><ul id="${segment.id}-nested" class="nested active">Duration: <span id="${segment.id}-duration">${(segment.endTime - segment.startTime).toFixed(2)}<span></ul>`;
       document.getElementById("Custom-Segments-nested").append(li);
+
+      li.children[1].addEventListener("click", function() { peaksInstance.player.playSegment(segment); });
+      li.children[2].addEventListener("click", function() { peaksInstance.player.playSegment(segment, true); });
 
       // create the table item for the segment
       const row = tbody.insertRow(-1);
       row.id = segment.id;
-      row.innerHTML = `<td><input data-action="toggle-segment" type="checkbox" data-id="${segment.id}" checked>${segment.id}</td><td>${segment.startTime.toFixed(3)}</td><td>${segment.endTime.toFixed(3)}</td><td><a href="#${segment.id}" data-action="play-segment" data-id="${segment.id}">Play</a></td><td><a href="#${segment.id}" data-action="loop-segment" data-id="${segment.id}">Loop</a></td>`;
+      row.innerHTML = `<td><input data-action="toggle-segment" type="checkbox" data-id="${segment.id}" checked>${segment.id}</td><td id="${segment.id}-start">${segment.startTime.toFixed(3)}</td><td id="${segment.id}-end">${segment.endTime.toFixed(3)}</td><td><a href="#${segment.id}" data-action="play-segment" data-id="${segment.id}">Play</a></td><td><a href="#${segment.id}" data-action="loop-segment" data-id="${segment.id}">Loop</a></td>`;
+
+      row.children[3].firstChild.addEventListener("click", function() { peaksInstance.player.playSegment(segment); });
+      row.children[4].firstChild.addEventListener("click", function() { peaksInstance.player.playSegment(segment, true); });
+
+      segment.durationText = document.getElementById(`${segment.id}-duration`);
+      segment.startText = document.getElementById(`${segment.id}-start`);
+      segment.endText = document.getElementById(`${segment.id}-end`);
       
       // add the checkboxes for the segment to the segment and add event listeners to them
       const treeCheckbox = li.firstChild;
       const tableCheckbox = row.firstChild.firstChild;
       segment.treeCheckbox = treeCheckbox;
       segment.tableCheckbox = tableCheckbox;
-      treeCheckbox.addEventListener("click", function() { toggleSegments(peaks, this.dataset.id, this.checked); });
-      tableCheckbox.addEventListener("click", function() { toggleSegments(peaks, this.dataset.id, this.checked); });
+      treeCheckbox.addEventListener("click", function() { toggleSegments(peaksInstance, this.dataset.id, this.checked); });
+      tableCheckbox.addEventListener("click", function() { toggleSegments(peaksInstance, this.dataset.id, this.checked); });
       
       // add segment to visible segments and segmentsByID
       visibleSegments["Custom-Segments"][segment.id] = segment;
       segmentsByID[segment.id] = segment;
     
-      });
+    });
 
       // Auto-scroll
       document.getElementById('auto-scroll').addEventListener('change', function () { zoomview.enableAutoScroll(this.checked); });
@@ -268,6 +279,14 @@ var runPeaks = async function (fileName) {
     // Context menus
     peaksInstance.on('segments.contextmenu', function (event) { event.evt.preventDefault(); });
     peaksInstance.on('overview.contextmenu', function (event) { event.evt.preventDefault(); });
+    peaksInstance.on("segments.dragend", function (event) {
+      const segment = event.segment;
+      const startTime = segment.startTime;
+      const endTime = segment.endTime;
+      segment.startText.innerHTML = startTime.toFixed(3);
+      segment.endText.innerHTML = endTime.toFixed(3);
+      segment.durationText.innerHTML = (segment.endTime - segment.startTime).toFixed(2);
+    })
 
     // generate Custom-Segments branch of tree
 
@@ -303,17 +322,12 @@ var runPeaks = async function (fileName) {
 
     // Event listeners for the "play" and "loop" buttons in the table
     document.querySelectorAll("a[data-action='play-segment']").forEach(function (button) {
-      const id = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
-      button.addEventListener("click", function() {
-        peaksInstance.player.playSegment(id);
-      });
-      button.addEventListener("dragstart", function() { id = null; });
+      const segment = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
+      button.addEventListener("click", function() { peaksInstance.player.playSegment(segment); });
     });
     document.querySelectorAll("a[data-action='loop-segment']").forEach(function (button) {
-      const id = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
-      button.addEventListener("click", function() {
-        peaksInstance.player.playSegment(id, true);
-      });
+      const segment = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
+      button.addEventListener("click", function() { peaksInstance.player.playSegment(segment, true); });
     });
 
     // if there are no segments, remove the table and tree so that only peaks is visible
