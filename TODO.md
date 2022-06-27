@@ -3,6 +3,7 @@
 
 ### Node
  - [ ] Add HTTPS
+ - [ ] Fix error raised when submitting login: `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`
  - [x] Get own server working
  - [x] Upload to GitLab
  - [x] Add instructions to README
@@ -11,7 +12,7 @@
 
 ### Interface
  - [ ] Make custom segments save-able
- - [ ] Add SNR to speakers
+ - [x] Add SNR to speakers
  - [ ] Custom labeling
  - [ ] Duration on segment groups
  - [ ] Play/loop button on segment groups
