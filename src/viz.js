@@ -120,7 +120,10 @@ var runPeaks = async function (fileName) {
       hiddenSegments[group[0]] = {}
       visibleSegments[group[0]] = {};
       
-      peaks.segments.add(group[1]);
+      if (group.length == 3)
+      	peaks.segments.add(group[2]);
+      else
+	peaks.segments.add(group[1]);
       const segments = peaks.segments.getSegments().filter(segment => segment.labelText == group[0]);
       for (let segment of segments) {
         segment.path = path.split("|").concat(group[0], segment.id);
