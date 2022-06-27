@@ -12,6 +12,7 @@
 
 ### Interface
  - [ ] Leave "Segments" checked by default, but make all nested groups unchecked (and hidden on peaks) by default
+ - [ ] Make the "Custom-Segments" tree branch and log row hidden when there are no custom segments
  - [ ] Make custom segments save-able
  - [ ] Custom labeling
  - [ ] Duration on segment groups
