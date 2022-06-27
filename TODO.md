@@ -11,12 +11,13 @@
  - [x] Add support for multiple files
 
 ### Interface
+ - [ ] Leave "Segments" checked by default, but make all nested groups unchecked (and hidden on peaks) by default
  - [ ] Make custom segments save-able
- - [x] Add SNR to speakers
  - [ ] Custom labeling
  - [ ] Duration on segment groups
  - [ ] Play/loop button on segment groups
  - [ ] Merge-able segments
+ - [x] Add SNR to speakers
  - [x] Intro page with file selection, not on main page
  - [x] Re-add custom segments
  - [x] Add play buttons for segments in tree  <sub>Add loop buttons in tree as well??</sub>
