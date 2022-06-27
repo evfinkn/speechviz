@@ -3,7 +3,7 @@
 
 ### Node
  - [ ] Add HTTPS
- - [ ] Fix error raised when submitting login: `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`
+ - [x] Fix error raised when submitting login: `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`
  - [x] Get own server working
  - [x] Upload to GitLab
  - [x] Add instructions to README
@@ -25,7 +25,7 @@
  - [x] Add duration for segments
 
 ### Pipeline
- - [ ] Try different speaker separation
+ - [x] Try different speaker separation
  - [ ] Calculate true speaker
  - [x] Add to GitLab
  - [x] Make "help" more informative
