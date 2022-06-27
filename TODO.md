@@ -11,7 +11,7 @@
 
 ### Interface
  - [ ] Make custom segments save-able
- - [ ] Add SNR to speakers
+ - [x] Add SNR to speakers
  - [ ] Custom labeling
  - [ ] Duration on segment groups
  - [ ] Play/loop button on segment groups
