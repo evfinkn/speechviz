@@ -101,11 +101,12 @@ var runPeaks = async function (fileName) {
     // create the tree item for the group
     const branch = document.createElement("li");
     if (group.length == 3){
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" checked autocomplete="off">${group[0] + " SNR: " + group[2].toFixed(2)}<ul id="${group[0]}-nested" class="nested active"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" checked autocomplete="off"><span id="${group[0]}-span">${group[0] + " SNR: " + group[2].toFixed(2)}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
     }
     else{
       branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" checked autocomplete="off">${group[0]}<ul id="${group[0]}-nested" class="nested active"></ul>`;
     }
+
     document.getElementById(`${parent}-nested`).append(branch);
 
     // create the table item for the group
@@ -157,6 +158,16 @@ var runPeaks = async function (fileName) {
     }
     else {
       for (let nestedGroup of group[1]) { renderGroup(peaks, nestedGroup, `${path}|${group[0]}`); }
+    }
+    if (group.length == 3){
+      var sum = 0;
+      const thisSegments = Object.values(visibleSegments[group[0]]);
+      var span = document.getElementById(`${group[0]}-span`);
+      console.log(span);
+      for (let segment of thisSegments) {
+        sum += segment.endTime - segment.startTime;
+      }
+      span.innerHTML = span.innerHTML + " DURATION: " + sum.toFixed(2);
     }
   }
 
