@@ -11,13 +11,13 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] Leave "Segments" checked by default, but make all nested groups unchecked (and hidden on peaks) by default
  - [ ] Make the "Custom-Segments" tree branch and log row hidden when there are no custom segments
  - [ ] Make custom segments save-able
  - [ ] Custom labeling
  - [ ] Duration on segment groups
  - [ ] Play/loop button on segment groups
  - [ ] Merge-able segments
+ - [x] Leave "Segments" checked by default, but make all nested groups unchecked (and hidden on peaks) by default
  - [x] Add SNR to speakers
  - [x] Intro page with file selection, not on main page
  - [x] Re-add custom segments
@@ -25,8 +25,10 @@
  - [x] Add duration for segments
 
 ### Pipeline
- - [x] Try different speaker separation
+ - [ ] Use numpy arrays instead of lists (numpy arrays are faster)
+ - [ ] Try different speaker separation
  - [ ] Calculate true speaker
+ - [x] Try different speaker separation
  - [x] Add to GitLab
  - [x] Make "help" more informative
  - [x] Export segments as json for GET request
