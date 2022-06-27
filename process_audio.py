@@ -187,7 +187,7 @@ def process_audio(*args,
                 )
             # sort speakers so that index of 'Speaker i' is i - 1
             #ADD SNR IN BETWEEN SPEAKER, SPEAKERS_SEGMENTS,
-            speakers_segments = [(speaker, findSpeakerSNR(speaker), speakers_segments[speaker]) for speaker in sorted(speakers_segments)]
+            speakers_segments = [(speaker, speakers_segments[speaker]) for speaker in sorted(speakers_segments), findSpeakerSNR(speaker)]
             segments.append(("Speakers", speakers_segments))
             
         if do_vad:

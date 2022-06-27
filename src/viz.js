@@ -89,7 +89,7 @@ var runPeaks = async function (fileName) {
   }
 
   const renderGroup = function (peaks, group, path) {
-    if (group[1].length == 0) { return; } 	// if group has no segments, return
+    if (group[1].length == 0) { return; } 	// if group has no segments/snr, return
 
     const parent = path.split("|").at(-1);  // parent needed to find where in tree to nest group
     // add group to the parents children
@@ -120,10 +120,7 @@ var runPeaks = async function (fileName) {
       hiddenSegments[group[0]] = {}
       visibleSegments[group[0]] = {};
       
-      if (group.length == 3)
-      	peaks.segments.add(group[2]);
-      else
-	peaks.segments.add(group[1]);
+	    peaks.segments.add(group[1]);
       const segments = peaks.segments.getSegments().filter(segment => segment.labelText == group[0]);
       for (let segment of segments) {
         segment.path = path.split("|").concat(group[0], segment.id);
