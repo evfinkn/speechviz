@@ -3,7 +3,7 @@
 
 ### Node
  - [ ] Add HTTPS
- - [ ] Fix error raised when submitting login: `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`
+ - [x] Fix error raised when submitting login: `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`
  - [x] Get own server working
  - [x] Upload to GitLab
  - [x] Add instructions to README
@@ -11,19 +11,21 @@
  - [x] Add support for multiple files
 
 ### Interface
+ - [ ] Leave "Segments" checked by default, but make all nested groups unchecked (and hidden on peaks) by default
+ - [ ] Make the "Custom-Segments" tree branch and log row hidden when there are no custom segments
  - [ ] Make custom segments save-able
- - [x] Add SNR to speakers
  - [ ] Custom labeling
  - [ ] Duration on segment groups
  - [ ] Play/loop button on segment groups
  - [ ] Merge-able segments
+ - [x] Add SNR to speakers
  - [x] Intro page with file selection, not on main page
  - [x] Re-add custom segments
  - [x] Add play buttons for segments in tree  <sub>Add loop buttons in tree as well??</sub>
  - [x] Add duration for segments
 
 ### Pipeline
- - [ ] Try different speaker separation
+ - [x] Try different speaker separation
  - [ ] Calculate true speaker
  - [x] Add to GitLab
  - [x] Make "help" more informative
