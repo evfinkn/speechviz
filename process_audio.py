@@ -91,7 +91,7 @@ def process_audio(*args,
         subprocess.run(["audiowaveform", "-q", f"-i{file_path}", f"-o{json_path}", "-b", "8"], capture_output=True, check=True)  # create the waveform
 
 
-        samples, sr = librosa.load(file_path)
+        samples, sr = librosa.load(file_path, sr=None)
         # if the audio isn't in wav format, convert it to wav (pipeline requires wav)
         made_wav = False
         if file_ext != ".wav":
