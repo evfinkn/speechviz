@@ -16,9 +16,9 @@ To start the server, run
 ```
 npm start
 ```
-and then open http://localhost:8080 in your browser.
+and then open http://localhost:3000 in your browser.
 
-By default, the server listens on port 8080. You can specify a different port by running
+By default, the server listens on port 3000. You can specify a different port by running
 ```
 npm start -- --port=PORT
 ```
