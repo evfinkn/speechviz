@@ -16,6 +16,7 @@ router.get('/credentials', (req, res, next) => {
       req.session.authenticated = true;
       req.session.user = user;
       res.redirect('/');
+      return;
     }
   }
 

@@ -31,7 +31,10 @@ function checkAuthentification(req, res, next) {
   let req_url = req.url.toString();
   if (req_url.startsWith('/login')) { next(); }
   else {
-    if (!req.session || !req.session.authenticated) { res.redirect('/login'); }
+    if (!req.session || !req.session.authenticated) { 
+      res.redirect('/login'); 
+      return;
+  }
     else { next(); }  // authenticated
   }
 }
