@@ -156,7 +156,6 @@ var runPeaks = async function (fileName) {
         segmentsByID[segment.id] = segment;
         visibleSegments[group[0]][segment.id] = segment;
       }
-      toggleSegments(peaks, group[0], false);
     }
     else {
       for (let nestedGroup of group[1]) { 
@@ -282,6 +281,10 @@ var runPeaks = async function (fileName) {
       visibleSegments["Custom-Segments"][segment.id] = segment;
       segmentsByID[segment.id] = segment;
     
+      toggleSegments(peaksInstance, "Segments", false);
+      groupsInputs.Segments[0].checked = true;
+      document.getElementById("Segments-nested").classList.add("active");
+      groupsInputs.Segments[1].checked = true;
     });
 
       // Auto-scroll
