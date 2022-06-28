@@ -98,13 +98,15 @@ var runPeaks = async function (fileName) {
       parentInput.dataset.children = parentChildren === undefined ? group[0] : `${parentChildren}|${group[0]}`;
     });
 
+    
+
     // create the tree item for the group
     const branch = document.createElement("li");
     if (group.length == 3){
       branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span">${group[0] + " SNR: " + group[2].toFixed(2)}</span><ul id="${group[0]}-nested" class="nested"></ul>`;
     }
     else{
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off">${group[0]}<ul id="${group[0]}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span">${group[0]}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
     }
 
     document.getElementById(`${parent}-nested`).append(branch);
@@ -156,7 +158,18 @@ var runPeaks = async function (fileName) {
       }
     }
     else {
-      for (let nestedGroup of group[1]) { renderGroup(peaks, nestedGroup, `${path}|${group[0]}`); }
+      for (let nestedGroup of group[1]) { 
+        renderGroup(peaks, nestedGroup, `${path}|${group[0]}`);
+      }
+      //make duration shiz happen here
+      var speakersSpan = document.getElementById(`${group[0]}-span`);
+      var speakersSum = 0;
+      for (let nestedGroup of group[1]){
+        var individualSpans = document.getElementById(`${nestedGroup[0]}-span`);
+        
+        speakersSum += parseFloat(individualSpans.innerHTML.split(" ").at(-1));
+      }
+      speakersSpan.innerHTML = speakersSpan.innerHTML + " DURATION: " + speakersSum;
     }
     if (group.length == 3){
       var sum = 0;
@@ -167,6 +180,8 @@ var runPeaks = async function (fileName) {
       }
       span.innerHTML = span.innerHTML + "      DURATION: " + sum.toFixed(2);
     }
+
+    
   }
 
   const options = {
@@ -266,6 +281,10 @@ var runPeaks = async function (fileName) {
       visibleSegments["Custom-Segments"][segment.id] = segment;
       segmentsByID[segment.id] = segment;
     
+      toggleSegments(peaksInstance, "Segments", false);
+      groupsInputs.Segments[0].checked = true;
+      document.getElementById("Segments-nested").classList.add("active");
+      groupsInputs.Segments[1].checked = true;
     });
 
       // Auto-scroll
