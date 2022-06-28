@@ -11,6 +11,7 @@
  - [x] Add support for multiple files
 
 ### Interface
+ - [ ] Show SNR and duration when cursor hovers over group
  - [ ] Make the "Custom-Segments" tree branch and log row hidden when there are no custom segments
  - [ ] Make custom segments save-able
  - [ ] Custom labeling
