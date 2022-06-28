@@ -103,10 +103,10 @@ var runPeaks = async function (fileName) {
     // create the tree item for the group
     const branch = document.createElement("li");
     if (group.length == 3){
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" checked autocomplete="off"><span id="${group[0]}-span">${group[0] + " SNR: " + group[2].toFixed(2)}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span">${group[0] + " SNR: " + group[2].toFixed(2)}</span><ul id="${group[0]}-nested" class="nested"></ul>`;
     }
     else{
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" checked autocomplete="off"><span id="${group[0]}-span">${group[0]}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span">${group[0]}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
     }
 
     document.getElementById(`${parent}-nested`).append(branch);
@@ -115,7 +115,7 @@ var runPeaks = async function (fileName) {
     const tbody = segmentsTable.createTBody();
     tbody.id = group[0];
     const head = tbody.insertRow(-1);
-    head.innerHTML = `<th><input data-action="toggle-segment" type="checkbox" data-id="${group[0]}" checked>${group[0]}</th>`;
+    head.innerHTML = `<th><input data-action="toggle-segment" type="checkbox" data-id="${group[0]}">${group[0]}</th>`;
 
     // add inputs for group to groupInputs and add event listeners to them
     const treeInput = branch.firstChild
@@ -137,14 +137,13 @@ var runPeaks = async function (fileName) {
         const li = document.createElement("li");
         li.id = segment.id;
         li.style.fontSize = "12px";
-        li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" checked autocomplete="off">${segment.id.replace("peaks.", "")} <a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segment.id}">&#x1f501;</a><ul id="${segment.id}-nested" class="nested active">Duration: ${(segment.endTime - segment.startTime).toFixed(2)}</ul>`; 
-
+        li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off">${segment.id.replace("peaks.", "")} <a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segment.id}">&#x1f501;</a><ul id="${segment.id}-nested" class="nested">Duration: ${(segment.endTime - segment.startTime).toFixed(2)}</ul>`;
         document.getElementById(`${group[0]}-nested`).append(li);
 
         // create the table item for the segment
         const row = tbody.insertRow(-1);
         row.id = segment.id;
-        row.innerHTML = `<td><input data-action="toggle-segment" type="checkbox" data-id="${segment.id}" checked>${segment.id}</td><td>${segment.startTime.toFixed(3)}</td><td>${segment.endTime.toFixed(3)}</td><td><a href="#${segment.id}" data-action="play-segment" data-id="${segment.id}">Play</a></td><td><a href="#${segment.id}" data-action="loop-segment" data-id="${segment.id}">Loop</a></td>`;
+        row.innerHTML = `<td><input data-action="toggle-segment" type="checkbox" data-id="${segment.id}">${segment.id}</td><td>${segment.startTime.toFixed(3)}</td><td>${segment.endTime.toFixed(3)}</td><td><a href="#${segment.id}" data-action="play-segment" data-id="${segment.id}">Play</a></td><td><a href="#${segment.id}" data-action="loop-segment" data-id="${segment.id}">Loop</a></td>`;
 
         // add the checkboxes for the segment to the segment and add event listeners to them
         const treeCheckbox = li.firstChild;
@@ -157,6 +156,7 @@ var runPeaks = async function (fileName) {
         segmentsByID[segment.id] = segment;
         visibleSegments[group[0]][segment.id] = segment;
       }
+      toggleSegments(peaks, group[0], false);
     }
     else {
       for (let nestedGroup of group[1]) { 
@@ -179,7 +179,7 @@ var runPeaks = async function (fileName) {
       for (let segment of thisSegments) {
         sum += segment.endTime - segment.startTime;
       }
-      span.innerHTML = span.innerHTML + " DURATION: " + sum.toFixed(2);
+      span.innerHTML = span.innerHTML + "      DURATION: " + sum.toFixed(2);
     }
 
     
@@ -325,7 +325,7 @@ var runPeaks = async function (fileName) {
     const tbody = segmentsTable.createTBody();
     tbody.id = "Custom-Segments";
     const head = tbody.insertRow(-1);
-    head.innerHTML = `<th><input data-action="toggle-segment" type="checkbox" data-id="Custom-Segments" checked>Custom Segments</th>`;
+    head.innerHTML = `<th><input data-action="toggle-segment" type="checkbox" data-id="Custom-Segments">Custom Segments</th>`;
 
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // generate the tree and the table
@@ -333,7 +333,7 @@ var runPeaks = async function (fileName) {
 
     // add custom segments to tree
     const customSeg = document.createElement("li");
-    customSeg.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="Custom-Segments" checked autocomplete="off">Custom-Segments<ul id="Custom-Segments-nested" class="nested active"></ul>`;
+    customSeg.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="Custom-Segments" autocomplete="off">Custom-Segments<ul id="Custom-Segments-nested" class="nested"></ul>`;
     segmentsTree.append(customSeg);
 
     // initialize hidden/visible segments
@@ -360,13 +360,6 @@ var runPeaks = async function (fileName) {
       const segment = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
       button.addEventListener("click", function() { peaksInstance.player.playSegment(segment, true); });
     });
-
-    // if there are no segments, remove the table and tree so that only peaks is visible
-    if (segmentsTable.tBodies.length === 0) {
-      document.getElementById("log").classList.add("hide");
-      document.getElementById("column").classList.add("hide");
-      document.getElementById("column2").classList.remove("column2");
-    }
   });
 };
 
