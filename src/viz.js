@@ -98,13 +98,15 @@ var runPeaks = async function (fileName) {
       parentInput.dataset.children = parentChildren === undefined ? group[0] : `${parentChildren}|${group[0]}`;
     });
 
+    
+
     // create the tree item for the group
     const branch = document.createElement("li");
     if (group.length == 3){
       branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" checked autocomplete="off"><span id="${group[0]}-span">${group[0] + " SNR: " + group[2].toFixed(2)}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
     }
     else{
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" checked autocomplete="off">${group[0]}<ul id="${group[0]}-nested" class="nested active"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" checked autocomplete="off"><span id="${group[0]}-span">${group[0]}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
     }
 
     document.getElementById(`${parent}-nested`).append(branch);
@@ -157,18 +159,30 @@ var runPeaks = async function (fileName) {
       }
     }
     else {
-      for (let nestedGroup of group[1]) { renderGroup(peaks, nestedGroup, `${path}|${group[0]}`); }
+      for (let nestedGroup of group[1]) { 
+        renderGroup(peaks, nestedGroup, `${path}|${group[0]}`);
+      }
+      //make duration shiz happen here
+      var speakersSpan = document.getElementById(`${group[0]}-span`);
+      var speakersSum = 0;
+      for (let nestedGroup of group[1]){
+        var individualSpans = document.getElementById(`${nestedGroup[0]}-span`);
+        
+        speakersSum += parseFloat(individualSpans.innerHTML.split(" ").at(-1));
+      }
+      speakersSpan.innerHTML = speakersSpan.innerHTML + " DURATION: " + speakersSum;
     }
     if (group.length == 3){
       var sum = 0;
       const thisSegments = Object.values(visibleSegments[group[0]]);
       var span = document.getElementById(`${group[0]}-span`);
-      console.log(span);
       for (let segment of thisSegments) {
         sum += segment.endTime - segment.startTime;
       }
       span.innerHTML = span.innerHTML + " DURATION: " + sum.toFixed(2);
     }
+
+    
   }
 
   const options = {
