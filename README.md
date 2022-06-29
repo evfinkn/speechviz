@@ -13,8 +13,13 @@ python db_init.py
 To use process_audio and the pipeline, create an environment in anaconda, activate it and do this.
 ```
 conda activate ENVNAME
-conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+conda install pytorch numpy torchvision torchaudio cudatoolkit=11.3 -c pytorch
 ```
+Then put
+```
+python process_audio.py -r data/audio
+```
+while in speechviz.
 ## Usage
 
 To start the server, run
