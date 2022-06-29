@@ -13,8 +13,8 @@ var runPeaks = async function (fileName) {
   [ 
     ["Speakers",
       [
-        ["Speaker 1", [{...}, {...}, {...}]],
-        ["Speaker 2", [{...}]]
+        ["Speaker 1", [{...}, {...}, {...}], ...],
+        ["Speaker 2", [{...}], ...]
       ]
     ],
     ["VAD", [{...}, {...}, {...}]],
@@ -157,11 +157,10 @@ var runPeaks = async function (fileName) {
         visibleSegments[group[0]][segment.id] = segment;
       }
     }
-    else {
+    else { //gives speakers duration
       for (let nestedGroup of group[1]) { 
         renderGroup(peaks, nestedGroup, `${path}|${group[0]}`);
       }
-      //make duration shiz happen here
       var speakersSpan = document.getElementById(`${group[0]}-span`);
       var speakersSum = 0;
       for (let nestedGroup of group[1]){
@@ -180,8 +179,15 @@ var runPeaks = async function (fileName) {
       }
       span.innerHTML = span.innerHTML + "      DURATION: " + sum.toFixed(2);
     }
-
-    
+    else{ //for vad and non vad
+      var sum = 0;
+      const thisSegments = group[1]
+      var span = document.getElementById(`${group[0]}-span`);
+      for (let segment of thisSegments) {
+        sum += segment.endTime - segment.startTime;
+      }
+      span.innerHTML = span.innerHTML + "      DURATION: " + sum.toFixed(2);
+    }
   }
 
   const options = {
