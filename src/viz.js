@@ -103,7 +103,7 @@ var runPeaks = async function (fileName) {
     // create the tree item for the group
     const branch = document.createElement("li");
     if (group.length == 3){
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span">${group[0] + " SNR: " + group[2].toFixed(2)}</span><ul id="${group[0]}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span><ul id="${group[0]}-nested" class="nested"></ul>`;
     }
     else{
       branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span">${group[0]}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
@@ -137,7 +137,7 @@ var runPeaks = async function (fileName) {
         const li = document.createElement("li");
         li.id = segment.id;
         li.style.fontSize = "12px";
-        li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off">${segment.id.replace("peaks.", "")} <a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segment.id}">&#x1f501;</a><ul id="${segment.id}-nested" class="nested active">Duration: ${(segment.endTime - segment.startTime).toFixed(2)}</ul>`;
+        li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off"><span title="${"Duration: " + (segment.endTime - segment.startTime).toFixed(2)}">${segment.id.replace("peaks.", "")}</span><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segment.id}">&#x1f501;</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
         document.getElementById(`${group[0]}-nested`).append(li);
 
         // create the table item for the segment
@@ -168,7 +168,7 @@ var runPeaks = async function (fileName) {
           speakersSum += segment.endTime - segment.startTime;
         }
       }
-      speakersSpan.innerHTML = speakersSpan.innerHTML + " DURATION: " + speakersSum.toFixed(2);
+      speakersSpan.title = speakersSpan.title + "Duration: " + speakersSum.toFixed(2);
     }
     //get duration for vad and non vad
     if (group[0] != "Speakers"){
@@ -178,7 +178,7 @@ var runPeaks = async function (fileName) {
       for (let segment of thisSegments) {
         sum += segment.endTime - segment.startTime;
       }
-      span.innerHTML = span.innerHTML + " DURATION: " + sum.toFixed(2);
+      span.title = span.title + " Duration: " + sum.toFixed(2);
     }
   }
 
