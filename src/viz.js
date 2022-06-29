@@ -177,16 +177,18 @@ var runPeaks = async function (fileName) {
       for (let segment of thisSegments) {
         sum += segment.endTime - segment.startTime;
       }
-      span.innerHTML = span.innerHTML + "      DURATION: " + sum.toFixed(2);
+      span.innerHTML = span.innerHTML + " DURATION: " + sum.toFixed(2);
     }
     else{ //for vad and non vad
+      if (group[0] != "Speakers"){
       var sum = 0;
       const thisSegments = group[1]
       var span = document.getElementById(`${group[0]}-span`);
       for (let segment of thisSegments) {
         sum += segment.endTime - segment.startTime;
       }
-      span.innerHTML = span.innerHTML + "      DURATION: " + sum.toFixed(2);
+      span.innerHTML = span.innerHTML + " DURATION: " + sum.toFixed(2);
+    }
     }
   }
 
