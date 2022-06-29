@@ -280,11 +280,6 @@ var runPeaks = async function (fileName) {
       // add segment to visible segments and segmentsByID
       visibleSegments["Custom-Segments"][segment.id] = segment;
       segmentsByID[segment.id] = segment;
-    
-      toggleSegments(peaksInstance, "Segments", false);
-      groupsInputs.Segments[0].checked = true;
-      document.getElementById("Segments-nested").classList.add("active");
-      groupsInputs.Segments[1].checked = true;
     });
 
       // Auto-scroll
