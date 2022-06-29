@@ -10,7 +10,11 @@ cd speechviz
 npm install
 python db_init.py
 ```
-
+To use process_audio and the pipeline, create an environment in anaconda, activate it and do this.
+```
+conda activate ENVNAME
+conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+```
 ## Usage
 
 To start the server, run
