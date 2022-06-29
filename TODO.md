@@ -15,7 +15,7 @@
  - [ ] Make the "Custom-Segments" tree branch and log row hidden when there are no custom segments
  - [ ] Make custom segments save-able
  - [ ] Custom labeling
- - [ ] Duration on segment groups
+ - [x] Duration on segment groups
  - [ ] Play/loop button on segment groups
  - [ ] Merge-able segments
  - [x] Leave "Segments" checked by default, but make all nested groups unchecked (and hidden on peaks) by default
@@ -27,7 +27,7 @@
 
 ### Pipeline
  - [ ] Use numpy arrays instead of lists (numpy arrays are faster)
- - [ ] Try different speaker separation
+ - [x] Try different speaker separation
  - [ ] Calculate true speaker
  - [x] Try different speaker separation
  - [x] Add to GitLab
