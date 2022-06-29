@@ -124,7 +124,7 @@ var runPeaks = async function (fileName) {
     treeInput.addEventListener("click", function() { toggleSegments(peaks, group[0], this.checked); });
     tableInput.addEventListener("click", function() { toggleSegments(peaks, group[0], this.checked); });
     
-    if (!Array.isArray(group[1][0])) {
+    if (!Array.isArray(group[1][0])) { //if the group isn't the big overall speakers group
       hiddenSegments[group[0]] = {}
       visibleSegments[group[0]] = {};
       
@@ -157,38 +157,28 @@ var runPeaks = async function (fileName) {
         visibleSegments[group[0]][segment.id] = segment;
       }
     }
-    else { //gives speakers duration
+    else { //duration for speakers big overall tab
       for (let nestedGroup of group[1]) { 
         renderGroup(peaks, nestedGroup, `${path}|${group[0]}`);
       }
       var speakersSpan = document.getElementById(`${group[0]}-span`);
       var speakersSum = 0;
       for (let nestedGroup of group[1]){
-        var individualSpans = document.getElementById(`${nestedGroup[0]}-span`);
-        
-        speakersSum += parseFloat(individualSpans.innerHTML.split(" ").at(-1));
+        for (let segment of nestedGroup[1]) {
+          speakersSum += segment.endTime - segment.startTime;
+        }
       }
-      speakersSpan.innerHTML = speakersSpan.innerHTML + " DURATION: " + speakersSum;
+      speakersSpan.innerHTML = speakersSpan.innerHTML + " DURATION: " + speakersSum.toFixed(2);
     }
-    if (group.length == 3){
+    //get duration for vad and non vad
+    if (group[0] != "Speakers"){
       var sum = 0;
-      const thisSegments = Object.values(visibleSegments[group[0]]);
+      const thisSegments = group[1];
       var span = document.getElementById(`${group[0]}-span`);
       for (let segment of thisSegments) {
         sum += segment.endTime - segment.startTime;
       }
       span.innerHTML = span.innerHTML + " DURATION: " + sum.toFixed(2);
-    }
-    else{ //for vad and non vad
-      if (group[0] != "Speakers"){
-      var sum = 0;
-      const thisSegments = group[1]
-      var span = document.getElementById(`${group[0]}-span`);
-      for (let segment of thisSegments) {
-        sum += segment.endTime - segment.startTime;
-      }
-      span.innerHTML = span.innerHTML + " DURATION: " + sum.toFixed(2);
-    }
     }
   }
 
