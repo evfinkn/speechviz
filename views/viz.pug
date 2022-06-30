@@ -39,19 +39,4 @@ html(lang="en")
                                 button(data-action="seek") Seek
                             div
                                 button(data-action="add-segment") Add Segment
-            
-        .log#log
-            h2
-                input(type="checkbox", data-action="toggle-segment", data-id="Segments" autocomplete="off" checked)
-                | Segments 
-                a(href="#", data-id="Segments") Play
-                |  
-                a(href="#", data-id="Segments") Loop
-            table#Segments
-                thead
-                    tr
-                        th ID
-                        th Start time
-                        th End time
-                        th
         script(type="application/javascript", src="js/viz.js")
