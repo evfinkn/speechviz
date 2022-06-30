@@ -233,7 +233,7 @@ var runPeaks = async function (fileName) {
       segment.path = ["Segments", "Custom-Segments", segment.id];
 
       // create tree item for segment
-      const li = document.createElement("li");
+      const li = document.createElement("li"); 
       li.id = segment.id;
       li.style.fontSize = "12px";
       li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" checked autocomplete="off">${segment.id.replace("peaks.", "")} <a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-id="${segment.id}">&#x1f501;</a><ul id="${segment.id}-nested" class="nested active">Duration: <span id="${segment.id}-duration">${(segment.endTime - segment.startTime).toFixed(2)}<span></ul>`;
