@@ -16,7 +16,6 @@
  - [ ] Make custom segments save-able
  - [ ] Custom labeling
  - [ ] Play/loop button on segment groups
- - [ ] Merge-able segments
  - [x] Show SNR and duration when cursor hovers over group
  - [x] Duration on segment groups
  - [x] Leave "Segments" checked by default, but make all nested groups unchecked (and hidden on peaks) by default
