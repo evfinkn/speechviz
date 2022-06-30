@@ -16,11 +16,14 @@ conda create -n ENVNAME
 conda activate ENVNAME
 conda install pytorch numpy torchvision torchaudio cudatoolkit=11.3 -c pytorch
 ```
-Then, install [pyannotate.audio](https://github.com/pyannote/pyannote-audio) with pip:
+Then, install [pyannotate.audio](https://github.com/pyannote/pyannote-audio) and speechbrain with pip:
 ```
 pip install https://github.com/pyannote/pyannote-audio/archive/develop.zip
+pip install speechbrain
 ```
-You also need to install [audiowaveform](https://github.com/pyannote/pyannote-audio) and [ffmpeg](https://ffmpeg.org/download.html).
+You also need to install [audiowaveform](https://github.com/bbc/audiowaveform#installation) and [ffmpeg](https://ffmpeg.org/download.html).
+
+pip install
 
 ## Usage
 Before running the server, you'll need to process some audio. To do so, run:
