@@ -10,25 +10,35 @@ cd speechviz
 npm install
 python db_init.py
 ```
-To use process_audio and the pipeline, create an environment in anaconda, activate it and do this.
+To use process_audio and the pipeline, you'll need to first make a conda environment:
 ```
+conda create -n ENVNAME
 conda activate ENVNAME
 conda install pytorch numpy torchvision torchaudio cudatoolkit=11.3 -c pytorch
 ```
-Then put
+Then, install [pyannotate.audio](https://github.com/pyannote/pyannote-audio) with pip:
 ```
-python process_audio.py -r data/audio
+pip install https://github.com/pyannote/pyannote-audio/archive/develop.zip
 ```
-while in speechviz.
-## Usage
+You also need to install [audiowaveform](https://github.com/pyannote/pyannote-audio) and [ffmpeg](https://ffmpeg.org/download.html).
 
-To start the server, run
+## Usage
+Before running the server, you'll need to process some audio. To do so, run:
+```
+python process_audio.py FILE
+```
+For more information, run:
+```
+python process_audio.py -h
+```
+
+To start the server, run:
 ```
 npm start
 ```
 and then open http://localhost:3000 in your browser.
 
-By default, the server listens on port 3000. You can specify a different port by running
+By default, the server listens on port 3000. To specify a different port, run with the port option:
 ```
 npm start -- --port=PORT
 ```
