@@ -23,8 +23,6 @@ pip install speechbrain
 ```
 You also need to install [audiowaveform](https://github.com/bbc/audiowaveform#installation) and [ffmpeg](https://ffmpeg.org/download.html).
 
-pip install
-
 ## Usage
 Before running the server, you'll need to process some audio. To do so, run:
 ```
