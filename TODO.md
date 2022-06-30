@@ -1,5 +1,6 @@
 # TODO
 
+ - [ ] !!! Test the pipeline installation instructions
 
 ### Node
  - [ ] Add HTTPS
