@@ -1,7 +1,7 @@
 import Peaks from "peaks.js";
+const feather = require('feather-icons');
 
-const segmentsTree = document.getElementById("Segments-nested");
-const segmentsTable = document.getElementById("Segments");
+const audio =  document.getElementById('audio');
 
 var snrs = {};
 var durations = {};
@@ -17,72 +17,120 @@ var runPeaks = async function (fileName) {
   [ 
     ["Speakers",
       [
-        ["Speaker 1", [{...}, {...}, {...}], ...],
-        ["Speaker 2", [{...}], ...]
+        ["Speaker 1", [{...}, {...}, {...}]],
+        ["Speaker 2", [{...}]]
       ]
     ],
     ["VAD", [{...}, {...}, {...}]],
     ["Non-VAD", [{...}, {...}]]
-  ] */
+  ]   */
   const importedSegments = await fetch(`/segments/${name}-segments.json`).then(response => response.json());
 
-  // object containing ALL segments (hidden and visible)
-  // {id: segment}
+  // object containing ALL segments (hidden and visible)    {id: segment}
   const segmentsByID = {};
-  // segments that aren't visible on peaksjs
-  // {group: {childGroup: {...: {id, segment}}}}
+  // segments that aren't visible on peaksjs    {group: {childGroup: {...: {id, segment}}}}
   const hiddenSegments = {};
-  // segments that are visible on peaksjs
-  // {group: {childGroup: {...: {id, segment}}}}
+  // segments that are visible on peaksjs       {group: {childGroup: {...: {id, segment}}}}
   const visibleSegments = {};
-  // dictionary of checkboxes for every group
-  // {group: [HTMLInputElement for tree, HTMLInputElement for table]}
-  const groupsInputs = {"Segments": document.querySelectorAll("input[data-id='Segments']")};
+
+  // dictionary of checkboxes for every group   {group: HTMLInputElement}
+  const groupsCheckboxes = { "Segments": document.querySelector("input[data-id='Segments']") };
+  // dictionary of buttons for every group      {group: [HTMLLinkElement for play, HTMLLinkElement for loop]}
+  const groupsButtons = { "Segments": document.querySelectorAll("a[data-id='Segments']") };
+
+  const segmentsFromGroup = function (group, {visible = false, hidden = false, peaks = undefined, sort = false} = {}) {
+    if (peaks) {  // get segments from peaks instead of visibleSegments or hiddenSegments
+      return peaks.segments.getSegments().filter(segment => segment.path.includes(group));
+    }
+
+    let segments = [];
+    if (!(group in visibleSegments)) {  // group is a group of groups
+      for (let child of groupsCheckboxes[group].dataset.children.split("|")) {
+        segments = segments.concat(segmentsFromGroup(child, arguments[1]));  // get the groups from the children
+      }
+    }
+    else {  // group is a group of segments
+      if (visible) { segments = Object.values(visibleSegments[group]); }  // get segments from visibleSegments
+      if (hidden) { segments = segments.concat(Object.values(hiddenSegments[group])); }  // get segments from hiddenSegments
+    }
+    if (sort) { segments.sort((seg1, seg2) => seg1.startTime > seg2.startTime); }  // sort by start time
+
+    return segments;
+  }
+  
+  const segmentIter = function* (segments, loop = false) {  // custom iterator for infinite iteration (when loop is true)
+    for (let i = 0; (i < segments.length) || loop; i++) { yield segments[i % segments.length]; }
+  }
+
+  let curPlaying = null;
+  
+  const playNext = function (peaks, group, iter) {
+    const next = iter.next();
+    if (curPlaying == group) {
+        if (!next.done) {
+          peaks.player.playSegment(next.value);  // [1] because each value of Array.entries() is [index of item, item], we want item
+          peaks.once("player.ended", function () { playNext(peaks, group, iter); });
+        }
+        else {
+          curPlaying = null;
+          iter.return();
+        }
+    }
+    else { iter.return(); }
+  }
+
+  const playGroup = function (peaks, group, loop = false) {
+    curPlaying = group;
+    const segments = segmentsFromGroup(group, {visible: true, sort: true});
+    const iter = segmentIter(segments, loop);
+    playNext(peaks, group, iter);
+  }
 
   const toggleSegments = function (peaks, group, checked) {
-    // groupInputs has a key for every group, so if not in there, group is a segment id
-    if (!(group in groupsInputs)) {
+    // groupsCheckboxes has a key for every group, so if not in there, group is a segment id
+    if (!(group in groupsCheckboxes)) {
       const segment = segmentsByID[group];
-      segment.treeCheckbox.checked = checked;
-      segment.tableCheckbox.checked = checked;
+      segment.checkbox.checked = checked;
 
       const parent = segment.path.at(-2);  // get group segment belongs to
       if (checked) {    // add the segment back to peaks and remove it from hiddenSegments
         visibleSegments[parent][group] = segment;
         peaks.segments.add(segment);
+        segment.buttons.forEach(function (button) { button.style.pointerEvents = "auto"; });
         delete hiddenSegments[parent][group];
       }
       else {  // add the segment to hiddenSegments and remove it from peaks
         hiddenSegments[parent][group] = segment;
         peaks.segments.removeById(group);
+        segment.buttons.forEach(function (button) { button.style.pointerEvents = "none"; });
         delete visibleSegments[parent][group];
       }
     }
     else {  // group is not a segment id
-      const [treeInput, tableInput] = groupsInputs[group];
-      treeInput.checked = checked;
-      tableInput.checked = checked;
+      if (checked) { groupsButtons[group].forEach(function (button) { button.style.pointerEvents = "auto"; }); }
+      else { groupsButtons[group].forEach(function (button) { button.style.pointerEvents = "none"; }); } 
+      const groupCheckbox = groupsCheckboxes[group];
+      groupCheckbox.checked = checked;
 
-      if (checked) { treeInput.parentElement.querySelector("ul").classList.add("active"); }
-      else { treeInput.parentElement.querySelector("ul").classList.remove("active"); }
+      if (checked) { groupCheckbox.parentElement.querySelector("ul").classList.add("active"); }
+      else { groupCheckbox.parentElement.querySelector("ul").classList.remove("active"); }
 
       if (!(group in visibleSegments)) {  // group is a group of groups
-        for (let child of treeInput.dataset.children.split("|")) { toggleSegments(peaks, child, checked); }
+        for (let child of groupCheckbox.dataset.children.split("|")) { toggleSegments(peaks, child, checked); }
       }
       else {  // group is a group of segments
         if (checked) {
-          Object.values(hiddenSegments[group]).forEach(function (segment) {
-            segment.treeCheckbox.checked = checked;
-            segment.tableCheckbox.checked = checked;
+          const segments = segmentsFromGroup(group, {hidden: true});
+          segments.forEach(function (segment) {
+            segment.checkbox.checked = checked;
           });
-          peaks.segments.add(Object.values(hiddenSegments[group]));
+          peaks.segments.add(segments);
           visibleSegments[group] = Object.assign({}, visibleSegments[group], hiddenSegments[group]);
           hiddenSegments[group] = {};
         }
         else {
-          Object.values(visibleSegments[group]).forEach(function (segment) {
-            segment.treeCheckbox.checked = checked;
-            segment.tableCheckbox.checked = checked;
+          segmentsFromGroup(group, {visible: true}).forEach(function (segment) {
+            segment.checkbox.checked = checked;
             peaks.segments.removeById(segment.id);
           });
           hiddenSegments[group] = Object.assign({}, hiddenSegments[group], visibleSegments[group]);
@@ -92,101 +140,111 @@ var runPeaks = async function (fileName) {
     }
   }
 
-  const renderGroup = function (peaks, group, path) {
-    if (group[1].length == 0) { return; } 	// if group has no segments/snr, return
+  const segmentPlayIcon = feather.icons.play.toSvg({"width": 12, "height": 12, "stroke": "black", "fill": "black"});
+  const segmentLoopIcon = feather.icons.repeat.toSvg({"width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5});
+  const segmentRemoveIcon = feather.icons.x.toSvg({"width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5});
 
-    const parent = path.split("|").at(-1);  // parent needed to find where in tree to nest group
+  const renderSegment = function (peaks, segment, group, path) {
+    // create the tree item for the segment
+    const li = document.createElement("li");
+    li.style.fontSize = "12px";
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off" checked><span title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    document.getElementById(`${group}-nested`).append(li);
+
+    // segment checkboxes
+    const checkbox = li.firstElementChild;
+
+    checkbox.addEventListener("click", function () { toggleSegments(peaks, this.dataset.id, this.checked); });
+
+    // segment play/loop buttons
+    const play = li.children[2];
+    const loop = li.children[3];
+
+    play.addEventListener("click", function () { peaks.player.playSegment(segment); });
+    loop.addEventListener("click", function () { peaks.player.playSegment(segment, true); });
+
+    segment.path = path.concat(group, segment.id);  // path is a list of groups the segment belongs to
+    segment.checkbox = checkbox;
+    segment.buttons = [play, loop];
+
+    segmentsByID[segment.id] = segment;
+    visibleSegments[group][segment.id] = segment;
+
+    if (segment.editable) {
+      const template = document.createElement("template");
+      template.innerHTML = `<td><a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a></td>`;
+      const remove = template.content.firstElementChild;
+      loop.after(remove);
+      remove.firstElementChild.addEventListener("click", function () {
+        const id = segment.id;
+        // remove segment from lists
+        peaks.segments.removeById(id);
+        delete segmentsByID[id];
+        if (hiddenSegments[group][id]) { delete hiddenSegments[group][id]; }
+        if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
+        // update table and tree
+        document.getElementById(`${group}-nested`).removeChild(segment.checkbox.parentElement);
+      });
+      segment.durationSpan = li.children[1];
+    }
+  }
+
+  const groupPlayIcon = feather.icons.play.toSvg({"width": 15, "height": 15, "stroke": "black", "fill": "black"});
+  const groupLoopIcon = feather.icons.repeat.toSvg({"width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5});
+
+  const renderGroup = function (peaks, group, path, {renderEmpty = false} = {}) {
+    if (typeof group == "string") { group = [group, []]; }
+    if (group[1].length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
+
+    const parent = path.at(-1);  // parent needed to find where in tree to nest group
     // add group to the parents children
-    document.querySelectorAll(`input[data-id="${parent}"]`).forEach(function (parentInput) {
-      const parentChildren = parentInput.dataset.children;
-      parentInput.dataset.children = parentChildren === undefined ? group[0] : `${parentChildren}|${group[0]}`;
-    });
-
-    
+    const parentCheckbox = groupsCheckboxes[parent];
+    const parentChildren = parentCheckbox.dataset.children;
+    parentCheckbox.dataset.children = parentChildren === undefined ? group[0] : `${parentChildren}|${group[0]}`;
 
     // create the tree item for the group
     const branch = document.createElement("li");
-    if (group.length == 3){
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span><ul id="${group[0]}-nested" class="nested"></ul>`;
+    branch.style.fontSize = "18px";
+    let spanHTML;
+    if(group.length == 3){
+      spanHTML = `<span id="${group[0]}-span" style="font-size:18px;" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span>`
       snrs[group[0]] = group[2];
     }
     else{
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span">${group[0]}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
+      spanHTML = `<span id="${group[0]}-span" style="font-size:18px;">${group[0]}</span>`;
     }
-
+    branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupLoopIcon}</a><ul id="${group[0]}-nested" class="nested"></ul>`;
     document.getElementById(`${parent}-nested`).append(branch);
 
-    // create the table item for the group
-    const tbody = segmentsTable.createTBody();
-    tbody.id = group[0];
-    const head = tbody.insertRow(-1);
-    head.innerHTML = `<th><input data-action="toggle-segment" type="checkbox" data-id="${group[0]}">${group[0]}</th>`;
-
     // add inputs for group to groupInputs and add event listeners to them
-    const treeInput = branch.firstChild
-    const tableInput = head.firstChild.firstChild;
-    groupsInputs[group[0]] = [treeInput, tableInput];
-    treeInput.addEventListener("click", function() { toggleSegments(peaks, group[0], this.checked); });
-    tableInput.addEventListener("click", function() { toggleSegments(peaks, group[0], this.checked); });
-    
-    if (!Array.isArray(group[1][0])) { //if the group isn't the big overall speakers group
-      hiddenSegments[group[0]] = {}
+    const groupCheckbox = branch.firstChild;
+    groupCheckbox.addEventListener("click", function () { toggleSegments(peaks, group[0], this.checked); });
+
+    const groupPlay = branch.children[2];
+    const groupLoop = branch.children[3];
+    groupPlay.addEventListener("click", function () { playGroup(peaks, group[0]); });
+    groupLoop.addEventListener("click", function () { playGroup(peaks, group[0], true); });
+
+    groupsCheckboxes[group[0]] = groupCheckbox;
+    groupsButtons[group[0]] = [groupPlay, groupLoop];
+
+    if (!Array.isArray(group[1][0])) {
+      hiddenSegments[group[0]] = {};
       visibleSegments[group[0]] = {};
-      
-	    peaks.segments.add(group[1]);
-      const segments = peaks.segments.getSegments().filter(segment => segment.labelText == group[0]);
-      for (let segment of segments) {
-        segment.path = path.split("|").concat(group[0], segment.id);
-
-        // create the tree item for the segment
-        const li = document.createElement("li");
-        li.id = segment.id;
-        li.style.fontSize = "12px";
-        li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off"><span title="${"Duration: " + (segment.endTime - segment.startTime).toFixed(2)}">${segment.id.replace("peaks.", "")}</span><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segment.id}">&#x1f501;</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
-        document.getElementById(`${group[0]}-nested`).append(li);
-
-        // create the table item for the segment
-        const row = tbody.insertRow(-1);
-        row.id = segment.id;
-        row.innerHTML = `<td><input data-action="toggle-segment" type="checkbox" data-id="${segment.id}">${segment.id}</td><td>${segment.startTime.toFixed(3)}</td><td>${segment.endTime.toFixed(3)}</td><td><a href="#${segment.id}" data-action="play-segment" data-id="${segment.id}">Play</a></td><td><a href="#${segment.id}" data-action="loop-segment" data-id="${segment.id}">Loop</a></td>`;
-
-        // add the checkboxes for the segment to the segment and add event listeners to them
-        const treeCheckbox = li.firstChild;
-        const tableCheckbox = row.firstChild.firstChild;
-        segment.treeCheckbox = treeCheckbox;
-        segment.tableCheckbox = tableCheckbox;
-        treeCheckbox.addEventListener("click", function() { toggleSegments(peaks, this.dataset.id, this.checked); });
-        tableCheckbox.addEventListener("click", function() { toggleSegments(peaks, this.dataset.id, this.checked); });
-
-        segmentsByID[segment.id] = segment;
-        visibleSegments[group[0]][segment.id] = segment;
-      }
+      peaks.segments.add(group[1]).forEach(function (segment) { renderSegment(peaks, segment, group[0], path); });
     }
-    else { //duration for speakers big overall tab
-      for (let nestedGroup of group[1]) { 
-        renderGroup(peaks, nestedGroup, `${path}|${group[0]}`);
-      }
-      var speakersSpan = document.getElementById(`${group[0]}-span`);
-      var speakersSum = 0;
-      for (let nestedGroup of group[1]){
-        for (let segment of nestedGroup[1]) {
-          speakersSum += segment.endTime - segment.startTime;
-        }
-      }
-      speakersSpan.title = speakersSpan.title + "Duration: " + speakersSum.toFixed(2);
+    else {
+      for (let nestedGroup of group[1]) { renderGroup(peaks, nestedGroup, path.concat(group[0])); }
     }
-    //get duration for vad and non vad and Speaker 1 Speaker 2
-    if (group[0] != "Speakers"){
-      var sum = 0;
-      const thisSegments = group[1];
-      var span = document.getElementById(`${group[0]}-span`);
-      for (let segment of thisSegments) {
-        sum += segment.endTime - segment.startTime;
-      }
-      if (group.length == 3){//it is a Speaker with Speaker x, segments, snr
-        durations[group[0]] = sum;
-      }
-      span.title = span.title + " Duration: " + sum.toFixed(2);
+    const segments = segmentsFromGroup(group[0], {"peaks": peaks});
+    const sum = segments.reduce((prev, cur) => prev + cur.endTime - cur.startTime, 0);
+    const span = branch.children[1];
+    if (span.title == ""){
+      span.title += `Duration: ${sum.toFixed(2)}`;
+    }
+    else{
+      span.title += `\n Duration: ${sum.toFixed(2)}`;
+      durations[group[0]] = sum;
     }
   }
 
@@ -201,7 +259,7 @@ var runPeaks = async function (fileName) {
       container: document.getElementById('overview-container'),
       waveformColor: 'rgba(0,0,0,0.2)'
     },
-    mediaElement: document.getElementById('audio'),
+    mediaElement: audio,
     dataUri: {
       json: `waveforms/${name}-waveform.json`
     },
@@ -219,16 +277,16 @@ var runPeaks = async function (fileName) {
     }
 
     // Event listeners for the utilities underneath peaks
-    
+
     // store elements that are needed multiple times to save time from re-searching for them
     const seekTime = document.getElementById('seek-time');
     const overview = peaksInstance.views.getView('overview');
     const zoomview = peaksInstance.views.getView('zoomview');
-    
+
     // Zoom
     document.querySelector('[data-action="zoom-in"]').addEventListener('click', function () { peaksInstance.zoom.zoomIn(); });
     document.querySelector('[data-action="zoom-out"]').addEventListener('click', function () { peaksInstance.zoom.zoomOut(); });
-    
+
     // Seek
     document.querySelector('button[data-action="seek"]').addEventListener('click', function () {
       const seconds = parseFloat(seekTime.value);
@@ -239,102 +297,63 @@ var runPeaks = async function (fileName) {
       overview.enableSeek(this.checked);
     });
 
-    var segmentCounter = 1;
+    // Auto-scroll
+    document.getElementById('auto-scroll').addEventListener('change', function () { zoomview.enableAutoScroll(this.checked); });
 
-    // Add (custom) segment
-    document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
-      const segName = 'Test segment' + segmentCounter++;
-      var segment = {
-        startTime: peaksInstance.player.getCurrentTime(),
-        endTime: peaksInstance.player.getCurrentTime() + 10,
-        labelText: segName,
-        editable: true
-      };
-      segment = peaksInstance.segments.add(segment);
-      segment.path = ["Segments", "Custom-Segments", segment.id];
-
-      // make it visible in tree and table (path???)
-      const li = document.createElement("li");
-      li.id = segment.id;
-      li.style.fontSize = "12px";
-      li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" checked autocomplete="off">${segment.id.replace("peaks.", "")} <a href="#${segment.id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segment.id}">&#x25B6;</a><a href="#${segment.id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segment.id}">&#x1f501;</a><ul id="${segment.id}-nested" class="nested active">Duration: <span id="${segment.id}-duration">${(segment.endTime - segment.startTime).toFixed(2)}<span></ul>`;
-      document.getElementById("Custom-Segments-nested").append(li);
-
-      li.children[1].addEventListener("click", function() { peaksInstance.player.playSegment(segment); });
-      li.children[2].addEventListener("click", function() { peaksInstance.player.playSegment(segment, true); });
-
-      // create the table item for the segment
-      const row = tbody.insertRow(-1);
-      row.id = segment.id;
-      row.innerHTML = `<td><input data-action="toggle-segment" type="checkbox" data-id="${segment.id}" checked>${segment.id}</td><td id="${segment.id}-start">${segment.startTime.toFixed(3)}</td><td id="${segment.id}-end">${segment.endTime.toFixed(3)}</td><td><a href="#${segment.id}" data-action="play-segment" data-id="${segment.id}">Play</a></td><td><a href="#${segment.id}" data-action="loop-segment" data-id="${segment.id}">Loop</a></td>`;
-
-      row.children[3].firstChild.addEventListener("click", function() { peaksInstance.player.playSegment(segment); });
-      row.children[4].firstChild.addEventListener("click", function() { peaksInstance.player.playSegment(segment, true); });
-
-      segment.durationText = document.getElementById(`${segment.id}-duration`);
-      segment.startText = document.getElementById(`${segment.id}-start`);
-      segment.endText = document.getElementById(`${segment.id}-end`);
-      
-      // add the checkboxes for the segment to the segment and add event listeners to them
-      const treeCheckbox = li.firstChild;
-      const tableCheckbox = row.firstChild.firstChild;
-      segment.treeCheckbox = treeCheckbox;
-      segment.tableCheckbox = tableCheckbox;
-      treeCheckbox.addEventListener("click", function() { toggleSegments(peaksInstance, this.dataset.id, this.checked); });
-      tableCheckbox.addEventListener("click", function() { toggleSegments(peaksInstance, this.dataset.id, this.checked); });
-      
-      // add segment to visible segments and segmentsByID
-      visibleSegments["Custom-Segments"][segment.id] = segment;
-      segmentsByID[segment.id] = segment;
+    // Amplitude
+    const amplitudeScales = {
+      "0": 0.0,
+      "1": 0.1,
+      "2": 0.25,
+      "3": 0.5,
+      "4": 0.75,
+      "5": 1.0,
+      "6": 1.5,
+      "7": 2.0,
+      "8": 3.0,
+      "9": 4.0,
+      "10": 5.0
+    };
+    document.getElementById('amplitude-scale').addEventListener('input', function () {
+      const scale = amplitudeScales[this.value];
+      zoomview.setAmplitudeScale(scale);
+      overview.setAmplitudeScale(scale);
     });
-
-      // Auto-scroll
-      document.getElementById('auto-scroll').addEventListener('change', function () { zoomview.enableAutoScroll(this.checked); });
-      
-      // Amplitude
-      const amplitudeScales = {
-        "0": 0.0,
-        "1": 0.1,
-        "2": 0.25,
-        "3": 0.5,
-        "4": 0.75,
-        "5": 1.0,
-        "6": 1.5,
-        "7": 2.0,
-        "8": 3.0,
-        "9": 4.0,
-        "10": 5.0
-      };
-      document.getElementById('amplitude-scale').addEventListener('input', function () {
-        const scale = amplitudeScales[this.value];
-        zoomview.setAmplitudeScale(scale);
-        overview.setAmplitudeScale(scale);
-      });
 
     // Context menus
     peaksInstance.on('segments.contextmenu', function (event) { event.evt.preventDefault(); });
     peaksInstance.on('overview.contextmenu', function (event) { event.evt.preventDefault(); });
+
+    // generate the tree
+    renderGroup(peaksInstance, "Custom-Segments", ["Segments"], {renderEmpty: true});
+    for (let segmentsGroup of importedSegments) { renderGroup(peaksInstance, segmentsGroup, ["Segments"]); }
+
+    const customSpan = document.getElementById("Custom-Segments-span");
+    let customDuration = 0;
+    let segmentCounter = 1;
+    // Add (custom) segment
+    document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
+      const label = 'Custom Segment ' + segmentCounter++;
+      let segment = {
+        startTime: peaksInstance.player.getCurrentTime(),
+        endTime: peaksInstance.player.getCurrentTime() + 10,
+        labelText: label,
+        editable: true
+      };
+      segment = peaksInstance.segments.add(segment);
+      renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
+      customDuration += 10;
+      customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
+    });
+
     peaksInstance.on("segments.dragend", function (event) {
       const segment = event.segment;
-      const startTime = segment.startTime;
-      const endTime = segment.endTime;
-      segment.startText.innerHTML = startTime.toFixed(3);
-      segment.endText.innerHTML = endTime.toFixed(3);
-      segment.durationText.innerHTML = (segment.endTime - segment.startTime).toFixed(2);
-    })
+      const segmentSpan = segment.durationSpan;
 
-    // generate Custom-Segments branch of tree
-
-    // add custom segments to table
-    const tbody = segmentsTable.createTBody();
-    tbody.id = "Custom-Segments";
-    const head = tbody.insertRow(-1);
-    head.innerHTML = `<th><input data-action="toggle-segment" type="checkbox" data-id="Custom-Segments">Custom Segments</th>`;
-
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // generate the tree and the table
-    for (let segmentsGroup of importedSegments) { renderGroup(peaksInstance, segmentsGroup, "Segments"); }
-
+      const oldDuration = parseFloat(segmentSpan.title.split(" ").at(-1));
+      const newDuration = segment.endTime - segment.startTime;
+      customDuration += newDuration - oldDuration;
+    });
 
     //getting z-scores for snrs and durations
     var snrMean = 0;
@@ -365,7 +384,6 @@ var runPeaks = async function (fileName) {
     for (var key in snrs){
       overallZScores[key] = snrs[key] + durations[key];
     }
-    console.log(overallZScores);
     var maxSpeaker;
     var maxZ;
     for (var key in snrs){
@@ -383,26 +401,6 @@ var runPeaks = async function (fileName) {
     var primarySpeakerSpan = document.getElementById(`${maxSpeaker}-span`);
     primarySpeakerSpan.style = "color:violet"
 
-    // add custom segments to tree
-    const customSeg = document.createElement("li");
-    customSeg.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="Custom-Segments" autocomplete="off">Custom-Segments<ul id="Custom-Segments-nested" class="nested"></ul>`;
-    segmentsTree.append(customSeg);
-
-    // initialize hidden/visible segments
-    hiddenSegments["Custom-Segments"] = {};
-    visibleSegments["Custom-Segments"] = {};
-    
-    // add inputs for customSeg and add event listeners to them
-    const treeInput = customSeg.firstChild
-    const tableInput = head.firstChild.firstChild;
-    groupsInputs["Custom-Segments"] = [treeInput, tableInput];
-    treeInput.addEventListener("click", function() { toggleSegments(peaksInstance, "Custom-Segments", this.checked); });
-    tableInput.addEventListener("click", function() { toggleSegments(peaksInstance, "Custom-Segments", this.checked); });
-
-    // Event listeners for Segments checkboxes
-    groupsInputs.Segments[0].addEventListener("click", function() { toggleSegments(peaksInstance, "Segments", this.checked); })
-    groupsInputs.Segments[1].addEventListener("click", function() { toggleSegments(peaksInstance, "Segments", this.checked); })
-
     // Event listeners for the "play" and "loop" buttons in the table
     document.querySelectorAll("a[data-action='play-segment']").forEach(function (button) {
       const segment = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
@@ -411,13 +409,26 @@ var runPeaks = async function (fileName) {
     document.querySelectorAll("a[data-action='loop-segment']").forEach(function (button) {
       const segment = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
       button.addEventListener("click", function() { peaksInstance.player.playSegment(segment, true); });
+      segmentSpan.title = `Duration: ${newDuration.toFixed(2)}`;
+      customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
     });
+
     toggleSegments(peaksInstance, "Segments", false);
-    groupsInputs.Segments[0].checked = true;
     document.getElementById("Segments-nested").classList.add("active");
-    groupsInputs.Segments[1].checked = true;
+    
+    groupsCheckboxes["Segments"].checked = true;
+    groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
+
+    const segmentsPlay = groupsButtons["Segments"][0];
+    const segmentsLoop = groupsButtons["Segments"][1];
+    segmentsPlay.innerHTML = feather.icons.play.toSvg({"width": 17, "height": 17, "stroke": "black", "fill": "black"});
+    segmentsLoop.innerHTML = feather.icons.repeat.toSvg({"width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5});
+    segmentsPlay.style.pointerEvents = "auto";
+    segmentsLoop.style.pointerEvents = "auto";
+    segmentsPlay.addEventListener("click", function () { playGroup(peaksInstance, "Segments"); });
+    segmentsLoop.addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
   });
-};
+}
 
 const urlParams = new URLSearchParams(window.location.search);
 const fileName = urlParams.get("audiofile");

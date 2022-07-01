@@ -1,5 +1,6 @@
 # TODO
 
+ - [ ] !!! Test the pipeline installation instructions
 
 ### Node
  - [ ] Add HTTPS
@@ -11,13 +12,12 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] Show SNR and duration when cursor hovers over group
  - [ ] Make the "Custom-Segments" tree branch and log row hidden when there are no custom segments
  - [ ] Make custom segments save-able
  - [ ] Custom labeling
- - [x] Duration on segment groups
  - [ ] Play/loop button on segment groups
- - [ ] Merge-able segments
+ - [x] Show SNR and duration when cursor hovers over group
+ - [x] Duration on segment groups
  - [x] Leave "Segments" checked by default, but make all nested groups unchecked (and hidden on peaks) by default
  - [x] Add SNR to speakers
  - [x] Intro page with file selection, not on main page
@@ -26,9 +26,8 @@
  - [x] Add duration for segments
 
 ### Pipeline
- - [ ] Use numpy arrays instead of lists (numpy arrays are faster)
+ - [ ] Calculate true speaker ?
  - [x] Try different speaker separation
- - [ ] Calculate true speaker
  - [x] Try different speaker separation
  - [x] Add to GitLab
  - [x] Make "help" more informative

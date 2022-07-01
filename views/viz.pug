@@ -9,9 +9,11 @@ html(lang="en")
         .row 
             .column#column
                 ul
-                    li
+                    li(style="font-size:20px;")
                         input(type="checkbox", data-action="toggle-segment", data-id="Segments", autocomplete="off", checked)
-                        | Segments
+                        | Segments 
+                        a(href="#", style="text-decoration:none;" data-id="Segments")
+                        a(href="#", style="text-decoration:none;" data-id="Segments")
                         ul.nested.active#Segments-nested
             .column2#column2
                 #waveform-container
@@ -37,16 +39,4 @@ html(lang="en")
                                 button(data-action="seek") Seek
                             div
                                 button(data-action="add-segment") Add Segment
-            
-        .log#log
-            h2
-                input(type="checkbox", data-action="toggle-segment", data-id="Segments" autocomplete="off" checked)
-                | Segments
-            table#Segments
-                thead
-                    tr
-                        th ID
-                        th Start time
-                        th End time
-                        th
         script(type="application/javascript", src="js/viz.js")
