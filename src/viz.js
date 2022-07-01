@@ -38,12 +38,11 @@ var runPeaks = async function (fileName) {
   // dictionary of buttons for every group      {group: [HTMLLinkElement for play, HTMLLinkElement for loop]}
   const groupsButtons = { "Segments": document.querySelectorAll("a[data-id='Segments']") };
 
-  const segmentsFromGroup = function (group, {visible = false, hidden = false, peaks = undefined, sort = false} = {}) {
-    if (peaks) {  // get segments from peaks instead of visibleSegments or hiddenSegments
-      return peaks.segments.getSegments().filter(segment => segment.path.includes(group));
-    }
-
+  const segmentsFromGroup = function (group, {visible = false, hidden = false, peaks = undefined, sort = false, simple = false} = {}) {
     let segments = [];
+    if (peaks) {  // get segments from peaks instead of visibleSegments or hiddenSegments
+      segments = peaks.segments.getSegments().filter(segment => segment.path.includes(group));
+    }
     if (!(group in visibleSegments)) {  // group is a group of groups
       for (let child of groupsCheckboxes[group].dataset.children.split("|")) {
         segments = segments.concat(segmentsFromGroup(child, arguments[1]));  // get the groups from the children
@@ -54,7 +53,9 @@ var runPeaks = async function (fileName) {
       if (hidden) { segments = segments.concat(Object.values(hiddenSegments[group])); }  // get segments from hiddenSegments
     }
     if (sort) { segments.sort((seg1, seg2) => seg1.startTime > seg2.startTime); }  // sort by start time
-
+    if (simple) {
+      segments = segments.map(seg => ({"id": seg.id, "startTime": seg.startTime, "endTime": seg.endTime, "labelText": seg.labelText}));
+    }
     return segments;
   }
   
@@ -175,8 +176,6 @@ var runPeaks = async function (fileName) {
       template.innerHTML = `<td><a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a></td>`;
       const remove = template.content.firstElementChild;
       loop.after(remove);
-      const parent = document.getElementById(group);
-      const parentNested = document.getElementById(`${group}-nested`);
       remove.firstElementChild.addEventListener("click", function () {
         const id = segment.id;
         // remove segment from lists
@@ -185,8 +184,7 @@ var runPeaks = async function (fileName) {
         if (hiddenSegments[group][id]) { delete hiddenSegments[group][id]; }
         if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
         // update table and tree
-        parentNested.removeChild(segment.checkbox.parentElement);
-        if (parentNested.children.length == 0) { parent.hidden = true; }
+        document.getElementById(`${group}-nested`).removeChild(segment.checkbox.parentElement);
       });
       segment.durationSpan = li.children[1];
     }
@@ -207,7 +205,6 @@ var runPeaks = async function (fileName) {
 
     // create the tree item for the group
     const branch = document.createElement("li");
-    branch.id = group[0];
     branch.style.fontSize = "18px";
     let spanHTML;
     if(group.length == 3){
@@ -288,36 +285,8 @@ var runPeaks = async function (fileName) {
     const zoomview = peaksInstance.views.getView('zoomview');
 
     // Zoom
-    const zoomIn = document.querySelector("[data-action='zoom-in']");
-    const zoomOut = document.querySelector("[data-action='zoom-out']");
-    zoomIn.innerHTML = feather.icons["zoom-in"].toSvg({"stroke": "gray"});
-    const zoomInSvg = zoomIn.firstElementChild;
-    zoomOut.innerHTML = feather.icons["zoom-out"].toSvg({"stroke": "black"});
-    const zoomOutSvg = zoomOut.firstElementChild;
-    zoomIn.addEventListener('click', function () {
-      peaksInstance.zoom.zoomIn();
-      const zoomLevel = peaksInstance.zoom.getZoom();
-      if (zoomLevel == 0) {
-        zoomIn.style.pointerEvents = "none";
-        zoomInSvg.style.stroke = "gray";
-      }
-      else if (zoomLevel == 3) {
-        zoomOut.style.pointerEvents = "auto";
-        zoomOutSvg.style.stroke = "black";
-      }
-    });
-    zoomOut.addEventListener('click', function () {
-      peaksInstance.zoom.zoomOut();
-      const zoomLevel = peaksInstance.zoom.getZoom();
-      if (zoomLevel == 4) {
-        zoomOut.style.pointerEvents = "none";
-        zoomOutSvg.style.stroke = "gray";
-      }
-      else if (zoomLevel == 1) {
-        zoomIn.style.pointerEvents = "auto";
-        zoomInSvg.style.stroke = "black";
-      }
-    });
+    document.querySelector('[data-action="zoom-in"]').addEventListener('click', function () { peaksInstance.zoom.zoomIn(); });
+    document.querySelector('[data-action="zoom-out"]').addEventListener('click', function () { peaksInstance.zoom.zoomOut(); });
 
     // Seek
     document.querySelector('button[data-action="seek"]').addEventListener('click', function () {
@@ -358,8 +327,6 @@ var runPeaks = async function (fileName) {
 
     // generate the tree
     renderGroup(peaksInstance, "Custom-Segments", ["Segments"], {renderEmpty: true});
-    const customSegmentsBranch = document.getElementById("Custom-Segments");
-
     for (let segmentsGroup of importedSegments) { renderGroup(peaksInstance, segmentsGroup, ["Segments"]); }
 
     const customSpan = document.getElementById("Custom-Segments-span");
@@ -367,7 +334,6 @@ var runPeaks = async function (fileName) {
     let segmentCounter = 1;
     // Add (custom) segment
     document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
-      customSegmentsBranch.hidden = false;
       const label = 'Custom Segment ' + segmentCounter++;
       let segment = {
         startTime: peaksInstance.player.getCurrentTime(),
@@ -448,14 +414,15 @@ var runPeaks = async function (fileName) {
       customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
     });
 
+    document.querySelector('button[data-action="save-annotations"]').addEventListener('click', function(event) {
+      saveAnnotations(segmentsFromGroup("Custom-Segments", {"peaks": peaksInstance, "simple": true}));
+    });
+
     toggleSegments(peaksInstance, "Segments", false);
     document.getElementById("Segments-nested").classList.add("active");
     
     groupsCheckboxes["Segments"].checked = true;
     groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
-    groupsCheckboxes["Custom-Segments"].checked = true;
-    customSegmentsBranch.hidden = true;
-    document.getElementById("Custom-Segments-nested").classList.add("active");
 
     const segmentsPlay = groupsButtons["Segments"][0];
     const segmentsLoop = groupsButtons["Segments"][1];
@@ -470,4 +437,29 @@ var runPeaks = async function (fileName) {
 
 const urlParams = new URLSearchParams(window.location.search);
 const fileName = urlParams.get("audiofile");
+var user = document.getElementById("user");
+
+
+function saveAnnotations(customSegments) {
+  console.log('Saving annotations', fileName);
+
+  console.log(customSegments);
+  const record = {
+      'user': user.innerHTML,
+      'filename': fileName,
+      'segments': customSegments
+  }
+  const json = JSON.stringify(record)
+  console.log(json)
+  var request = new XMLHttpRequest()
+  request.open('POST', 'saveannotations', true);
+  request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+
+  request.send(json)
+  request.onload = function() {
+      // done
+      console.log('Annotations saved')
+  };
+}
+
 runPeaks(fileName);
