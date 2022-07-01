@@ -1,7 +1,5 @@
 # TODO
 
- - [ ] !!! Test the pipeline installation instructions
-
 ### Node
  - [ ] Add HTTPS
  - [x] Fix error raised when submitting login: `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`
@@ -12,10 +10,11 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] Make the "Custom-Segments" tree branch and log row hidden when there are no custom segments
+ - [ ] Make the "Custom-Segments" tree branch hidden when there are no custom segments
  - [ ] Make custom segments save-able
  - [ ] Custom labeling
- - [ ] Play/loop button on segment groups
+ - [x] Play/loop button on segment groups
+ - [x] Calculate true speaker
  - [x] Show SNR and duration when cursor hovers over group
  - [x] Duration on segment groups
  - [x] Leave "Segments" checked by default, but make all nested groups unchecked (and hidden on peaks) by default
@@ -26,7 +25,7 @@
  - [x] Add duration for segments
 
 ### Pipeline
- - [ ] Calculate true speaker ?
+ - [x] Test the pipeline installation instructions
  - [x] Try different speaker separation
  - [x] Try different speaker separation
  - [x] Add to GitLab
