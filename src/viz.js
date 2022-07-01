@@ -269,8 +269,36 @@ var runPeaks = async function (fileName) {
     const zoomview = peaksInstance.views.getView('zoomview');
 
     // Zoom
-    document.querySelector('[data-action="zoom-in"]').addEventListener('click', function () { peaksInstance.zoom.zoomIn(); });
-    document.querySelector('[data-action="zoom-out"]').addEventListener('click', function () { peaksInstance.zoom.zoomOut(); });
+    const zoomIn = document.querySelector("[data-action='zoom-in']");
+    const zoomOut = document.querySelector("[data-action='zoom-out']");
+    zoomIn.innerHTML = feather.icons["zoom-in"].toSvg({"stroke": "gray"});
+    const zoomInSvg = zoomIn.firstElementChild;
+    zoomOut.innerHTML = feather.icons["zoom-out"].toSvg({"stroke": "black"});
+    const zoomOutSvg = zoomOut.firstElementChild;
+    zoomIn.addEventListener('click', function () {
+      peaksInstance.zoom.zoomIn();
+      const zoomLevel = peaksInstance.zoom.getZoom();
+      if (zoomLevel == 0) {
+        zoomIn.style.pointerEvents = "none";
+        zoomInSvg.style.stroke = "gray";
+      }
+      else if (zoomLevel == 3) {
+        zoomOut.style.pointerEvents = "auto";
+        zoomOutSvg.style.stroke = "black";
+      }
+    });
+    zoomOut.addEventListener('click', function () {
+      peaksInstance.zoom.zoomOut();
+      const zoomLevel = peaksInstance.zoom.getZoom();
+      if (zoomLevel == 4) {
+        zoomOut.style.pointerEvents = "none";
+        zoomOutSvg.style.stroke = "gray";
+      }
+      else if (zoomLevel == 1) {
+        zoomIn.style.pointerEvents = "auto";
+        zoomInSvg.style.stroke = "black";
+      }
+    });
 
     // Seek
     document.querySelector('button[data-action="seek"]').addEventListener('click', function () {

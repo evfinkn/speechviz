@@ -26,8 +26,8 @@ html(lang="en")
 
                         #controls
                             div
-                                button(data-action="zoom-in") Zoom in
-                                button(data-action="zoom-out") Zoom out
+                                a(href="javascript:;", style="text-decoration:none;pointer-events:none;", data-action="zoom-in")
+                                a(href="javascript:;", style="text-decoration:none;", data-action="zoom-out")
                                 label(for="amplitude-scale") Amplitude scale
                                 input#amplitude-scale(type="range", min="0", max="10", step="1")
                             div
