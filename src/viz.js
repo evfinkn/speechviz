@@ -3,6 +3,10 @@ import Peaks from "peaks.js";
 const segmentsTree = document.getElementById("Segments-nested");
 const segmentsTable = document.getElementById("Segments");
 
+var snrs = {};
+var durations = {};
+
+
 var runPeaks = async function (fileName) {
   const name = fileName.replace(/\.[^/.]+$/, "");  // name of the file without the extension
 
@@ -31,7 +35,7 @@ var runPeaks = async function (fileName) {
   // segments that are visible on peaksjs
   // {group: {childGroup: {...: {id, segment}}}}
   const visibleSegments = {};
-  // dictionary of checkboxes for eveery group
+  // dictionary of checkboxes for every group
   // {group: [HTMLInputElement for tree, HTMLInputElement for table]}
   const groupsInputs = {"Segments": document.querySelectorAll("input[data-id='Segments']")};
 
@@ -104,6 +108,7 @@ var runPeaks = async function (fileName) {
     const branch = document.createElement("li");
     if (group.length == 3){
       branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span><ul id="${group[0]}-nested" class="nested"></ul>`;
+      snrs[group[0]] = group[2];
     }
     else{
       branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span">${group[0]}</span><ul id="${group[0]}-nested" class="nested active"></ul>`;
@@ -170,13 +175,16 @@ var runPeaks = async function (fileName) {
       }
       speakersSpan.title = speakersSpan.title + "Duration: " + speakersSum.toFixed(2);
     }
-    //get duration for vad and non vad
+    //get duration for vad and non vad and Speaker 1 Speaker 2
     if (group[0] != "Speakers"){
       var sum = 0;
       const thisSegments = group[1];
       var span = document.getElementById(`${group[0]}-span`);
       for (let segment of thisSegments) {
         sum += segment.endTime - segment.startTime;
+      }
+      if (group.length == 3){//it is a Speaker with Speaker x, segments, snr
+        durations[group[0]] = sum;
       }
       span.title = span.title + " Duration: " + sum.toFixed(2);
     }
@@ -326,6 +334,54 @@ var runPeaks = async function (fileName) {
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // generate the tree and the table
     for (let segmentsGroup of importedSegments) { renderGroup(peaksInstance, segmentsGroup, "Segments"); }
+
+
+    //getting z-scores for snrs and durations
+    var snrMean = 0;
+    var durMean = 0;
+    var counter = 0;
+    for (var key in snrs){
+      counter++;
+      snrMean += snrs[key];
+      durMean += durations[key];
+    }
+    snrMean /= counter;
+    durMean /= counter;
+    var snrStdDev = 0;
+    var durStdDev = 0;
+    for (var key in snrs){
+      snrStdDev += (snrs[key] - snrMean) ** 2;
+      durStdDev += (durations[key] - durMean) ** 2;
+    }
+    snrStdDev /= counter;
+    durStdDev /= counter;
+    snrStdDev = Math.sqrt(snrStdDev);
+    durStdDev = Math.sqrt(durStdDev);
+    for (var key in snrs){
+      snrs[key] = (snrs[key] - snrMean) / snrStdDev; //now snrs stores z scores of snrs
+      durations[key] = (durations[key] - durMean) / durStdDev; //now durations stores z scores of durations
+    }
+    var overallZScores = {};
+    for (var key in snrs){
+      overallZScores[key] = snrs[key] + durations[key];
+    }
+    console.log(overallZScores);
+    var maxSpeaker;
+    var maxZ;
+    for (var key in snrs){
+      if (maxZ == null){
+        maxSpeaker = key;
+        maxZ = overallZScores[key];
+      }
+      else{
+        if(maxZ < overallZScores[key]){
+          maxSpeaker = key;
+          maxZ = overallZScores[key];
+        }
+      }
+    }
+    var primarySpeakerSpan = document.getElementById(`${maxSpeaker}-span`);
+    primarySpeakerSpan.style = "color:violet"
 
     // add custom segments to tree
     const customSeg = document.createElement("li");
