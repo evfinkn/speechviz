@@ -3,6 +3,10 @@ const feather = require('feather-icons');
 
 const audio =  document.getElementById('audio');
 
+var snrs = {};
+var durations = {};
+
+
 var runPeaks = async function (fileName) {
   const name = fileName.replace(/\.[^/.]+$/, "");  // name of the file without the extension
 
@@ -201,9 +205,14 @@ var runPeaks = async function (fileName) {
     // create the tree item for the group
     const branch = document.createElement("li");
     branch.style.fontSize = "18px";
-    const spanHTML = group.length == 3 
-      ? `<span id="${group[0]}-span" style="font-size:18px;" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span>`
-      : `<span id="${group[0]}-span" style="font-size:18px;">${group[0]}</span>`;
+    let spanHTML;
+    if(group.length == 3){
+      spanHTML = `<span id="${group[0]}-span" style="font-size:18px;" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span>`
+      snrs[group[0]] = group[2];
+    }
+    else{
+      spanHTML = `<span id="${group[0]}-span" style="font-size:18px;">${group[0]}</span>`;
+    }
     branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupLoopIcon}</a><ul id="${group[0]}-nested" class="nested"></ul>`;
     document.getElementById(`${parent}-nested`).append(branch);
 
@@ -230,7 +239,13 @@ var runPeaks = async function (fileName) {
     const segments = segmentsFromGroup(group[0], {"peaks": peaks});
     const sum = segments.reduce((prev, cur) => prev + cur.endTime - cur.startTime, 0);
     const span = branch.children[1];
-    span.title += span.title == "" ? `Duration: ${sum.toFixed(2)}` : `\n Duration: ${sum.toFixed(2)}`
+    if (span.title == ""){
+      span.title += `Duration: ${sum.toFixed(2)}`;
+    }
+    else{
+      span.title += `\n Duration: ${sum.toFixed(2)}`;
+      durations[group[0]] = sum;
+    }
   }
 
   const options = {
@@ -366,7 +381,62 @@ var runPeaks = async function (fileName) {
       const oldDuration = parseFloat(segmentSpan.title.split(" ").at(-1));
       const newDuration = segment.endTime - segment.startTime;
       customDuration += newDuration - oldDuration;
+    });
 
+    //getting z-scores for snrs and durations
+    var snrMean = 0;
+    var durMean = 0;
+    var counter = 0;
+    for (var key in snrs){
+      counter++;
+      snrMean += snrs[key];
+      durMean += durations[key];
+    }
+    snrMean /= counter;
+    durMean /= counter;
+    var snrStdDev = 0;
+    var durStdDev = 0;
+    for (var key in snrs){
+      snrStdDev += (snrs[key] - snrMean) ** 2;
+      durStdDev += (durations[key] - durMean) ** 2;
+    }
+    snrStdDev /= counter;
+    durStdDev /= counter;
+    snrStdDev = Math.sqrt(snrStdDev);
+    durStdDev = Math.sqrt(durStdDev);
+    for (var key in snrs){
+      snrs[key] = (snrs[key] - snrMean) / snrStdDev; //now snrs stores z scores of snrs
+      durations[key] = (durations[key] - durMean) / durStdDev; //now durations stores z scores of durations
+    }
+    var overallZScores = {};
+    for (var key in snrs){
+      overallZScores[key] = snrs[key] + durations[key];
+    }
+    var maxSpeaker;
+    var maxZ;
+    for (var key in snrs){
+      if (maxZ == null){
+        maxSpeaker = key;
+        maxZ = overallZScores[key];
+      }
+      else{
+        if(maxZ < overallZScores[key]){
+          maxSpeaker = key;
+          maxZ = overallZScores[key];
+        }
+      }
+    }
+    var primarySpeakerSpan = document.getElementById(`${maxSpeaker}-span`);
+    primarySpeakerSpan.style = "color:violet"
+
+    // Event listeners for the "play" and "loop" buttons in the table
+    document.querySelectorAll("a[data-action='play-segment']").forEach(function (button) {
+      const segment = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
+      button.addEventListener("click", function() { peaksInstance.player.playSegment(segment); });
+    });
+    document.querySelectorAll("a[data-action='loop-segment']").forEach(function (button) {
+      const segment = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
+      button.addEventListener("click", function() { peaksInstance.player.playSegment(segment, true); });
       segmentSpan.title = `Duration: ${newDuration.toFixed(2)}`;
       customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
     });
