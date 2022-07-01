@@ -1,4 +1,5 @@
 import Peaks from "peaks.js";
+const feather = require('feather-icons');
 
 const audio =  document.getElementById('audio');
 
@@ -135,11 +136,15 @@ var runPeaks = async function (fileName) {
     }
   }
 
+  const segmentPlayIcon = feather.icons.play.toSvg({"width": 12, "height": 12, "stroke": "black", "fill": "black"});
+  const segmentLoopIcon = feather.icons.repeat.toSvg({"width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5});
+  const segmentRemoveIcon = feather.icons.x.toSvg({"width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5});
+
   const renderSegment = function (peaks, segment, group, path) {
     // create the tree item for the segment
     const li = document.createElement("li");
     li.style.fontSize = "12px";
-    li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off" checked><span title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.id.replace("peaks.", "")}</span> <a href="#" style="color:black;text-decoration:none;font-size:16px;" data-id="${segment.id}">&#x25B6;</a><a href="#" style="color:black;text-decoration:none;font-size:14px;" data-id="${segment.id}">&#x1f501;</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off" checked><span title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
 
     // segment checkboxes
@@ -162,23 +167,26 @@ var runPeaks = async function (fileName) {
     visibleSegments[group][segment.id] = segment;
 
     if (segment.editable) {
-      // row.innerHTML += `<td><a href="#" data-id="${segment.id}">Remove</a></td>`;  // remove button
-      // row.children[5].firstElementChild.addEventListener("click", function () {    // remove button
-      //   const id = segment.id;
-      //   // remove segment from lists
-      //   peaks.segments.removeById(id);
-      //   if (hiddenSegments[group][id]) { delete hiddenSegments[group][id]; }
-      //   if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
-      //   // update table and tree
-      //   const elements = document.querySelectorAll(`input[data-id="${id}"]`);
-      //   const branch = elements[0].parentNode;
-      //   const row = elements[1].parentNode.parentNode;
-      //   branch.parentNode.removeChild(branch);
-      //   row.parentNode.removeChild(row);
-      // });
+      const template = document.createElement("template");
+      template.innerHTML = `<td><a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a></td>`;
+      const remove = template.content.firstElementChild;
+      loop.after(remove);
+      remove.firstElementChild.addEventListener("click", function () {
+        const id = segment.id;
+        // remove segment from lists
+        peaks.segments.removeById(id);
+        delete segmentsByID[id];
+        if (hiddenSegments[group][id]) { delete hiddenSegments[group][id]; }
+        if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
+        // update table and tree
+        document.getElementById(`${group}-nested`).removeChild(segment.checkbox.parentElement);
+      });
       segment.durationSpan = li.children[1];
     }
   }
+
+  const groupPlayIcon = feather.icons.play.toSvg({"width": 15, "height": 15, "stroke": "black", "fill": "black"});
+  const groupLoopIcon = feather.icons.repeat.toSvg({"width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5});
 
   const renderGroup = function (peaks, group, path, {renderEmpty = false} = {}) {
     if (typeof group == "string") { group = [group, []]; }
@@ -192,12 +200,11 @@ var runPeaks = async function (fileName) {
 
     // create the tree item for the group
     const branch = document.createElement("li");
-    if (group.length == 3) {
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span> <a href="#" style="color:black;text-decoration:none;font-size:16px;" data-id="${group[0]}">&#x25B6;</a><a href="#" style="color:black;text-decoration:none;font-size:14px;" data-id="${group[0]}">&#x1f501;</a><ul id="${group[0]}-nested" class="nested"></ul>`;
-    }
-    else {
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off"><span id="${group[0]}-span">${group[0]}</span> <a href="#" style="color:black;text-decoration:none;font-size:16px;" data-id="${group[0]}">&#x25B6;</a><a href="#" style="color:black;text-decoration:none;font-size:14px;" data-id="${group[0]}">&#x1f501;</a><ul id="${group[0]}-nested" class="nested"></ul>`;
-    }
+    branch.style.fontSize = "18px";
+    const spanHTML = group.length == 3 
+      ? `<span id="${group[0]}-span" style="font-size:18px;" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span>`
+      : `<span id="${group[0]}-span" style="font-size:18px;">${group[0]}</span>`;
+    branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupLoopIcon}</a><ul id="${group[0]}-nested" class="nested"></ul>`;
     document.getElementById(`${parent}-nested`).append(branch);
 
     // add inputs for group to groupInputs and add event listeners to them
@@ -341,11 +348,15 @@ var runPeaks = async function (fileName) {
     
     groupsCheckboxes["Segments"].checked = true;
     groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
-    
-    groupsButtons["Segments"][0].style.pointerEvents = "auto";
-    groupsButtons["Segments"][1].style.pointerEvents = "auto";
-    groupsButtons["Segments"][0].addEventListener("click", function () { playGroup(peaksInstance, "Segments"); });
-    groupsButtons["Segments"][1].addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
+
+    const segmentsPlay = groupsButtons["Segments"][0];
+    const segmentsLoop = groupsButtons["Segments"][1];
+    segmentsPlay.innerHTML = feather.icons.play.toSvg({"width": 17, "height": 17, "stroke": "black", "fill": "black"});
+    segmentsLoop.innerHTML = feather.icons.repeat.toSvg({"width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5});
+    segmentsPlay.style.pointerEvents = "auto";
+    segmentsLoop.style.pointerEvents = "auto";
+    segmentsPlay.addEventListener("click", function () { playGroup(peaksInstance, "Segments"); });
+    segmentsLoop.addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
   });
 }
 

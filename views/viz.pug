@@ -9,11 +9,11 @@ html(lang="en")
         .row 
             .column#column
                 ul
-                    li
+                    li(style="font-size:20px;")
                         input(type="checkbox", data-action="toggle-segment", data-id="Segments", autocomplete="off", checked)
                         | Segments 
-                        a(href="#", style="color:black;text-decoration:none;font-size:16px;" data-id="Segments") &#x25B6;
-                        a(href="#", style="color:black;text-decoration:none;font-size:14px;" data-id="Segments") &#x1f501;
+                        a(href="#", style="text-decoration:none;" data-id="Segments")
+                        a(href="#", style="text-decoration:none;" data-id="Segments")
                         ul.nested.active#Segments-nested
             .column2#column2
                 #waveform-container
