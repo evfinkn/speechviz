@@ -175,6 +175,8 @@ var runPeaks = async function (fileName) {
       template.innerHTML = `<td><a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a></td>`;
       const remove = template.content.firstElementChild;
       loop.after(remove);
+      const parent = document.getElementById(group);
+      const parentNested = document.getElementById(`${group}-nested`);
       remove.firstElementChild.addEventListener("click", function () {
         const id = segment.id;
         // remove segment from lists
@@ -183,7 +185,8 @@ var runPeaks = async function (fileName) {
         if (hiddenSegments[group][id]) { delete hiddenSegments[group][id]; }
         if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
         // update table and tree
-        document.getElementById(`${group}-nested`).removeChild(segment.checkbox.parentElement);
+        parentNested.removeChild(segment.checkbox.parentElement);
+        if (parentNested.children.length == 0) { parent.hidden = true; }
       });
       segment.durationSpan = li.children[1];
     }
@@ -204,6 +207,7 @@ var runPeaks = async function (fileName) {
 
     // create the tree item for the group
     const branch = document.createElement("li");
+    branch.id = group[0];
     branch.style.fontSize = "18px";
     let spanHTML;
     if(group.length == 3){
@@ -354,6 +358,8 @@ var runPeaks = async function (fileName) {
 
     // generate the tree
     renderGroup(peaksInstance, "Custom-Segments", ["Segments"], {renderEmpty: true});
+    const customSegmentsBranch = document.getElementById("Custom-Segments");
+
     for (let segmentsGroup of importedSegments) { renderGroup(peaksInstance, segmentsGroup, ["Segments"]); }
 
     const customSpan = document.getElementById("Custom-Segments-span");
@@ -361,6 +367,7 @@ var runPeaks = async function (fileName) {
     let segmentCounter = 1;
     // Add (custom) segment
     document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
+      customSegmentsBranch.hidden = false;
       const label = 'Custom Segment ' + segmentCounter++;
       let segment = {
         startTime: peaksInstance.player.getCurrentTime(),
@@ -446,6 +453,9 @@ var runPeaks = async function (fileName) {
     
     groupsCheckboxes["Segments"].checked = true;
     groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
+    groupsCheckboxes["Custom-Segments"].checked = true;
+    customSegmentsBranch.hidden = true;
+    document.getElementById("Custom-Segments-nested").classList.add("active");
 
     const segmentsPlay = groupsButtons["Segments"][0];
     const segmentsLoop = groupsButtons["Segments"][1];
