@@ -161,6 +161,8 @@ def process_audio(*args,
                     end = int(segmentTup[1] * sr)
                     speakerSeg.append(samples[start:end].tolist())
                 flattenSpeakerSeg = [j for sub in speakerSeg for j in sub]
+                for x in range(len(flattenListSamp)):
+                    flattenListSamp[x] *= flattenListSamp[x]
                 return (rms(flattenSpeakerSeg)-noise)/noise
             
 

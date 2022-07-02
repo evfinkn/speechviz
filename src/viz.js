@@ -442,8 +442,6 @@ var user = document.getElementById("user");
 
 function saveAnnotations(customSegments) {
   console.log('Saving annotations', fileName);
-
-  console.log(customSegments);
   const record = {
       'user': user.innerHTML,
       'filename': fileName,

@@ -10,6 +10,9 @@ var viz = require('./routes/viz-route');
 var login = require('./routes/login-route');
 var app = express();
 
+var Database = require('better-sqlite3');
+var db = new Database("speechviz.sqlite3");
+
 // use sessions
 var session = require('express-session');
 app.use(session({
@@ -57,19 +60,19 @@ app.get("/filelist", (req, res) => {
 app.get(/\/(audio|segments|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
 function saveSegsOrPoints(userid, fileid, segments) {
-  console.log('num items', segments.length)
+  console.log('num items', segments.length);
   for (index=0; index < segments.length; index++) {
-      let id = segments[index].id
-      let startTime = segments[index].startTime
-      let label = segments[index].labelText
-      var endTime
+      let id = segments[index].id;
+      let startTime = segments[index].startTime;
+      let label = segments[index].labelText;
+      var endTime;
       if (startTime == null) {
           console.log('\tthis is a point')
-          startTime = segments[index].time
-          endTime = -1
+          startTime = segments[index].time;
+          endTime = -1;
       } else {
           console.log('\tthis is a segment')
-          endTime = segments[index].endTime
+          endTime = segments[index].endTime;
       }
       console.log(`fileid=${fileid} userid=${userid} id=${id} start=${startTime} end=${endTime} label=${label}`)
 
@@ -81,7 +84,7 @@ function saveSegsOrPoints(userid, fileid, segments) {
         console.log('\tinserting')
         // statement = db.prepare('INSERT INTO annotations(id,user_id,file_id,start,end,label) VALUES(?,?,?,?,?,?)')
         // info = statement.run([id, userid, fileid, startTime, endTime, label])
-        statement = db.prepare('INSERT INTO annotations(user_id,file_id,start,end,label) VALUES(?,?,?,?,?)')
+        statement = db.prepare('INSERT INTO annotations(user_id,audiofile,start,end,label) VALUES(?,?,?,?,?)')
         info = statement.run([userid, fileid, startTime, endTime, label])
         console.log('\tcommit', info)
       } else {
@@ -104,7 +107,7 @@ app.use('/saveannotations/', function(req, res) {
 
   let filename = req.body['filename']
   let segments = req.body['segments']
-  let points = req.body['points']
+  //let points = req.body['points']
   let user = req.body['user']
 
   // if (user == 'admin') {
@@ -114,15 +117,15 @@ app.use('/saveannotations/', function(req, res) {
   // }
 
   //row = db.prepare('SELECT id FROM wavefiles WHERE audiofile=?').get(filename);
-  fileid = row.id
-  console.log('filename', filename, '==>', fileid)
+  //fileid = row.id
+  //console.log('filename', filename, '==>', fileid)
 
-  row = db.prepare('SELECT id FROM users WHERE user=?').get(user)
-  userid = row.id
-  console.log('user', user, '==>', userid)
-
-  saveSegsOrPoints(userid, fileid, segments)
-  saveSegsOrPoints(userid, fileid, points)
+  var userid = db.prepare('SELECT id FROM users WHERE user=?').get(user).id
+  //userid = row.id
+  //console.log('user', user, '==>', userid)
+  console.log(segments);
+  saveSegsOrPoints(userid, filename, segments)
+  //saveSegsOrPoints(user, fileName, points)
 
   res.end()
   console.log('---- save annotations ---- (end)')
