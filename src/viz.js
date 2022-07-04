@@ -176,6 +176,8 @@ var runPeaks = async function (fileName) {
       template.innerHTML = `<td><a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a></td>`;
       const remove = template.content.firstElementChild;
       loop.after(remove);
+      const parent = document.getElementById(group);
+      const parentNested = document.getElementById(`${group}-nested`);
       remove.firstElementChild.addEventListener("click", function () {
         const id = segment.id;
         // remove segment from lists
@@ -184,7 +186,8 @@ var runPeaks = async function (fileName) {
         if (hiddenSegments[group][id]) { delete hiddenSegments[group][id]; }
         if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
         // update table and tree
-        document.getElementById(`${group}-nested`).removeChild(segment.checkbox.parentElement);
+        parentNested.removeChild(segment.checkbox.parentElement);
+        if (parentNested.children.length == 0) { parent.hidden = true; }
       });
       segment.durationSpan = li.children[1];
     }
@@ -205,6 +208,7 @@ var runPeaks = async function (fileName) {
 
     // create the tree item for the group
     const branch = document.createElement("li");
+    branch.id = group[0];
     branch.style.fontSize = "18px";
     let spanHTML;
     if(group.length == 3){
@@ -285,8 +289,36 @@ var runPeaks = async function (fileName) {
     const zoomview = peaksInstance.views.getView('zoomview');
 
     // Zoom
-    document.querySelector('[data-action="zoom-in"]').addEventListener('click', function () { peaksInstance.zoom.zoomIn(); });
-    document.querySelector('[data-action="zoom-out"]').addEventListener('click', function () { peaksInstance.zoom.zoomOut(); });
+    const zoomIn = document.querySelector("[data-action='zoom-in']");
+    const zoomOut = document.querySelector("[data-action='zoom-out']");
+    zoomIn.innerHTML = feather.icons["zoom-in"].toSvg({"stroke": "gray"});
+    const zoomInSvg = zoomIn.firstElementChild;
+    zoomOut.innerHTML = feather.icons["zoom-out"].toSvg({"stroke": "black"});
+    const zoomOutSvg = zoomOut.firstElementChild;
+    zoomIn.addEventListener('click', function () {
+      peaksInstance.zoom.zoomIn();
+      const zoomLevel = peaksInstance.zoom.getZoom();
+      if (zoomLevel == 0) {
+        zoomIn.style.pointerEvents = "none";
+        zoomInSvg.style.stroke = "gray";
+      }
+      else if (zoomLevel == 3) {
+        zoomOut.style.pointerEvents = "auto";
+        zoomOutSvg.style.stroke = "black";
+      }
+    });
+    zoomOut.addEventListener('click', function () {
+      peaksInstance.zoom.zoomOut();
+      const zoomLevel = peaksInstance.zoom.getZoom();
+      if (zoomLevel == 4) {
+        zoomOut.style.pointerEvents = "none";
+        zoomOutSvg.style.stroke = "gray";
+      }
+      else if (zoomLevel == 1) {
+        zoomIn.style.pointerEvents = "auto";
+        zoomInSvg.style.stroke = "black";
+      }
+    });
 
     // Seek
     document.querySelector('button[data-action="seek"]').addEventListener('click', function () {
@@ -327,6 +359,8 @@ var runPeaks = async function (fileName) {
 
     // generate the tree
     renderGroup(peaksInstance, "Custom-Segments", ["Segments"], {renderEmpty: true});
+    const customSegmentsBranch = document.getElementById("Custom-Segments");
+
     for (let segmentsGroup of importedSegments) { renderGroup(peaksInstance, segmentsGroup, ["Segments"]); }
 
     const customSpan = document.getElementById("Custom-Segments-span");
@@ -334,6 +368,7 @@ var runPeaks = async function (fileName) {
     let segmentCounter = 1;
     // Add (custom) segment
     document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
+      customSegmentsBranch.hidden = false;
       const label = 'Custom Segment ' + segmentCounter++;
       let segment = {
         startTime: peaksInstance.player.getCurrentTime(),
@@ -423,6 +458,9 @@ var runPeaks = async function (fileName) {
     
     groupsCheckboxes["Segments"].checked = true;
     groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
+    groupsCheckboxes["Custom-Segments"].checked = true;
+    customSegmentsBranch.hidden = true;
+    document.getElementById("Custom-Segments-nested").classList.add("active");
 
     const segmentsPlay = groupsButtons["Segments"][0];
     const segmentsLoop = groupsButtons["Segments"][1];
