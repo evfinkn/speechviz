@@ -431,6 +431,9 @@ var runPeaks = async function (fileName) {
       const oldDuration = parseFloat(segmentSpan.title.split(" ").at(-1));
       const newDuration = segment.endTime - segment.startTime;
       customDuration += newDuration - oldDuration;
+
+      segmentSpan.title = `Duration: ${newDuration.toFixed(2)}`;
+      customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
     });
 
     //getting z-scores for snrs and durations
