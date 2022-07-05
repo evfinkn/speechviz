@@ -79,7 +79,7 @@ def snr_from_times(signal_times, samples, sr, *, noise_rms=None):
     segments = np.array([signal_samps[x:x + segment_size] for x in np.arange(0, signal_len, segment_size)])
 
     energies = [np.square(s).sum() / len(s) for s in segments]
-    thres = 0.7 * np.median(energies)
+    thres = np.median(energies)
     index_of_segments_to_keep = (np.where(energies > thres)[0])
     signal_powers_no_pauses = segments[index_of_segments_to_keep]
     signal_powers_no_pauses = np.concatenate(signal_powers_no_pauses)
