@@ -57,6 +57,8 @@ def rms(powers):  # give it a list, and it finds the root mean squared
 def snr(signal, noise):
     signal_rms = rms(signal) if not isinstance(signal, float) else signal
     noise_rms = rms(noise) if not isinstance(noise, float) else noise
+    print("Signal RMS is " + str(signal_rms))
+    print("Noise RMS is " + str(noise_rms))
     return (signal_rms - noise_rms) / noise_rms
 
 

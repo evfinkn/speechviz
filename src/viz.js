@@ -86,6 +86,7 @@ var runPeaks = async function (fileName) {
   const groupLoopIcon = feather.icons.repeat.toSvg({"width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5});
 
   const playGroup = function (peaks, group, loop = false) {
+    curPlaying = group;
     const segments = segmentsFromGroup(group, {visible: true, sort: true});
     peaks.player.playSegments(segments, loop);
     const button = loop ? groupsButtons[group][1] : groupsButtons[group][0];
