@@ -59,12 +59,45 @@ var runPeaks = async function (fileName) {
     return segments;
   }
 
+  const segmentPlayIcon = feather.icons.play.toSvg({"width": 12, "height": 12, "stroke": "black", "fill": "black"});
+  const segmentPauseIcon = feather.icons.pause.toSvg({"width": 12, "height": 12, "stroke": "black", "fill": "black"});
+  const segmentLoopIcon = feather.icons.repeat.toSvg({"width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5});
+  const segmentRemoveIcon = feather.icons.x.toSvg({"width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5});
+
+  const playSegment = function (peaks, segment, loop = false) {
+    if (typeof segment == "string") {  // segment is an id
+      segment = peaks.segments.getSegment();
     }
+    peaks.player.playSegment(segment, loop);
+    const button = loop ? segment.buttons[1] : segment.buttons[0];
+    button.innerHTML = segmentPauseIcon;
+
+    const pause = function () { peaks.player.pause(); }
+    button.addEventListener("click", pause, {once: true});
+    peaks.once("player.pause", function () {
+      button.innerHTML = loop ? segmentLoopIcon : segmentPlayIcon;
+      button.removeEventListener("click", pause);
+      button.addEventListener("click", function () { playSegment(peaks, segment, loop); }, {once: true});
+    });
   }
+
+  const groupPlayIcon = feather.icons.play.toSvg({"width": 15, "height": 15, "stroke": "black", "fill": "black"});
+  const groupPauseIcon = feather.icons.pause.toSvg({"width": 15, "height": 15, "stroke": "black", "fill": "black"});
+  const groupLoopIcon = feather.icons.repeat.toSvg({"width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5});
 
   const playGroup = function (peaks, group, loop = false) {
     const segments = segmentsFromGroup(group, {visible: true, sort: true});
     peaks.player.playSegments(segments, loop);
+    const button = loop ? groupsButtons[group][1] : groupsButtons[group][0];
+    button.innerHTML = groupPauseIcon;
+
+    const pause = function () { peaks.player.pause(); }
+    button.addEventListener("click", pause, {once: true});
+    peaks.once("player.pause", function () {
+      button.innerHTML = loop ? groupLoopIcon : groupPlayIcon;
+      button.removeEventListener("click", pause);
+      button.addEventListener("click", function () { playGroup(peaks, group, loop); }, {once: true});
+    });
   }
 
   const toggleSegments = function (peaks, group, checked) {
@@ -121,10 +154,6 @@ var runPeaks = async function (fileName) {
     }
   }
 
-  const segmentPlayIcon = feather.icons.play.toSvg({"width": 12, "height": 12, "stroke": "black", "fill": "black"});
-  const segmentLoopIcon = feather.icons.repeat.toSvg({"width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5});
-  const segmentRemoveIcon = feather.icons.x.toSvg({"width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5});
-
   const renderSegment = function (peaks, segment, group, path) {
     // create the tree item for the segment
     const li = document.createElement("li");
@@ -141,8 +170,8 @@ var runPeaks = async function (fileName) {
     const play = li.children[2];
     const loop = li.children[3];
 
-    play.addEventListener("click", function () { peaks.player.playSegment(segment); });
-    loop.addEventListener("click", function () { peaks.player.playSegment(segment, true); });
+    play.addEventListener("click", function () { playSegment(peaks, segment); }, {once: true});
+    loop.addEventListener("click", function () { playSegment(peaks, segment, true); }, {once: true});
 
     segment.path = path.concat(group, segment.id);  // path is a list of groups the segment belongs to
     segment.checkbox = checkbox;
@@ -172,9 +201,6 @@ var runPeaks = async function (fileName) {
       segment.durationSpan = li.children[1];
     }
   }
-
-  const groupPlayIcon = feather.icons.play.toSvg({"width": 15, "height": 15, "stroke": "black", "fill": "black"});
-  const groupLoopIcon = feather.icons.repeat.toSvg({"width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5});
 
   const renderGroup = function (peaks, group, path, {renderEmpty = false} = {}) {
     if (typeof group == "string") { group = [group, []]; }
@@ -207,8 +233,8 @@ var runPeaks = async function (fileName) {
 
     const groupPlay = branch.children[2];
     const groupLoop = branch.children[3];
-    groupPlay.addEventListener("click", function () { playGroup(peaks, group[0]); });
-    groupLoop.addEventListener("click", function () { playGroup(peaks, group[0], true); });
+    groupPlay.addEventListener("click", function () { playGroup(peaks, group[0]); }, {once: true});
+    groupLoop.addEventListener("click", function () { playGroup(peaks, group[0], true); }, {once: true});
 
     groupsCheckboxes[group[0]] = groupCheckbox;
     groupsButtons[group[0]] = [groupPlay, groupLoop];
