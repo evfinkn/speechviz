@@ -81,12 +81,12 @@ function saveSegsOrPoints(userid, fileid, segments) {
       //checkStmt = db.prepare('SELECT id FROM annotations WHERE user_id=? AND file_id=? AND id=?')
       checkAnnotation = checkStmt.get([id])
       if ((id < 0) || (!checkAnnotation))  {
-        console.log('\tinserting')
+        console.log('\tinserting');
         // statement = db.prepare('INSERT INTO annotations(id,user_id,file_id,start,end,label) VALUES(?,?,?,?,?,?)')
         // info = statement.run([id, userid, fileid, startTime, endTime, label])
-        statement = db.prepare('INSERT INTO annotations(user_id,audiofile,start,end,label) VALUES(?,?,?,?,?)')
-        info = statement.run([userid, fileid, startTime, endTime, label])
-        console.log('\tcommit', info)
+        statement = db.prepare('INSERT INTO annotations(user_id,audiofile,start,end,label) VALUES(?,?,?,?,?)');
+        info = statement.run([userid, fileid, startTime, endTime, label]);
+        console.log('\tcommit', info);
       } else {
         console.log('\tupdating', fileid, 'start', startTime, 'end', endTime, 'label', label)
         //statement = db.prepare('UPDATE annotations SET start=?, end=?, label=? where file_id=? and user_id=? and id=?')
@@ -121,8 +121,8 @@ app.use('/saveannotations/', function(req, res) {
   //console.log('filename', filename, '==>', fileid)
 
   var userid = db.prepare('SELECT id FROM users WHERE user=?').get(user).id
-  //userid = row.id
-  //console.log('user', user, '==>', userid)
+  console.log('user', user, '==>', userid)
+
   console.log(segments);
   saveSegsOrPoints(userid, filename, segments)
   //saveSegsOrPoints(user, fileName, points)
