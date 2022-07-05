@@ -47,11 +47,7 @@ def get_complement_segments(segments, duration, color, label, times=None):
 
 
 def rms(powers):  # give it a list, and it finds the root mean squared
-    squares_sum = np.sum(np.square(powers))
-    if len(powers) != 0:
-        return math.sqrt(squares_sum / (len(powers)))
-    else:
-        return 0
+    return np.sqrt(np.mean(np.square(powers), axis=-1))
 
 
 def snr(signal, noise):
@@ -59,7 +55,7 @@ def snr(signal, noise):
     noise_rms = rms(noise) if not isinstance(noise, float) else noise
     print("Signal RMS is " + str(signal_rms))
     print("Noise RMS is " + str(noise_rms))
-    return ((signal_rms - noise_rms) / noise_rms) ** 2
+    return (signal_rms - noise_rms) / noise_rms
 
 
 def samples_from_times(times, samples, sr):
@@ -75,12 +71,23 @@ def samples_from_times(times, samples, sr):
 
 def snr_from_times(signal_times, samples, sr, *, noise_rms=None):
     signal_samps = samples_from_times(signal_times, samples, sr)
+    signal_len = len(signal_samps)
+    segment_size_t = 1 # segment size in seconds
+    segment_size = segment_size_t * sr  # segment size in samples
+    # Break signal into list of segments in a single-line Python code
+    segments = np.array([signal_samps[x:x + segment_size] for x in np.arange(0, signal_len, segment_size)])
+
+    energies = [np.square(s).sum() / len(s) for s in segments]
+    thres = 0.5 * np.median(energies)
+    index_of_segments_to_keep = (np.where(energies > thres)[0])
+    signal_powers_no_pauses = segments[index_of_segments_to_keep]
+    signal_powers_no_pauses = np.concatenate(signal_powers_no_pauses)
     #signal_powers = np.square(signal_samps)
     if noise_rms is None:
         noise_samps = samples_from_times(get_complement_times(signal_times, len(samples) / sr), samples, sr)
         #noise_powers = np.square(noise_samps)
         noise_rms = rms(noise_samps)
-    return snr(signal_samps, noise_rms)
+    return snr(signal_powers_no_pauses, noise_rms)
 
 
 def get_diarization(file_path, samples, sr, quiet, verbose):
@@ -130,8 +137,9 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
     
     noise_times = get_complement_times(diar_times, len(samples) / sr)
     noise_samps = samples_from_times(noise_times, samples, sr)
-    #noise_powers = np.square(noise_samps)
-    noise_rms = rms(noise_samps)
+
+    noise_powers = np.square(noise_samps)
+    noise_rms = rms(noise_powers)
     spkrs_snrs = {spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms=noise_rms) for spkr in spkrs}
     
     if verbose:
