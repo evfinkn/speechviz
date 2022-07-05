@@ -55,11 +55,11 @@ def rms(powers):  # give it a list, and it finds the root mean squared
 
 
 def snr(signal, noise):
-    signal_rms = (rms(signal) ** 2) if not isinstance(signal, float) else signal
-    noise_rms = (rms(noise) ** 2) if not isinstance(noise, float) else noise
+    signal_rms = rms(signal) if not isinstance(signal, float) else signal
+    noise_rms = rms(noise) if not isinstance(noise, float) else noise
     print("Signal RMS is " + str(signal_rms))
     print("Noise RMS is " + str(noise_rms))
-    return (signal_rms - noise_rms) / noise_rms
+    return ((signal_rms - noise_rms) / noise_rms) ** 2
 
 
 def samples_from_times(times, samples, sr):
@@ -79,7 +79,7 @@ def snr_from_times(signal_times, samples, sr, *, noise_rms=None):
     if noise_rms is None:
         noise_samps = samples_from_times(get_complement_times(signal_times, len(samples) / sr), samples, sr)
         #noise_powers = np.square(noise_samps)
-        noise_rms = rms(noise_samps) ** 2
+        noise_rms = rms(noise_samps)
     return snr(signal_samps, noise_rms)
 
 
@@ -131,7 +131,7 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
     noise_times = get_complement_times(diar_times, len(samples) / sr)
     noise_samps = samples_from_times(noise_times, samples, sr)
     #noise_powers = np.square(noise_samps)
-    noise_rms = rms(noise_samps) ** 2
+    noise_rms = rms(noise_samps)
     spkrs_snrs = {spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms=noise_rms) for spkr in spkrs}
     
     if verbose:
