@@ -5,8 +5,9 @@ html(lang="en")
         title Speechviz
         link(rel="stylesheet", type="text/css", href="css/style.css")
     body 
-        a(href="/") Back to file selection 
-        p#user #{user}
+        div(style="display:flex;align-items:center;justify-content:space-between;")
+            a(href="/") Back to file selection 
+            p#user #{user}
         .row 
             .column#column
                 ul
@@ -18,6 +19,7 @@ html(lang="en")
                         ul.nested.active#Segments-nested
             .column2#column2
                 #waveform-container
+                    p #{audiofile}
                     #zoomview-container
                     #overview-container
                     #audio-controls
