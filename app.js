@@ -61,6 +61,8 @@ app.get(/\/(audio|segments|waveforms)/, (req, res) => res.sendFile(req.url, {roo
 
 function saveSegsOrPoints(userid, fileid, segments) {
   console.log('num items', segments.length);
+  deleteStatement = db.prepare('DELETE FROM annotations WHERE user_id=? AND audiofile=?');
+  deleteStatement.run([userid,fileid]);
   for (index=0; index < segments.length; index++) {
       let id = segments[index].id;
       let startTime = segments[index].startTime;
@@ -84,8 +86,6 @@ function saveSegsOrPoints(userid, fileid, segments) {
         console.log('\tinserting');
         // statement = db.prepare('INSERT INTO annotations(id,user_id,file_id,start,end,label) VALUES(?,?,?,?,?,?)')
         // info = statement.run([id, userid, fileid, startTime, endTime, label])
-        deleteStatement = db.prepare('DELETE FROM annotations WHERE user_id=? AND audiofile=?');
-        deleteStatement.run([userid,fileid]);
 
         statement = db.prepare('INSERT INTO annotations(user_id,audiofile,start,end,label) VALUES(?,?,?,?,?)');
         info = statement.run([userid, fileid, startTime, endTime, label]);
