@@ -60,7 +60,6 @@ var runPeaks = async function (fileName) {
   }
 
     }
-  }
 
   const playGroup = function (peaks, group, loop = false) {
     const segments = segmentsFromGroup(group, {visible: true, sort: true});
@@ -451,7 +450,6 @@ var runPeaks = async function (fileName) {
     segmentsPlay.addEventListener("click", function () { playGroup(peaksInstance, "Segments"); });
     segmentsLoop.addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
   });
-}
 
 const urlParams = new URLSearchParams(window.location.search);
 const fileName = urlParams.get("audiofile");
