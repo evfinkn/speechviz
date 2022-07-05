@@ -1,3 +1,4 @@
+from signal import signal
 from pyannote.audio import Pipeline
 import numpy as np
 import librosa
@@ -82,11 +83,13 @@ def snr_from_times(signal_times, samples, sr, *, noise_rms=None):
     index_of_segments_to_keep = (np.where(energies > thres)[0])
     signal_powers_no_pauses = segments[index_of_segments_to_keep]
     signal_powers_no_pauses = np.concatenate(signal_powers_no_pauses)
+    signal_powers_no_pauses = np.square(signal_powers_no_pauses)
+
     #signal_powers = np.square(signal_samps)
     if noise_rms is None:
         noise_samps = samples_from_times(get_complement_times(signal_times, len(samples) / sr), samples, sr)
-        #noise_powers = np.square(noise_samps)
-        noise_rms = rms(noise_samps)
+        noise_powers = np.square(noise_samps)
+        noise_rms = rms(noise_powers)
     return snr(signal_powers_no_pauses, noise_rms)
 
 
