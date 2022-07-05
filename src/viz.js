@@ -6,6 +6,7 @@ const audio =  document.getElementById('audio');
 var snrs = {};
 var durations = {};
 
+let newChanges = false;
 
 var runPeaks = async function (fileName) {
   const name = fileName.replace(/\.[^/.]+$/, "");  // name of the file without the extension
@@ -387,6 +388,7 @@ var runPeaks = async function (fileName) {
       renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
       customDuration += 10;
       customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
+      newChanges = true;
     });
 
     function loadAnnotations(customSegments) {
@@ -434,6 +436,8 @@ var runPeaks = async function (fileName) {
 
       segmentSpan.title = `Duration: ${newDuration.toFixed(2)}`;
       customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
+
+      newChanges = true;
     });
 
     //getting z-scores for snrs and durations
@@ -544,7 +548,19 @@ function saveAnnotations(customSegments) {
       // done
       console.log('Annotations saved')
   };
+  newChanges = false;
 }
 
+// https://stackoverflow.com/a/7317311
+window.onload = function() {
+  window.addEventListener("beforeunload", function (event) {
+      if (!newChanges) { return undefined; }
+      
+      var confirmationMessage = "You have unsaved changes. If you leave before saving, these changes will be lost.";
+      // returnValue and return for cross compatibility 
+      (event || window.event).returnValue = confirmationMessage;
+      return confirmationMessage;
+  });
+};
 
 runPeaks(fileName);
