@@ -84,6 +84,9 @@ function saveSegsOrPoints(userid, fileid, segments) {
         console.log('\tinserting');
         // statement = db.prepare('INSERT INTO annotations(id,user_id,file_id,start,end,label) VALUES(?,?,?,?,?,?)')
         // info = statement.run([id, userid, fileid, startTime, endTime, label])
+        deleteStatement = db.prepare('DELETE FROM annotations WHERE user_id=? AND audiofile=?');
+        deleteStatement.run([userid,fileid]);
+
         statement = db.prepare('INSERT INTO annotations(user_id,audiofile,start,end,label) VALUES(?,?,?,?,?)');
         info = statement.run([userid, fileid, startTime, endTime, label]);
         console.log('\tcommit', info);
@@ -96,6 +99,31 @@ function saveSegsOrPoints(userid, fileid, segments) {
       }
   }
 }
+
+app.use('/loadannotations/', function(req, res){
+  /**
+    Loads the annotations from the database for a given user and file
+    When the annotate.html loads, it will make request to load all the annotatiosn for the current file
+  **/
+    console.log('---- load annotations ----')
+    //console.log(req.body)
+    let filename = req.body['filename']
+    let user = req.body['user']
+    console.log('user', user, 'audiofile', audiofile)
+  
+    // obtain the id of the user based on its user  
+    var userid = db.prepare('SELECT id FROM users WHERE user=?').get(user).id
+    console.log('user', user, '==>', userid)
+  
+    r = db.prepare('SELECT id,audiofile,start,end,label FROM annotations where user_id=? AND audiofile=?').all([userid, filename])
+
+    console.log('retrieved', r.length, 'annotations')
+    console.log(r)
+  
+    res.send(r)
+    console.log(`---- load annotations ---- (end) total=${r.length}`)
+    res.end()
+});
 
 app.use('/saveannotations/', function(req, res) {
   /**

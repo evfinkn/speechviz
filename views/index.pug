@@ -17,7 +17,9 @@ html(lang="en")
         .then(fileList => fileList.forEach(function (fileName) {  // fileList is data from the json
             const div = document.createElement("div");
             div.innerHTML = `<input type="radio" id="${fileName}" name="file-selection" value="${fileName}"></input><label for="${fileName}">${fileName}</label>`;
-            div.firstChild.addEventListener("change", function () { window.location.replace(`/viz?audiofile=${this.value}`); });
+            div.firstChild.addEventListener("change", function () { 
+                window.location.replace(`/viz?audiofile=${this.value}`); 
+            });
             fieldset.append(div);
         }))
         .catch(error => { console.error('Error during fetch: ', error); });  // catch err thrown by res if any

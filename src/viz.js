@@ -389,6 +389,41 @@ var runPeaks = async function (fileName) {
       customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
     });
 
+    function loadAnnotations(customSegments) {
+      console.log('Loading annotations', fileName);
+      const record = {
+          'user': user.innerHTML,
+          'filename': fileName,
+      }
+      const json = JSON.stringify(record)
+      console.log(json)
+      var request = new XMLHttpRequest()
+      request.open('POST', 'loadannotations', true);
+      request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    
+      request.send(json)
+      request.onload = function () {
+          // done
+          let jsonData = JSON.parse(request.response);
+          for (let i = 0; i < jsonData.length; i++){
+            customSegmentsBranch.hidden = false;
+            const label = 'Custom Segment ' + segmentCounter++;
+            let segment = {
+              startTime: jsonData[i]['start'],
+              endTime: jsonData[i]['end'],
+              labelText: jsonData[i]['label'],
+              editable: true
+            };
+            segment = peaksInstance.segments.add(segment);
+            renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
+            customDuration += jsonData[i]['end'] - jsonData[i]['start'];
+            customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
+          }
+          console.log('Annotations loaded')
+      };
+      
+    }
+
     peaksInstance.on("segments.dragend", function (event) {
       const segment = event.segment;
       const segmentSpan = segment.durationSpan;
@@ -459,6 +494,9 @@ var runPeaks = async function (fileName) {
     document.querySelector('button[data-action="save-annotations"]').addEventListener('click', function(event) {
       saveAnnotations(segmentsFromGroup("Custom-Segments", {"peaks": peaksInstance, "simple": true}));
     });
+    document.querySelector('button[data-action="load-annotations"]').addEventListener('click', function(event) {
+      loadAnnotations(segmentsFromGroup("Custom-Segments", {"peaks": peaksInstance, "simple": true}));
+    });
 
     toggleSegments(peaksInstance, "Segments", false);
     document.getElementById("Segments-nested").classList.add("active");
@@ -504,5 +542,6 @@ function saveAnnotations(customSegments) {
       console.log('Annotations saved')
   };
 }
+
 
 runPeaks(fileName);
