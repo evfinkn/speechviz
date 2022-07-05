@@ -553,9 +553,8 @@ var runPeaks = async function (fileName) {
     
     groupsCheckboxes["Segments"].checked = true;
     groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
-    groupsCheckboxes["Custom-Segments"].checked = true;
+    toggleSegments(peaksInstance, "Custom-Segments", true);
     customSegmentsBranch.hidden = true;
-    document.getElementById("Custom-Segments-nested").classList.add("active");
 
     segmentsPlay.style.pointerEvents = "auto";
     segmentsLoop.style.pointerEvents = "auto";
