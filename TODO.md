@@ -10,8 +10,8 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] Make custom segments save-able
  - [ ] Custom labeling
+ - [x] Make custom segments save-able
  - [x] Make the "Custom-Segments" tree branch hidden when there are no custom segments
  - [x] Play/loop button on segment groups
  - [x] Calculate true speaker
