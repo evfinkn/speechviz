@@ -58,33 +58,13 @@ var runPeaks = async function (fileName) {
     }
     return segments;
   }
-  
-  const segmentIter = function* (segments, loop = false) {  // custom iterator for infinite iteration (when loop is true)
-    for (let i = 0; (i < segments.length) || loop; i++) { yield segments[i % segments.length]; }
-  }
 
-  let curPlaying = null;
-  
-  const playNext = function (peaks, group, iter) {
-    const next = iter.next();
-    if (curPlaying == group) {
-        if (!next.done) {
-          peaks.player.playSegment(next.value);  // [1] because each value of Array.entries() is [index of item, item], we want item
-          peaks.once("player.ended", function () { playNext(peaks, group, iter); });
-        }
-        else {
-          curPlaying = null;
-          iter.return();
-        }
     }
-    else { iter.return(); }
   }
 
   const playGroup = function (peaks, group, loop = false) {
-    curPlaying = group;
     const segments = segmentsFromGroup(group, {visible: true, sort: true});
-    const iter = segmentIter(segments, loop);
-    playNext(peaks, group, iter);
+    peaks.player.playSegments(segments, loop);
   }
 
   const toggleSegments = function (peaks, group, checked) {
