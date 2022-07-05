@@ -66,20 +66,31 @@ var runPeaks = async function (fileName) {
   const segmentRemoveIcon = feather.icons.x.toSvg({"width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5});
 
   const playSegment = function (peaks, segment, loop = false) {
-    if (typeof segment == "string") {  // segment is an id
-      segment = peaks.segments.getSegment();
-    }
-    peaks.player.playSegment(segment, loop);
-    const button = loop ? segment.buttons[1] : segment.buttons[0];
-    button.innerHTML = segmentPauseIcon;
-
-    const pause = function () { peaks.player.pause(); }
-    button.addEventListener("click", pause, {once: true});
+    // Have to put in event listener because need to call
+    // peaks.player.pause() to switch other pause buttons 
+    // back to play buttons, but pausing without
+    // the event listener instantly changes the new pause
+    // button (from this function call) to change back to
+    // a play button.
     peaks.once("player.pause", function () {
-      button.innerHTML = loop ? segmentLoopIcon : segmentPlayIcon;
-      button.removeEventListener("click", pause);
-      button.addEventListener("click", function () { playSegment(peaks, segment, loop); }, {once: true});
+      if (typeof segment == "string") {  // segment is an id
+        segment = peaks.segments.getSegment();
+      }
+      peaks.player.playSegment(segment, loop);
+      const button = loop ? segment.buttons[1] : segment.buttons[0];
+      button.innerHTML = segmentPauseIcon;
+
+      const pause = function () { peaks.player.pause(); }
+      button.addEventListener("click", pause, {once: true});
+      peaks.once("player.pause", function () {
+        button.innerHTML = loop ? segmentLoopIcon : segmentPlayIcon;
+        button.removeEventListener("click", pause);
+        button.addEventListener("click", function () { playSegment(peaks, segment, loop); }, {once: true});
+      });
     });
+    // peaks.player.pause() only pauses if playing, so have to play audio if not already
+    if (!peaks.player.isPlaying()) { peaks.player.play(); }
+    peaks.player.pause();
   }
 
   const groupPlayIcon = feather.icons.play.toSvg({"width": 15, "height": 15, "stroke": "black", "fill": "black"});
@@ -87,19 +98,22 @@ var runPeaks = async function (fileName) {
   const groupLoopIcon = feather.icons.repeat.toSvg({"width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5});
 
   const playGroup = function (peaks, group, loop = false) {
-    curPlaying = group;
-    const segments = segmentsFromGroup(group, {visible: true, sort: true});
-    peaks.player.playSegments(segments, loop);
-    const button = loop ? groupsButtons[group][1] : groupsButtons[group][0];
-    button.innerHTML = groupPauseIcon;
-
-    const pause = function () { peaks.player.pause(); }
-    button.addEventListener("click", pause, {once: true});
     peaks.once("player.pause", function () {
-      button.innerHTML = loop ? groupLoopIcon : groupPlayIcon;
-      button.removeEventListener("click", pause);
-      button.addEventListener("click", function () { playGroup(peaks, group, loop); }, {once: true});
+      const segments = segmentsFromGroup(group, {visible: true, sort: true});
+      peaks.player.playSegments(segments, loop);
+      const button = loop ? groupsButtons[group][1] : groupsButtons[group][0];
+      button.innerHTML = groupPauseIcon;
+
+      const pause = function () { peaks.player.pause(); }
+      button.addEventListener("click", pause, {once: true});
+      peaks.once("player.pause", function () {
+        button.innerHTML = loop ? groupLoopIcon : groupPlayIcon;
+        button.removeEventListener("click", pause);
+        button.addEventListener("click", function () { playGroup(peaks, group, loop); }, {once: true});
+      });
     });
+    if (!peaks.player.isPlaying()) { peaks.player.play(); }
+    peaks.player.pause();
   }
 
   const toggleSegments = function (peaks, group, checked) {
@@ -112,19 +126,43 @@ var runPeaks = async function (fileName) {
       if (checked) {    // add the segment back to peaks and remove it from hiddenSegments
         visibleSegments[parent][group] = segment;
         peaks.segments.add(segment);
-        segment.buttons.forEach(function (button) { button.style.pointerEvents = "auto"; });
+        segment.buttons.forEach(function (button) {
+          button.style.pointerEvents = "auto";
+          const buttonIcon = button.firstElementChild;
+          buttonIcon.style.stroke = "black";
+          if (buttonIcon.getAttribute("fill") != "none") { buttonIcon.style.fill = "black"; }
+        });
         delete hiddenSegments[parent][group];
       }
       else {  // add the segment to hiddenSegments and remove it from peaks
         hiddenSegments[parent][group] = segment;
         peaks.segments.removeById(group);
-        segment.buttons.forEach(function (button) { button.style.pointerEvents = "none"; });
+        segment.buttons.forEach(function (button) {
+          button.style.pointerEvents = "none";
+          const buttonIcon = button.firstElementChild;
+          buttonIcon.style.stroke = "gray";
+          if (buttonIcon.getAttribute("fill") != "none") { buttonIcon.style.fill = "gray"; }
+        });
         delete visibleSegments[parent][group];
       }
     }
     else {  // group is not a segment id
-      if (checked) { groupsButtons[group].forEach(function (button) { button.style.pointerEvents = "auto"; }); }
-      else { groupsButtons[group].forEach(function (button) { button.style.pointerEvents = "none"; }); } 
+      if (checked) {
+        groupsButtons[group].forEach(function (button) {
+          button.style.pointerEvents = "auto";
+          const buttonIcon = button.firstElementChild;
+          buttonIcon.style.stroke = "black";
+          if (buttonIcon.getAttribute("fill") != "none") { buttonIcon.style.fill = "black"; }
+        });
+      }
+      else {
+        groupsButtons[group].forEach(function (button) {
+          button.style.pointerEvents = "none";
+          const buttonIcon = button.firstElementChild;
+          buttonIcon.style.stroke = "gray";
+          if (buttonIcon.getAttribute("fill") != "none") { buttonIcon.style.fill = "gray"; }
+        });
+      } 
       const groupCheckbox = groupsCheckboxes[group];
       groupCheckbox.checked = checked;
 
@@ -505,6 +543,11 @@ var runPeaks = async function (fileName) {
       loadAnnotations(segmentsFromGroup("Custom-Segments", {"peaks": peaksInstance, "simple": true}));
     });
 
+    const segmentsPlay = groupsButtons["Segments"][0];
+    const segmentsLoop = groupsButtons["Segments"][1];
+    segmentsPlay.innerHTML = feather.icons.play.toSvg({"width": 17, "height": 17, "stroke": "black", "fill": "black"});
+    segmentsLoop.innerHTML = feather.icons.repeat.toSvg({"width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5});
+
     toggleSegments(peaksInstance, "Segments", false);
     document.getElementById("Segments-nested").classList.add("active");
     
@@ -514,12 +557,13 @@ var runPeaks = async function (fileName) {
     customSegmentsBranch.hidden = true;
     document.getElementById("Custom-Segments-nested").classList.add("active");
 
-    const segmentsPlay = groupsButtons["Segments"][0];
-    const segmentsLoop = groupsButtons["Segments"][1];
-    segmentsPlay.innerHTML = feather.icons.play.toSvg({"width": 17, "height": 17, "stroke": "black", "fill": "black"});
-    segmentsLoop.innerHTML = feather.icons.repeat.toSvg({"width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5});
     segmentsPlay.style.pointerEvents = "auto";
     segmentsLoop.style.pointerEvents = "auto";
+    const segmentsPlayIcon = segmentsPlay.firstElementChild;
+    const segmentsLoopIcon = segmentsLoop.firstElementChild;
+    segmentsPlayIcon.style.stroke = "black";
+    segmentsPlayIcon.style.fill = "black";
+    segmentsLoopIcon.style.stroke = "black";
     segmentsPlay.addEventListener("click", function () { playGroup(peaksInstance, "Segments"); });
     segmentsLoop.addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
   });
