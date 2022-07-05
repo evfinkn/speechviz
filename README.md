@@ -8,6 +8,7 @@ This will take an audio file and visualize various characteristics. Currently, y
 git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
 cd speechviz
 npm install
+npm run mkdir
 python db_init.py
 ```
 To use process_audio and the pipeline, you'll need to first make a conda environment:
