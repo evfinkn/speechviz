@@ -60,9 +60,9 @@ def snr(signal, noise):
     return (signal_rms - noise_rms) / noise_rms
 
 
-def get_noise_rms(signal_samps, noise_times):
+def get_noise_rms(signal_times, noise_times):
     noise_samps = []
-    for start, stop in signal_samps:
+    for start, stop in signal_times:
         left=[noise_times[0]]
         right=[noise_times[1]]
         for noiseSegTuple in noise_times:
@@ -94,9 +94,9 @@ def samples_from_times(times, samples, sr):
 
 
 def snr_from_times(signal_times, samples, sr, *, noise_times):
-    noise_rms = get_noise_rms(signal_samps, noise_times)
     signal_samps = samples_from_times(signal_times, samples, sr)
     signal_powers = np.square(signal_samps)
+    noise_rms = get_noise_rms(signal_times, noise_times)
     return snr(signal_powers, noise_rms)
 
 
