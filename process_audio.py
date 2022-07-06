@@ -119,7 +119,7 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         spkrs_times[spkr].append((start, end))
         diar_times.append((start, end))
     spkrs = sorted(spkrs_segs)
-    print(spkrs.values())
+    print(spkrs_segs.values())
     
     if verbose:
         print(f"Loop completed in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
