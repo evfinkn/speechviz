@@ -94,8 +94,9 @@ def samples_from_times(times, samples, sr):
 
 
 def snr_from_times(signal_times, samples, sr, *, noise_times):
-    signal_samps, noise_rms = samples_from_times(signal_times, samples, sr, noise_times)
+    signal_samps = samples_from_times(signal_times, samples, sr, noise_times)
     signal_powers = np.square(signal_samps)
+    noise_rms = get_noise_rms(signal_samps, noise_times)
     return snr(signal_powers, noise_rms)
 
 
@@ -147,7 +148,6 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
     #for key in spkrs_times:
 
     noise_times = get_complement_times(diar_times, len(samples) / sr)
-    noise_rms = get_noise_rms(noise_times)
     #noise_samps = samples_from_times(noise_times, samples, sr)
     #noise_powers = np.square(noise_samps)
     #noise_rms = rms(noise_powers)
