@@ -8,7 +8,7 @@ var durations = {};
 
 let newChanges = false;
 
-var runPeaks = async function (fileName) {
+const runPeaks = async function (fileName) {
   const name = fileName.replace(/\.[^/.]+$/, "");  // name of the file without the extension
 
   /* importedSegments is an array of groups or segments
@@ -429,40 +429,34 @@ var runPeaks = async function (fileName) {
       newChanges = true;
     });
 
-    function loadAnnotations() {
-      console.log('Loading annotations', fileName);
-      const record = {
-          'user': user.innerHTML,
-          'filename': fileName,
-      }
-      const json = JSON.stringify(record)
-      console.log(json)
-      var request = new XMLHttpRequest()
-      request.open('POST', 'loadannotations', true);
-      request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
     
-      request.send(json)
-      request.onload = function () {
-          // done
-          let jsonData = JSON.parse(request.response);
-          for (let i = 0; i < jsonData.length; i++){
-            customSegmentsBranch.hidden = false;
-            const label = 'Custom Segment ' + segmentCounter++;
-            let segment = {
-              startTime: jsonData[i]['start'],
-              endTime: jsonData[i]['end'],
-              labelText: jsonData[i]['label'],
-              editable: true
-            };
-            segment = peaksInstance.segments.add(segment);
-            renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
-            customDuration += jsonData[i]['end'] - jsonData[i]['start'];
-            customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
-          }
-          console.log('Annotations loaded')
-      };
-      
+    const record = {
+        'user': user.innerHTML,
+        'filename': fileName,
     }
+    const json = JSON.stringify(record)
+    var request = new XMLHttpRequest()
+    request.open('POST', 'loadannotations', true);
+    request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+  
+    request.send(json)
+    request.onload = function () {
+        let jsonData = JSON.parse(request.response);
+        for (let i = 0; i < jsonData.length; i++) {
+          customSegmentsBranch.hidden = false;
+          const label = 'Custom Segment ' + segmentCounter++;
+          let segment = {
+            startTime: jsonData[i]['start'],
+            endTime: jsonData[i]['end'],
+            labelText: jsonData[i]['label'],
+            editable: true
+          };
+          segment = peaksInstance.segments.add(segment);
+          renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
+          customDuration += jsonData[i]['end'] - jsonData[i]['start'];
+          customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
+        }
+    };
 
     peaksInstance.on("segments.dragend", function (event) {
       const segment = event.segment;
@@ -524,23 +518,8 @@ var runPeaks = async function (fileName) {
     var primarySpeakerSpan = document.getElementById(`${maxSpeaker}-span`);
     primarySpeakerSpan.style = "color:violet"
 
-    // Event listeners for the "play" and "loop" buttons in the table
-    document.querySelectorAll("a[data-action='play-segment']").forEach(function (button) {
-      const segment = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
-      button.addEventListener("click", function() { peaksInstance.player.playSegment(segment); });
-    });
-    document.querySelectorAll("a[data-action='loop-segment']").forEach(function (button) {
-      const segment = peaksInstance.segments.getSegment(button.getAttribute("data-id"));
-      button.addEventListener("click", function() { peaksInstance.player.playSegment(segment, true); });
-      segmentSpan.title = `Duration: ${newDuration.toFixed(2)}`;
-      customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
-    });
-
     document.querySelector('button[data-action="save-annotations"]').addEventListener('click', function(event) {
       saveAnnotations(segmentsFromGroup("Custom-Segments", {"peaks": peaksInstance, "simple": true}));
-    });
-    document.querySelector('button[data-action="load-annotations"]').addEventListener('click', function(event) {
-      loadAnnotations();
     });
 
     const segmentsPlay = groupsButtons["Segments"][0];
