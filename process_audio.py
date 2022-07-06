@@ -119,6 +119,7 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         spkrs_times[spkr].append((start, end))
         diar_times.append((start, end))
     spkrs = sorted(spkrs_segs)
+    print(spkrs)
     
     if verbose:
         print(f"Loop completed in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
@@ -127,23 +128,8 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
     
     noise_times = get_complement_times(diar_times, len(samples) / sr)
     noise_samps = samples_from_times(noise_times, samples, sr)
-
-    noise_len = len(noise_samps)
-    segment_size_t = 1 # segment size in seconds
-    segment_size = segment_size_t * sr  # segment size in samples
-    # Break signal into list of segments in a single-line Python code
-    nSegments = np.array([noise_samps[x:x + segment_size] for x in np.arange(0, noise_len, segment_size)])
-
-    energies = [np.square(s).sum() / len(s) for s in nSegments]
-    upThres = np.percentile(energies, 75)
-    downThres = np.percentile(energies, 25)
-    index_of_segments_to_keep = (np.where(np.logical_and(np.greater(upThres,energies),np.greater(energies,downThres))))
-    noise_powers_iqr = nSegments[index_of_segments_to_keep]
-    noise_powers_iqr = np.concatenate(noise_powers_iqr)
-    noise_powers_iqr = np.square(noise_powers_iqr)
-
-    #noise_powers = np.square(noise_samps)
-    noise_rms = rms(noise_powers_iqr)
+    noise_powers = np.square(noise_samps)
+    noise_rms = rms(noise_powers)
     spkrs_snrs = {spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms=noise_rms) for spkr in spkrs}
     
     if verbose:
