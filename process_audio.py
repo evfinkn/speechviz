@@ -68,9 +68,9 @@ def get_noise_rms(signal_times, noise_times):
         for noiseSegTuple in noise_times:
             print(left)
             print(noiseSegTuple)
-            if noiseSegTuple[1] - start < left[1] - start:
+            if noiseSegTuple[0][1] - start < left[1] - start:
                 left = noiseSegTuple
-            if noiseSegTuple[0] - stop < right[0] - stop:
+            if noiseSegTuple[0][0] - stop < right[0] - stop:
                 right = noiseSegTuple
         #left = (np.abs(noise_times - start)).argmin()
         #right = (np.abs(noise_times - stop)).argmin()
