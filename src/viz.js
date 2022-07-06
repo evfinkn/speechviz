@@ -134,37 +134,51 @@ var runPeaks = async function (fileName) {
 
           // event listener for clicking a radio button
           document.getElementsByName(group[0]).forEach(function(button){
+            
             button.addEventListener("click", function () {
-              const label = button.getAttribute("label-id");
-              // make new copy of speaker checkbox
-              let spbranch = document.createElement("li");
-              spbranch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" label-id="${label}" autocomplete="off">${group[0]}`;
+              
+              // // make new copy of speaker checkbox
+              // let spbranch = document.createElement("li");
+              // spbranch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" label-id="${label}" autocomplete="off">${group[0]}`;
               // add to groupInputs
-              var input = spbranch.firstChild;
-              input.addEventListener("click", function () { toggleSegments(peaks, group[0], this.checked); });
-              groupsInputs[group[0]].push(input);
+              
+              //spbranch.innerHTML += document.getElementById(group[0]+'-span').innerHTML;
+              //spbranch.append(document.getElementById(group[0]+'-span'));
+              // console.log(spbranch);
+              // var input = spbranch.firstChild;
+              // input.addEventListener("click", function () { toggleSegments(peaks, group[0], this.checked); });
+              // groupsInputs[group[0]].push(input);
               // create nested group
-              let children = document.createElement("li");
-              children.innerHTML = `<ul id="${group[0]}-nested" label-id="${label}" class="nested"></ul>`;
-              console.log(children);
+              // let children = document.createElement("li");
+              // children.innerHTML = `<ul id="${group[0]}-nested" label-id="${label}" class="nested"></ul>`;
+              // console.log(children);
               // TODO ADD DURATION
               // add segments
-              console.log(document.querySelector(`[id='${group[0]}-nested']`));
-              const segments = document.querySelector(`[id='${group[0]}-nested']`).getElementsByTagName("li");
-              for(var i=0; i < segments.length; i++){
-                // make a copy of each segment
-                const li = document.createElement("li");
-                li.id = segments[i].id;
-                li.style.fontSize = "12px";
-                li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segments[i].id}" label-id="${label}" autocomplete="off">${segments[i].id.replace("peaks.", "")} <a href="#${segments[i].id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segments[i].id}">&#x25B6;</a><a href="#${segments[i].id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segments[i].id}">&#x1f501;</a><ul id="${segments[i].id}-nested" class="nested">Duration: ${(segments[i].endTime - segments[i].startTime).toFixed(2)}</ul>`;
-                children.append(li);
-                // add input and event listener
-                input = li.firstChild;
-                input.addEventListener("click", function () { toggleSegments(peaks, this.dataset.id, this.checked); });
-              };
-              spbranch.append(children);
-              document.getElementById(`${label}-nested`).append(spbranch);
 
+              
+              //console.log(children);
+              // const segments = document.querySelector(`[id='${group[0]}-nested']`).getElementsByTagName("li");
+              // for(var i=0; i < segments.length; i++){
+                // make a copy of each segment
+                // const li = document.createElement("li");
+                // li.id = segments[i].id;
+                // li.style.fontSize = "12px";
+                // li.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${segments[i].id}" label-id="${label}" autocomplete="off">${segments[i].id.replace("peaks.", "")} <a href="#${segments[i].id}" style="color:black;text-decoration:none;font-size:16px"; data-action="play-segment" data-id="${segments[i].id}">&#x25B6;</a><a href="#${segments[i].id}" style="color:black;text-decoration:none;font-size:14px"; data-action="loop-segment" data-id="${segments[i].id}">&#x1f501;</a><ul id="${segments[i].id}-nested" class="nested">Duration: ${(segments[i].endTime - segments[i].startTime).toFixed(2)}</ul>`;
+                // children.append(li);
+                // add input and event listener
+                // input = li.firstChild;
+                // input.addEventListener("click", function () { toggleSegments(peaks, this.dataset.id, this.checked); });
+              //};
+              // spbranch.appendChild(children);
+              // console.log(spbranch);
+              // document.getElementById(`${label}-nested`).append(spbranch);
+              const label = button.getAttribute("label-id");
+              let children = document.querySelector(`[id='${group[0]}-nested']`);
+              document.getElementById(`${label}-nested`).append(children);
+              // add event listeners check children if parent is checked
+              document.querySelector(`[data-id='${group[0]}']`).remove();
+              document.getElementById(group[0]+'-span').remove();
+              
               popupContent.innerHTML = "";
               popup.style.display = "none";
       
