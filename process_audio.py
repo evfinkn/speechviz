@@ -53,10 +53,33 @@ def rms(powers):  # give it a list, and it finds the root mean squared
 
 def snr(signal, noise):
     signal_rms = rms(signal) if not isinstance(signal, float) else signal
-    noise_rms = rms(noise) if not isinstance(noise, float) else noise
+    #noise_rms = rms(noise) if not isinstance(noise, float) else noise
+    noise_rms = noise
     print("Signal RMS is " + str(signal_rms))
     print("Noise RMS is " + str(noise_rms))
     return (signal_rms - noise_rms) / noise_rms
+
+
+def get_noise_rms(signal_samps, noise_times):
+    noise_samps = []
+    for start, stop in signal_samps:
+        left=[noise_times[0]]
+        right=[noise_times[1]]
+        for noiseSegTuple in noise_times:
+            if noiseSegTuple[1] - start < left[1] - start:
+                left = noiseSegTuple
+            if noiseSegTuple[0] - stop < right[0] - stop:
+                right = noiseSegTuple
+        #left = (np.abs(noise_times - start)).argmin()
+        #right = (np.abs(noise_times - stop)).argmin()
+        #if right == left:
+            #right += 1
+        noise_samps.append(left)
+        noise_samps.append(right)
+    noise_samps = np.asarray(noise_samps)
+    noise_samps = samples_from_times(noise_samps)
+    return rms(noise_samps)
+        
 
 
 def samples_from_times(times, samples, sr):
@@ -70,13 +93,9 @@ def samples_from_times(times, samples, sr):
     return samps
 
 
-def snr_from_times(signal_times, samples, sr, *, noise_rms=None):
-    signal_samps = samples_from_times(signal_times, samples, sr)
+def snr_from_times(signal_times, samples, sr, *, noise_times):
+    signal_samps, noise_rms = samples_from_times(signal_times, samples, sr, noise_times)
     signal_powers = np.square(signal_samps)
-    if noise_rms is None:
-        noise_samps = samples_from_times(get_complement_times(signal_times, len(samples) / sr), samples, sr)
-        noise_powers = np.square(noise_samps)
-        noise_rms = rms(noise_powers)
     return snr(signal_powers, noise_rms)
 
 
@@ -119,7 +138,6 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         spkrs_times[spkr].append((start, end))
         diar_times.append((start, end))
     spkrs = sorted(spkrs_segs)
-    print(diar_times)
     
     if verbose:
         print(f"Loop completed in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
@@ -129,11 +147,11 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
     #for key in spkrs_times:
 
     noise_times = get_complement_times(diar_times, len(samples) / sr)
-    print(noise_times)
-    noise_samps = samples_from_times(noise_times, samples, sr)
-    noise_powers = np.square(noise_samps)
-    noise_rms = rms(noise_powers)
-    spkrs_snrs = {spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms=noise_rms) for spkr in spkrs}
+    noise_rms = get_noise_rms(noise_times)
+    #noise_samps = samples_from_times(noise_times, samples, sr)
+    #noise_powers = np.square(noise_samps)
+    #noise_rms = rms(noise_powers)
+    spkrs_snrs = {spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_times=noise_times) for spkr in spkrs}
     
     if verbose:
         print(f"SNRs calculated in {(time.perf_counter() - snr_start_time) * 1000:.4f} milliseconds")
