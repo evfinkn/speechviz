@@ -429,7 +429,7 @@ var runPeaks = async function (fileName) {
       newChanges = true;
     });
 
-    function loadAnnotations(customSegments) {
+    function loadAnnotations() {
       console.log('Loading annotations', fileName);
       const record = {
           'user': user.innerHTML,
@@ -540,7 +540,7 @@ var runPeaks = async function (fileName) {
       saveAnnotations(segmentsFromGroup("Custom-Segments", {"peaks": peaksInstance, "simple": true}));
     });
     document.querySelector('button[data-action="load-annotations"]').addEventListener('click', function(event) {
-      loadAnnotations(segmentsFromGroup("Custom-Segments", {"peaks": peaksInstance, "simple": true}));
+      loadAnnotations();
     });
 
     const segmentsPlay = groupsButtons["Segments"][0];
