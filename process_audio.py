@@ -119,13 +119,15 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         spkrs_times[spkr].append((start, end))
         diar_times.append((start, end))
     spkrs = sorted(spkrs_segs)
-    print(spkrs_times.values())
+    print(diar_times)
     
     if verbose:
         print(f"Loop completed in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
         print("Calculating SNRs")
         snr_start_time = time.perf_counter()
     
+    #for key in spkrs_times:
+
     noise_times = get_complement_times(diar_times, len(samples) / sr)
     noise_samps = samples_from_times(noise_times, samples, sr)
     noise_powers = np.square(noise_samps)
