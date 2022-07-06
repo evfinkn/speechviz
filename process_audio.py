@@ -61,16 +61,16 @@ def snr(signal, noise):
 
 
 def get_noise_rms(signal_times, noise_times):
-    noise_samps = []
+    noise_samps = []    
     for start, stop in signal_times:
-        left=[noise_times[0]]
-        right=[noise_times[1]]
+        left=noise_times[0]
+        right=noise_times[1]
         for noiseSegTuple in noise_times:
             print(left)
             print(noiseSegTuple)
-            if noiseSegTuple[0][1] - start < left[1] - start:
+            if noiseSegTuple[0] - start < left[1] - start:
                 left = noiseSegTuple
-            if noiseSegTuple[0][0] - stop < right[0] - stop:
+            if noiseSegTuple[1] - stop < right[0] - stop:
                 right = noiseSegTuple
         #left = (np.abs(noise_times - start)).argmin()
         #right = (np.abs(noise_times - stop)).argmin()
