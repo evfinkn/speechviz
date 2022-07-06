@@ -94,7 +94,7 @@ def samples_from_times(times, samples, sr):
 
 
 def snr_from_times(signal_times, samples, sr, *, noise_times):
-    signal_samps = samples_from_times(signal_times, samples, sr, noise_times)
+    signal_samps = samples_from_times(signal_times, samples, sr)
     signal_powers = np.square(signal_samps)
     noise_rms = get_noise_rms(signal_samps, noise_times)
     return snr(signal_powers, noise_rms)
