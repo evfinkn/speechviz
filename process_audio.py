@@ -137,7 +137,7 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
     energies = [np.square(s).sum() / len(s) for s in nSegments]
     upThres = np.percentile(energies, 75)
     downThres = np.percentile(energies, 25)
-    index_of_segments_to_keep = (np.where(downThres < energies < upThres)[0])
+    index_of_segments_to_keep = (np.where(energies < upThres)[0])
     noise_powers_iqr = nSegments[index_of_segments_to_keep]
     noise_powers_iqr = np.concatenate(noise_powers_iqr)
     noise_powers_iqr = np.square(noise_powers_iqr)
