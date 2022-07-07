@@ -108,6 +108,7 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
     spkrs_segs = {}
     spkrs_times = {}
     diar_times = []
+    is_speech = np.full(len(samples), False)
     for turn, _, spkr in diar.itertracks(yield_label=True):
         start = turn.start
         end = turn.end
@@ -122,7 +123,19 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         spkrs_times[spkr].append((start, end))
         diar_times.append((start, end))
     spkrs = sorted(spkrs_segs)
-    
+    for srange in librosa.time_to_samples(diar_times):
+        is_speech[srange[0]:srange[1]] = True
+    diar_indices = np.where(is_speech == True)[0]
+    diar_times = [diar_indices[0]]
+    for i in range(1, len(diar_indices) - 1):
+        if diar_indices[i] + 1 != diar_indices[i + 1]:
+            diar_times.append(diar_indices[i])
+        if diar_indices[i] != diar_indices[i - 1] + 1:
+            diar_times.append(diar_indices[i])
+    diar_times.append(diar_indices[-1])
+    diar_times = librosa.samples_to_time(diar_times)
+    diar_times = [(diar_times[i], diar_times[i + 1]) for i in range(0, len(diar_times), 2)]
+
     if verbose:
         print(f"Loop completed in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
         print("Calculating SNRs")
