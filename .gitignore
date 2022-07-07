@@ -3,3 +3,5 @@ public
 data
 speechviz.sqlite3
 audiowaveform.exe
+speechviz.sqlite3-shm
+speechviz.sqlite3-wal

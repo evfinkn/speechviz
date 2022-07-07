@@ -155,7 +155,7 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         if diar_indices[i] != diar_indices[i - 1] + 1:
             diar_times.append(diar_indices[i])
     diar_times.append(diar_indices[-1])
-    diar_times = librosa.samples_to_time(diar_times)
+    diar_times = librosa.samples_to_time(diar_times, sr=sr)
     diar_times = [(diar_times[i], diar_times[i + 1]) for i in range(0, len(diar_times), 2)]
     
     if verbose:
