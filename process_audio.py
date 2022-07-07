@@ -94,7 +94,8 @@ def snr_from_times(signal_times, samples, sr, *, noise_times):
     signal_powers = np.square(signal_samps)
     adjacent_noise = get_noise_times(signal_times, noise_times)
     noise_samps = samples_from_times(adjacent_noise, samples, sr)
-    noise_rms = rms(noise_samps)
+    noise_power = np.square(noise_samps)
+    noise_rms = rms(noise_power)
     return snr(signal_powers, noise_rms)
 
 
@@ -123,6 +124,8 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
     spkrs_segs = {}
     spkrs_times = {}
     diar_times = []
+    is_speech = np.full(len(samples), False)
+
     for turn, _, spkr in diar.itertracks(yield_label=True):
         start = turn.start
         end = turn.end
@@ -137,6 +140,18 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         spkrs_times[spkr].append((start, end))
         diar_times.append((start, end))
     spkrs = sorted(spkrs_segs)
+    for srange in librosa.time_to_samples(diar_times):
+        is_speech[srange[0]:srange[1]] = True
+    diar_indices = np.where(is_speech == True)[0]
+    diar_times = [diar_indices[0]]
+    for i in range(1, len(diar_indices) - 1):
+        if diar_indices[i] + 1 != diar_indices[i + 1]:
+            diar_times.append(diar_indices[i])
+        if diar_indices[i] != diar_indices[i - 1] + 1:
+            diar_times.append(diar_indices[i])
+    diar_times.append(diar_indices[-1])
+    diar_times = librosa.samples_to_time(diar_times)
+    diar_times = [(diar_times[i], diar_times[i + 1]) for i in range(0, len(diar_times), 2)]
     
     if verbose:
         print(f"Loop completed in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
@@ -144,7 +159,7 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         snr_start_time = time.perf_counter()
     
     #for key in spkrs_times:
-    #print(diar_times)
+    print(diar_times)
     noise_times = get_complement_times(diar_times, len(samples) / sr)
     print(noise_times)
     #noise_samps = samples_from_times(noise_times, samples, sr)
