@@ -79,7 +79,7 @@ def get_noise_times(signal_times, noise_times):
             #right += 1
         adjacent_noise.append(left)
         adjacent_noise.append(right)
-    adjacent_noise = np.asarray(noise_samps)
+    adjacent_noise = np.asarray(adjacent_noise)
     return adjacent_noise
         
 
