@@ -144,9 +144,8 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         snr_start_time = time.perf_counter()
     
     #for key in spkrs_times:
-
-    noise_times = get_complement_times(diar_times, len(samples) / sr)
     print(diar_times)
+    noise_times = get_complement_times(diar_times, len(samples) / sr)
     print(noise_times)
     #noise_samps = samples_from_times(noise_times, samples, sr)
     #noise_powers = np.square(noise_samps)
