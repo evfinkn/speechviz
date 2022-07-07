@@ -68,11 +68,11 @@ def get_noise_times(signal_times, noise_times):
         for noiseSegTuple in noise_times:
             if noiseSegTuple[0] - start < left[1] - start:
                 left = noiseSegTuple
-                print("the signal time is: " + str(noiseSegTuple))
+                print("the signal time is: " + str(start))
                 print("the new left noise is: " + str(left))
             if noiseSegTuple[1] - stop < right[0] - stop:
                 right = noiseSegTuple
-                print("the signal time is: " + str(noiseSegTuple))
+                print("the signal time is: " + str(stop))
                 print("the new right noise is:" + str(right))
         #left = (np.abs(noise_times - start)).argmin()
         #right = (np.abs(noise_times - stop)).argmin()
