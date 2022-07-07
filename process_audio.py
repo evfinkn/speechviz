@@ -94,10 +94,10 @@ def snr_from_times(signal_times, samples, sr, *, noise_times):
     signal_powers = np.square(signal_samps)
     adjacent_noise = get_noise_times(signal_times, noise_times)
     noise_samps = samples_from_times(adjacent_noise, samples, sr)
-    print("Before noise rms was: " str(rms(noise_samps)))
+    print("Before noise rms was: " + str(rms(noise_samps)))
     noise_power = np.square(noise_samps)
     noise_rms = rms(noise_power)
-    print("After noise rms was: " str(noise_rms))
+    print("After noise rms was: " + str(noise_rms))
     return snr(signal_powers, noise_rms)
 
 
