@@ -98,6 +98,7 @@ def snr_from_times(signal_times, samples, sr, *, noise_times):
     print(noise_samps)
     print("Before noise rms was: " + str(rms(noise_samps)))
     noise_power = np.square(noise_samps)
+    print(noise_power)
     noise_rms = rms(noise_power)
     print("After noise rms was: " + str(noise_rms))
     return snr(signal_powers, noise_rms)
@@ -144,7 +145,7 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
         spkrs_times[spkr].append((start, end))
         diar_times.append((start, end))
     spkrs = sorted(spkrs_segs)
-    for srange in librosa.time_to_samples(diar_times):
+    for srange in librosa.time_to_samples(diar_times, sr=sr):
         is_speech[srange[0]:srange[1]] = True
     diar_indices = np.where(is_speech == True)[0]
     diar_times = [diar_indices[0]]
