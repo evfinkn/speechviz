@@ -77,6 +77,7 @@ def get_noise_times(signal_times, noise_times):
         adjacent_noise.append(left)
         adjacent_noise.append(right)
     adjacent_noise = np.asarray(adjacent_noise)
+    print(adjacent_noise)
     return adjacent_noise
         
 
@@ -96,7 +97,9 @@ def snr_from_times(signal_times, samples, sr, *, noise_times):
     signal_samps = samples_from_times(signal_times, samples, sr)
     signal_powers = np.square(signal_samps)
     adjacent_noise = get_noise_times(signal_times, noise_times)
+    print(len(adjacent_noise))
     noise_samps = samples_from_times(adjacent_noise, samples, sr)
+    print(len(noise_samps))
     noise_rms = rms(noise_samps)
     return snr(signal_powers, noise_rms)
 
