@@ -66,7 +66,6 @@ def get_noise_times(signal_times, noise_times):
         left=noise_times[0]
         right=noise_times[1]
         for noiseSegTuple in noise_times:
-            print(noiseSegTuple)
             if abs(noiseSegTuple[0] - start) < left[1] - start:
                 left = noiseSegTuple
                 print("the signal time is: " + str(start))
