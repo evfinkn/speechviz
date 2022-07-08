@@ -46,6 +46,7 @@ const runPeaks = async function (fileName) {
   const segmentsFromGroup = function (group, {visible = false, hidden = false, peaks = undefined, sort = false, simple = false} = {}) {
     let segments = [];
     if (peaks) {  // get segments from peaks instead of visibleSegments or hiddenSegments
+      console.log(peaks.segments.getSegments());
       segments = peaks.segments.getSegments().filter(segment => segment.path.includes(group));
     }
     if (!(group in visibleSegments)) {  // group is a group of groups
@@ -214,8 +215,14 @@ const runPeaks = async function (fileName) {
     popupContent.appendChild(closeButton);
   }
 
-  const addToLabel = function(peaks, label, group) {
-    const segments = segmentsFromGroup(group, { "peaks": peaks });
+  const addToLabel = function(peaks, label, group, loading) {
+    let segments;
+    if (loading){
+      segments = segmentsFromGroup(group, { "peaks": peaks, "hidden": true });
+    }
+    else{
+      segments = segmentsFromGroup(group, { "peaks": peaks});
+    }
 
     for (let segment of segments) {
       const copiedSegment = peaks.segments.add({
@@ -229,9 +236,6 @@ const runPeaks = async function (fileName) {
     }
 
     document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
-
-    popupContent.innerHTML = "";
-    popup.style.display = "none";
   }
 
   const renderSegment = function (peaks, segment, group, path, {removable = false, treeText = null} = {}) {
@@ -316,7 +320,8 @@ const runPeaks = async function (fileName) {
           document.getElementsByName(group[0]).forEach(function(button) {
             button.addEventListener("click", function () {
               const label = button.getAttribute("label-id");
-              addToLabel(peaks, label, group[0]);
+              addToLabel(peaks, label, group[0], false);
+              saveLabels(label, group[0]);
             });
           });
         });
@@ -546,6 +551,28 @@ const runPeaks = async function (fileName) {
     };
     //#endregion
 
+    request.open('POST', 'loadlabels', true);
+    request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    
+    request.send(json)
+    request.onload = function () {
+      let jsonData = JSON.parse(request.response);
+      for (let i = 0; i < jsonData.length; i++) {
+        var label = jsonData[i]['label'];
+        var speakers = jsonData[i]['speakers'].split("|");
+        console.log(speakers);
+        if (!labels.includes(label)){ //if this label isn't already in add it
+          labels.push(label);
+          labelsColors[label] = getRandomColor();
+          renderGroup(peaksInstance, label, ["Segments", "Labeled-Speakers"], {renderEmpty: true});
+          console.log("Added " + label + " to labels");
+        }
+        for (let speaker of speakers){
+          addToLabel(peaksInstance, label, speaker, true);
+        }
+      }
+    };
+
     peaksInstance.on("segments.dragend", function (event) {
       const segment = event.segment;
       const segmentSpan = segment.durationSpan;
@@ -681,5 +708,26 @@ window.onload = function() {
       return confirmationMessage;
   });
 };
+
+function saveLabels(label, speaker) {
+  console.log('Saving label', fileName);
+  const record = {
+    'user': user.innerHTML,
+    'filename': fileName,
+    'label': label,
+    'speaker': speaker
+  }
+
+  const json = JSON.stringify(record)
+  console.log(json)
+  var request = new XMLHttpRequest()
+  request.open('POST', 'savelabels', true);
+  request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+  request.send(json)
+  request.onload = function() {
+      // done
+      console.log('Labels saved')
+  };
+}
 
 runPeaks(fileName);
