@@ -472,10 +472,23 @@ const runPeaks = async function (fileName) {
       newChanges = true;
     });
 
-    //getting z-scores for snrs and durations
+    //getting z-scores for snrs and durations, sorting via highest to lowest snrs
     var snrMean = 0;
     var durMean = 0;
     var counter = 0;
+    var snrArray = Object.entries(snrs);
+    for (let i = 0; i < snrArray.length; i++){
+      for (let j = 0; j < snrArray.length - i - 1; j++){
+        if (snrArray[j+1][1] > snrArray[j][1]){
+          [snrArray[j + 1],snrArray[j]] = [snrArray[j],snrArray[j + 1]]
+        }
+      }
+    }
+
+    for (let i = 0; i < snrArray.length; i++){
+      document.getElementById(`${snrArray[i][0]}-span`).innerHTML += "\n num. " + String(i+1) + " snr";
+    }
+
     for (var key in snrs){
       counter++;
       snrMean += snrs[key];
@@ -515,8 +528,9 @@ const runPeaks = async function (fileName) {
         }
       }
     }
+
     var primarySpeakerSpan = document.getElementById(`${maxSpeaker}-span`);
-    primarySpeakerSpan.style = "color:violet"
+    primarySpeakerSpan.style = "color:violet";
 
     document.querySelector('button[data-action="save-annotations"]').addEventListener('click', function(event) {
       saveAnnotations(segmentsFromGroup("Custom-Segments", {"peaks": peaksInstance, "simple": true}));
