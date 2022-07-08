@@ -10,6 +10,10 @@ var viz = require('./routes/viz-route');
 var login = require('./routes/login-route');
 var app = express();
 
+var Database = require('better-sqlite3');
+var db = new Database("speechviz.sqlite3");
+
+
 // use sessions
 var session = require('express-session');
 app.use(session({
@@ -55,6 +59,49 @@ app.get("/filelist", (req, res) => {
 });
 
 app.get(/\/(audio|segments|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
+
+app.use('/savelabels/', function(req, res) {
+  /**
+    Saves the annotations to the database
+    Annotate.html will make an HTTP POST that contains all the annotations.
+    The body of the request include all the parameters encoded in JSON
+  **/
+  console.log('---- save labels ----');
+
+  let filename = req.body['filename'];
+  let label = req.body['label'];
+  let speaker = req.body['speaker'];
+  //let points = req.body['points'];
+  let user = req.body['user'];
+
+  // if (user == 'admin') {
+  //   console.log('admin cannot do removes')
+  //   res.end();
+  //   return;
+  // }
+
+  //row = db.prepare('SELECT id FROM wavefiles WHERE audiofile=?').get(filename);
+  //fileid = row.id
+  //console.log('filename', filename, '==>', fileid)
+
+  var userid = db.prepare('SELECT id FROM users WHERE user=?').get([user]);
+  console.log('user', user, '==>', userid);
+
+  var r = db.prepare('SELECT speakers FROM labels where user_id=? AND audiofile=?').get([userid.id, filename]);
+  console.log(r);
+
+  if (r != null){
+    r.speakers += "|" + speaker;
+    db.prepare('UPDATE labels SET speakers=? WHERE user_id=? AND audiofile=?').run([r.speakers, userid.id, filename]);
+  }
+  else{
+    db.prepare('INSERT INTO labels(user_id,audiofile,label,speakers) VALUES(?,?,?,?)').run([userid.id, filename, label, speaker]);
+  }
+
+  res.end();
+  console.log('---- save annotations ---- (end)');
+})
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

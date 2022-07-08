@@ -32,6 +32,17 @@ def init_database():
         FOREIGN KEY(user_id) references users(id)
     )''')
 
+    #create labels table
+    c.execute('''CREATE TABLE IF NOT EXISTS labels(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        audiofile TEXT,
+        user_id INTEGER,
+        label TEXT,
+        speakers TEXT,
+        UNIQUE(id),
+        FOREIGN KEY(user_id) references users(id)
+    )''')
+
     conn.close()
 
 if __name__ == "__main__":

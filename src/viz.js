@@ -101,7 +101,6 @@ var runPeaks = async function (fileName) {
     closeButton.id = "close";
     closeButton.innerHTML = "&times";
     popupContent.appendChild(closeButton);
-
   }
 
   const renderGroup = function (peaks, group, path) {
@@ -122,7 +121,7 @@ var runPeaks = async function (fileName) {
 
       // event listener for clicking on a speaker
       document.getElementById(`${group[0]}-button`).addEventListener("click", function(){
-        initPopup(group[0]);  
+        initPopup(group[0]);
         var popup = document.getElementById("popup");
         var popupContent = document.getElementById("popup-content");
         popup.style.display = "block";
@@ -181,7 +180,8 @@ var runPeaks = async function (fileName) {
               
               popupContent.innerHTML = "";
               popup.style.display = "none";
-      
+
+              saveLabels(label, group[0]);
             });
           });
           
@@ -530,6 +530,29 @@ var runPeaks = async function (fileName) {
   });
 }
 
+
 const urlParams = new URLSearchParams(window.location.search);
 const fileName = urlParams.get("audiofile");
+var user = document.getElementById("user");
+
+function saveLabels(label, speaker) {
+  console.log('Saving label', fileName);
+  const record = {
+    'user': user.innerHTML,
+    'filename': fileName,
+    'label': label,
+    'speaker': speaker
+  }
+
+  const json = JSON.stringify(record)
+  console.log(json)
+  var request = new XMLHttpRequest()
+  request.open('POST', 'savelabels', true);
+  request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+  request.send(json)
+  request.onload = function() {
+      // done
+      console.log('Labels saved')
+  };
+}
 runPeaks(fileName);
