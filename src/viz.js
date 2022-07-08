@@ -46,7 +46,6 @@ const runPeaks = async function (fileName) {
   const segmentsFromGroup = function (group, {visible = false, hidden = false, peaks = undefined, sort = false, simple = false} = {}) {
     let segments = [];
     if (peaks) {  // get segments from peaks instead of visibleSegments or hiddenSegments
-      console.log(peaks.segments.getSegments());
       segments = peaks.segments.getSegments().filter(segment => segment.path.includes(group));
     }
     if (!(group in visibleSegments)) {  // group is a group of groups
@@ -236,13 +235,15 @@ const runPeaks = async function (fileName) {
     }
 
     document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
+    popupContent.innerHTML = "";
+    popup.style.display = "none";
   }
 
   const renderSegment = function (peaks, segment, group, path, {removable = false, treeText = null} = {}) {
     // create the tree item for the segment
     const li = document.createElement("li");
     li.style.fontSize = "12px";
-    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off" checked><span title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${treeText ? treeText : segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${treeText ? treeText : segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
 
     // segment checkboxes
@@ -265,6 +266,26 @@ const runPeaks = async function (fileName) {
     visibleSegments[group][segment.id] = segment;
 
     if (segment.editable || removable) {
+      let temp = document.getElementById(`${segment.id}-span`)
+      document.getElementById(`${segment.id}-span`).outerHTML = '<button id="'+segment.id+'-button" class="nolink">'+ temp.outerHTML +'</button>';
+      // rename segment
+      document.getElementById(`${segment.id}-span`).addEventListener('click', function(){
+        // change innerHTML to an input box
+        console.log(document.getElementById(`${segment.id}-span`).innerHTML);
+        document.getElementById(`${segment.id}-span`).innerHTML = "<input type='text' id='"+ segment.id +"-rename' value='"+ temp.innerHTML + "'>";
+        // rename segment when "enter" is pressed
+        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function(event) {
+          if (event.key === "Enter") {
+            let newLabel = document.getElementById(`${segment.id}-rename`).value;
+            // switch back to text with new name
+            temp.innerHTML = newLabel;
+            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
+            segment.update({"labelText": newLabel}); 
+            console.log(segment);
+          }
+        });
+      });
+
       const remove = htmlToElement(`<a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a>`);
       loop.after(remove);
       const parent = document.getElementById(group);
