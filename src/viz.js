@@ -201,17 +201,31 @@ const runPeaks = async function (fileName) {
 
   const popup = document.getElementById("popup");
   const popupContent = document.getElementById("popup-content");
-  
-  const initPopup = function(){
-    const header = document.createElement("h2");
-    header.innerHTML = "Choose a label: ";
-    popupContent.appendChild(header);
+  const initPopup = function(peaks, group) {
+    popup.style.display = "block";
+    popupContent.appendChild(htmlToElement("<h2>Choose a label: </h2>"));
+    popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
 
-    const closeButton = document.createElement("a");
-    closeButton.classList.add("close");
-    closeButton.id = "close";
-    closeButton.innerHTML = "&times";
-    popupContent.appendChild(closeButton);
+    labels.forEach(function (label) {
+      // add radio button
+      const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+      popupContent.append(radio);
+      popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+      radio.addEventListener("change", function() {
+        addToLabel(peaks, label, group);
+        saveLabels(label, group);
+        popupContent.innerHTML = "";
+        popup.style.display = "none";
+      });
+    });
+
+    // close popup button
+    document.querySelectorAll(".close").forEach(function (button) {
+      button.addEventListener("click", function() { 
+        popupContent.innerHTML = "";
+        popup.style.display = "none";
+      });
+    });
   }
 
   const addToLabel = function(peaks, label, group, loading) {
@@ -235,15 +249,13 @@ const runPeaks = async function (fileName) {
     }
 
     document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
-    popupContent.innerHTML = "";
-    popup.style.display = "none";
   }
 
   const renderSegment = function (peaks, segment, group, path, {removable = false, treeText = null} = {}) {
     // create the tree item for the segment
     const li = document.createElement("li");
     li.style.fontSize = "12px";
-    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${treeText ? treeText : segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-id="${segment.id}" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${treeText ? treeText : segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
 
     // segment checkboxes
@@ -323,42 +335,16 @@ const runPeaks = async function (fileName) {
       spanHTML = `<button id="${group[0]}-button" class="nolink"><span id="${group[0]}-span" style="font-size:18px;" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span></button>`
       snrs[group[0]] = group[2];
 
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupLoopIcon}</a><ul id="${group[0]}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group[0]}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupLoopIcon}</a><ul id="${group[0]}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
 
       // event listener for clicking on a speaker
-      const groupButton = document.getElementById(`${group[0]}-button`);
-      document.getElementById(`${group[0]}-button`).addEventListener("click", function() {
-        initPopup();  
-        popup.style.display = "block";
-
-        labels.forEach(label => {
-          // add radio button
-          const row = `<input type="radio" id="${group[0]}" name="${group[0]}" data-action="toggle-segment" label-id="${label}" autocomplete="off">${label}`;
-          popupContent.innerHTML += row;
-
-          // event listener for clicking a radio button
-          document.getElementsByName(group[0]).forEach(function(button) {
-            button.addEventListener("click", function () {
-              const label = button.getAttribute("label-id");
-              addToLabel(peaks, label, group[0], false);
-              saveLabels(label, group[0]);
-            });
-          });
-        });
-        // close popup function
-        document.querySelectorAll(".close").forEach(function (button) {
-          button.addEventListener("click", function() { 
-            popupContent.innerHTML = "";
-            popup.style.display = "none";
-          });
-        });       
-      });    
+      document.getElementById(`${group[0]}-button`).addEventListener("click", function() { initPopup(peaks, group[0]); });    
     }
     else {
       spanHTML = `<span id="${group[0]}-span" style="font-size:18px;">${group[0]}</span>`;
 
-      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id="${group[0]}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupLoopIcon}</a><ul id="${group[0]}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group[0]}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupLoopIcon}</a><ul id="${group[0]}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
     }
 
@@ -498,7 +484,6 @@ const runPeaks = async function (fileName) {
     });
     //#endregion
 
-    // Context menus
     peaksInstance.on('segments.contextmenu', function (event) { event.evt.preventDefault(); });
     peaksInstance.on('overview.contextmenu', function (event) { event.evt.preventDefault(); });
 
@@ -511,10 +496,12 @@ const runPeaks = async function (fileName) {
     document.querySelector("button[data-action='add-labeled-speaker']").addEventListener('click',function() {
       // get the label name from the textbox 
       const label = labelInput.value;
-      labelInput.value = ""; // clear text box after submitting
-      labels.push(label);
-      labelsColors[label] = getRandomColor();
-      renderGroup(peaksInstance, label, ["Segments", "Labeled-Speakers"], {renderEmpty: true});
+      if (!labels.includes(label)) {
+        labelInput.value = "";  // clear text box after submitting
+        labels.push(label);
+        labelsColors[label] = getRandomColor();
+        renderGroup(peaksInstance, label, ["Segments", "Labeled-Speakers"], {renderEmpty: true});
+      }
     });
 
     //#region add custom segment
