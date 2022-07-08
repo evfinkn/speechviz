@@ -118,8 +118,9 @@ ul, #Segments {
 }
 
 .nolink {
-  background:none; 
-  border:none; 
+  background: none; 
+  border: none; 
+  text-decoration: none;
 }
 
 .popup {
