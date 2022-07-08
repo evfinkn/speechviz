@@ -278,20 +278,19 @@ const runPeaks = async function (fileName) {
     visibleSegments[group][segment.id] = segment;
 
     if (segment.editable || removable) {
-      let temp = document.getElementById(`${segment.id}-span`)
-      document.getElementById(`${segment.id}-span`).outerHTML = '<button id="'+segment.id+'-button" class="nolink">'+ temp.outerHTML +'</button>';
+      let segmentSpan = document.getElementById(`${segment.id}-span`)
+      segmentSpan.outerHTML = '<button id="'+segment.id+'-button" class="nolink">'+ temp.outerHTML +'</button>';
       // rename segment
-      document.getElementById(`${segment.id}-span`).addEventListener('click', function(){
+      segmentSpan.addEventListener('click', function(){
         // change innerHTML to an input box
-        console.log(document.getElementById(`${segment.id}-span`).innerHTML);
-        document.getElementById(`${segment.id}-span`).innerHTML = "<input type='text' id='"+ segment.id +"-rename' value='"+ temp.innerHTML + "'>";
+        segmentSpan.innerHTML = "<input type='text' id='"+ segment.id +"-rename' value='"+ temp.innerHTML + "'>";
         // rename segment when "enter" is pressed
         document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function(event) {
           if (event.key === "Enter") {
             let newLabel = document.getElementById(`${segment.id}-rename`).value;
             // switch back to text with new name
             temp.innerHTML = newLabel;
-            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
+            segmentSpan.innerHTML = newLabel;
             segment.update({"labelText": newLabel}); 
             console.log(segment);
           }
