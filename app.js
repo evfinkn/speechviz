@@ -87,7 +87,7 @@ app.use('/savelabels/', function(req, res) {
   var userid = db.prepare('SELECT id FROM users WHERE user=?').get([user]);
   console.log('user', user, '==>', userid);
 
-  var r = db.prepare('SELECT speakers FROM labels where user_id=? AND audiofile=?').get([userid.id, filename]);
+  var r = db.prepare('SELECT speakers FROM labels where user_id=? AND audiofile=? AND label=?').get([userid.id, filename, label]);
   console.log(r);
 
   if (r != null){
