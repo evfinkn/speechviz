@@ -12,6 +12,7 @@
 ### Interface
  - [ ] Custom labeling
  - [ ] Make renderGroup take group, segments, and snr instead of an array of the three
+ - [x] rename custom segments
  - [x] Make custom segments save-able
  - [x] Make the "Custom-Segments" tree branch hidden when there are no custom segments
  - [x] Play/loop button on segment groups
