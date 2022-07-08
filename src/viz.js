@@ -248,15 +248,15 @@ const runPeaks = async function (fileName) {
         // change innerHTML to an input box
         console.log(document.getElementById(`${segment.id}-span`).innerHTML);
         document.getElementById(`${segment.id}-span`).innerHTML = "<input type='text' id='"+ segment.id +"-rename' value='"+ temp.innerHTML + "'>";
-        // when you hit enter
+        // rename segment when "enter" is pressed
         document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function(event) {
-          // If the user presses the "Enter" key on the keyboard
           if (event.key === "Enter") {
             let newLabel = document.getElementById(`${segment.id}-rename`).value;
             // switch back to text with new name
             temp.innerHTML = newLabel;
-            document.getElementById(`${segment.id}-span`).innerHTML = newLabel; // change back
-            segment.labelText = newLabel;
+            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
+            segment.update({"labelText": newLabel}); 
+            console.log(segment);
           }
         });
       });
@@ -544,17 +544,19 @@ const runPeaks = async function (fileName) {
     request.send(json)
     request.onload = function () {
         let jsonData = JSON.parse(request.response);
+        const labelRegex = /Custom Segment /;
         for (let i = 0; i < jsonData.length; i++) {
           customSegmentsBranch.hidden = false;
-          const label = 'Custom Segment ' + segmentCounter++;
+          const label = jsonData[i]["label"];
+          if (label.match(labelRegex)) { segmentCounter++; }
           let segment = {
             startTime: jsonData[i]['start'],
             endTime: jsonData[i]['end'],
-            labelText: jsonData[i]['label'],
+            labelText: label,
             editable: true
           };
           segment = peaksInstance.segments.add(segment);
-          renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
+          renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"], {"treeText": label});
           customDuration += jsonData[i]['end'] - jsonData[i]['start'];
           customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
         }
