@@ -102,6 +102,30 @@ app.use('/savelabels/', function(req, res) {
   console.log('---- save annotations ---- (end)');
 })
 
+app.use('/loadlabels/', function(req, res){
+  /**
+    Loads the annotations from the database for a given user and file
+    When the annotate.html loads, it will make request to load all the annotatiosn for the current file
+  **/
+    console.log('---- load labels ----')
+    //console.log(req.body)
+    let filename = req.body['filename']
+    let user = req.body['user']
+    console.log('user', user, 'audiofile', audiofile)
+  
+    // obtain the id of the user based on its user  
+    var userid = db.prepare('SELECT id FROM users WHERE user=?').get(user).id
+    console.log('user', user, '==>', userid)
+  
+    r = db.prepare('SELECT label, speakers FROM annotations where user_id=? AND audiofile=?').all([userid, filename])
+
+    console.log('retrieved', r.length, 'annotations')
+    console.log(r)
+  
+    res.send(r)
+    console.log(`---- load labels ---- (end) total=${r.length}`)
+    res.end()
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
