@@ -524,18 +524,20 @@ const runPeaks = async function (fileName) {
     request.send(json)
     request.onload = function () {
         let jsonData = JSON.parse(request.response);
+        const labelRegex = /Custom Segment /;
         for (let i = 0; i < jsonData.length; i++) {
           customSegmentsBranch.hidden = false;
-          const label = 'Custom Segment ' + segmentCounter++;
+          const label = jsonData[i]["label"];
+          if (label.match(labelRegex)) { segmentCounter++; }
           let segment = {
-            startTime: jsonData[i]['start'],
-            endTime: jsonData[i]['end'],
-            labelText: jsonData[i]['label'],
+            startTime: jsonData[i]["start"],
+            endTime: jsonData[i]["end"],
+            labelText: label,
             editable: true
           };
           segment = peaksInstance.segments.add(segment);
           renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
-          customDuration += jsonData[i]['end'] - jsonData[i]['start'];
+          customDuration += jsonData[i]["end"] - jsonData[i]["start"];
           customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
         }
     };
