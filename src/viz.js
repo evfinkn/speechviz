@@ -214,6 +214,26 @@ const runPeaks = async function (fileName) {
     popupContent.appendChild(closeButton);
   }
 
+  const addToLabel = function(peaks, label, group) {
+    const segments = segmentsFromGroup(group, { "peaks": peaks });
+
+    for (let segment of segments) {
+      const copiedSegment = peaks.segments.add({
+        "startTime": segment.startTime,
+        "endTime": segment.endTime,
+        "editable": segment.editable,
+        "color": labelsColors[label],
+        "labelText": label
+      });
+      renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers", label], { "removable": true, "treeText": segment.id.replace("peaks.", "") });
+    }
+
+    document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
+
+    popupContent.innerHTML = "";
+    popup.style.display = "none";
+  }
+
   const renderSegment = function (peaks, segment, group, path, {removable = false, treeText = null} = {}) {
     // create the tree item for the segment
     const li = document.createElement("li");
@@ -303,7 +323,7 @@ const runPeaks = async function (fileName) {
 
       // event listener for clicking on a speaker
       const groupButton = document.getElementById(`${group[0]}-button`);
-      groupButton.addEventListener("click", function() {
+      document.getElementById(`${group[0]}-button`).addEventListener("click", function() {
         initPopup();  
         popup.style.display = "block";
 
@@ -313,29 +333,12 @@ const runPeaks = async function (fileName) {
           popupContent.innerHTML += row;
 
           // event listener for clicking a radio button
-          document.getElementsByName(group[0]).forEach(function(button) {           
+          document.getElementsByName(group[0]).forEach(function(button) {
             button.addEventListener("click", function () {
               const label = button.getAttribute("label-id");
-              
-              const segments = segmentsFromGroup(group[0], { "peaks": peaks });
-
-              for (let segment of segments) {
-                const copiedSegment = peaks.segments.add({
-                  "startTime": segment.startTime,
-                  "endTime": segment.endTime,
-                  "editable": segment.editable,
-                  "color": labelsColors[label],
-                  "labelText": label
-                });
-                renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers", label], { "removable": true });
-              }
-
-              groupButton.firstElementChild.innerHTML += ` (${label})`;
-
-              popupContent.innerHTML = "";
-              popup.style.display = "none";   
+              addToLabel(peaks, label, group[0]);
             });
-          });         
+          });
         });
         // close popup function
         document.querySelectorAll(".close").forEach(function (button) {
@@ -550,14 +553,14 @@ const runPeaks = async function (fileName) {
           const label = jsonData[i]["label"];
           if (label.match(labelRegex)) { segmentCounter++; }
           let segment = {
-            startTime: jsonData[i]['start'],
-            endTime: jsonData[i]['end'],
+            startTime: jsonData[i]["start"],
+            endTime: jsonData[i]["end"],
             labelText: label,
             editable: true
           };
           segment = peaksInstance.segments.add(segment);
           renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"], {"treeText": label});
-          customDuration += jsonData[i]['end'] - jsonData[i]['start'];
+          customDuration += jsonData[i]["end"] - jsonData[i]["start"];
           customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
         }
     };
