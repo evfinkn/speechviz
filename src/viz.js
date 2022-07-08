@@ -541,25 +541,28 @@ const record = {
 }
 const json = JSON.stringify(record)
 var request = new XMLHttpRequest()
-request.open('POST', 'loadannotations', true);
+request.open('POST', 'loadlabels', true);
 request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
 
 request.send(json)
 request.onload = function () {
   let jsonData = JSON.parse(request.response);
   for (let i = 0; i < jsonData.length; i++) {
-    customSegmentsBranch.hidden = false;
-    const label = 'Custom Segment ' + segmentCounter++;
-    let segment = {
-      startTime: jsonData[i]['start'],
-      endTime: jsonData[i]['end'],
-      labelText: jsonData[i]['label'],
-      editable: true
-    };
-    segment = peaksInstance.segments.add(segment);
-    renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
-    customDuration += jsonData[i]['end'] - jsonData[i]['start'];
-    customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
+    label = jsonData[i]['label'];
+    speakers = jsonData[i]['speakers'].split("|")
+    if (!labels.includes(label)){ //if this label isn't already in add it
+      labels.push(label);
+      console.log("Added " + label + " to labels");
+      const branch = document.createElement("li");
+      branch.innerHTML = `<input type="checkbox" data-action="toggle-segment" data-id=${label} unchecked autocomplete="off">${label}<ul id="${label}-nested" class="nested active"></ul>`;
+      document.getElementById("Labeled-Speakers-nested").append(branch);
+      
+      const treeInput = branch.firstChild;
+      const tableInput = head.firstChild.firstChild;
+      groupsInputs[label] = [treeInput, tableInput];
+      treeInput.addEventListener("click", function () { toggleSegments(peaksInstance, label, this.checked); });
+    }
+    
   }
 };
 
