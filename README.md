@@ -8,6 +8,7 @@ This will take an audio file and visualize various characteristics. Currently, y
 git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
 cd speechviz
 npm install
+npm run mkdir
 python db_init.py
 ```
 To use process_audio and the pipeline, you'll need to first make a conda environment:
@@ -16,11 +17,12 @@ conda create -n ENVNAME
 conda activate ENVNAME
 conda install pytorch numpy torchvision torchaudio cudatoolkit=11.3 -c pytorch
 ```
-Then, install [pyannotate.audio](https://github.com/pyannote/pyannote-audio) with pip:
+Then, install [pyannotate.audio](https://github.com/pyannote/pyannote-audio) and speechbrain with pip:
 ```
 pip install https://github.com/pyannote/pyannote-audio/archive/develop.zip
+pip install speechbrain
 ```
-You also need to install [audiowaveform](https://github.com/pyannote/pyannote-audio) and [ffmpeg](https://ffmpeg.org/download.html).
+You also need to install [audiowaveform](https://github.com/bbc/audiowaveform#installation) and [ffmpeg](https://ffmpeg.org/download.html).
 
 ## Usage
 Before running the server, you'll need to process some audio. To do so, run:
