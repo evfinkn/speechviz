@@ -214,11 +214,11 @@ const runPeaks = async function (fileName) {
     popupContent.appendChild(closeButton);
   }
 
-  const renderSegment = function (peaks, segment, group, path, {removable = false} = {}) {
+  const renderSegment = function (peaks, segment, group, path, {removable = false, treeText = null} = {}) {
     // create the tree item for the segment
     const li = document.createElement("li");
     li.style.fontSize = "12px";
-    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off" checked><span title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-action="toggle-segment" data-id="${segment.id}" autocomplete="off" checked><span title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${treeText ? treeText : segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
 
     // segment checkboxes
@@ -504,7 +504,7 @@ const runPeaks = async function (fileName) {
         editable: true
       };
       segment = peaksInstance.segments.add(segment);
-      renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
+      renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"], {"treeText": label});
       customDuration += 10;
       customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
       newChanges = true;
