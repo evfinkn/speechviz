@@ -1,5 +1,5 @@
 import Peaks from "peaks.js";
-import { getRandomColor, htmlToElement } from "./util";
+import { getRandomColor, htmlToElement, compareProperty } from "./util";
 const feather = require('feather-icons');
 
 const audio = document.getElementById('audio');
@@ -62,7 +62,7 @@ const runPeaks = async function (fileName) {
       if (visible) { segments = Object.values(visibleSegments[group]); }  // get segments from visibleSegments
       if (hidden) { segments = segments.concat(Object.values(hiddenSegments[group])); }  // get segments from hiddenSegments
     }
-    if (sort) { segments.sort((seg1, seg2) => seg1.startTime > seg2.startTime); }  // sort by start time
+    if (sort) { segments.sort((seg1, seg2) => compareProperty(seg1, seg2, "startTime")); }  // sort by start time
     if (simple) {
       segments = segments.map(seg => ({ "id": seg.id, "startTime": seg.startTime, "endTime": seg.endTime, "labelText": seg.labelText }));
     }

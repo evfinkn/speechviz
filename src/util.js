@@ -11,6 +11,20 @@ const htmlToElement = function (html) {
     return template.content.firstElementChild;
 }
 
+// property is the segment property to sort by, i.e. 'startTime' or 'labelText'
+const compareProperty = function (obj1, obj2, property) {
+    if (obj1[property] > obj2[property]) { return 1; }
+    if (obj1[property] < obj2[property]) { return -1; }
+    return 0;
+}
 
-export { getRandomColor, htmlToElement };
+const propertiesEqual = function (obj1, obj2, properties) {
+    for (let prop of properties) {
+        if (obj1[prop] != obj2[prop]) { return false; }
+    }
+    return true;
+}
+
+
+export { getRandomColor, htmlToElement, compareProperty, propertiesEqual };
 
