@@ -259,6 +259,8 @@ const runPeaks = async function (fileName) {
 
     document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
     toggleSegments(peaks, group, false);
+    document.getElementById(`${label}-nested`).classList.add("active");
+    document.getElementById("Labeled-Speakers-nested").classList.add("active");
   }
   //#endregion
 
