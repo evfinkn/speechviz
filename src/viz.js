@@ -42,8 +42,7 @@ const runPeaks = async function (fileName) {
   
   // array of all labels for labeled speakers
   const labels = [];
-  // dictionary of colors used for a label's segments     {label: color}
-  // each color is a 6-digit hex color code (i.e. '#ffffff' or '#a54e76')
+  // dictionary of colors used for a label's segments     {label: '#rrggbb'}
   const labelsColors = {};
 
   const segmentsFromGroup = function (group, { visible = false, hidden = false, peaks = undefined, sort = false, simple = false } = {}) {
