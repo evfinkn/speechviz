@@ -574,6 +574,7 @@ const runPeaks = async function (fileName) {
         customDuration += jsonData[i]["end"] - jsonData[i]["start"];
         customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
       }
+      toggleSegments(peaksInstance, "Custom-Segments", false);
     };
     //#endregion
 
@@ -592,6 +593,7 @@ const runPeaks = async function (fileName) {
           addToLabel(peaksInstance, label, speaker, true);
         }
       }
+      toggleSegments(peaksInstance, "Labeled-Speakers", false);
     };
 
     peaksInstance.on("segments.dragend", function (event) {
