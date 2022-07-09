@@ -44,6 +44,8 @@ const runPeaks = async function (fileName) {
   const labels = [];
   // dictionary of colors used for a label's segments     {label: '#rrggbb'}
   const labelsColors = {};
+  // dictionary of segments added to each label     {label: }
+  const labeled = {}
 
   const segmentsFromGroup = function (group, { visible = false, hidden = false, peaks = undefined, sort = false, simple = false } = {}) {
     let segments = [];
@@ -222,7 +224,6 @@ const runPeaks = async function (fileName) {
       popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
       radio.addEventListener("change", function () {
         addToLabel(peaks, label, group);
-        saveLabels(label, group);
         popupContent.innerHTML = "";
         popup.style.display = "none";
       });
@@ -241,6 +242,7 @@ const runPeaks = async function (fileName) {
     if (!labels.includes(label)) {
       labels.push(label);
       labelsColors[label] = getRandomColor();
+      labeled[label] = [];
       renderGroup(peaks, label, ["Segments", "Labeled-Speakers"], { renderEmpty: true });
     }
   }
@@ -248,27 +250,32 @@ const runPeaks = async function (fileName) {
   const addToLabel = function (peaks, label, group, loading) {
     let segments;
     if (loading) {
-      segments = segmentsFromGroup(group, { "peaks": peaks, "hidden": true });
+      segments = segmentsFromGroup(group, { "hidden": true });
     }
     else {
       segments = segmentsFromGroup(group, { "peaks": peaks });
     }
 
-    for (let segment of segments) {
-      const copiedSegment = peaks.segments.add({
-        "startTime": segment.startTime,
-        "endTime": segment.endTime,
-        "editable": segment.editable,
-        "color": labelsColors[label],
-        "labelText": label
-      });
-      renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers", label], { "removable": true, "treeText": segment.id.replace("peaks.", "") });
-    }
+    if (!labeled[label].includes(group)) {
+      labeled[label].push(group);
+      for (let segment of segments) {
+        const copiedSegment = peaks.segments.add({
+          "startTime": segment.startTime,
+          "endTime": segment.endTime,
+          "editable": segment.editable,
+          "color": labelsColors[label],
+          "labelText": label
+        });
+        renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers", label], { "removable": true, "treeText": segment.id.replace("peaks.", "") });
+      }
 
-    document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
-    toggleSegments(peaks, group, false);
-    document.getElementById(`${label}-nested`).classList.add("active");
-    document.getElementById("Labeled-Speakers-nested").classList.add("active");
+      document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
+      toggleSegments(peaks, group, false);
+      document.getElementById(`${label}-nested`).classList.add("active");
+      document.getElementById("Labeled-Speakers-nested").classList.add("active");
+
+      if (!loading) { saveLabels(label, group); }
+    }
   }
   //#endregion
 
