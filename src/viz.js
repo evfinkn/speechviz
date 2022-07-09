@@ -52,8 +52,11 @@ const runPeaks = async function (fileName) {
       segments = peaks.segments.getSegments().filter(segment => segment.path.includes(group));
     }
     if (!(group in visibleSegments)) {  // group is a group of groups
-      for (let child of groupsCheckboxes[group].dataset.children.split("|")) {
-        segments = segments.concat(segmentsFromGroup(child, arguments[1]));  // get the groups from the children
+      const children = groupsCheckboxes[group].dataset.children;
+      if (children) { 
+        for (let child of children.split("|")) {
+          segments = segments.concat(segmentsFromGroup(child, arguments[1]));  // get the groups from the children
+        }
       }
     }
     else {  // group is a group of segments
@@ -178,7 +181,10 @@ const runPeaks = async function (fileName) {
       }
 
       if (!(group in visibleSegments)) {  // group is a group of groups
-        for (let child of groupCheckbox.dataset.children.split("|")) { toggleSegments(peaks, child, checked); }
+        const children = groupCheckbox.dataset.children;
+        if (children) {
+          for (let child of groupCheckbox.dataset.children.split("|")) { toggleSegments(peaks, child, checked); }
+      }
       }
       else {  // group is a group of segments
         if (checked) {
@@ -334,7 +340,7 @@ const runPeaks = async function (fileName) {
     }
   }
 
-  const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false } = {}) {
+  const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false, groupOfGroups = false } = {}) {
     if (items.length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
 
     const parent = path.at(-1);  // parent needed to find where in tree to nest group
@@ -375,7 +381,7 @@ const runPeaks = async function (fileName) {
     groupsCheckboxes[group] = groupCheckbox;
     groupsButtons[group] = [groupPlay, groupLoop];
 
-    if (!Array.isArray(items[0])) {
+    if (!Array.isArray(items[0]) && !groupOfGroups) {
       hiddenSegments[group] = {};
       visibleSegments[group] = {};
       peaks.segments.add(items).forEach(function (segment) { renderSegment(peaks, segment, group, path); });
@@ -505,7 +511,7 @@ const runPeaks = async function (fileName) {
     peaksInstance.on('overview.contextmenu', function (event) { event.evt.preventDefault(); });
 
     renderGroup(peaksInstance, "Custom-Segments", ["Segments"], { renderEmpty: true });
-    renderGroup(peaksInstance, "Labeled-Speakers", ["Segments"], { renderEmpty: true });
+    renderGroup(peaksInstance, "Labeled-Speakers", ["Segments"], { renderEmpty: true, "groupOfGroups": true });
     for (let [group, items, snr] of importedSegments) {
       renderGroup(peaksInstance, group, ["Segments"], { "items": items, "snr": snr });
     }
