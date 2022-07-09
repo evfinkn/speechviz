@@ -223,6 +223,7 @@ const runPeaks = async function (fileName) {
       popupContent.append(radio);
       popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
       radio.addEventListener("change", function () {
+        if (!labeled[label].includes(group)) { saveLabels(label, group); }
         addToLabel(peaks, label, group);
         popupContent.innerHTML = "";
         popup.style.display = "none";
@@ -273,8 +274,6 @@ const runPeaks = async function (fileName) {
       toggleSegments(peaks, group, false);
       document.getElementById(`${label}-nested`).classList.add("active");
       document.getElementById("Labeled-Speakers-nested").classList.add("active");
-
-      if (!loading) { saveLabels(label, group); }
     }
   }
   //#endregion
