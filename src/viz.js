@@ -228,6 +228,14 @@ const runPeaks = async function (fileName) {
     });
   }
 
+  const addLabel = function (peaks, label) {
+    if (!labels.includes(label)) {
+      labels.push(label);
+      labelsColors[label] = getRandomColor();
+      renderGroup(peaks, label, ["Segments", "Labeled-Speakers"], { renderEmpty: true });
+    }
+  }
+
   const addToLabel = function (peaks, label, group, loading) {
     let segments;
     if (loading) {
@@ -297,7 +305,6 @@ const runPeaks = async function (fileName) {
           }
         });
       });
-
 
       const remove = htmlToElement(`<a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a>`);
       loop.after(remove);
@@ -498,14 +505,8 @@ const runPeaks = async function (fileName) {
     // add labeled speaker
     const labelInput = document.getElementById("label");
     document.querySelector("button[data-action='add-labeled-speaker']").addEventListener('click', function () {
-      // get the label name from the textbox 
-      const label = labelInput.value;
-      if (!labels.includes(label)) {
-        labelInput.value = "";  // clear text box after submitting
-        labels.push(label);
-        labelsColors[label] = getRandomColor();
-        renderGroup(peaksInstance, label, ["Segments", "Labeled-Speakers"], { renderEmpty: true });
-      }
+      addLabel(peaksInstance, labelInput.value);
+      labelInput.value = "";  // clear text box after submitting
     });
 
     //#region add custom segment
@@ -572,13 +573,7 @@ const runPeaks = async function (fileName) {
       for (let i = 0; i < jsonData.length; i++) {
         var label = jsonData[i]['label'];
         var speakers = jsonData[i]['speakers'].split("|");
-        console.log(speakers);
-        if (!labels.includes(label)) { //if this label isn't already in add it
-          labels.push(label);
-          labelsColors[label] = getRandomColor();
-          renderGroup(peaksInstance, label, ["Segments", "Labeled-Speakers"], { renderEmpty: true });
-          console.log("Added " + label + " to labels");
-        }
+        addLabel(peaksInstance, label);
         for (let speaker of speakers) {
           addToLabel(peaksInstance, label, speaker, true);
         }
