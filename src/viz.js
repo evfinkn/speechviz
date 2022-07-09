@@ -64,12 +64,12 @@ const runPeaks = async function (fileName) {
     return segments;
   }
 
+  //#region playing segments and groups
   const segmentPlayIcon = feather.icons.play.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
   const segmentPauseIcon = feather.icons.pause.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
   const segmentLoopIcon = feather.icons.repeat.toSvg({ "width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5 });
   const segmentRemoveIcon = feather.icons.x.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
 
-  //#region playing segments and groups
   const playSegment = function (peaks, segment, loop = false) {
     // Have to put in event listener because need to call
     // peaks.player.pause() to switch other pause buttons 
@@ -278,24 +278,26 @@ const runPeaks = async function (fileName) {
     visibleSegments[group][segment.id] = segment;
 
     if (segment.editable || removable) {
-      let segmentSpan = document.getElementById(`${segment.id}-span`)
-      segmentSpan.outerHTML = '<button id="' + segment.id + '-button" class="nolink">' + temp.outerHTML + '</button>';
+      let temp = document.getElementById(`${segment.id}-span`)
+      document.getElementById(`${segment.id}-span`).outerHTML = '<button id="'+segment.id+'-button" class="nolink">'+ temp.outerHTML +'</button>';
       // rename segment
-      segmentSpan.addEventListener('click', function () {
+      document.getElementById(`${segment.id}-span`).addEventListener('click', function(){
         // change innerHTML to an input box
-        segmentSpan.innerHTML = "<input type='text' id='" + segment.id + "-rename' value='" + temp.innerHTML + "'>";
+        console.log(document.getElementById(`${segment.id}-span`).innerHTML);
+        document.getElementById(`${segment.id}-span`).innerHTML = "<input type='text' id='"+ segment.id +"-rename' value='"+ temp.innerHTML + "'>";
         // rename segment when "enter" is pressed
-        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
+        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function(event) {
           if (event.key === "Enter") {
             let newLabel = document.getElementById(`${segment.id}-rename`).value;
             // switch back to text with new name
             temp.innerHTML = newLabel;
-            segmentSpan.innerHTML = newLabel;
-            segment.update({ "labelText": newLabel });
+            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
+            segment.update({"labelText": newLabel}); 
             console.log(segment);
           }
         });
       });
+
 
       const remove = htmlToElement(`<a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a>`);
       loop.after(remove);
@@ -317,65 +319,66 @@ const runPeaks = async function (fileName) {
     }
   }
 
-  const renderGroup = function (peaks, group, path, { renderEmpty = false } = {}) {
-    if (typeof group == "string") { group = [group, []]; }
-    if (group[1].length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
+  const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false } = {}) {
+    if (items.length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
 
     const parent = path.at(-1);  // parent needed to find where in tree to nest group
     // add group to the parents children
     const parentCheckbox = groupsCheckboxes[parent];
     const parentChildren = parentCheckbox.dataset.children;
-    parentCheckbox.dataset.children = parentChildren === undefined ? group[0] : `${parentChildren}|${group[0]}`;
+    parentCheckbox.dataset.children = parentChildren === undefined ? group : `${parentChildren}|${group}`;
 
     // create the tree item for the group
-    const branch = htmlToElement(`<li id="${group[0]}" style="font-size:18px;"></li>`);
+    const branch = htmlToElement(`<li id="${group}" style="font-size:18px;"></li>`);
     let spanHTML;
-    if (group.length == 3) {
-      spanHTML = `<button id="${group[0]}-button" class="nolink"><span id="${group[0]}-span" style="font-size:18px;" title="${"SNR: " + group[2].toFixed(2)}">${group[0]}</span></button>`
-      snrs[group[0]] = group[2];
+    if (snr) {
+      spanHTML = `<button id="${group}-button" class="nolink"><span id="${group}-span" style="font-size:18px;" title="${"SNR: " + snr.toFixed(2)}">${group}</span></button>`
+      snrs[group] = snr;
 
-      branch.innerHTML = `<input type="checkbox" data-id="${group[0]}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupLoopIcon}</a><ul id="${group[0]}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}</a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
 
       // event listener for clicking on a speaker
-      document.getElementById(`${group[0]}-button`).addEventListener("click", function () { initPopup(peaks, group[0]); });
+      document.getElementById(`${group}-button`).addEventListener("click", function () { initPopup(peaks, group); });
     }
     else {
-      spanHTML = `<span id="${group[0]}-span" style="font-size:18px;">${group[0]}</span>`;
+      spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
 
-      branch.innerHTML = `<input type="checkbox" data-id="${group[0]}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group[0]}">${groupLoopIcon}</a><ul id="${group[0]}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}</a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
     }
 
     // add inputs for group to groupInputs and add event listeners to them
     const groupCheckbox = branch.firstElementChild;
-    groupCheckbox.addEventListener("click", function () { toggleSegments(peaks, group[0], this.checked); });
+    groupCheckbox.addEventListener("click", function () { toggleSegments(peaks, group, this.checked); });
 
     const groupPlay = branch.children[2];
     const groupLoop = branch.children[3];
-    groupPlay.addEventListener("click", function () { playGroup(peaks, group[0]); }, { once: true });
-    groupLoop.addEventListener("click", function () { playGroup(peaks, group[0], true); }, { once: true });
+    groupPlay.addEventListener("click", function () { playGroup(peaks, group); }, { once: true });
+    groupLoop.addEventListener("click", function () { playGroup(peaks, group, true); }, { once: true });
 
-    groupsCheckboxes[group[0]] = groupCheckbox;
-    groupsButtons[group[0]] = [groupPlay, groupLoop];
+    groupsCheckboxes[group] = groupCheckbox;
+    groupsButtons[group] = [groupPlay, groupLoop];
 
-    if (!Array.isArray(group[1][0])) {
-      hiddenSegments[group[0]] = {};
-      visibleSegments[group[0]] = {};
-      peaks.segments.add(group[1]).forEach(function (segment) { renderSegment(peaks, segment, group[0], path); });
+    if (!Array.isArray(items[0])) {
+      hiddenSegments[group] = {};
+      visibleSegments[group] = {};
+      peaks.segments.add(items).forEach(function (segment) { renderSegment(peaks, segment, group, path); });
     }
     else {
-      for (let nestedGroup of group[1]) { renderGroup(peaks, nestedGroup, path.concat(group[0])); }
+      for (let [nestedGroup, nestedItems, nestedSNR] of items) {
+        renderGroup(peaks, nestedGroup, path.concat(group), { "items": nestedItems, "snr": nestedSNR });
+      }
     }
-    const segments = segmentsFromGroup(group[0], { "peaks": peaks });
+    const segments = segmentsFromGroup(group, { "peaks": peaks });
     const sum = segments.reduce((prev, cur) => prev + cur.endTime - cur.startTime, 0);
-    const span = document.getElementById(`${group[0]}-span`);
+    const span = document.getElementById(`${group}-span`);
     if (span.title == "") {
       span.title += `Duration: ${sum.toFixed(2)}`;
     }
     else {
       span.title += `\n Duration: ${sum.toFixed(2)}`;
-      durations[group[0]] = sum;
+      durations[group] = sum;
     }
   }
 
@@ -488,7 +491,9 @@ const runPeaks = async function (fileName) {
 
     renderGroup(peaksInstance, "Custom-Segments", ["Segments"], { renderEmpty: true });
     renderGroup(peaksInstance, "Labeled-Speakers", ["Segments"], { renderEmpty: true });
-    for (let segmentsGroup of importedSegments) { renderGroup(peaksInstance, segmentsGroup, ["Segments"]); }
+    for (let [group, items, snr] of importedSegments) {
+      renderGroup(peaksInstance, group, ["Segments"], { "items": items, "snr": snr });
+    }
 
     // add labeled speaker
     const labelInput = document.getElementById("label");
