@@ -39,8 +39,11 @@ const runPeaks = async function (fileName) {
   const groupsCheckboxes = { "Segments": document.querySelector("input[data-id='Segments']") };
   // dictionary of buttons for every group      {group: [HTMLLinkElement for play, HTMLLinkElement for loop]}
   const groupsButtons = { "Segments": document.querySelectorAll("a[data-id='Segments']") };
+  
   // array of all labels for labeled speakers
   const labels = [];
+  // dictionary of colors used for a label's segments     {label: color}
+  // each color is a 6-digit hex color code (i.e. '#ffffff' or '#a54e76')
   const labelsColors = {};
 
   const segmentsFromGroup = function (group, { visible = false, hidden = false, peaks = undefined, sort = false, simple = false } = {}) {
