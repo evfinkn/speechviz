@@ -199,6 +199,7 @@ const runPeaks = async function (fileName) {
     }
   }
 
+  //#region popup and label functions
   const popup = document.getElementById("popup");
   const popupContent = document.getElementById("popup-content");
   const initPopup = function (peaks, group) {
@@ -257,7 +258,9 @@ const runPeaks = async function (fileName) {
     }
 
     document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
+    toggleSegments(peaks, group, false);
   }
+  //#endregion
 
   const renderSegment = function (peaks, segment, group, path, { removable = false, treeText = null } = {}) {
     // create the tree item for the segment
