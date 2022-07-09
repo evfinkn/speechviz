@@ -191,7 +191,7 @@ app.use('/savelabels/', function(req, res) {
 
   if (r != null){
     r.speakers += "|" + speaker;
-    db.prepare('UPDATE labels SET speakers=? WHERE user_id=? AND audiofile=?').run([r.speakers, userid.id, filename]);
+    db.prepare('UPDATE labels SET speakers=? WHERE user_id=? AND audiofile=? AND label=?').run([r.speakers, userid.id, filename, label]);
   }
   else{
     db.prepare('INSERT INTO labels(user_id,audiofile,label,speakers) VALUES(?,?,?,?)').run([userid.id, filename, label, speaker]);
