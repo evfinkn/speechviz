@@ -542,14 +542,14 @@ const runPeaks = async function (fileName) {
       'user': user.innerHTML,
       'filename': fileName,
     }
-    const json = JSON.stringify(record)
-    var request = new XMLHttpRequest()
-    request.open('POST', 'loadannotations', true);
-    request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    const json = JSON.stringify(record);
+    var annotRequest = new XMLHttpRequest();
+    annotRequest.open('POST', 'loadannotations', true);
+    annotRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
 
-    request.send(json)
-    request.onload = function () {
-      let jsonData = JSON.parse(request.response);
+    annotRequest.send(json)
+    annotRequest.onload = function () {
+      let jsonData = JSON.parse(annotRequest.response);
       const labelRegex = /Custom Segment /;
       for (let i = 0; i < jsonData.length; i++) {
         customSegmentsBranch.hidden = false;
@@ -569,12 +569,13 @@ const runPeaks = async function (fileName) {
     };
     //#endregion
 
-    request.open('POST', 'loadlabels', true);
-    request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    var labelRequest = new XMLHttpRequest();
+    labelRequest.open('POST', 'loadlabels', true);
+    labelRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
 
-    request.send(json)
-    request.onload = function () {
-      let jsonData = JSON.parse(request.response);
+    labelRequest.send(json)
+    labelRequest.onload = function () {
+      let jsonData = JSON.parse(labelRequest.response);
       for (let i = 0; i < jsonData.length; i++) {
         var label = jsonData[i]['label'];
         var speakers = jsonData[i]['speakers'].split("|");
