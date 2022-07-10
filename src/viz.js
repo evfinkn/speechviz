@@ -39,7 +39,7 @@ const runPeaks = async function (fileName) {
   const groupsCheckboxes = { "Segments": document.querySelector("input[data-id='Segments']") };
   // dictionary of buttons for every group      {group: [HTMLLinkElement for play, HTMLLinkElement for loop]}
   const groupsButtons = { "Segments": document.querySelectorAll("a[data-id='Segments']") };
-  
+
   // array of all labels for labeled speakers
   const labels = [];
   // dictionary of colors used for a label's segments     {label: '#rrggbb'}
@@ -54,7 +54,7 @@ const runPeaks = async function (fileName) {
     }
     if (!(group in visibleSegments)) {  // group is a group of groups
       const children = groupsCheckboxes[group].dataset.children;
-      if (children) { 
+      if (children) {
         for (let child of children.split("|")) {
           segments = segments.concat(segmentsFromGroup(child, arguments[1]));  // get the groups from the children
         }
@@ -108,6 +108,7 @@ const runPeaks = async function (fileName) {
   const groupPlayIcon = feather.icons.play.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
   const groupPauseIcon = feather.icons.pause.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
   const groupLoopIcon = feather.icons.repeat.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
+  const groupRemoveIcon = feather.icons.x.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
 
   const playGroup = function (peaks, group, loop = false) {
     peaks.once("player.pause", function () {
@@ -185,7 +186,7 @@ const runPeaks = async function (fileName) {
         const children = groupCheckbox.dataset.children;
         if (children) {
           for (let child of groupCheckbox.dataset.children.split("|")) { toggleSegments(peaks, child, checked); }
-      }
+        }
       }
       else {  // group is a group of segments
         if (checked) {
@@ -207,6 +208,43 @@ const runPeaks = async function (fileName) {
         }
       }
     }
+  }
+
+  const removeSegment = function (peaks, segment, group) {
+    const parent = document.getElementById(group);
+    const parentNested = document.getElementById(`${group}-nested`);
+    const id = segment.id;
+    // remove segment from lists
+    peaks.segments.removeById(id);
+    delete segmentsByID[id];
+    if (hiddenSegments[group][id]) { delete hiddenSegments[group][id]; }
+    if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
+    // update table and tree
+    parentNested.removeChild(segment.checkbox.parentElement);
+    if (parentNested.children.length == 0) { parent.hidden = true; }
+    newChanges = true;
+  }
+
+  const removeGroup = function (peaks, group, parent) {
+    for (let segment of segmentsFromGroup(group, { "peaks": peaks })) {
+      removeSegment(peaks, segment, group);
+    }
+
+    const parentCheckbox = groupsCheckboxes[parent];
+    const parentChildren = parentCheckbox.dataset.children.split("|").filter(child => child != group);
+    parentCheckbox.dataset.children = parentChildren.join("|");
+
+    delete groupsCheckboxes[group];
+    delete groupsButtons[group];
+    if (labels.includes(group)) {  // if group is a label
+      labels.splice(labels.indexOf(group), 1);
+      delete labelsColors[group];
+      delete labeled[group];
+    }
+
+    document.getElementById(group).remove();
+
+    newChanges = true;
   }
 
   //#region popup and label functions
@@ -244,7 +282,7 @@ const runPeaks = async function (fileName) {
       labels.push(label);
       labelsColors[label] = getRandomColor();
       labeled[label] = [];
-      renderGroup(peaks, label, ["Segments", "Labeled-Speakers"], { renderEmpty: true });
+      renderGroup(peaks, label, ["Segments", "Labeled-Speakers"], { "renderEmpty": true, "removable": true });
     }
   }
 
@@ -306,20 +344,20 @@ const runPeaks = async function (fileName) {
 
     if (segment.editable || removable) {
       let temp = document.getElementById(`${segment.id}-span`)
-      document.getElementById(`${segment.id}-span`).outerHTML = '<button id="'+segment.id+'-button" class="nolink">'+ temp.outerHTML +'</button>';
+      document.getElementById(`${segment.id}-span`).outerHTML = '<button id="' + segment.id + '-button" class="nolink">' + temp.outerHTML + '</button>';
       // rename segment
-      document.getElementById(`${segment.id}-span`).addEventListener('click', function(){
+      document.getElementById(`${segment.id}-span`).addEventListener('click', function () {
         // change innerHTML to an input box
         console.log(document.getElementById(`${segment.id}-span`).innerHTML);
-        document.getElementById(`${segment.id}-span`).innerHTML = "<input type='text' id='"+ segment.id +"-rename' value='"+ temp.innerHTML + "'>";
+        document.getElementById(`${segment.id}-span`).innerHTML = "<input type='text' id='" + segment.id + "-rename' value='" + temp.innerHTML + "'>";
         // rename segment when "enter" is pressed
-        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function(event) {
+        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
           if (event.key === "Enter") {
             let newLabel = document.getElementById(`${segment.id}-rename`).value;
             // switch back to text with new name
             temp.innerHTML = newLabel;
             document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
-            segment.update({"labelText": newLabel}); 
+            segment.update({ "labelText": newLabel });
             console.log(segment);
           }
         });
@@ -327,25 +365,19 @@ const runPeaks = async function (fileName) {
 
       const remove = htmlToElement(`<a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a>`);
       loop.after(remove);
-      const parent = document.getElementById(group);
-      const parentNested = document.getElementById(`${group}-nested`);
-      remove.firstElementChild.addEventListener("click", function () {
-        const id = segment.id;
-        // remove segment from lists
-        peaks.segments.removeById(id);
-        delete segmentsByID[id];
-        if (hiddenSegments[group][id]) { delete hiddenSegments[group][id]; }
-        if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
-        // update table and tree
-        parentNested.removeChild(segment.checkbox.parentElement);
-        if (parentNested.children.length == 0) { parent.hidden = true; }
-        newChanges = true;
-      });
+
+
+      // why firstElementChild??? Shouldn't it just be remove?
+      remove.firstElementChild.addEventListener("click", function () { removeSegment(peaks, segment, group); });
+
+
+
+
       segment.durationSpan = li.children[1];
     }
   }
 
-  const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false, groupOfGroups = false } = {}) {
+  const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false, groupOfGroups = false, removable = false } = {}) {
     if (items.length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
 
     const parent = path.at(-1);  // parent needed to find where in tree to nest group
@@ -396,6 +428,7 @@ const runPeaks = async function (fileName) {
         renderGroup(peaks, nestedGroup, path.concat(group), { "items": nestedItems, "snr": nestedSNR });
       }
     }
+
     const segments = segmentsFromGroup(group, { "peaks": peaks });
     const sum = segments.reduce((prev, cur) => prev + cur.endTime - cur.startTime, 0);
     const span = document.getElementById(`${group}-span`);
@@ -405,6 +438,12 @@ const runPeaks = async function (fileName) {
     else {
       span.title += `\n Duration: ${sum.toFixed(2)}`;
       durations[group] = sum;
+    }
+
+    if (removable) {
+      const remove = htmlToElement(`<a href="#" data-id="${group}">${groupRemoveIcon}</a>`);
+      branch.children[3].after(remove);
+      remove.addEventListener("click", function () { removeGroup(peaks, group, parent); });
     }
   }
 
@@ -523,19 +562,20 @@ const runPeaks = async function (fileName) {
 
     // add labeled speaker
     const labelInput = document.getElementById("label");
-    document.querySelector("button[data-action='add-labeled-speaker']").addEventListener('click', function () {
+    document.querySelector("button[data-action='add-label']").addEventListener('click', function () {
       addLabel(peaksInstance, labelInput.value);
       labelInput.value = "";  // clear text box after submitting
     });
 
     //#region add custom segment
-    const customSegmentsBranch = document.getElementById("Custom-Segments");
+    const customBranch = document.getElementById("Custom-Segments");
+    const customNested = document.getElementById("Custom-Segments-nested")
     const customSpan = document.getElementById("Custom-Segments-span");
     let customDuration = 0;
     let segmentCounter = 1;
     // Add (custom) segment
     document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
-      customSegmentsBranch.hidden = false;
+      customBranch.hidden = false;
       const label = 'Custom Segment ' + segmentCounter++;
       let segment = {
         startTime: peaksInstance.player.getCurrentTime(),
@@ -545,6 +585,7 @@ const runPeaks = async function (fileName) {
       };
       segment = peaksInstance.segments.add(segment);
       renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"], { "treeText": label });
+      customNested.classList.add("active");
       customDuration += 10;
       customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
       newChanges = true;
@@ -566,7 +607,7 @@ const runPeaks = async function (fileName) {
       let jsonData = JSON.parse(annotRequest.response);
       const labelRegex = /Custom Segment /;
       for (let i = 0; i < jsonData.length; i++) {
-        customSegmentsBranch.hidden = false;
+        customBranch.hidden = false;
         const label = jsonData[i]["label"];
         if (label.match(labelRegex)) { segmentCounter++; }
         let segment = {
@@ -584,6 +625,7 @@ const runPeaks = async function (fileName) {
     };
     //#endregion
 
+    //#region load labels
     var labelRequest = new XMLHttpRequest();
     labelRequest.open('POST', 'loadlabels', true);
     labelRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
@@ -596,11 +638,12 @@ const runPeaks = async function (fileName) {
         var speakers = jsonData[i]['speakers'].split("|");
         addLabel(peaksInstance, label);
         for (let speaker of speakers) {
-          addToLabel(peaksInstance, label, speaker, true);
+          if (speaker != "") { addToLabel(peaksInstance, label, speaker, true); }
         }
       }
       toggleSegments(peaksInstance, "Labeled-Speakers", false);
     };
+    //#endregion
 
     peaksInstance.on("segments.dragend", function (event) {
       const segment = event.segment;
@@ -671,8 +714,11 @@ const runPeaks = async function (fileName) {
     primarySpeakerSpan.style.color = "violet";
     //#endregion
 
-    document.querySelector('button[data-action="save-annotations"]').addEventListener('click', function (event) {
+    document.querySelector('button[data-action="save-annotations"]').addEventListener('click', function () {
       saveAnnotations(segmentsFromGroup("Custom-Segments", { "peaks": peaksInstance, "simple": true }));
+    });
+    document.querySelector('button[data-action="save-labels"]').addEventListener('click', function () {
+      saveLabels(labeled);
     });
 
     const segmentsPlay = groupsButtons["Segments"][0];
@@ -687,7 +733,7 @@ const runPeaks = async function (fileName) {
     groupsCheckboxes["Segments"].checked = true;
     groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
     toggleSegments(peaksInstance, "Custom-Segments", true);
-    customSegmentsBranch.hidden = true;
+    customBranch.hidden = true;
 
     segmentsPlay.style.pointerEvents = "auto";
     segmentsLoop.style.pointerEvents = "auto";
@@ -713,15 +759,15 @@ function saveAnnotations(customSegments) {
     'filename': fileName,
     'segments': customSegments
   }
-  const json = JSON.stringify(record)
-  var request = new XMLHttpRequest()
+  const json = JSON.stringify(record);
+  var request = new XMLHttpRequest();
   request.open('POST', 'saveannotations', true);
   request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
 
-  request.send(json)
+  request.send(json);
   request.onload = function () {
     // done
-    console.log('Annotations saved')
+    console.log('Annotations saved');
   };
   newChanges = false;
 }
@@ -738,24 +784,24 @@ window.onload = function () {
   });
 };
 
-function saveLabels(label, speaker) {
-  console.log('Saving label', fileName);
+function saveLabels(labels) {
+  console.log('Saving labels', fileName);
   const record = {
     'user': user.innerHTML,
     'filename': fileName,
-    'label': label,
-    'speaker': speaker
+    'labels': labels
+    //'speaker': speaker
   }
 
-  const json = JSON.stringify(record)
-  console.log(json)
-  var request = new XMLHttpRequest()
+  const json = JSON.stringify(record);
+  console.log(json);
+  var request = new XMLHttpRequest();
   request.open('POST', 'savelabels', true);
   request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-  request.send(json)
+  request.send(json);
   request.onload = function () {
     // done
-    console.log('Labels saved')
+    console.log('Labels saved');
   };
 }
 

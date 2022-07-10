@@ -138,12 +138,6 @@ app.use('/saveannotations/', function(req, res) {
   //let points = req.body['points']
   let user = req.body['user']
 
-  // if (user == 'admin') {
-  //   console.log('admin cannot do removes')
-  //   res.end();
-  //   return;
-  // }
-
   //row = db.prepare('SELECT id FROM wavefiles WHERE audiofile=?').get(filename);
   //fileid = row.id
   //console.log('filename', filename, '==>', fileid)
@@ -160,24 +154,14 @@ app.use('/saveannotations/', function(req, res) {
 })
 
 app.use('/savelabels/', function(req, res) {
-  /**
-    Saves the annotations to the database
-    Annotate.html will make an HTTP POST that contains all the annotations.
-    The body of the request include all the parameters encoded in JSON
-  **/
   console.log('---- save labels ----');
 
   let filename = req.body['filename'];
-  let label = req.body['label'];
-  let speaker = req.body['speaker'];
-  //let points = req.body['points'];
+  let labels = req.body['labels'];
+  // let label = req.body['label'];
+  // let speaker = req.body['speaker'];
   let user = req.body['user'];
 
-  // if (user == 'admin') {
-  //   console.log('admin cannot do removes')
-  //   res.end();
-  //   return;
-  // }
 
   //row = db.prepare('SELECT id FROM wavefiles WHERE audiofile=?').get(filename);
   //fileid = row.id
@@ -186,15 +170,11 @@ app.use('/savelabels/', function(req, res) {
   var userid = db.prepare('SELECT id FROM users WHERE user=?').get([user]);
   console.log('user', user, '==>', userid);
 
-  var r = db.prepare('SELECT speakers FROM labels where user_id=? AND audiofile=? AND label=?').get([userid.id, filename, label]);
-  console.log(r);
+  db.prepare('DELETE FROM labels WHERE user_id=? AND audiofile=?').run([userid.id,filename]);
 
-  if (r != null){
-    r.speakers += "|" + speaker;
-    db.prepare('UPDATE labels SET speakers=? WHERE user_id=? AND audiofile=? AND label=?').run([r.speakers, userid.id, filename, label]);
-  }
-  else{
-    db.prepare('INSERT INTO labels(user_id,audiofile,label,speakers) VALUES(?,?,?,?)').run([userid.id, filename, label, speaker]);
+  var statement = db.prepare('INSERT INTO labels(user_id,audiofile,label,speakers) VALUES(?,?,?,?)');
+  for (let [label, groups] of Object.entries(labels)) {
+    statement.run([userid.id, filename, label, groups.join("|")]);
   }
 
   res.end();
