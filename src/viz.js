@@ -289,7 +289,7 @@ const runPeaks = async function (fileName) {
   const addToLabel = function (peaks, label, group, loading) {
     let segments;
     if (loading) {
-      segments = segmentsFromGroup(group, { "hidden": true });
+      segments = segmentsFromGroup(group, { "hidden": true }); // sorts them by number here
     }
     else {
       segments = segmentsFromGroup(group, { "peaks": peaks });
@@ -343,22 +343,20 @@ const runPeaks = async function (fileName) {
     visibleSegments[group][segment.id] = segment;
 
     if (segment.editable || removable) {
-      let temp = document.getElementById(`${segment.id}-span`)
-      document.getElementById(`${segment.id}-span`).outerHTML = '<button id="' + segment.id + '-button" class="nolink">' + temp.outerHTML + '</button>';
+      let temp = document.getElementById(`${segment.id}-span`);
+      temp.outerHTML = '<button id="' + segment.id + '-button" class="nolink">' + temp.outerHTML + '</button>';
       // rename segment
-      document.getElementById(`${segment.id}-span`).addEventListener('click', function () {
+      document.getElementById(`${segment.id}-button`).addEventListener('click', function () {
         // change innerHTML to an input box
-        console.log(document.getElementById(`${segment.id}-span`).innerHTML);
-        document.getElementById(`${segment.id}-span`).innerHTML = "<input type='text' id='" + segment.id + "-rename' value='" + temp.innerHTML + "'>";
+        document.getElementById(`${segment.id}-button`).outerHTML = "<input type='text' id='" + segment.id + "-rename' value='" + temp.innerHTML + "'>";
         // rename segment when "enter" is pressed
         document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
           if (event.key === "Enter") {
             let newLabel = document.getElementById(`${segment.id}-rename`).value;
             // switch back to text with new name
-            temp.innerHTML = newLabel;
+            document.getElementById(`${segment.id}-rename`).outerHTML = temp.outerHTML;
             document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
             segment.update({ "labelText": newLabel });
-            console.log(segment);
           }
         });
       });
@@ -592,7 +590,7 @@ const runPeaks = async function (fileName) {
     });
     //#endregion
 
-    //#region load annoations
+    //#region load annotations
     const record = {
       'user': user.innerHTML,
       'filename': fileName,
