@@ -289,7 +289,7 @@ const runPeaks = async function (fileName) {
   const addToLabel = function (peaks, label, group, loading) {
     let segments;
     if (loading) {
-      segments = segmentsFromGroup(group, { "hidden": true }); // sorts them by number here
+      segments = segmentsFromGroup(group, { "hidden": true }); 
     }
     else {
       segments = segmentsFromGroup(group, { "peaks": peaks });
@@ -307,6 +307,22 @@ const runPeaks = async function (fileName) {
         });
         renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers", label], { "removable": true, "treeText": segment.id.replace("peaks.", "") });
       }
+      // sort all segments under label
+      segments = segmentsFromGroup(label, { "peaks": peaks, "sort": true });
+      // (to sort by id-- sort by the span innerHTML of the button -- document.getElementById(`${segment.id}-spam`).innerHTML
+      var temp = document.createElement("ul");
+      segments.forEach(function(segment){ 
+        temp.append(document.getElementById(segment.id));            
+      });
+      // add them back to the tree
+      var tree = document.getElementById(`${label}-nested`);
+      tree.innerHTML = "";
+      var children = Array.from(temp.children);
+      children.reverse();
+      console.log(children);
+      for(let i=children.length-1; i>=0; i--){
+        tree.appendChild(children[i]);
+      };
 
       document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
       toggleSegments(peaks, group, false);
@@ -319,6 +335,7 @@ const runPeaks = async function (fileName) {
   const renderSegment = function (peaks, segment, group, path, { removable = false, treeText = null } = {}) {
     // create the tree item for the segment
     const li = document.createElement("li");
+    li.id = segment.id;
     li.style.fontSize = "12px";
     li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-id="${segment.id}" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${treeText ? treeText : segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
