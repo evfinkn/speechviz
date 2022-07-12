@@ -330,54 +330,12 @@ const runPeaks = async function (fileName) {
 
   }
 
-  const addToLabel = function (peaks, label, group, loading) {
-    let segments;
-    if (loading) {
-      segments = segmentsFromGroup(group, { "hidden": true }); 
-    }
-    else {
-      segments = segmentsFromGroup(group, { "peaks": peaks });
-    }
-
-    if (!labeled[label].includes(group)) {
-      labeled[label].push(group);
-      for (let segment of segments) {
-        const copiedSegment = peaks.segments.add({
-          "startTime": segment.startTime,
-          "endTime": segment.endTime,
-          "editable": segment.editable,
-          "color": labelsColors[label],
-          "labelText": label
-        });
-        renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers", label], { "removable": true, "treeText": segment.id.replace("peaks.", "") });
-      }
-      // sort all segments under label
-      segments = segmentsFromGroup(label, { "peaks": peaks, "sort": true });
-      // (to sort by id-- sort by the span innerHTML of the button -- document.getElementById(`${segment.id}-spam`).innerHTML
-      var temp = document.createElement("ul");
-      segments.forEach(function(segment){ 
-        temp.append(document.getElementById(segment.id));            
-      });
-      // add them back to the tree
-      var tree = document.getElementById(`${label}-nested`);
-      tree.innerHTML = "";
-      var children = Array.from(temp.children);
-      children.reverse();
-      console.log(children);
-      for(let i=children.length-1; i>=0; i--){
-        tree.appendChild(children[i]);
-      };
-
-      document.getElementById(`${group}-button`).firstElementChild.innerHTML += ` (${label})`;
-      toggleSegments(peaks, group, false);
-      document.getElementById(`${label}-nested`).classList.add("active");
-      document.getElementById("Labeled-Speakers-nested").classList.add("active");
-    }
-  }
-
   //#endregion
 
   const renderSegment = function (peaks, segment, group, path, { removable = false, treeText = null } = {}) {
+    if (group.includes("Custom") || group.includes("Labeled")){ //not sure if we need but this used to be in for custom and labeled
+      document.getElementById(`${group}-nested`).classList.add("active");
+    }
     // create the tree item for the segment
     const li = document.createElement("li");
     li.id = segment.id;
@@ -663,52 +621,51 @@ const runPeaks = async function (fileName) {
       'filename': fileName,
     }
     const json = JSON.stringify(record);
-    var annotRequest = new XMLHttpRequest();
-    annotRequest.open('POST', 'loadannotations', true);
-    annotRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    var loadRequest = new XMLHttpRequest();
 
-    annotRequest.send(json)
-    annotRequest.onload = function () {
+    loadRequest.open('POST', 'loadannotations', true);
+    loadRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+
+    loadRequest.send(json)
+    loadRequest.onload = function () {
       let jsonData = JSON.parse(annotRequest.response);
-      const labelRegex = /Custom Segment /;
       for (let i = 0; i < jsonData.length; i++) {
-        customBranch.hidden = false;
         const label = jsonData[i]["label"];
-        if (label.match(labelRegex)) { segmentCounter++; }
+        let path = jsonData[i]["path"];
+        pathSplit = path.split("|");
         let segment = {
           startTime: jsonData[i]["start"],
           endTime: jsonData[i]["end"],
           labelText: label,
-          editable: true
+          editable: jsonData[i]["editable"]
         };
         segment = peaksInstance.segments.add(segment);
-        renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"], { "treeText": label });
-        customDuration += jsonData[i]["end"] - jsonData[i]["start"];
-        customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
-      }
-      toggleSegments(peaksInstance, "Custom-Segments", false);
-    };
-    //#endregion
+        if (pathSplit.match("Custom-Segments")) { //if it should be in custom segments
+          segmentCounter++;
+          renderSegment(peaksInstance, segment, label, path, { "removable": true, "treeText": label });
+        }
+        else if (pathSplit.includes("Labeled-Speakers")) { //if it should be  
+          console.log("label is " + pathSplit[-1]);
+          addLabel(pathSplit[-1]);
+          if (!labeled[label].includes(segment)){
+            labeled[label].push(segment);
+          }
+          renderSegment(peaksInstance, segment, label, path, { "removable": true, "treeText": segment.id.replace("peaks.", "") });
+        }
+        else{//if it is a segment that should be on a different speaker
 
-    //#region load labels
-    var labelRequest = new XMLHttpRequest();
-    labelRequest.open('POST', 'loadlabels', true);
-    labelRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-
-    labelRequest.send(json)
-    labelRequest.onload = function () {
-      let jsonData = JSON.parse(labelRequest.response);
-      for (let i = 0; i < jsonData.length; i++) {
-        var label = jsonData[i]['label'];
-        var speakers = jsonData[i]['speakers'].split("|");
-        addLabel(peaksInstance, label);
-        for (let speaker of speakers) {
-          if (speaker != "") { addToLabel(peaksInstance, label, speaker, true); }
         }
       }
-      toggleSegments(peaksInstance, "Labeled-Speakers", false);
+      if (document.getElementById("Custom-Segments-nested").childElementCount == 0){
+        customBranch.hidden = false;
+      }
+      //toggleSegments(peaksInstance, "Custom-Segments", false);
+      //#region uncheck everything on start
+      toggleSegments(peaksInstance, "Segments", false);
     };
     //#endregion
+
+    
 
     peaksInstance.on("segments.dragend", function (event) {
       const segment = event.segment;
@@ -791,8 +748,7 @@ const runPeaks = async function (fileName) {
     segmentsPlay.innerHTML = feather.icons.play.toSvg({ "width": 17, "height": 17, "stroke": "black", "fill": "black" });
     segmentsLoop.innerHTML = feather.icons.repeat.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
 
-    //#region uncheck everything on start
-    toggleSegments(peaksInstance, "Segments", false);
+    
     document.getElementById("Segments-nested").classList.add("active");
 
     groupsCheckboxes["Segments"].checked = true;
