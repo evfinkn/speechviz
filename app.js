@@ -72,7 +72,7 @@ const insertLabel = db.prepare("INSERT INTO labels(label) VALUES(?)");
 const selectPathId = db.prepare("SELECT id FROM paths WHERE path=?");
 const insertPath = db.prepare("INSERT INTO paths(path) VALUES(?)");
 
-const insertSegment = db.prepare("INSERT INTO annotations(fileId,userId,startTime,endTime,editable,labelId,id,pathId,treeText,removable) VALUES(?,?,?,?,?,?,?,?,?)");
+const insertSegment = db.prepare("INSERT INTO annotations(fileId,userId,startTime,endTime,editable,labelId,id,pathId,treeText,removable) VALUES(?,?,?,?,?,?,?,?,?,?)");
 
 const save = db.transaction((filename, user, segments) => {
   let fileId = selectFileId.get(filename)?.id;

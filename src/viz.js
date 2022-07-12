@@ -628,7 +628,7 @@ const runPeaks = async function (fileName) {
     const json = JSON.stringify(record);
     var loadRequest = new XMLHttpRequest();
 
-    loadRequest.open('POST', 'loadannotations', true);
+    loadRequest.open('POST', 'load', true);
     loadRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
 
     loadRequest.send(json)
