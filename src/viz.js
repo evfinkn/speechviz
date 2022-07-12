@@ -653,7 +653,6 @@ const runPeaks = async function (fileName) {
 
       groupsCheckboxes["Segments"].checked = true;
       groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
-      toggleSegments(peaksInstance, "Custom-Segments", true);
 
       segmentsPlay.style.pointerEvents = "auto";
       segmentsLoop.style.pointerEvents = "auto";
@@ -666,8 +665,6 @@ const runPeaks = async function (fileName) {
       segmentsLoop.addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
     };
     //#endregion
-
-    
 
     peaksInstance.on("segments.dragend", function (event) {
       const segment = event.segment;
