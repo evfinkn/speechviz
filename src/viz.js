@@ -39,23 +39,13 @@ const runPeaks = async function (fileName) {
   const groupsCheckboxes = { "Segments": document.querySelector("input[data-id='Segments']") };
   // dictionary of buttons for every group      {group: [HTMLLinkElement for play, HTMLLinkElement for loop]}
   const groupsButtons = { "Segments": document.querySelectorAll("a[data-id='Segments']") };
-
-  // array of all labels for labeled speakers
-  const labels = [];
-  // dictionary of colors used for a label's segments     {label: '#rrggbb'}
-  const labelsColors = {};
-  // dictionary of segments added to each label     {label: }
-  const labeled = {}
+  // dictionary of colors for every group       {group: "#rrggbb"}
+  const groupsColors = {};
 
   const segmentsFromGroup = function (group, { visible = false, hidden = false, sort = false, simple = false } = {}) {
     let segments = [];
 
-    if (Array.isArray(group)) {
-      for (const g of group) { segments = segments.concat(segmentsFromGroup(g, arguments[1])); }
-    }
-
-    else if (!(group in visibleSegments)) {  // group is a group of groups
-      console.log(group);
+    if (!(group in visibleSegments)) {  // group is a group of groups
       const children = groupsCheckboxes[group].dataset.children;
       if (children) {
         for (let child of children.split("|")) {
@@ -75,7 +65,7 @@ const runPeaks = async function (fileName) {
         "editable": segment.editable,
         "labelText": segment.labelText,
         "id": segment.id,
-        "path": segment.path.slice(0, -2),
+        "path": segment.path.slice(0, -1),
         "treeText": segment.treeText,
         "removable": segment.removable
       }));
@@ -261,25 +251,25 @@ const runPeaks = async function (fileName) {
     if (group.includes("Speaker")){
       popupContent.appendChild(htmlToElement("<h2>Choose a label: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-      labels.forEach(function (label) {
+      const labeledSpeakersDataset = groupsCheckboxes["Labeled-Speakers"].dataset;
+      labeledSpeakersDataset.children.split("|").forEach(function (label) {
         // add radio button
         const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
         popupContent.append(radio);
         popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
         radio.addEventListener("change", function () {
           let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
-          if (!labeled[label].includes(group)) {
-            labeled[label].push(group);
-            for (let segment of segments) {
-              const copiedSegment = peaks.segments.add({
-                "startTime": segment.startTime,
-                "endTime": segment.endTime,
-                "editable": segment.editable,
-                "color": labelsColors[label],
-                "labelText": label
-              });
-              renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"], { "removable": true, "treeText": segment.id.replace("peaks.", "") });
-            }
+          for (let segment of segments) {
+            const copiedSegment = peaks.segments.add({
+              "startTime": segment.startTime,
+              "endTime": segment.endTime,
+              "editable": segment.editable,
+              "color": groupsColors[label],
+              "labelText": label,
+              "treeText": segment.treeText,
+              "removable": true
+            });
+            renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
           }
           popupContent.innerHTML = "";
           popup.style.display = "none";
@@ -298,8 +288,6 @@ const runPeaks = async function (fileName) {
         radio.addEventListener("change", function () {
             //if (!labeled[label].includes(group)) { saveLabels(label, group); } put save here later
             //addToLabel(peaks, label, group); make it add to different speaker here
-            console.log(group);
-            console.log(segmentsByID[group].path);
             changeSpeaker(peaks, speaker, group);
             popupContent.innerHTML = "";
             popup.style.display = "none";
@@ -332,18 +320,9 @@ const runPeaks = async function (fileName) {
     });
   }
 
-  const addLabel = function (peaks, label) {
-    if (!labels.includes(label)) {
-      labels.push(label);
-      labelsColors[label] = getRandomColor();
-      labeled[label] = [];
-      renderGroup(peaks, label, ["Segments", "Labeled-Speakers"], { "renderEmpty": true, "removable": true });
-    }
-  }
-
   const changeSpeaker = function (peaks, speaker, segment) {
     document.getElementById(`${segment}`).remove();
-    renderSegment(peaks, segmentsByID[segment], speaker, ["Segments", "Speakers"], { "removable": false });
+    renderSegment(peaks, segmentsByID[segment], speaker, ["Segments", "Speakers"]);
     const segments = segmentsFromGroup(speaker, { "peaks": peaks });
     const sum = segments.reduce((prev, cur) => prev + cur.endTime - cur.startTime, 0);
     const span = document.getElementById(`${speaker}-span`);
@@ -358,17 +337,18 @@ const runPeaks = async function (fileName) {
   
   //#endregion
 
-  const renderSegment = function (peaks, segment, group, path, { removable = false, treeText = null } = {}) {
+  const renderSegment = function (peaks, segment, group, path) {
     // if (group.includes("Custom") || group.includes("Labeled")){ //not sure if we need but this used to be in for custom and labeled
     //   document.getElementById(`${group}-nested`).classList.add("active");
     // }
     // create the tree item for the segment
 
     if (!(group in visibleSegments)) {
-        renderGroup(peaks, group, path, { "renderEmpty": true });
+      groupsColors[group] = getRandomColor();
+      renderGroup(peaks, group, path, { "renderEmpty": true });
     }
 
-    segment.treeText = treeText ? treeText : segment.id.replace("peaks.", "");
+    segment.treeText = segment.treeText || segment.id.replace("peaks.", "");
 
     const li = document.createElement("li");
     li.id = segment.id;
@@ -393,12 +373,15 @@ const runPeaks = async function (fileName) {
     segment.path = path.concat(group, segment.id);  // path is a list of groups the segment belongs to
     segment.checkbox = checkbox;
     segment.buttons = [play, loop];
-    segment.removable = removable;
+    segment.removable = !!segment.removable;
+    if (groupsColors[group]) {
+      segment.update({ "color": groupsColors[group] });
+    }
 
     segmentsByID[segment.id] = segment;
     visibleSegments[group][segment.id] = segment;
 
-    if (segment.editable || removable) {
+    if (segment.editable) {
       let temp = document.getElementById(`${segment.id}-span`);
       temp.outerHTML = '<button id="' + segment.id + '-button" class="nolink">' + temp.outerHTML + '</button>';
       // rename segment
@@ -412,27 +395,22 @@ const runPeaks = async function (fileName) {
             // switch back to text with new name
             document.getElementById(`${segment.id}-rename`).outerHTML = temp.outerHTML;
             document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
-            segment.update({ "labelText": newLabel });
+            segment.update({ "labelText": newLabel, "treeText": newLabel });
           }
         });
       });
-
+    }
+    if (segment.editable || segment.removable) {
       const remove = htmlToElement(`<a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a>`);
       loop.after(remove);
-
-
-      // why firstElementChild??? Shouldn't it just be remove?
-      remove.firstElementChild.addEventListener("click", function () { removeSegment(peaks, segment, group); });
-
-
-
-
+      remove.addEventListener("click", function () { removeSegment(peaks, segment, group); });
       segment.durationSpan = li.children[1];
     }
   }
 
   const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false, groupOfGroups = false, removable = false } = {}) {
 
+    if (group in groupsCheckboxes) { return; }  // group already exists
     if (items.length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
 
     const parent = path.at(-1);  // parent needed to find where in tree to nest group
@@ -618,7 +596,7 @@ const runPeaks = async function (fileName) {
     // add labeled speaker
     const labelInput = document.getElementById("label");
     document.querySelector("button[data-action='add-label']").addEventListener('click', function () {
-      addLabel(peaksInstance, labelInput.value);
+      renderGroup(peaksInstance, labelInput.value, ["Segments", "Labeled-Speakers"], { "renderEmpty": true, "removable": true });
       labelInput.value = "";  // clear text box after submitting
     });
 
@@ -633,10 +611,12 @@ const runPeaks = async function (fileName) {
         startTime: peaksInstance.player.getCurrentTime(),
         endTime: peaksInstance.player.getCurrentTime() + 10,
         labelText: label,
-        editable: true
+        editable: true,
+        treeText: label,
+        removable: true,
       };
       segment = peaksInstance.segments.add(segment);
-      renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"], { "treeText": label });
+      renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
       customDuration += 10;
       customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
       newChanges = true;
@@ -644,44 +624,43 @@ const runPeaks = async function (fileName) {
     //#endregion
 
     //#region load annotations
-    const record = {
-      'user': user.innerHTML,
-      'filename': fileName,
-    }
-    const json = JSON.stringify(record);
-    var loadRequest = new XMLHttpRequest();
-
-    loadRequest.open('POST', 'load', true);
-    loadRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-
-    loadRequest.send(json)
-    loadRequest.onload = function () {
-      let jsonData = JSON.parse(loadRequest.response);
-
-      peaksInstance.segments.add(jsonData).forEach(function (segment) {
-        const group = segment.path.at(-1);
-
-        renderSegment(peaksInstance, segment, group, path.slice(0, -1), { "removable": segment.removable, "treeText": segment.treeText});
-
-      });
-
-      toggleSegments(peaksInstance, "Segments", false);
-
-      document.getElementById("Segments-nested").classList.add("active");
-
-      groupsCheckboxes["Segments"].checked = true;
-      groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
-
-      segmentsPlay.style.pointerEvents = "auto";
-      segmentsLoop.style.pointerEvents = "auto";
-      const segmentsPlayIcon = segmentsPlay.firstElementChild;
-      const segmentsLoopIcon = segmentsLoop.firstElementChild;
-      segmentsPlayIcon.style.stroke = "black";
-      segmentsPlayIcon.style.fill = "black";
-      segmentsLoopIcon.style.stroke = "black";
-      segmentsPlay.addEventListener("click", function () { playGroup(peaksInstance, "Segments"); });
-      segmentsLoop.addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
-    };
+    (function () {
+      const record = {
+        'user': user.innerHTML,
+        'filename': fileName,
+      }
+      const json = JSON.stringify(record);
+      var loadRequest = new XMLHttpRequest();
+  
+      loadRequest.open('POST', 'load', true);
+      loadRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+  
+      loadRequest.send(json)
+      loadRequest.onload = function () {
+        let jsonData = JSON.parse(loadRequest.response);
+  
+        peaksInstance.segments.add(jsonData).forEach(function (segment) {  
+          renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
+        });
+  
+        toggleSegments(peaksInstance, "Segments", false);
+  
+        document.getElementById("Segments-nested").classList.add("active");
+  
+        groupsCheckboxes["Segments"].checked = true;
+        groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
+  
+        segmentsPlay.style.pointerEvents = "auto";
+        segmentsLoop.style.pointerEvents = "auto";
+        const segmentsPlayIcon = segmentsPlay.firstElementChild;
+        const segmentsLoopIcon = segmentsLoop.firstElementChild;
+        segmentsPlayIcon.style.stroke = "black";
+        segmentsPlayIcon.style.fill = "black";
+        segmentsLoopIcon.style.stroke = "black";
+        segmentsPlay.addEventListener("click", function () { playGroup(peaksInstance, "Segments"); });
+        segmentsLoop.addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
+      };
+    })();
     //#endregion
 
     peaksInstance.on("segments.dragend", function (event) {
@@ -755,7 +734,11 @@ const runPeaks = async function (fileName) {
 
     document.querySelector('button[data-action="save"]').addEventListener('click', function () {
       const regex = /Speaker |VAD|Non-VAD/;
-      const segments = segmentsFromGroup(Object.keys(visibleSegments).filter(group => !group.match(regex), { "visible": true, "hidden": true, "simple": true }));
+      const groups = Object.keys(visibleSegments).filter(group => !group.match(regex));
+      let segments = [];
+      for (const group of groups) {
+        segments = segments.concat(segmentsFromGroup(group, { "visible": true, "hidden": true, "simple": true }));
+      }
       const record = {
         'user': user.innerHTML,
         'filename': fileName,
