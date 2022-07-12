@@ -337,13 +337,13 @@ const runPeaks = async function (fileName) {
     const li = document.createElement("li");
     li.id = segment.id;
     li.style.fontSize = "12px";
-    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-id="${segment.id}" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${treeText ? treeText : segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox"  autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${treeText ? treeText : segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" >${segmentPlayIcon}</a><a href="#" style="text-decoration:none;">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
 
     // segment checkboxes
     const checkbox = li.firstElementChild;
 
-    checkbox.addEventListener("click", function () { toggleSegments(peaks, this.dataset.id, this.checked); });
+    checkbox.addEventListener("click", function () { toggleSegments(peaks, segment.id, this.checked); });
 
     // segment play/loop buttons
     const play = li.children[2];
