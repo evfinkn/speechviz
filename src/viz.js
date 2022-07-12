@@ -633,7 +633,7 @@ const runPeaks = async function (fileName) {
 
     loadRequest.send(json)
     loadRequest.onload = function () {
-      let jsonData = JSON.parse(annotRequest.response);
+      let jsonData = JSON.parse(loadRequest.response);
 
       peaksInstance.segments.add(jsonData).forEach(function (segment) {
         const group = segment.path.at(-1);
