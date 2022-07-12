@@ -75,31 +75,41 @@ const insertPath = db.prepare("INSERT INTO paths(path) VALUES(?)");
 const insertSegment = db.prepare("INSERT INTO annotations(fileId,userId,startTime,endTime,editable,labelId,id,pathId,treeText,removable) VALUES(?,?,?,?,?,?,?,?,?,?)");
 
 const save = db.transaction((filename, user, segments) => {
-  let fileId = selectFileId.get(filename)?.id;
+  let fileId = selectFileId.get([filename])?.id;
   if (!fileId) {
-    fileId = insertFile.run(filename).lastInsertRowid;
+    fileId = insertFile.run([filename]).lastInsertRowid;
   }
-  const userId = selectUserId.get(user).id;
+  console.log(segments);
+
+  const userId = selectUserId.get([user]).id;
 
   deleteSegments.run([fileId, userId]);
 
   for (const segment of segments) {
     const label = segment.labelText;
-    let labelId = selectLabelId.get(label).id;
+    let labelId = selectLabelId.get([label])?.id;
     if (!labelId) {
-      labelId = insertLabel.run(label).lastInsertRowid;
+      labelId = insertLabel.run([label]).lastInsertRowid;
     }
 
+    console.log(segment.path);
     const path = segment.path.join("|");
-    let pathId = selectPathId.get(path).id;
+    console.log(`path: ${path}`);
+    let pathId = selectPathId.get([path])?.id;
     if (!pathId) {
-      pathId = insertPath.run(path).lastInsertRowid;
+      pathId = insertPath.run([path]).lastInsertRowid;
     }
+
+    segment.editable = +segment.editable;
+    segment.removable = +segment.removable;
 
     insertSegment.run([fileId, userId, segment.startTime, segment.endTime, segment.editable, labelId, segment.id, pathId, segment.treeText, segment.removable]);
   }
 });
-app.use("/save/", (req, res) => save(req.body["filename"], req.body["user"], req.body["segments"]));
+app.use("/save/", (req, res) => {
+  save(req.body["filename"], req.body["user"], req.body["segments"]);
+  res.end();
+});
 
 const selectSegments = db.prepare("SELECT startTime,endTime,editable,labelId,id,pathId,treeText,removable FROM annotations WHERE fileId=? AND userId=?");
 
@@ -107,20 +117,20 @@ const selectLabel = db.prepare("SELECT label FROM labels WHERE id=?");
 const selectPath = db.prepare("SELECT path FROM paths WHERE id=?");
 
 const load = db.transaction((filename, user) => {
-  let fileId = selectFileId.get(filename)?.id;
+  let fileId = selectFileId.get([filename])?.id;
   if (!fileId) {
-    fileId = insertFile.run(filename).lastInsertRowid;
+    fileId = insertFile.run([filename]).lastInsertRowid;
   }
-  const userId = selectUserId.get(user).id;
+  const userId = selectUserId.get([user]).id;
 
   const segments = selectSegments.all([fileId, userId]);
   for (const segment of segments) {
     segment.editable = !!segment.editable;  // "double not" to cast to boolean
 
-    segment.labelText = selectLabel.get(segment.labelId).label;
+    segment.labelText = selectLabel.get([segment.labelId]).label;
     delete segment.labelId;
 
-    segment.path = selectPath.get(segment.pathId).path.split("|");
+    segment.path = selectPath.get([segment.pathId]).path.split("|");
     delete segment.pathId;
   }
 
