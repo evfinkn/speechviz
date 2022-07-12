@@ -252,21 +252,58 @@ const runPeaks = async function (fileName) {
   const popupContent = document.getElementById("popup-content");
   const initPopup = function (peaks, group) {
     popup.style.display = "block";
-    popupContent.appendChild(htmlToElement("<h2>Choose a label: </h2>"));
-    popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-
-    labels.forEach(function (label) {
-      // add radio button
-      const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
-      popupContent.append(radio);
-      popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
-      radio.addEventListener("change", function () {
-        if (!labeled[label].includes(group)) { saveLabels(label, group); }
-        addToLabel(peaks, label, group);
-        popupContent.innerHTML = "";
-        popup.style.display = "none";
+    if (group.includes("Speaker")){
+      popupContent.appendChild(htmlToElement("<h2>Choose a label: </h2>"));
+      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+      labels.forEach(function (label) {
+        // add radio button
+        const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+        popupContent.append(radio);
+        popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+        radio.addEventListener("change", function () {
+          if (!labeled[label].includes(group)) { saveLabels(label, group); }
+          addToLabel(peaks, label, group);
+          popupContent.innerHTML = "";
+          popup.style.display = "none";
+        });
       });
-    });
+    }
+    else{
+      popupContent.appendChild(htmlToElement("<h2>Choose a new speaker for this segment: </h2>"));
+      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+
+      Object.keys(snrs).forEach(function (speaker){
+        if (speaker != segmentsByID[group].path[2]){
+        const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+        popupContent.append(radio);
+        popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
+        radio.addEventListener("change", function () {
+            //if (!labeled[label].includes(group)) { saveLabels(label, group); } put save here later
+            //addToLabel(peaks, label, group); make it add to different speaker here
+            console.log(group);
+            console.log(segmentsByID[group].path)
+            changeSpeaker(peaks, speaker, group)
+            popupContent.innerHTML = "";
+            popup.style.display = "none";
+          });
+        }
+      });
+    }
+    //remove this from above in the if (group.includes("Speaker")){ 
+    //and then uncomment it here
+
+    //labels.forEach(function (label) {
+      //// add radio button
+      //const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+      //popupContent.append(radio);
+      //popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+      //radio.addEventListener("change", function () {
+        //if (!labeled[label].includes(group)) { saveLabels(label, group); }
+        //addToLabel(peaks, label, group);
+        //popupContent.innerHTML = "";
+        //popup.style.display = "none";
+      //});
+    //});
 
     // close popup button
     document.querySelectorAll(".close").forEach(function (button) {
@@ -284,6 +321,13 @@ const runPeaks = async function (fileName) {
       labeled[label] = [];
       renderGroup(peaks, label, ["Segments", "Labeled-Speakers"], { "renderEmpty": true, "removable": true });
     }
+  }
+
+  const changeSpeaker = function (peaks, speaker, group){
+    console.log(segmentsByID[group].id)
+    document.getElementById(`${segmentsByID[group].id}`).remove();
+    renderSegment(peaks, segmentsByID[group], speaker, ["Segments", "Speakers"], { "removable": false });
+
   }
 
   const addToLabel = function (peaks, label, group, loading) {
@@ -330,6 +374,7 @@ const runPeaks = async function (fileName) {
       document.getElementById("Labeled-Speakers-nested").classList.add("active");
     }
   }
+
   //#endregion
 
   const renderSegment = function (peaks, segment, group, path, { removable = false, treeText = null } = {}) {
@@ -344,6 +389,8 @@ const runPeaks = async function (fileName) {
     const checkbox = li.firstElementChild;
 
     checkbox.addEventListener("click", function () { toggleSegments(peaks, segment.id, this.checked); });
+  
+    document.getElementById(`${segment.id}-span`).addEventListener("click", function () { initPopup(peaks, segment.id); });
 
     // segment play/loop buttons
     const play = li.children[2];
@@ -416,7 +463,6 @@ const runPeaks = async function (fileName) {
     }
     else {
       spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
-
       branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}</a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
     }
@@ -436,7 +482,9 @@ const runPeaks = async function (fileName) {
     if (!Array.isArray(items[0]) && !groupOfGroups) {
       hiddenSegments[group] = {};
       visibleSegments[group] = {};
-      peaks.segments.add(items).forEach(function (segment) { renderSegment(peaks, segment, group, path); });
+      peaks.segments.add(items).forEach(function (segment) { 
+        renderSegment(peaks, segment, group, path);
+      });
     }
     else {
       for (let [nestedGroup, nestedItems, nestedSNR] of items) {
