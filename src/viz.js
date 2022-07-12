@@ -605,8 +605,6 @@ const runPeaks = async function (fileName) {
     });
 
     //#region add custom segment
-    const customBranch = document.getElementById("Custom-Segments");
-    const customNested = document.getElementById("Custom-Segments-nested")
     const customSpan = document.getElementById("Custom-Segments-span");
     let customDuration = 0;
     let segmentCounter = 1;
@@ -621,7 +619,6 @@ const runPeaks = async function (fileName) {
       };
       segment = peaksInstance.segments.add(segment);
       renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"], { "treeText": label });
-      customNested.classList.add("active");
       customDuration += 10;
       customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
       newChanges = true;
