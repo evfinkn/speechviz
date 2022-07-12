@@ -342,18 +342,23 @@ const runPeaks = async function (fileName) {
   }
 
   const changeSpeaker = function (peaks, speaker, segment) {
+    let path = segmentsByID[segment].path;
+    let oldSpeaker = path.at(-2);
     document.getElementById(`${segment}`).remove();
     renderSegment(peaks, segmentsByID[segment], speaker, ["Segments", "Speakers"], { "removable": false });
-    const segments = segmentsFromGroup(speaker, { "peaks": peaks });
-    const sum = segments.reduce((prev, cur) => prev + cur.endTime - cur.startTime, 0);
     const span = document.getElementById(`${speaker}-span`);
-    if (span.title == "") {
-      span.title += `Duration: ${sum.toFixed(2)}`;
-    }
-    else {
-      span.title += `\n Duration: ${sum.toFixed(2)}`;
-      durations[speaker] = sum;
-    }
+    let titleSplit = span.title.split(" ");
+    titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) + parseFloat(document.getElementById(`${segment}-span`).title.split(" ").at(-1));
+    let titleRejoined = titleSplit.join(" ");
+    span.title = titleRejoined;
+
+    const oldSpan = document.getElementById(`${oldSpeaker}-span`);
+    let oldTitleSplit = oldSpan.title.split(" ");
+    console.log(oldTitleSplit);
+    oldTitleSplit[oldTitleSplit.length - 1] = parseFloat(oldTitleSplit.at(-1)) - parseFloat(document.getElementById(`${segment}-span`).title.split(" ").at(-1));
+    let oldTitleRejoined = oldTitleSplit.join(" ");
+    console.log(oldTitleRejoined);
+    oldSpan.title = oldTitleRejoined;
   }
   
   //#endregion
