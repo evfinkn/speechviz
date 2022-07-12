@@ -144,15 +144,6 @@ ul, #Segments {
   background: #c9daf4;
 }
 
-.label-form button {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  background: #1c87c9;
-  font-size: 16px;
-  font-weight: 400;
-  color: #fff;
-}
 .close {
   color: #aaa;
   float: right;
