@@ -333,14 +333,17 @@ const runPeaks = async function (fileName) {
   //#endregion
 
   const renderSegment = function (peaks, segment, group, path, { removable = false, treeText = null } = {}) {
-    if (group.includes("Custom") || group.includes("Labeled")){ //not sure if we need but this used to be in for custom and labeled
-      document.getElementById(`${group}-nested`).classList.add("active");
-    }
+    // if (group.includes("Custom") || group.includes("Labeled")){ //not sure if we need but this used to be in for custom and labeled
+    //   document.getElementById(`${group}-nested`).classList.add("active");
+    // }
     // create the tree item for the segment
+
+    segment.treeText = treeText ? treeText : segment.id.replace("peaks.", "");
+
     const li = document.createElement("li");
     li.id = segment.id;
     li.style.fontSize = "12px";
-    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-id="${segment.id}" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${treeText ? treeText : segment.id.replace("peaks.", "")}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" data-id="${segment.id}" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.treeText}</span> <a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${segment.id}">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
 
     // segment checkboxes
@@ -362,6 +365,7 @@ const runPeaks = async function (fileName) {
     segment.path = path.concat(group, segment.id);  // path is a list of groups the segment belongs to
     segment.checkbox = checkbox;
     segment.buttons = [play, loop];
+    segment.removable = removable;
 
     segmentsByID[segment.id] = segment;
     visibleSegments[group][segment.id] = segment;
@@ -400,6 +404,7 @@ const runPeaks = async function (fileName) {
   }
 
   const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false, groupOfGroups = false, removable = false } = {}) {
+
     if (items.length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
 
     const parent = path.at(-1);  // parent needed to find where in tree to nest group
@@ -629,33 +634,34 @@ const runPeaks = async function (fileName) {
     loadRequest.send(json)
     loadRequest.onload = function () {
       let jsonData = JSON.parse(annotRequest.response);
-      for (let i = 0; i < jsonData.length; i++) {
-        const label = jsonData[i]["label"];
-        let path = jsonData[i]["path"];
-        pathSplit = path.split("|");
-        let segment = {
-          startTime: jsonData[i]["start"],
-          endTime: jsonData[i]["end"],
-          labelText: label,
-          editable: jsonData[i]["editable"]
-        };
-        segment = peaksInstance.segments.add(segment);
-        if (pathSplit.match("Custom-Segments")) { //if it should be in custom segments
-          segmentCounter++;
-          renderSegment(peaksInstance, segment, label, path, { "removable": true, "treeText": label });
-        }
-        else if (pathSplit.includes("Labeled-Speakers")) { //if it should be  
-          console.log("label is " + pathSplit[-1]);
-          addLabel(pathSplit[-1]);
-          if (!labeled[label].includes(segment)){
-            labeled[label].push(segment);
-          }
-          renderSegment(peaksInstance, segment, label, path, { "removable": true, "treeText": segment.id.replace("peaks.", "") });
-        }
-        else{//if it is a segment that should be on a different speaker
 
-        }
-      }
+      peaksInstance.segments.add(jsonData).forEach(function (segment) {
+        const group = segment.path.at(-1);
+
+        renderSegment(peaksInstance, segment, group, path.slice(0, -1), { "removable": segment.removable, "treeText": segment.treeText});
+
+      });
+
+      // for (let i = 0; i < jsonData.length; i++) {
+      //   const label = jsonData[i]["label"];
+      //   let path = jsonData[i]["path"];
+      //   segment = peaksInstance.segments.add(segment);
+      //   // if (pathSplit.match("Custom-Segments")) { //if it should be in custom segments
+      //   //   segmentCounter++;
+      //   //   renderSegment(peaksInstance, segment, label, path, { "removable": true, "treeText": label });
+      //   // }
+      //   // else if (pathSplit.includes("Labeled-Speakers")) { //if it should be  
+      //   //   console.log("label is " + pathSplit[-1]);
+      //   //   addLabel(pathSplit[-1]);
+      //   //   if (!labeled[label].includes(segment)){
+      //   //     labeled[label].push(segment);
+      //   //   }
+      //   //   renderSegment(peaksInstance, segment, label, path, { "removable": true, "treeText": segment.id.replace("peaks.", "") });
+      //   // }
+      //   // else{//if it is a segment that should be on a different speaker
+
+      //   // }
+      // }
       if (document.getElementById("Custom-Segments-nested").childElementCount == 0){
         customBranch.hidden = false;
       }
