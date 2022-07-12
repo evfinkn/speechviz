@@ -126,15 +126,17 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
     for srange in librosa.time_to_samples(diar_times, sr=sr):
         is_speech[srange[0]:srange[1]] = True
     diar_indices = np.where(is_speech == True)[0]
-    diar_times = [diar_indices[0]]
+    if len(diar_indices) != 0:
+        diar_times = [diar_indices[0]]
     for i in range(1, len(diar_indices) - 1):
         if diar_indices[i] + 1 != diar_indices[i + 1]:
             diar_times.append(diar_indices[i])
         if diar_indices[i] != diar_indices[i - 1] + 1:
             diar_times.append(diar_indices[i])
-    diar_times.append(diar_indices[-1])
-    diar_times = librosa.samples_to_time(diar_times, sr=sr)
-    diar_times = [(diar_times[i], diar_times[i + 1]) for i in range(0, len(diar_times), 2)]
+    if len(diar_indices) != 0:
+        diar_times.append(diar_indices[-1])
+        diar_times = librosa.samples_to_time(diar_times, sr=sr)
+        diar_times = [(diar_times[i], diar_times[i + 1]) for i in range(0, len(diar_times), 2)]
 
     if verbose:
         print(f"Loop completed in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
