@@ -662,11 +662,24 @@ const runPeaks = async function (fileName) {
 
       //   // }
       // }
-      if (document.getElementById("Custom-Segments-nested").childElementCount == 0){
-        customBranch.hidden = false;
-      }
-      //toggleSegments(peaksInstance, "Custom-Segments", false);
-      //#region uncheck everything on start
+
+      document.getElementById("Segments-nested").classList.add("active");
+
+      groupsCheckboxes["Segments"].checked = true;
+      groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
+      toggleSegments(peaksInstance, "Custom-Segments", true);
+      customBranch.hidden = document.getElementById("Custom-Segments-nested").childElementCount == 0;
+
+      segmentsPlay.style.pointerEvents = "auto";
+      segmentsLoop.style.pointerEvents = "auto";
+      const segmentsPlayIcon = segmentsPlay.firstElementChild;
+      const segmentsLoopIcon = segmentsLoop.firstElementChild;
+      segmentsPlayIcon.style.stroke = "black";
+      segmentsPlayIcon.style.fill = "black";
+      segmentsLoopIcon.style.stroke = "black";
+      segmentsPlay.addEventListener("click", function () { playGroup(peaksInstance, "Segments"); });
+      segmentsLoop.addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
+
       toggleSegments(peaksInstance, "Segments", false);
     };
     //#endregion
@@ -755,22 +768,6 @@ const runPeaks = async function (fileName) {
     segmentsLoop.innerHTML = feather.icons.repeat.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
 
     
-    document.getElementById("Segments-nested").classList.add("active");
-
-    groupsCheckboxes["Segments"].checked = true;
-    groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
-    toggleSegments(peaksInstance, "Custom-Segments", true);
-    customBranch.hidden = true;
-
-    segmentsPlay.style.pointerEvents = "auto";
-    segmentsLoop.style.pointerEvents = "auto";
-    const segmentsPlayIcon = segmentsPlay.firstElementChild;
-    const segmentsLoopIcon = segmentsLoop.firstElementChild;
-    segmentsPlayIcon.style.stroke = "black";
-    segmentsPlayIcon.style.fill = "black";
-    segmentsLoopIcon.style.stroke = "black";
-    segmentsPlay.addEventListener("click", function () { playGroup(peaksInstance, "Segments"); });
-    segmentsLoop.addEventListener("click", function () { playGroup(peaksInstance, "Segments", true); });
     //#endregion
   });
 }
