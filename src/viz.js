@@ -221,7 +221,8 @@ const runPeaks = async function (fileName) {
     if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
     // update table and tree
     parentNested.removeChild(segment.checkbox.parentElement);
-    if (parentNested.children.length == 0) { parent.hidden = true; }
+    if (parentNested.children.length == 0) { //parent.hidden = true; 
+    }
     newChanges = true;
   }
 
@@ -262,7 +263,20 @@ const runPeaks = async function (fileName) {
         popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
         radio.addEventListener("change", function () {
           if (!labeled[label].includes(group)) { saveLabels(label, group); }
-          addToLabel(peaks, label, group);
+          let segments = segmentsFromGroup(group, { "peaks": peaks });
+          if (!labeled[label].includes(group)) {
+            labeled[label].push(group);
+            for (let segment of segments) {
+              const copiedSegment = peaks.segments.add({
+                "startTime": segment.startTime,
+                "endTime": segment.endTime,
+                "editable": segment.editable,
+                "color": labelsColors[label],
+                "labelText": label
+              });
+              renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"], { "removable": true, "treeText": segment.id.replace("peaks.", "") });
+            }
+          }
           popupContent.innerHTML = "";
           popup.style.display = "none";
         });
@@ -327,7 +341,16 @@ const runPeaks = async function (fileName) {
     console.log(segmentsByID[group].id)
     document.getElementById(`${segmentsByID[group].id}`).remove();
     renderSegment(peaks, segmentsByID[group], speaker, ["Segments", "Speakers"], { "removable": false });
-
+    const segments = segmentsFromGroup(group, { "peaks": peaks });
+    const sum = segments.reduce((prev, cur) => prev + cur.endTime - cur.startTime, 0);
+    const span = document.getElementById(`${group}-span`);
+    if (span.title == "") {
+      span.title += `Duration: ${sum.toFixed(2)}`;
+    }
+    else {
+      span.title += `\n Duration: ${sum.toFixed(2)}`;
+      durations[group] = sum;
+    }
   }
 
   //#endregion
@@ -603,7 +626,7 @@ const runPeaks = async function (fileName) {
     let segmentCounter = 1;
     // Add (custom) segment
     document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
-      customBranch.hidden = false;
+      //customBranch.hidden = false;
       const label = 'Custom Segment ' + segmentCounter++;
       let segment = {
         startTime: peaksInstance.player.getCurrentTime(),
@@ -668,7 +691,7 @@ const runPeaks = async function (fileName) {
       groupsCheckboxes["Segments"].checked = true;
       groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
       toggleSegments(peaksInstance, "Custom-Segments", true);
-      customBranch.hidden = document.getElementById("Custom-Segments-nested").childElementCount == 0;
+      //customBranch.hidden = document.getElementById("Custom-Segments-nested").childElementCount == 0;
 
       segmentsPlay.style.pointerEvents = "auto";
       segmentsLoop.style.pointerEvents = "auto";
