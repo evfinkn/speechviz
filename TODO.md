@@ -28,6 +28,7 @@
  - [x] Add duration for segments
 
 ### Pipeline
+ - [ ] Add counter to print the number of files proceessed
  - [x] Test the pipeline installation instructions
  - [x] Try different speaker separation
  - [x] Try different speaker separation
