@@ -24,6 +24,7 @@
  - [ ] When sorting labels, should it resort when a segment in it is dragged?
  - [ ] If possible, button to hide the segment drag things
  - [ ] Don't change labelText when renaming, just change treeText
+ - [ ] Add toFixed() to changeDuration
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
