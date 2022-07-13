@@ -18,6 +18,7 @@
  - [ ] Show segment start time and end time when hovering over its tree text
  - [ ] Change default custom segment duration (lower from 10 to maybe like 5?)
  - [ ] Make segment popup radio buttons appear on separate lines
+ - [ ] When playing group, show segment currently playing
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
