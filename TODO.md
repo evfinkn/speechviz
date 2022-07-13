@@ -22,6 +22,7 @@
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
  - [ ] Fix labels so it sorts chronologically again
  - [ ] When sorting labels, should it resort when a segment in it is dragged?
+ - [ ] If possible, button to hide the segment drag things
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
