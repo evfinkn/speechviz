@@ -302,21 +302,39 @@ const runPeaks = async function (fileName) {
     else{
       const segment = segmentsByID[group];
 
-      popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
-      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+      
+      if (segment.editable){
+        // rename box code
+        popupContent.appendChild(htmlToElement("<h2>Rename segment or move to label: </h2>"));
+        popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+        let span = document.getElementById(`${segment.id}-span`);
+        popupContent.appendChild(htmlToElement("<input type='text' id='" + segment.id + "-rename' value='" + span.innerHTML + "'>"));
+        // rename segment when "enter" is pressed
+        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            let newLabel = document.getElementById(`${segment.id}-rename`).value;
+            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
+            segment.update({ "labelText": newLabel, "treeText": newLabel });
+          }
+        });
+      }
+      else{
+        popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
+        popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
 
-      Object.keys(snrs).forEach(function (speaker){
-        if (speaker != segment.path[2]){
-        const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
-        popupContent.append(radio);
-        popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
-        radio.addEventListener("change", function () {
-            changeSpeaker(peaks, speaker, segment);
-            popupContent.innerHTML = "";
-            popup.style.display = "none";
-          });
-        }
-      });
+        Object.keys(snrs).forEach(function (speaker){
+          if (speaker != segment.path[2]){
+          const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
+          popupContent.append(radio);
+          popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
+          radio.addEventListener("change", function () {
+              changeSpeaker(peaks, speaker, segment);
+              popupContent.innerHTML = "";
+              popup.style.display = "none";
+            });
+          }
+        });      
+      }
       if (labelsDataset.children && labelsDataset.children != "") {
         labelsDataset.children.split("|").forEach(function (label) {
           // add radio button
@@ -428,25 +446,25 @@ const runPeaks = async function (fileName) {
     segmentsByID[segment.id] = segment;
     visibleSegments[group][segment.id] = segment;
 
-    if (segment.editable) {
-      let temp = document.getElementById(`${segment.id}-span`);
-      temp.outerHTML = '<button id="' + segment.id + '-button" class="nolink">' + temp.outerHTML + '</button>';
-      // rename segment
-      document.getElementById(`${segment.id}-button`).addEventListener('click', function () {
-        // change innerHTML to an input box
-        document.getElementById(`${segment.id}-button`).outerHTML = "<input type='text' id='" + segment.id + "-rename' value='" + temp.innerHTML + "'>";
-        // rename segment when "enter" is pressed
-        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            let newLabel = document.getElementById(`${segment.id}-rename`).value;
-            // switch back to text with new name
-            //document.getElementById(`${segment.id}-rename`).outerHTML = temp.outerHTML;
-            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
-            segment.update({ "labelText": newLabel, "treeText": newLabel });
-          }
-        });
-      });
-    }
+    // if (segment.editable) {
+    //   let temp = document.getElementById(`${segment.id}-span`);
+    //   temp.outerHTML = '<button id="' + segment.id + '-button" class="nolink">' + temp.outerHTML + '</button>';
+    //   // rename segment
+    //   document.getElementById(`${segment.id}-button`).addEventListener('click', function () {
+    //     // change innerHTML to an input box
+    //     document.getElementById(`${segment.id}-button`).outerHTML = "<input type='text' id='" + segment.id + "-rename' value='" + temp.innerHTML + "'>";
+    //     // rename segment when "enter" is pressed
+    //     document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
+    //       if (event.key === "Enter") {
+    //         let newLabel = document.getElementById(`${segment.id}-rename`).value;
+    //         // switch back to text with new name
+    //         //document.getElementById(`${segment.id}-rename`).outerHTML = temp.outerHTML;
+    //         document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
+    //         segment.update({ "labelText": newLabel, "treeText": newLabel });
+    //       }
+    //     });
+    //   });
+    // }
     if (segment.editable || segment.removable) {
       const remove = htmlToElement(`<a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a>`);
       loop.after(remove);
