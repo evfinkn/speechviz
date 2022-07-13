@@ -20,6 +20,8 @@
  - [ ] Make segment popup radio buttons appear on separate lines
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
+ - [ ] Fix labels so it sorts chronologically again
+ - [ ] When sorting labels, should it resort when a segment in it is dragged?
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
