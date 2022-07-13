@@ -5,9 +5,9 @@ import sys
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds / updates / deletes users from the database")
-    parser.add_argument("--delete", action="store_true")
-    parser.add_argument("user")
-    parser.add_argument("password", nargs="?")
+    parser.add_argument("--delete", action="store_true", help="If passed, the user will be deleted. Otherwise, the user will be added if they don't exist, or their password will be updated if they already exist")
+    parser.add_argument("user", help="The user to add / update / delete")
+    parser.add_argument("password", nargs="?", help="The password to give the user. Not used if deleting the user")
 
     args = parser.parse_args()
     delete = args.delete
