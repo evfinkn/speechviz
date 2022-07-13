@@ -1,5 +1,5 @@
 import Peaks from "peaks.js";
-import { getRandomColor, htmlToElement, compareProperty } from "./util";
+import { getRandomColor, htmlToElement, compareProperty, propertiesEqual } from "./util";
 const feather = require('feather-icons');
 
 const audio = document.getElementById('audio');
@@ -246,46 +246,45 @@ const runPeaks = async function (fileName) {
   //#region popup and label functions
   const popup = document.getElementById("popup");
   const popupContent = document.getElementById("popup-content");
+  let labelsDataset;
   const initPopup = function (peaks, group) {
     popup.style.display = "block";
     if (group.includes("Speaker")){
       popupContent.appendChild(htmlToElement("<h2>Choose a label for this speaker: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-      const labeledSpeakersDataset = groupsCheckboxes["Labeled-Speakers"].dataset;
-      labeledSpeakersDataset.children.split("|").forEach(function (label) {
+      labelsDataset.children.split("|").forEach(function (label) {
         // add radio button
         const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
         popupContent.append(radio);
         popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
         radio.addEventListener("change", function () {
+          const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
           let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
-          if (!labeled[label].includes(group)) {
-            labeled[label].push(group);
-            for (let segment of segments) {
-              if (!labeled[label].includes(segment.id)){
-                labeled[label].push(segment.id);
-                const copiedSegment = peaks.segments.add({
-                  "startTime": segment.startTime,
-                  "endTime": segment.endTime,
-                  "editable": segment.editable,
-                  "color": labelsColors[label],
-                  "labelText": label
-                });
-                renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"], { "removable": true, "treeText": segment.id.replace("peaks.", "") });
-                //could be faster way this code is repeated in essence in several places
-                const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
-                let labSpkTitleSplit = labSpkSpan.title.split(" ");
-                console.log(segment);
-                labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-                let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
-                labSpkSpan.title = labSpkTitleRejoined;
-                
-                const labelSpan = document.getElementById(`${label}-span`);
-                let labelTitleSplit = labelSpan.title.split(" ");
-                labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-                let labelTitleRejoined = labelTitleSplit.join(" ");
-                labelSpan.title = labelTitleRejoined;
-              }
+          for (let segment of segments) {
+            if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
+              const copiedSegment = peaks.segments.add({
+                "startTime": segment.startTime,
+                "endTime": segment.endTime,
+                "editable": true,
+                "color": groupsColors[label],
+                "labelText": label,
+                "treeText": segment.treeText,
+                "removable": true
+              });
+              renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
+              //could be faster way this code is repeated in essence in several places
+              const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
+              let labSpkTitleSplit = labSpkSpan.title.split(" ");
+              console.log(segment);
+              labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
+              let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
+              labSpkSpan.title = labSpkTitleRejoined;
+              
+              const labelSpan = document.getElementById(`${label}-span`);
+              let labelTitleSplit = labelSpan.title.split(" ");
+              labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
+              let labelTitleRejoined = labelTitleSplit.join(" ");
+              labelSpan.title = labelTitleRejoined;
             }
           }
           popupContent.innerHTML = "";
@@ -294,47 +293,51 @@ const runPeaks = async function (fileName) {
       });
     }
     else{
+      const segment = segmentsByID[group];
+
       popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
 
       Object.keys(snrs).forEach(function (speaker){
-        if (speaker != segmentsByID[group].path[2]){
-        const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+        if (speaker != segment.path[2]){
+        const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
         popupContent.append(radio);
         popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
         radio.addEventListener("change", function () {
-            changeSpeaker(peaks, speaker, group);
+            changeSpeaker(peaks, speaker, segment);
             popupContent.innerHTML = "";
             popup.style.display = "none";
           });
         }
       });
-      labels.forEach(function (label) {
+      labelsDataset.children.split("|").forEach(function (label) {
         // add radio button
-        const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+        const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
         popupContent.append(radio);
         popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
         radio.addEventListener("change", function () {
-          if (!labeled[label].includes(group)) {
-            labeled[label].push(group);
+          const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
+          if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
             const copiedSegment = peaks.segments.add({
-              "startTime": segmentsByID[group].startTime,
-              "endTime": segmentsByID[group].endTime,
-              "editable": segmentsByID[group].editable,
-              "color": labelsColors[label],
-              "labelText": label
+              "startTime": segment.startTime,
+              "endTime": segment.endTime,
+              "editable": true,
+              "color": groupsColors[label],
+              "labelText": label,
+              "treeText": segment.treeText,
+              "removable": true
             });
-            renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"], { "removable": true, "treeText": segmentsByID[group].id.replace("peaks.", "") });
+            renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
             
             const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
             let labSpkTitleSplit = labSpkSpan.title.split(" ");
-            labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${group}-span`).title.split(" ").at(-1));
+            labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
             let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
             labSpkSpan.title = labSpkTitleRejoined;
             
             const labelSpan = document.getElementById(`${label}-span`);
             let labelTitleSplit = labelSpan.title.split(" ");
-            labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${group}-span`).title.split(" ").at(-1));
+            labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
             let labelTitleRejoined = labelTitleSplit.join(" ");
             labelSpan.title = labelTitleRejoined;
           }
@@ -354,19 +357,18 @@ const runPeaks = async function (fileName) {
   }
 
   const changeSpeaker = function (peaks, speaker, segment) {
-    let path = segmentsByID[segment].path;
-    let oldSpeaker = path.at(-2);
-    document.getElementById(`${segment}`).remove();
-    renderSegment(peaks, segmentsByID[segment], speaker, ["Segments", "Speakers"]);
+    let oldSpeaker = segment.path.at(-2);
+    document.getElementById(`${segment.id}`).remove();
+    renderSegment(peaks, segment, speaker, ["Segments", "Speakers"]);
     const span = document.getElementById(`${speaker}-span`);
     let titleSplit = span.title.split(" ");
-    titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) + parseFloat(document.getElementById(`${segment}-span`).title.split(" ").at(-1));
+    titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
     let titleRejoined = titleSplit.join(" ");
     span.title = titleRejoined;
 
     const oldSpan = document.getElementById(`${oldSpeaker}-span`);
     let oldTitleSplit = oldSpan.title.split(" ");
-    oldTitleSplit[oldTitleSplit.length - 1] = parseFloat(oldTitleSplit.at(-1)) - parseFloat(document.getElementById(`${segment}-span`).title.split(" ").at(-1));
+    oldTitleSplit[oldTitleSplit.length - 1] = parseFloat(oldTitleSplit.at(-1)) - parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
     let oldTitleRejoined = oldTitleSplit.join(" ");
     oldSpan.title = oldTitleRejoined;
   }
@@ -379,10 +381,7 @@ const runPeaks = async function (fileName) {
     // }
     // create the tree item for the segment
 
-    if (!(group in visibleSegments)) {
-      groupsColors[group] = getRandomColor();
-      renderGroup(peaks, group, path, { "renderEmpty": true });
-    }
+    if (!(group in visibleSegments)) { renderGroup(peaks, group, path, { "renderEmpty": true }); }
 
     segment.treeText = segment.treeText || segment.id.replace("peaks.", "");
 
@@ -448,6 +447,8 @@ const runPeaks = async function (fileName) {
 
     if (group in groupsCheckboxes) { return; }  // group already exists
     if (items.length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
+
+    if (renderEmpty) { groupsColors[group] = getRandomColor(); }
 
     const parent = path.at(-1);  // parent needed to find where in tree to nest group
     // add group to the parents children
@@ -625,9 +626,15 @@ const runPeaks = async function (fileName) {
 
     renderGroup(peaksInstance, "Custom-Segments", ["Segments"], { renderEmpty: true });
     renderGroup(peaksInstance, "Labeled-Speakers", ["Segments"], { renderEmpty: true, "groupOfGroups": true });
+    labelsDataset = groupsCheckboxes["Labeled-Speakers"].dataset;
+
     for (let [group, items, snr] of importedSegments) {
       renderGroup(peaksInstance, group, ["Segments"], { "items": items, "snr": snr });
     }
+
+    const highestId = peaksInstance.segments.getSegments()
+      .map(seg => parseInt(seg.id.split(".").at(-1)))
+      .sort((id1, id2) => id1 - id2).at(-1);
 
     // add labeled speaker
     const labelInput = document.getElementById("label");
@@ -775,6 +782,21 @@ const runPeaks = async function (fileName) {
       for (const group of groups) {
         segments = segments.concat(segmentsFromGroup(group, { "visible": true, "hidden": true, "simple": true }));
       }
+
+      let idCounter = highestId + 1;
+      const changedIds = {};
+      segments.map((segment, index) => { return { "index": index, "id": parseInt(segment.id.split(".").at(-1)) }; })
+        .sort((seg1, seg2) => seg1.id - seg2.id)
+        .map(seg => segments[seg.index])
+        .forEach(function (segment) {
+          const newId = `peaks.segment.${idCounter++}`;
+          changedIds[segment.id] = newId;
+          segment.id = newId;
+        });
+      segments.forEach(function (segment) {
+        segment.treeText = changedIds[segment.treeText] || segment.treeText;
+      })
+
       const record = {
         'user': user.innerHTML,
         'filename': fileName,

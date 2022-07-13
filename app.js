@@ -92,9 +92,7 @@ const save = db.transaction((filename, user, segments) => {
       labelId = insertLabel.run([label]).lastInsertRowid;
     }
 
-    console.log(segment.path);
     const path = segment.path.join("|");
-    console.log(`path: ${path}`);
     let pathId = selectPathId.get([path])?.id;
     if (!pathId) {
       pathId = insertPath.run([path]).lastInsertRowid;
