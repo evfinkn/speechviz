@@ -35,12 +35,14 @@ const runPeaks = async function (fileName) {
   // segments that are visible on peaksjs       {group: {childGroup: {...: {id, segment}}}}
   const visibleSegments = {};
 
-  // dictionary of checkboxes for every group   {group: HTMLInputElement}
+  // dictionary of checkboxes for every group     {group: HTMLInputElement}
   const groupsCheckboxes = { "Segments": document.querySelector("input[data-id='Segments']") };
-  // dictionary of buttons for every group      {group: [HTMLLinkElement for play, HTMLLinkElement for loop]}
+  // dictionary of buttons for every group        {group: [HTMLLinkElement for play, HTMLLinkElement for loop]}
   const groupsButtons = { "Segments": document.querySelectorAll("a[data-id='Segments']") };
-  // dictionary of colors for every group       {group: "#rrggbb"}
+  // dictionary of colors for every group         {group: "#rrggbb"}
   const groupsColors = {};
+
+  const moved = {};
 
   const segmentsFromGroup = function (group, { visible = false, hidden = false, sort = false, simple = false } = {}) {
     let segments = [];
@@ -187,7 +189,7 @@ const runPeaks = async function (fileName) {
       if (!(group in visibleSegments)) {  // group is a group of groups
         const children = groupCheckbox.dataset.children;
         if (children) {
-          for (let child of groupCheckbox.dataset.children.split("|")) { toggleSegments(peaks, child, checked); }
+          for (let child of children.split("|")) { toggleSegments(peaks, child, checked); }
         }
       }
       else {  // group is a group of segments
@@ -242,6 +244,10 @@ const runPeaks = async function (fileName) {
 
     newChanges = true;
   }
+
+  // const getChildren = function (group, { array = false }) {
+  //   let children = groupsCheckboxes[]
+  // }
 
   //#region popup and label functions
   const popup = document.getElementById("popup");
@@ -371,6 +377,11 @@ const runPeaks = async function (fileName) {
     oldTitleSplit[oldTitleSplit.length - 1] = parseFloat(oldTitleSplit.at(-1)) - parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
     let oldTitleRejoined = oldTitleSplit.join(" ");
     oldSpan.title = oldTitleRejoined;
+
+    if (visibleSegments[oldSpeaker][segment.id]) { delete visibleSegments[oldSpeaker][segment.id] }
+    if (hiddenSegments[oldSpeaker][segment.id]) { delete hiddenSegments[oldSpeaker][segment.id] }
+    segment.update({ "labelText": speaker });
+    moved[segment.id] = segment;
   }
   
   //#endregion
@@ -409,9 +420,7 @@ const runPeaks = async function (fileName) {
     segment.checkbox = checkbox;
     segment.buttons = [play, loop];
     segment.removable = !!segment.removable;
-    if (groupsColors[group]) {
-      segment.update({ "color": groupsColors[group] });
-    }
+    if (groupsColors[group]) { segment.update({ "color": groupsColors[group] }); }
 
     segmentsByID[segment.id] = segment;
     visibleSegments[group][segment.id] = segment;
@@ -515,6 +524,7 @@ const runPeaks = async function (fileName) {
       branch.children[3].after(remove);
       remove.addEventListener("click", function () { removeGroup(peaks, group, parent); });
     }
+    return;
   }
 
   const options = {
@@ -681,10 +691,19 @@ const runPeaks = async function (fileName) {
       loadRequest.send(json)
       loadRequest.onload = function () {
         let jsonData = JSON.parse(loadRequest.response);
+        console.log(Object.keys(segmentsByID).length);
+
+        for (let segment of jsonData) {
+          if (segmentsByID[segment.id]) { changeSpeaker(peaksInstance, segment.path.at(-1), segmentsByID[segment.id]); }
+          else {
+            segment = peaksInstance.segments.add(segment);
+            renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
+          }
+        }
   
-        peaksInstance.segments.add(jsonData).forEach(function (segment) {  
-          renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
-        });
+        // peaksInstance.segments.add(jsonData).forEach(function (segment) {  
+        //   renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
+        // });
   
         toggleSegments(peaksInstance, "Segments", false);
   
@@ -788,6 +807,20 @@ const runPeaks = async function (fileName) {
         .sort((seg1, seg2) => seg1.id - seg2.id)
         .map(seg => segments[seg.index])
         .forEach(function (segment) { segment.id = `peaks.segment.${idCounter++}`; });
+
+      for (const segment of Object.values(moved)) {
+        console.log(segment);
+        segments.push({
+          "startTime": segment.startTime, 
+          "endTime": segment.endTime, 
+          "editable": segment.editable,
+          "labelText": segment.labelText,
+          "id": segment.id,
+          "path": segment.path.slice(0, -1),
+          "treeText": segment.treeText,
+          "removable": segment.removable
+        });
+      }
 
       const record = {
         'user': user.innerHTML,
