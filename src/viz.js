@@ -784,18 +784,10 @@ const runPeaks = async function (fileName) {
       }
 
       let idCounter = highestId + 1;
-      const changedIds = {};
       segments.map((segment, index) => { return { "index": index, "id": parseInt(segment.id.split(".").at(-1)) }; })
         .sort((seg1, seg2) => seg1.id - seg2.id)
         .map(seg => segments[seg.index])
-        .forEach(function (segment) {
-          const newId = `peaks.segment.${idCounter++}`;
-          changedIds[segment.id] = newId;
-          segment.id = newId;
-        });
-      segments.forEach(function (segment) {
-        segment.treeText = changedIds[segment.treeText] || segment.treeText;
-      })
+        .forEach(function (segment) { segment.id = `peaks.segment.${idCounter++}`; });
 
       const record = {
         'user': user.innerHTML,
