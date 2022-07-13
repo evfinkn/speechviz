@@ -19,6 +19,7 @@
  - [ ] Change default custom segment duration (lower from 10 to maybe like 5?)
  - [ ] Make segment popup radio buttons appear on separate lines
  - [ ] When playing group, show segment currently playing
+ - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
