@@ -15,6 +15,7 @@
  - [ ] Fix renaming
  - [ ] Movable custom segments
  - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
+ - [ ] Remake labels removable
  - [x] Make renderGroup take group, segments, and snr instead of an array of the three
  - [x] Sort segments within labeled speakers
  - [x] Custom labeling
