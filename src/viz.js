@@ -258,15 +258,73 @@ const runPeaks = async function (fileName) {
     if (group.includes("Speaker")){
       popupContent.appendChild(htmlToElement("<h2>Choose a label for this speaker: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-      labelsDataset.children.split("|").forEach(function (label) {
-        // add radio button
-        const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+      if (labelsDataset.children && labelsDataset.children != "") {
+        labelsDataset.children.split("|").forEach(function (label) {
+          // add radio button
+          const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+          popupContent.append(radio);
+          popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+          radio.addEventListener("change", function () {
+            const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
+            let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
+            for (let segment of segments) {
+              if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
+                const copiedSegment = peaks.segments.add({
+                  "startTime": segment.startTime,
+                  "endTime": segment.endTime,
+                  "editable": true,
+                  "color": groupsColors[label],
+                  "labelText": label,
+                  "treeText": segment.treeText,
+                  "removable": true
+                });
+                renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
+                //could be faster way this code is repeated in essence in several places
+                const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
+                let labSpkTitleSplit = labSpkSpan.title.split(" ");
+                labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
+                let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
+                labSpkSpan.title = labSpkTitleRejoined;
+                
+                const labelSpan = document.getElementById(`${label}-span`);
+                let labelTitleSplit = labelSpan.title.split(" ");
+                labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
+                let labelTitleRejoined = labelTitleSplit.join(" ");
+                labelSpan.title = labelTitleRejoined;
+              }
+            }
+            popupContent.innerHTML = "";
+            popup.style.display = "none";
+          });
+        });
+      }
+    }
+    else{
+      const segment = segmentsByID[group];
+
+      popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
+      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+
+      Object.keys(snrs).forEach(function (speaker){
+        if (speaker != segment.path[2]){
+        const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
         popupContent.append(radio);
-        popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+        popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
         radio.addEventListener("change", function () {
-          const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
-          let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
-          for (let segment of segments) {
+            changeSpeaker(peaks, speaker, segment);
+            popupContent.innerHTML = "";
+            popup.style.display = "none";
+          });
+        }
+      });
+      if (labelsDataset.children && labelsDataset.children != "") {
+        labelsDataset.children.split("|").forEach(function (label) {
+          // add radio button
+          const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
+          popupContent.append(radio);
+          popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+          radio.addEventListener("change", function () {
+            const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
             if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
               const copiedSegment = peaks.segments.add({
                 "startTime": segment.startTime,
@@ -278,10 +336,9 @@ const runPeaks = async function (fileName) {
                 "removable": true
               });
               renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
-              //could be faster way this code is repeated in essence in several places
+              
               const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
               let labSpkTitleSplit = labSpkSpan.title.split(" ");
-              console.log(segment);
               labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
               let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
               labSpkSpan.title = labSpkTitleRejoined;
@@ -292,65 +349,11 @@ const runPeaks = async function (fileName) {
               let labelTitleRejoined = labelTitleSplit.join(" ");
               labelSpan.title = labelTitleRejoined;
             }
-          }
-          popupContent.innerHTML = "";
-          popup.style.display = "none";
-        });
-      });
-    }
-    else{
-      const segment = segmentsByID[group];
-
-      popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
-      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-
-      Object.keys(snrs).forEach(function (speaker){
-        if (speaker != segment.path[2]){
-        const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
-        popupContent.append(radio);
-        popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
-        radio.addEventListener("change", function () {
-            changeSpeaker(peaks, speaker, segment);
             popupContent.innerHTML = "";
             popup.style.display = "none";
           });
-        }
-      });
-      labelsDataset.children.split("|").forEach(function (label) {
-        // add radio button
-        const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
-        popupContent.append(radio);
-        popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
-        radio.addEventListener("change", function () {
-          const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
-          if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-            const copiedSegment = peaks.segments.add({
-              "startTime": segment.startTime,
-              "endTime": segment.endTime,
-              "editable": true,
-              "color": groupsColors[label],
-              "labelText": label,
-              "treeText": segment.treeText,
-              "removable": true
-            });
-            renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
-            
-            const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
-            let labSpkTitleSplit = labSpkSpan.title.split(" ");
-            labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-            let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
-            labSpkSpan.title = labSpkTitleRejoined;
-            
-            const labelSpan = document.getElementById(`${label}-span`);
-            let labelTitleSplit = labelSpan.title.split(" ");
-            labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-            let labelTitleRejoined = labelTitleSplit.join(" ");
-            labelSpan.title = labelTitleRejoined;
-          }
-          popupContent.innerHTML = "";
-          popup.style.display = "none";
         });
-      });
+      }
     }
 
     // close popup button
@@ -380,7 +383,7 @@ const runPeaks = async function (fileName) {
 
     if (visibleSegments[oldSpeaker][segment.id]) { delete visibleSegments[oldSpeaker][segment.id] }
     if (hiddenSegments[oldSpeaker][segment.id]) { delete hiddenSegments[oldSpeaker][segment.id] }
-    segment.update({ "labelText": speaker });
+    segment.update({ "color": groupsColors[speaker], "labelText": speaker });
     moved[segment.id] = segment;
   }
   
@@ -392,7 +395,7 @@ const runPeaks = async function (fileName) {
     // }
     // create the tree item for the segment
 
-    if (!(group in visibleSegments)) { renderGroup(peaks, group, path, { "renderEmpty": true }); }
+    if (!(group in visibleSegments)) { renderGroup(peaks, group, path, { "renderEmpty": true, "removable": segment.removable }); }
 
     segment.treeText = segment.treeText || segment.id.replace("peaks.", "");
 
@@ -457,7 +460,7 @@ const runPeaks = async function (fileName) {
     if (group in groupsCheckboxes) { return; }  // group already exists
     if (items.length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
 
-    if (renderEmpty) { groupsColors[group] = getRandomColor(); }
+    if (items.length == 0) { groupsColors[group] = getRandomColor(); }
 
     const parent = path.at(-1);  // parent needed to find where in tree to nest group
     // add group to the parents children
@@ -500,6 +503,7 @@ const runPeaks = async function (fileName) {
       hiddenSegments[group] = {};
       visibleSegments[group] = {};
       peaks.segments.add(items).forEach(function (segment) { 
+        if (!(group in groupsColors)) { groupsColors[group] = segment.color; }
         renderSegment(peaks, segment, group, path);
       });
     }
@@ -691,8 +695,6 @@ const runPeaks = async function (fileName) {
       loadRequest.send(json)
       loadRequest.onload = function () {
         let jsonData = JSON.parse(loadRequest.response);
-        console.log(Object.keys(segmentsByID).length);
-
         for (let segment of jsonData) {
           if (segmentsByID[segment.id]) { changeSpeaker(peaksInstance, segment.path.at(-1), segmentsByID[segment.id]); }
           else {
@@ -809,7 +811,6 @@ const runPeaks = async function (fileName) {
         .forEach(function (segment) { segment.id = `peaks.segment.${idCounter++}`; });
 
       for (const segment of Object.values(moved)) {
-        console.log(segment);
         segments.push({
           "startTime": segment.startTime, 
           "endTime": segment.endTime, 
