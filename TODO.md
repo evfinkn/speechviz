@@ -27,6 +27,7 @@
  - [ ] Add toFixed() to changeDuration
  - [ ] Fix drag for the end of a segment is off screen when adding segment at the end of file
  - [ ] Fix the label not appearing next to speaker after adding it to label
+ - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
