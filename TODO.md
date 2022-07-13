@@ -10,6 +10,7 @@
  - [x] Add support for multiple files
 
 ### Interface
+ - [ ] Determine way to show id of segment when hovering over it
  - [ ] Make updateDuration function
  - [ ] Separate into multiple files
  - [ ] Fix renaming
