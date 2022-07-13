@@ -437,7 +437,7 @@ const runPeaks = async function (fileName) {
           if (event.key === "Enter") {
             let newLabel = document.getElementById(`${segment.id}-rename`).value;
             // switch back to text with new name
-            document.getElementById(`${segment.id}-rename`).outerHTML = temp.outerHTML;
+            //document.getElementById(`${segment.id}-rename`).outerHTML = temp.outerHTML;
             document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
             segment.update({ "labelText": newLabel, "treeText": newLabel });
           }
