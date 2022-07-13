@@ -11,6 +11,7 @@
 
 ### Interface
  - [ ] Determine way to show id of segment when hovering over it
+ - [ ] Changeable playback speed
  - [ ] Make updateDuration function
  - [ ] Separate into multiple files
  - [ ] Fix renaming
