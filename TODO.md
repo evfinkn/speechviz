@@ -25,7 +25,8 @@
  - [ ] If possible, button to hide the segment drag things
  - [ ] Don't change labelText when renaming, just change treeText
  - [ ] Add toFixed() to changeDuration
- - [ ] The drag for the end of a segment is off screen when adding segment at the end of file
+ - [ ] Fix drag for the end of a segment is off screen when adding segment at the end of file
+ - [ ] Fix the label not appearing next to speaker after adding it to label
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
