@@ -12,12 +12,14 @@
 ### Interface
  - [ ] Determine way to show id of segment when hovering over it
  - [ ] Changeable playback speed
- - [ ] Make updateDuration function
  - [ ] Separate into multiple files
- - [ ] Fix renaming
- - [ ] Movable custom segments
  - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
- - [ ] Remake labels removable
+ - [ ] Notes input text box in bottom right to write things down
+ - [ ] Show segment start time and end time when hovering over its tree text
+ - [x] Remake labels removable
+ - [x] Make updateDuration function
+ - [x] Movable custom segments
+ - [x] Fix renaming
  - [x] Make renderGroup take group, segments, and snr instead of an array of the three
  - [x] Sort segments within labeled speakers
  - [x] Custom labeling
