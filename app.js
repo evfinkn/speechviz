@@ -79,8 +79,6 @@ const save = db.transaction((filename, user, segments) => {
   if (!fileId) {
     fileId = insertFile.run([filename]).lastInsertRowid;
   }
-  console.log(segments);
-
   const userId = selectUserId.get([user]).id;
 
   deleteSegments.run([fileId, userId]);
