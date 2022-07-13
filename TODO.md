@@ -16,6 +16,7 @@
  - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
  - [ ] Notes input text box in bottom right to write things down
  - [ ] Show segment start time and end time when hovering over its tree text
+ - [ ] Change default custom segment duration (lower from 10 to maybe like 5?)
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
