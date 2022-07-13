@@ -17,6 +17,7 @@
  - [ ] Notes input text box in bottom right to write things down
  - [ ] Show segment start time and end time when hovering over its tree text
  - [ ] Change default custom segment duration (lower from 10 to maybe like 5?)
+ - [ ] Make segment popup radio buttons appear on separate lines
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
