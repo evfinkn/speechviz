@@ -30,10 +30,11 @@
  - [ ] Fix the label not appearing next to speaker after adding it to label
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
- - [x] Maybe confirm before deleting? Right now, it's very easy to accidentally delete it instead of looping it
  - [ ] Renamable labels
  - [ ] Fix toggling label not toggling its segments' play and loop buttons
  - [ ] Fix loading not setting duration
+ - [ ] Add reset button (with confirmation popup, I think javascript has a built-in prompt for said popup) that removes all saved segments
+ - [x] Add space between play, loop, and remove buttons
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
