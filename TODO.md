@@ -32,6 +32,7 @@
  - [ ] Maybe confirm before deleting? Right now, it's very easy to accidentally delete it instead of looping it
  - [ ] Renamable labels
  - [ ] Fix toggling label not toggling its segments' play and loop buttons
+ - [ ] Fix loading not setting duration
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
