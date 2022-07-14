@@ -402,7 +402,7 @@ const runPeaks = async function (fileName) {
     const li = document.createElement("li");
     li.id = segment.id;
     li.style.fontSize = "12px";
-    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.treeText}</span> <a href="#" style="text-decoration:none;">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.treeText}</span> <a href="#" style="text-decoration:none;">${segmentPlayIcon}   </a><a href="#" style="text-decoration:none;">${segmentLoopIcon}   </a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
 
     // segment checkboxes
@@ -475,7 +475,7 @@ const runPeaks = async function (fileName) {
       spanHTML = `<button id="${group}-button" class="nolink"><span id="${group}-span" style="font-size:18px;" title="${"SNR: " + snr.toFixed(2)}">${group}</span></button>`
       snrs[group] = snr;
 
-      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}</a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
 
       // event listener for clicking on a speaker
@@ -483,7 +483,7 @@ const runPeaks = async function (fileName) {
     }
     else {
       spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
-      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}</a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
     }
 
