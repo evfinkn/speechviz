@@ -1,5 +1,5 @@
 import Peaks from "peaks.js";
-import { getRandomColor, htmlToElement, compareProperty, propertiesEqual } from "./util";
+import { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment } from "./util";
 const feather = require('feather-icons');
 
 const audio = document.getElementById('audio');
@@ -8,6 +8,8 @@ var snrs = {};
 var durations = {};
 
 let newChanges = false;
+
+
 
 const runPeaks = async function (fileName) {
   const name = fileName.replace(/\.[^/.]+$/, "");  // name of the file without the extension
@@ -44,6 +46,8 @@ const runPeaks = async function (fileName) {
 
   const moved = {};
 
+
+
   const segmentsFromGroup = function (group, { visible = false, hidden = false, sort = false, simple = false } = {}) {
     let segments = [];
 
@@ -61,16 +65,11 @@ const runPeaks = async function (fileName) {
     }
     if (sort) { segments.sort((seg1, seg2) => compareProperty(seg1, seg2, "startTime")); }  // sort by start time
     if (simple) {
-      segments = segments.map(segment => ({
-        "startTime": segment.startTime, 
-        "endTime": segment.endTime, 
-        "editable": segment.editable,
-        "labelText": segment.labelText,
-        "id": segment.id,
-        "path": segment.path.slice(0, -1),
-        "treeText": segment.treeText,
-        "removable": segment.removable
-      }));
+      segments = segments.map(segment => {
+        const copied = copySegment(segment);
+        Object.assign(copied, { "path": segment.path.slice(0, -1) });
+        return copied;
+      });
     }
     return segments;
   }
@@ -109,6 +108,8 @@ const runPeaks = async function (fileName) {
     peaks.player.pause();
   }
 
+
+
   const groupPlayIcon = feather.icons.play.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
   const groupPauseIcon = feather.icons.pause.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
   const groupLoopIcon = feather.icons.repeat.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
@@ -133,6 +134,8 @@ const runPeaks = async function (fileName) {
     peaks.player.pause();
   }
   //#endregion
+
+
 
   const toggleSegments = function (peaks, group, checked) {
     // groupsCheckboxes has a key for every group, so if not in there, group is a segment id
@@ -214,6 +217,8 @@ const runPeaks = async function (fileName) {
     }
   }
 
+
+
   const removeSegment = function (peaks, segment, group) {
     const parent = document.getElementById(group);
     const parentNested = document.getElementById(`${group}-nested`);
@@ -227,6 +232,8 @@ const runPeaks = async function (fileName) {
     parentNested.removeChild(segment.checkbox.parentElement);
     newChanges = true;
   }
+
+
 
   const removeGroup = function (peaks, group, parent) {
     for (let segment of segmentsFromGroup(group, { visible: true, hidden: true })) {
@@ -245,9 +252,7 @@ const runPeaks = async function (fileName) {
     newChanges = true;
   }
 
-  // const getChildren = function (group, { array = false }) {
-  //   let children = groupsCheckboxes[]
-  // }
+
 
   //#region popup and label functions
   const popup = document.getElementById("popup");
@@ -255,7 +260,7 @@ const runPeaks = async function (fileName) {
   let labelsDataset;
   const initPopup = function (peaks, group) {
     popup.style.display = "block";
-    if (group.includes("Speaker")){
+    if (group.includes("Speaker")) {
       popupContent.appendChild(htmlToElement("<h2>Choose a label for this speaker: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
       if (labelsDataset.children && labelsDataset.children != "") {
@@ -269,23 +274,25 @@ const runPeaks = async function (fileName) {
             let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
             for (let segment of segments) {
               if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-                const copiedSegment = peaks.segments.add({
-                  "startTime": segment.startTime,
-                  "endTime": segment.endTime,
-                  "editable": true,
-                  "color": groupsColors[label],
-                  "labelText": label,
-                  "treeText": segment.treeText,
-                  "removable": true
-                });
-                renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
+                const copied = copySegment(segment, ["path", "id"]);
+                Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
+                // const copiedSegment = peaks.segments.add({
+                //   "startTime": segment.startTime,
+                //   "endTime": segment.endTime,
+                //   "editable": true,
+                //   "color": groupsColors[label],
+                //   "labelText": label,
+                //   "treeText": segment.treeText,
+                //   "removable": true
+                // });
+                renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
                 //could be faster way this code is repeated in essence in several places
                 const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
                 let labSpkTitleSplit = labSpkSpan.title.split(" ");
                 labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
                 let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
                 labSpkSpan.title = labSpkTitleRejoined;
-                
+
                 const labelSpan = document.getElementById(`${label}-span`);
                 let labelTitleSplit = labelSpan.title.split(" ");
                 labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
@@ -299,18 +306,18 @@ const runPeaks = async function (fileName) {
         });
       }
     }
-    else{
+    else {
       const segment = segmentsByID[group];
 
       popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
 
-      Object.keys(snrs).forEach(function (speaker){
-        if (speaker != segment.path[2]){
-        const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
-        popupContent.append(radio);
-        popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
-        radio.addEventListener("change", function () {
+      Object.keys(snrs).forEach(function (speaker) {
+        if (speaker != segment.path[2]) {
+          const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
+          popupContent.append(radio);
+          popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
+          radio.addEventListener("change", function () {
             changeSpeaker(peaks, speaker, segment);
             popupContent.innerHTML = "";
             popup.style.display = "none";
@@ -326,23 +333,25 @@ const runPeaks = async function (fileName) {
           radio.addEventListener("change", function () {
             const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
             if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-              const copiedSegment = peaks.segments.add({
-                "startTime": segment.startTime,
-                "endTime": segment.endTime,
-                "editable": true,
-                "color": groupsColors[label],
-                "labelText": label,
-                "treeText": segment.treeText,
-                "removable": true
-              });
-              renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
-              
+              const copied = copySegment(segment, ["path", "id"]);
+              Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
+              // const copiedSegment = peaks.segments.add({
+              //   "startTime": segment.startTime,
+              //   "endTime": segment.endTime,
+              //   "editable": true,
+              //   "color": groupsColors[label],
+              //   "labelText": label,
+              //   "treeText": segment.treeText,
+              //   "removable": true
+              // });
+              renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
+
               const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
               let labSpkTitleSplit = labSpkSpan.title.split(" ");
               labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
               let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
               labSpkSpan.title = labSpkTitleRejoined;
-              
+
               const labelSpan = document.getElementById(`${label}-span`);
               let labelTitleSplit = labelSpan.title.split(" ");
               labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
@@ -365,6 +374,8 @@ const runPeaks = async function (fileName) {
     });
   }
 
+
+
   const changeSpeaker = function (peaks, speaker, segment) {
     let oldSpeaker = segment.path.at(-2);
     document.getElementById(`${segment.id}`).remove();
@@ -383,11 +394,12 @@ const runPeaks = async function (fileName) {
 
     if (visibleSegments[oldSpeaker][segment.id]) { delete visibleSegments[oldSpeaker][segment.id] }
     if (hiddenSegments[oldSpeaker][segment.id]) { delete hiddenSegments[oldSpeaker][segment.id] }
-    segment.update({ "color": groupsColors[speaker], "labelText": speaker });
+    segment.update({ "labelText": speaker });
     moved[segment.id] = segment;
   }
-  
   //#endregion
+
+
 
   const renderSegment = function (peaks, segment, group, path) {
     // if (group.includes("Custom") || group.includes("Labeled")){ //not sure if we need but this used to be in for custom and labeled
@@ -409,7 +421,7 @@ const runPeaks = async function (fileName) {
     const checkbox = li.firstElementChild;
 
     checkbox.addEventListener("click", function () { toggleSegments(peaks, segment.id, this.checked); });
-  
+
     document.getElementById(`${segment.id}-span`).addEventListener("click", function () { initPopup(peaks, segment.id); });
 
     // segment play/loop buttons
@@ -454,6 +466,8 @@ const runPeaks = async function (fileName) {
       segment.durationSpan = li.children[1];
     }
   }
+
+
 
   const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false, groupOfGroups = false, removable = false } = {}) {
 
@@ -502,7 +516,7 @@ const runPeaks = async function (fileName) {
     if (!Array.isArray(items[0]) && !groupOfGroups) {
       hiddenSegments[group] = {};
       visibleSegments[group] = {};
-      peaks.segments.add(items).forEach(function (segment) { 
+      peaks.segments.add(items).forEach(function (segment) {
         if (!(group in groupsColors)) { groupsColors[group] = segment.color; }
         renderSegment(peaks, segment, group, path);
       });
@@ -531,6 +545,8 @@ const runPeaks = async function (fileName) {
     return;
   }
 
+
+
   const options = {
     zoomview: {
       container: document.getElementById('zoomview-container'),
@@ -553,6 +569,8 @@ const runPeaks = async function (fileName) {
     zoomLevels: [256, 512, 1024, 2048, 4096]
   };
 
+
+
   Peaks.init(options, function (err, peaksInstance) {
     if (err) {
       console.error(err.message);
@@ -560,7 +578,6 @@ const runPeaks = async function (fileName) {
     }
 
     // Event listeners for the utilities underneath peaks
-
     //#region zoom
     // Zoom
     const zoomIn = document.querySelector("[data-action='zoom-in']");
@@ -595,6 +612,7 @@ const runPeaks = async function (fileName) {
     });
     //#endregion
 
+
     //#region seek
     const seekTime = document.getElementById('seek-time');
     const overview = peaksInstance.views.getView('overview');
@@ -610,8 +628,10 @@ const runPeaks = async function (fileName) {
     });
     //#endregion
 
+
     // Auto-scroll
     document.getElementById('auto-scroll').addEventListener('change', function () { zoomview.enableAutoScroll(this.checked); });
+
 
     //#region amplitude scale
     // Amplitude
@@ -635,8 +655,10 @@ const runPeaks = async function (fileName) {
     });
     //#endregion
 
+
     peaksInstance.on('segments.contextmenu', function (event) { event.evt.preventDefault(); });
     peaksInstance.on('overview.contextmenu', function (event) { event.evt.preventDefault(); });
+
 
     renderGroup(peaksInstance, "Custom-Segments", ["Segments"], { renderEmpty: true });
     renderGroup(peaksInstance, "Labeled-Speakers", ["Segments"], { renderEmpty: true, "groupOfGroups": true });
@@ -650,12 +672,14 @@ const runPeaks = async function (fileName) {
       .map(seg => parseInt(seg.id.split(".").at(-1)))
       .sort((id1, id2) => id1 - id2).at(-1);
 
+
     // add labeled speaker
     const labelInput = document.getElementById("label");
     document.querySelector("button[data-action='add-label']").addEventListener('click', function () {
       renderGroup(peaksInstance, labelInput.value, ["Segments", "Labeled-Speakers"], { "renderEmpty": true, "removable": true });
       labelInput.value = "";  // clear text box after submitting
     });
+
 
     //#region add custom segment
     const customSpan = document.getElementById("Custom-Segments-span");
@@ -680,40 +704,38 @@ const runPeaks = async function (fileName) {
     });
     //#endregion
 
+
     //#region load annotations
     (function () {
-      const record = {
-        'user': user.innerHTML,
-        'filename': fileName,
-      }
+      const record = { 'user': user, 'filename': fileName }
       const json = JSON.stringify(record);
       var loadRequest = new XMLHttpRequest();
-  
+
       loadRequest.open('POST', 'load', true);
       loadRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-  
+
       loadRequest.send(json)
       loadRequest.onload = function () {
         let jsonData = JSON.parse(loadRequest.response);
-        for (let segment of jsonData) {
-          if (segmentsByID[segment.id]) { changeSpeaker(peaksInstance, segment.path.at(-1), segmentsByID[segment.id]); }
-          else {
-            segment = peaksInstance.segments.add(segment);
-            renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
-          }
-        }
-  
-        // peaksInstance.segments.add(jsonData).forEach(function (segment) {  
-        //   renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
-        // });
-  
+        // for (let segment of jsonData) {
+        //   if (segmentsByID[segment.id]) { changeSpeaker(peaksInstance, segment.path.at(-1), segmentsByID[segment.id]); }
+        //   else {
+        //     segment = peaksInstance.segments.add(segment);
+        //     renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
+        //   }
+        // }
+
+        peaksInstance.segments.add(jsonData, { "overwrite": true }).forEach(function (segment) {  
+          renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
+        });
+
         toggleSegments(peaksInstance, "Segments", false);
-  
+
         document.getElementById("Segments-nested").classList.add("active");
-  
+
         groupsCheckboxes["Segments"].checked = true;
         groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaksInstance, "Segments", this.checked); });
-  
+
         segmentsPlay.style.pointerEvents = "auto";
         segmentsLoop.style.pointerEvents = "auto";
         const segmentsPlayIcon = segmentsPlay.firstElementChild;
@@ -811,28 +833,17 @@ const runPeaks = async function (fileName) {
         .forEach(function (segment) { segment.id = `peaks.segment.${idCounter++}`; });
 
       for (const segment of Object.values(moved)) {
-        segments.push({
-          "startTime": segment.startTime, 
-          "endTime": segment.endTime, 
-          "editable": segment.editable,
-          "labelText": segment.labelText,
-          "id": segment.id,
-          "path": segment.path.slice(0, -1),
-          "treeText": segment.treeText,
-          "removable": segment.removable
-        });
+        const copied = copySegment(segment, ["color"]);
+        copied.path = copied.path.slice(0, -1);
+        segments.push(copied);
       }
 
-      const record = {
-        'user': user.innerHTML,
-        'filename': fileName,
-        'segments': segments
-      }
+      const record = { 'user': user, 'filename': fileName, 'segments': segments }
       const json = JSON.stringify(record);
       var request = new XMLHttpRequest();
       request.open('POST', 'save', true);
       request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-    
+
       request.send(json);
       request.onload = function () {
         // done
@@ -845,16 +856,14 @@ const runPeaks = async function (fileName) {
     const segmentsLoop = groupsButtons["Segments"][1];
     segmentsPlay.innerHTML = feather.icons.play.toSvg({ "width": 17, "height": 17, "stroke": "black", "fill": "black" });
     segmentsLoop.innerHTML = feather.icons.repeat.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
-
-    
-    //#endregion
   });
 }
 
+
+
 const urlParams = new URLSearchParams(window.location.search);
 const fileName = urlParams.get("audiofile");
-var user = document.getElementById("user");
-
+var user = document.getElementById("user").innerHTML;
 
 // https://stackoverflow.com/a/7317311
 window.onload = function () {
