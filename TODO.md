@@ -11,6 +11,7 @@
 
 ### Interface
  - [ ] Determine way to show id of segment when hovering over it
+ - [ ] Move custom segments to label instead of copying
  - [ ] Changeable playback speed
  - [ ] Separate into multiple files
  - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
