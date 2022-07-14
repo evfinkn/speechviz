@@ -36,6 +36,7 @@
  - [ ] Add reset button (with confirmation popup, I think javascript has a built-in prompt for said popup) that removes all saved segments
  - [ ] Fix custom segment not being checked when added
  - [ ] Document functions
+ - [ ] Fix the segment's own label appearing in the segment's popup
  - [x] Add space between play, loop, and remove buttons
  - [x] Remake labels removable
  - [x] Make updateDuration function
