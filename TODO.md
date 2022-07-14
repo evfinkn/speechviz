@@ -28,6 +28,7 @@
  - [ ] Fix drag for the end of a segment is off screen when adding segment at the end of file
  - [ ] Fix the label not appearing next to speaker after adding it to label
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
+ - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
  - [x] Remake labels removable
  - [x] Make updateDuration function
  - [x] Movable custom segments
