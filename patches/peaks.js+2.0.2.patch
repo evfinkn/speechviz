@@ -1,9 +1,8 @@
 diff --git a/node_modules/peaks.js/.DS_Store b/node_modules/peaks.js/.DS_Store
 new file mode 100644
-index 0000000..c88a062
-Binary files /dev/null and b/node_modules/peaks.js/.DS_Store differ
+index 0000000..e69de29
 diff --git a/node_modules/peaks.js/dist/peaks.esm.js b/node_modules/peaks.js/dist/peaks.esm.js
-index 70847f9..aa8f790 100644
+index 70847f9..c3f033f 100644
 --- a/node_modules/peaks.js/dist/peaks.esm.js
 +++ b/node_modules/peaks.js/dist/peaks.esm.js
 @@ -1589,7 +1589,7 @@ function WaveformSegments(peaks) {
@@ -23,8 +22,11 @@ index 70847f9..aa8f790 100644
  
    if (isNullOrUndefined(segmentOptions.color)) {
      segmentOptions.color = this._getSegmentColor();
-@@ -1737,7 +1738,14 @@ WaveformSegments.prototype.add = function
+@@ -1735,12 +1736,25 @@ WaveformSegments.prototype.add = function
+ () {
+   var self = this;
    var arrayArgs = Array.isArray(arguments[0]);
++  var overwrite = arguments[1]?.overwrite;
    var segments = arrayArgs ? arguments[0] : Array.prototype.slice.call(arguments);
    segments = segments.map(function (segmentOptions) {
 -    var segment = self._createSegment(segmentOptions);
@@ -38,8 +40,17 @@ index 70847f9..aa8f790 100644
 +    }
  
      if (objectHasProperty(self._segmentsById, segment.id)) {
-       throw new Error('peaks.segments.add(): duplicate id');
-@@ -2190,9 +2198,10 @@ function getAllPropertiesFrom(adapter) {
+-      throw new Error('peaks.segments.add(): duplicate id');
++      if (overwrite) {
++        self.removeById(segment.id);
++      }
++      else {
++        throw new Error('peaks.segments.add(): duplicate id');
++      }
+     }
+ 
+     return segment;
+@@ -2190,9 +2204,10 @@ function getAllPropertiesFrom(adapter) {
    var obj = adapter;
  
    while (obj) {
@@ -51,7 +62,7 @@ index 70847f9..aa8f790 100644
      obj = Object.getPrototypeOf(obj);
    }
  
-@@ -2212,6 +2221,18 @@ function validateAdapter(adapter) {
+@@ -2212,6 +2227,18 @@ function validateAdapter(adapter) {
      }
    });
  }
@@ -70,7 +81,7 @@ index 70847f9..aa8f790 100644
  /**
   * A wrapper for interfacing with an external player API.
   *
-@@ -2222,26 +2243,24 @@ function validateAdapter(adapter) {
+@@ -2222,26 +2249,24 @@ function validateAdapter(adapter) {
   * @param {Adapter} adapter The player adapter.
   */
  
@@ -101,7 +112,7 @@ index 70847f9..aa8f790 100644
    this._adapter.destroy();
  };
  /**
-@@ -2249,16 +2268,14 @@ Player.prototype.destroy = function () {
+@@ -2249,16 +2274,14 @@ Player.prototype.destroy = function () {
   * @returns {Promise}
   */
  
@@ -120,7 +131,7 @@ index 70847f9..aa8f790 100644
    this._adapter.pause();
  };
  /**
-@@ -2266,16 +2283,14 @@ Player.prototype.pause = function () {
+@@ -2266,16 +2289,14 @@ Player.prototype.pause = function () {
   * otherwise.
   */
  
@@ -139,7 +150,7 @@ index 70847f9..aa8f790 100644
    return this._adapter.isSeeking();
  };
  /**
-@@ -2284,8 +2299,7 @@ Player.prototype.isSeeking = function () {
+@@ -2284,8 +2305,7 @@ Player.prototype.isSeeking = function () {
   * @returns {Number}
   */
  
@@ -149,7 +160,7 @@ index 70847f9..aa8f790 100644
    return this._adapter.getCurrentTime();
  };
  /**
-@@ -2294,8 +2308,7 @@ Player.prototype.getCurrentTime = function () {
+@@ -2294,8 +2314,7 @@ Player.prototype.getCurrentTime = function () {
   * @returns {Number}
   */
  
@@ -159,7 +170,7 @@ index 70847f9..aa8f790 100644
    return this._adapter.getDuration();
  };
  /**
-@@ -2304,8 +2317,7 @@ Player.prototype.getDuration = function () {
+@@ -2304,8 +2323,7 @@ Player.prototype.getDuration = function () {
   * @param {Number} time The time position, in seconds.
   */
  
@@ -169,7 +180,7 @@ index 70847f9..aa8f790 100644
    if (!isValidTime(time)) {
      this._peaks._logger('peaks.player.seek(): parameter must be a valid time, in seconds');
  
-@@ -2321,53 +2333,71 @@ Player.prototype.seek = function (time) {
+@@ -2321,53 +2339,71 @@ Player.prototype.seek = function (time) {
   * @param {Boolean} loop If true, playback is looped.
   */
  
@@ -177,11 +188,11 @@ index 70847f9..aa8f790 100644
 +  if (!isValidSegment(segment)) {
 +    return Promise.reject(new Error('peaks.player.playSegment(): parameter must be a segment object'));
 +  }
- 
--Player.prototype.playSegment = function (segment, loop) {
++
 +  this.playSegments([segment], loop);
 +};
-+
+ 
+-Player.prototype.playSegment = function (segment, loop) {
 +Player.prototype.playSegments = function(segments, loop) {
    var self = this;
  
@@ -265,7 +276,7 @@ index 70847f9..aa8f790 100644
  };
  
 diff --git a/node_modules/peaks.js/dist/peaks.js b/node_modules/peaks.js/dist/peaks.js
-index 5206c82..ba793f3 100644
+index 5206c82..266c936 100644
 --- a/node_modules/peaks.js/dist/peaks.js
 +++ b/node_modules/peaks.js/dist/peaks.js
 @@ -1872,7 +1872,7 @@
@@ -285,8 +296,11 @@ index 5206c82..ba793f3 100644
  
      if (isNullOrUndefined(segmentOptions.color)) {
        segmentOptions.color = this._getSegmentColor();
-@@ -2020,7 +2021,14 @@
+@@ -2018,12 +2019,25 @@
+   () {
+     var self = this;
      var arrayArgs = Array.isArray(arguments[0]);
++    var overwrite = arguments[1]?.overwrite;
      var segments = arrayArgs ? arguments[0] : Array.prototype.slice.call(arguments);
      segments = segments.map(function (segmentOptions) {
 -      var segment = self._createSegment(segmentOptions);
@@ -300,8 +314,17 @@ index 5206c82..ba793f3 100644
 +      }
  
        if (objectHasProperty(self._segmentsById, segment.id)) {
-         throw new Error('peaks.segments.add(): duplicate id');
-@@ -2473,9 +2481,10 @@
+-        throw new Error('peaks.segments.add(): duplicate id');
++        if (overwrite) {
++          self.removeById(segment.id);
++        }
++        else {
++          throw new Error('peaks.segments.add(): duplicate id');
++        }
+       }
+ 
+       return segment;
+@@ -2473,9 +2487,10 @@
      var obj = adapter;
  
      while (obj) {
@@ -313,7 +336,7 @@ index 5206c82..ba793f3 100644
        obj = Object.getPrototypeOf(obj);
      }
  
-@@ -2495,6 +2504,18 @@
+@@ -2495,6 +2510,18 @@
        }
      });
    }
@@ -332,7 +355,7 @@ index 5206c82..ba793f3 100644
    /**
     * A wrapper for interfacing with an external player API.
     *
-@@ -2505,26 +2526,24 @@
+@@ -2505,26 +2532,24 @@
     * @param {Adapter} adapter The player adapter.
     */
  
@@ -363,7 +386,7 @@ index 5206c82..ba793f3 100644
      this._adapter.destroy();
    };
    /**
-@@ -2532,16 +2551,14 @@
+@@ -2532,16 +2557,14 @@
     * @returns {Promise}
     */
  
@@ -382,7 +405,7 @@ index 5206c82..ba793f3 100644
      this._adapter.pause();
    };
    /**
-@@ -2549,16 +2566,14 @@
+@@ -2549,16 +2572,14 @@
     * otherwise.
     */
  
@@ -401,7 +424,7 @@ index 5206c82..ba793f3 100644
      return this._adapter.isSeeking();
    };
    /**
-@@ -2567,8 +2582,7 @@
+@@ -2567,8 +2588,7 @@
     * @returns {Number}
     */
  
@@ -411,7 +434,7 @@ index 5206c82..ba793f3 100644
      return this._adapter.getCurrentTime();
    };
    /**
-@@ -2577,8 +2591,7 @@
+@@ -2577,8 +2597,7 @@
     * @returns {Number}
     */
  
@@ -421,7 +444,7 @@ index 5206c82..ba793f3 100644
      return this._adapter.getDuration();
    };
    /**
-@@ -2587,8 +2600,7 @@
+@@ -2587,8 +2606,7 @@
     * @param {Number} time The time position, in seconds.
     */
  
@@ -431,7 +454,7 @@ index 5206c82..ba793f3 100644
      if (!isValidTime(time)) {
        this._peaks._logger('peaks.player.seek(): parameter must be a valid time, in seconds');
  
-@@ -2604,53 +2616,71 @@
+@@ -2604,53 +2622,71 @@
     * @param {Boolean} loop If true, playback is looped.
     */
  
@@ -441,11 +464,11 @@ index 5206c82..ba793f3 100644
 +        new Error('peaks.player.playSegment(): parameter must be a segment object')
 +      );
 +    }
- 
--  Player.prototype.playSegment = function (segment, loop) {
++
 +    this.playSegments([segment], loop);
 +  };
-+
+ 
+-  Player.prototype.playSegment = function (segment, loop) {
 +  Player.prototype.playSegments = function(segments, loop) {
      var self = this;
  
