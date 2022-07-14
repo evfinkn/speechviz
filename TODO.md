@@ -34,6 +34,7 @@
  - [ ] Fix toggling label not toggling its segments' play and loop buttons
  - [ ] Fix loading not setting duration
  - [ ] Add reset button (with confirmation popup, I think javascript has a built-in prompt for said popup) that removes all saved segments
+ - [ ] Fix custom segment not being checked when added
  - [x] Add space between play, loop, and remove buttons
  - [x] Remake labels removable
  - [x] Make updateDuration function
