@@ -276,28 +276,9 @@ const runPeaks = async function (fileName) {
               if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
                 const copied = copySegment(segment, ["path", "id"]);
                 Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
-                // const copiedSegment = peaks.segments.add({
-                //   "startTime": segment.startTime,
-                //   "endTime": segment.endTime,
-                //   "editable": true,
-                //   "color": groupsColors[label],
-                //   "labelText": label,
-                //   "treeText": segment.treeText,
-                //   "removable": true
-                // });
                 renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
-                //could be faster way this code is repeated in essence in several places
-                const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
-                let labSpkTitleSplit = labSpkSpan.title.split(" ");
-                labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-                let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
-                labSpkSpan.title = labSpkTitleRejoined;
-
-                const labelSpan = document.getElementById(`${label}-span`);
-                let labelTitleSplit = labelSpan.title.split(" ");
-                labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-                let labelTitleRejoined = labelTitleSplit.join(" ");
-                labelSpan.title = labelTitleRejoined;
+                addOrSubDuration("Labeled-Speakers", segment, true);
+                addOrSubDuration(label, segment, true);
               }
             }
             popupContent.innerHTML = "";
@@ -306,62 +287,60 @@ const runPeaks = async function (fileName) {
         });
       }
     }
-    else {
+    else{
       const segment = segmentsByID[group];
-
+      
+      if (segment.editable){
+        // rename box code
+        popupContent.appendChild(htmlToElement("<h2>Rename segment or move to label: </h2>"));
+        popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+        let span = document.getElementById(`${segment.id}-span`);
+        popupContent.appendChild(htmlToElement("<input type='text' id='" + segment.id + "-rename' value='" + span.innerHTML + "'>"));
+        // rename segment when "enter" is pressed
+        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            let newLabel = document.getElementById(`${segment.id}-rename`).value;
+            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
+            segment.update({ "labelText": newLabel, "treeText": newLabel });
+          }
+        });
+      }
+      else{
       popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
 
-      Object.keys(snrs).forEach(function (speaker) {
-        if (speaker != segment.path[2]) {
+      Object.keys(snrs).forEach(function (speaker){
+        if (speaker != segment.path[2]){
           const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
-          popupContent.append(radio);
-          popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
-          radio.addEventListener("change", function () {
-            changeSpeaker(peaks, speaker, segment);
+        popupContent.append(radio);
+        popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
+        radio.addEventListener("change", function () {
+            changeSpeaker(peaks, speaker, segment.path.at(-2), segment);
             popupContent.innerHTML = "";
             popup.style.display = "none";
           });
         }
       });
+      }
       if (labelsDataset.children && labelsDataset.children != "") {
-        labelsDataset.children.split("|").forEach(function (label) {
-          // add radio button
-          const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
-          popupContent.append(radio);
-          popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
-          radio.addEventListener("change", function () {
-            const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
-            if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-              const copied = copySegment(segment, ["path", "id"]);
-              Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
-              // const copiedSegment = peaks.segments.add({
-              //   "startTime": segment.startTime,
-              //   "endTime": segment.endTime,
-              //   "editable": true,
-              //   "color": groupsColors[label],
-              //   "labelText": label,
-              //   "treeText": segment.treeText,
-              //   "removable": true
-              // });
-              renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
-
-              const labSpkSpan = document.getElementById(`Labeled-Speakers-span`);
-              let labSpkTitleSplit = labSpkSpan.title.split(" ");
-              labSpkTitleSplit[labSpkTitleSplit.length - 1] = parseFloat(labSpkTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-              let labSpkTitleRejoined = labSpkTitleSplit.join(" ");
-              labSpkSpan.title = labSpkTitleRejoined;
-
-              const labelSpan = document.getElementById(`${label}-span`);
-              let labelTitleSplit = labelSpan.title.split(" ");
-              labelTitleSplit[labelTitleSplit.length - 1] = parseFloat(labelTitleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-              let labelTitleRejoined = labelTitleSplit.join(" ");
-              labelSpan.title = labelTitleRejoined;
-            }
-            popupContent.innerHTML = "";
-            popup.style.display = "none";
-          });
+      labelsDataset.children.split("|").forEach(function (label) {
+        // add radio button
+        const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
+        popupContent.append(radio);
+        popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+        radio.addEventListener("change", function () {
+          const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
+          if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
+            const copied = copySegment(segment, ["path", "id"]);
+            Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
+            renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
+            addOrSubDuration("Labeled-Speakers", segment, true);
+            addOrSubDuration(label, segment, true);
+          }
+          popupContent.innerHTML = "";
+          popup.style.display = "none";
         });
+      });
       }
     }
 
@@ -376,28 +355,33 @@ const runPeaks = async function (fileName) {
 
 
 
-  const changeSpeaker = function (peaks, speaker, segment) {
-    let oldSpeaker = segment.path.at(-2);
+  const changeSpeaker = function (peaks, speaker, oldSpeaker, segment) {
+    segment.path = ["Segments", "Speakers", speaker, segment.id];
     document.getElementById(`${segment.id}`).remove();
     renderSegment(peaks, segment, speaker, ["Segments", "Speakers"]);
-    const span = document.getElementById(`${speaker}-span`);
-    let titleSplit = span.title.split(" ");
-    titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) + parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-    let titleRejoined = titleSplit.join(" ");
-    span.title = titleRejoined;
-
-    const oldSpan = document.getElementById(`${oldSpeaker}-span`);
-    let oldTitleSplit = oldSpan.title.split(" ");
-    oldTitleSplit[oldTitleSplit.length - 1] = parseFloat(oldTitleSplit.at(-1)) - parseFloat(document.getElementById(`${segment.id}-span`).title.split(" ").at(-1));
-    let oldTitleRejoined = oldTitleSplit.join(" ");
-    oldSpan.title = oldTitleRejoined;
-
+    addOrSubDuration(speaker, segment, true);
+    addOrSubDuration(oldSpeaker, segment, false);
     if (visibleSegments[oldSpeaker][segment.id]) { delete visibleSegments[oldSpeaker][segment.id] }
     if (hiddenSegments[oldSpeaker][segment.id]) { delete hiddenSegments[oldSpeaker][segment.id] }
     segment.update({ "labelText": speaker });
     moved[segment.id] = segment;
   }
   //#endregion
+
+
+
+  const addOrSubDuration = function (groupToUpdate, segmentMoving, adding){
+    const span = document.getElementById(`${groupToUpdate}-span`);
+    let titleSplit = span.title.split(" ");
+    if (adding){
+      titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) + parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1));
+    }
+    else{
+      titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) - parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1));
+    }
+    let titleRejoined = titleSplit.join(" ");
+    span.title = titleRejoined;
+  }
 
 
 
@@ -414,7 +398,7 @@ const runPeaks = async function (fileName) {
     const li = document.createElement("li");
     li.id = segment.id;
     li.style.fontSize = "12px";
-    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.treeText}</span> <a href="#" style="text-decoration:none;">${segmentPlayIcon}</a><a href="#" style="text-decoration:none;">${segmentLoopIcon}</a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" autocomplete="off" checked><span id="${segment.id}-span" title="Duration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.treeText}</span> <a href="#" style="text-decoration:none;">${segmentPlayIcon}   </a><a href="#" style="text-decoration:none;">${segmentLoopIcon}   </a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
 
     // segment checkboxes
@@ -440,25 +424,6 @@ const runPeaks = async function (fileName) {
     segmentsByID[segment.id] = segment;
     visibleSegments[group][segment.id] = segment;
 
-    if (segment.editable) {
-      let temp = document.getElementById(`${segment.id}-span`);
-      temp.outerHTML = '<button id="' + segment.id + '-button" class="nolink">' + temp.outerHTML + '</button>';
-      // rename segment
-      document.getElementById(`${segment.id}-button`).addEventListener('click', function () {
-        // change innerHTML to an input box
-        document.getElementById(`${segment.id}-button`).outerHTML = "<input type='text' id='" + segment.id + "-rename' value='" + temp.innerHTML + "'>";
-        // rename segment when "enter" is pressed
-        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            let newLabel = document.getElementById(`${segment.id}-rename`).value;
-            // switch back to text with new name
-            document.getElementById(`${segment.id}-rename`).outerHTML = temp.outerHTML;
-            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
-            segment.update({ "labelText": newLabel, "treeText": newLabel });
-          }
-        });
-      });
-    }
     if (segment.editable || segment.removable) {
       const remove = htmlToElement(`<a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a>`);
       loop.after(remove);
@@ -470,7 +435,6 @@ const runPeaks = async function (fileName) {
 
 
   const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false, groupOfGroups = false, removable = false } = {}) {
-
     if (group in groupsCheckboxes) { return; }  // group already exists
     if (items.length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
 
@@ -489,7 +453,7 @@ const runPeaks = async function (fileName) {
       spanHTML = `<button id="${group}-button" class="nolink"><span id="${group}-span" style="font-size:18px;" title="${"SNR: " + snr.toFixed(2)}">${group}</span></button>`
       snrs[group] = snr;
 
-      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}</a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
 
       // event listener for clicking on a speaker
@@ -497,7 +461,7 @@ const runPeaks = async function (fileName) {
     }
     else {
       spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
-      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}</a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}</a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
     }
 
@@ -717,16 +681,11 @@ const runPeaks = async function (fileName) {
       loadRequest.send(json)
       loadRequest.onload = function () {
         let jsonData = JSON.parse(loadRequest.response);
-        // for (let segment of jsonData) {
-        //   if (segmentsByID[segment.id]) { changeSpeaker(peaksInstance, segment.path.at(-1), segmentsByID[segment.id]); }
-        //   else {
-        //     segment = peaksInstance.segments.add(segment);
-        //     renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
-        //   }
-        // }
-
-        peaksInstance.segments.add(jsonData, { "overwrite": true }).forEach(function (segment) {  
-          renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
+        peaksInstance.segments.add(jsonData, { "overwrite": true }).forEach(function (segment) {
+          if (segment.id in segmentsByID) {
+            changeSpeaker(peaksInstance, segment.path.at(-1), segmentsByID[segment.id].path.at(-2), segment);
+          }
+          else { renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1)); }
         });
 
         toggleSegments(peaksInstance, "Segments", false);
