@@ -425,7 +425,7 @@ const runPeaks = async function (fileName) {
     visibleSegments[group][segment.id] = segment;
 
     if (segment.editable || segment.removable) {
-      const remove = htmlToElement(`<a href="#" data-id="${segment.id}">${segmentRemoveIcon}</a>`);
+      const remove = htmlToElement(`<a href="#" ">${segmentRemoveIcon}</a>`);
       loop.after(remove);
       remove.addEventListener("click", function () { removeSegment(peaks, segment, group); });
       segment.durationSpan = li.children[1];
@@ -453,7 +453,7 @@ const runPeaks = async function (fileName) {
       spanHTML = `<button id="${group}-button" class="nolink"><span id="${group}-span" style="font-size:18px;" title="${"SNR: " + snr.toFixed(2)}">${group}</span></button>`
       snrs[group] = snr;
 
-      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
 
       // event listener for clicking on a speaker
@@ -461,7 +461,7 @@ const runPeaks = async function (fileName) {
     }
     else {
       spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
-      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
     }
 
@@ -502,7 +502,7 @@ const runPeaks = async function (fileName) {
     }
 
     if (removable) {
-      const remove = htmlToElement(`<a href="#" data-id="${group}">${groupRemoveIcon}</a>`);
+      const remove = htmlToElement(`<a href="#">${groupRemoveIcon}</a>`);
       branch.children[3].after(remove);
       remove.addEventListener("click", function () { removeGroup(peaks, group, parent); });
     }
