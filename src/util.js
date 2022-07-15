@@ -25,6 +25,14 @@ const propertiesEqual = function (obj1, obj2, properties) {
     return true;
 }
 
+const segProperties = ["startTime", "endTime", "editable", "color", "labelText", "id", "path", "treeText", "removable"];
+const copySegment = function(seg, exclude = []) {
+    const copied = {};
+    segProperties.forEach(function (prop) {
+        if (!exclude.includes(prop)) { copied[prop] = seg[prop]; }
+    })
+    return copied;
+}
 
-export { getRandomColor, htmlToElement, compareProperty, propertiesEqual };
+export { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment };
 

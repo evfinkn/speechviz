@@ -59,160 +59,84 @@ app.get("/filelist", (req, res) => {
 
 app.get(/\/(audio|segments|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
-function saveSegsOrPoints(userid, fileid, segments) {
-  console.log('num items', segments.length);
-  deleteStatement = db.prepare('DELETE FROM annotations WHERE user_id=? AND audiofile=?');
-  deleteStatement.run([userid,fileid]);
-  for (index=0; index < segments.length; index++) {
-      let id = segments[index].id;
-      let startTime = segments[index].startTime;
-      let label = segments[index].labelText;
-      var endTime;
-      if (startTime == null) {
-          console.log('\tthis is a point')
-          startTime = segments[index].time;
-          endTime = -1;
-      } else {
-          console.log('\tthis is a segment')
-          endTime = segments[index].endTime;
-      }
-      console.log(`fileid=${fileid} userid=${userid} id=${id} start=${startTime} end=${endTime} label=${label}`)
+const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
+const insertFile = db.prepare("INSERT INTO audiofiles(audiofile) VALUES(?)");
 
+const selectUserId = db.prepare("SELECT id FROM users WHERE user=?");
 
-      checkStmt = db.prepare('SELECT id FROM annotations WHERE id=?')
-      //checkStmt = db.prepare('SELECT id FROM annotations WHERE user_id=? AND file_id=? AND id=?')
-      checkAnnotation = checkStmt.get([id])
-      if ((id < 0) || (!checkAnnotation))  {
-        console.log('\tinserting');
-        // statement = db.prepare('INSERT INTO annotations(id,user_id,file_id,start,end,label) VALUES(?,?,?,?,?,?)')
-        // info = statement.run([id, userid, fileid, startTime, endTime, label])
+const deleteSegments = db.prepare('DELETE FROM annotations WHERE fileId=? AND userId=?');
 
-        statement = db.prepare('INSERT INTO annotations(user_id,audiofile,start,end,label) VALUES(?,?,?,?,?)');
-        info = statement.run([userid, fileid, startTime, endTime, label]);
-        console.log('\tcommit', info);
-      } else {
-        console.log('\tupdating', fileid, 'start', startTime, 'end', endTime, 'label', label)
-        //statement = db.prepare('UPDATE annotations SET start=?, end=?, label=? where file_id=? and user_id=? and id=?')
-        statement = db.prepare('UPDATE annotations SET start=?, end=?, label=? WHERE id=?')
-        info = statement.run([startTime, endTime, label, id])
-        console.log('\tcommit', info)
-      }
+const selectLabelId = db.prepare("SELECT id FROM labels WHERE label=?");
+const insertLabel = db.prepare("INSERT INTO labels(label) VALUES(?)");
+
+const selectPathId = db.prepare("SELECT id FROM paths WHERE path=?");
+const insertPath = db.prepare("INSERT INTO paths(path) VALUES(?)");
+
+const insertSegment = db.prepare("INSERT INTO annotations(fileId,userId,startTime,endTime,editable,labelId,id,pathId,treeText,removable) VALUES(?,?,?,?,?,?,?,?,?,?)");
+
+const save = db.transaction((filename, user, segments) => {
+  let fileId = selectFileId.get([filename])?.id;
+  if (!fileId) {
+    fileId = insertFile.run([filename]).lastInsertRowid;
   }
-}
+  const userId = selectUserId.get([user]).id;
 
-app.use('/loadannotations/', function(req, res){
-  /**
-    Loads the annotations from the database for a given user and file
-    When the annotate.html loads, it will make request to load all the annotatiosn for the current file
-  **/
-    console.log('---- load annotations ----')
-    //console.log(req.body)
-    let filename = req.body['filename']
-    let user = req.body['user']
-    console.log('user', user, 'audiofile', audiofile)
-  
-    // obtain the id of the user based on its user  
-    var userid = db.prepare('SELECT id FROM users WHERE user=?').get(user).id
-    console.log('user', user, '==>', userid)
-  
-    r = db.prepare('SELECT id,audiofile,start,end,label FROM annotations where user_id=? AND audiofile=?').all([userid, filename])
+  deleteSegments.run([fileId, userId]);
 
-    console.log('retrieved', r.length, 'annotations')
-    console.log(r)
-  
-    res.send(r)
-    console.log(`---- load annotations ---- (end) total=${r.length}`)
-    res.end()
+  for (const segment of segments) {
+    const label = segment.labelText;
+    let labelId = selectLabelId.get([label])?.id;
+    if (!labelId) {
+      labelId = insertLabel.run([label]).lastInsertRowid;
+    }
+
+    const path = segment.path.join("|");
+    let pathId = selectPathId.get([path])?.id;
+    if (!pathId) {
+      pathId = insertPath.run([path]).lastInsertRowid;
+    }
+
+    segment.editable = +segment.editable;
+    segment.removable = +segment.removable;
+
+    insertSegment.run([fileId, userId, segment.startTime, segment.endTime, segment.editable, labelId, segment.id, pathId, segment.treeText, segment.removable]);
+  }
 });
-
-app.use('/saveannotations/', function(req, res) {
-  /**
-    Saves the annotations to the database
-    Annotate.html will make an HTTP POST that contains all the annotations.
-    The body of the request include all the parameters encoded in JSON
-  **/
-  console.log('---- save annotations ----')
-
-  let filename = req.body['filename']
-  let segments = req.body['segments']
-  //let points = req.body['points']
-  let user = req.body['user']
-
-  //row = db.prepare('SELECT id FROM wavefiles WHERE audiofile=?').get(filename);
-  //fileid = row.id
-  //console.log('filename', filename, '==>', fileid)
-
-  var userid = db.prepare('SELECT id FROM users WHERE user=?').get(user).id
-  console.log('user', user, '==>', userid)
-
-  console.log(segments);
-  saveSegsOrPoints(userid, filename, segments)
-  //saveSegsOrPoints(user, fileName, points)
-
-  res.end()
-  console.log('---- save annotations ---- (end)')
-})
-
-app.use('/savelabels/', function(req, res) {
-  console.log('---- save labels ----');
-
-  let filename = req.body['filename'];
-  let labels = req.body['labels'];
-  // let label = req.body['label'];
-  // let speaker = req.body['speaker'];
-  let user = req.body['user'];
-
-
-  //row = db.prepare('SELECT id FROM wavefiles WHERE audiofile=?').get(filename);
-  //fileid = row.id
-  //console.log('filename', filename, '==>', fileid)
-
-  var userid = db.prepare('SELECT id FROM users WHERE user=?').get([user]);
-  console.log('user', user, '==>', userid);
-
-  db.prepare('DELETE FROM labels WHERE user_id=? AND audiofile=?').run([userid.id,filename]);
-
-  var statement = db.prepare('INSERT INTO labels(user_id,audiofile,label,speakers) VALUES(?,?,?,?)');
-  for (let [label, groups] of Object.entries(labels)) {
-    statement.run([userid.id, filename, label, groups.join("|")]);
-  }
-
+app.use("/save/", (req, res) => {
+  save(req.body["filename"], req.body["user"], req.body["segments"]);
   res.end();
-  console.log('---- save annotations ---- (end)');
-})
-
-app.use('/loadlabels/', function(req, res){
-  /**
-    Loads the annotations from the database for a given user and file
-    When the annotate.html loads, it will make request to load all the annotatiosn for the current file
-  **/
-    console.log('---- load labels ----')
-    //console.log(req.body)
-    let filename = req.body['filename']
-    let user = req.body['user']
-    console.log('user', user, 'audiofile', audiofile)
-  
-    // obtain the id of the user based on its user  
-    var userid = db.prepare('SELECT id FROM users WHERE user=?').get(user).id
-    console.log('user', user, '==>', userid)
-  
-    r = db.prepare('SELECT label, speakers FROM labels where user_id=? AND audiofile=?').all([userid, filename])
-
-    console.log('retrieved', r.length, 'labels')
-    console.log(r)
-  
-    res.send(r)
-    console.log(`---- load labels ---- (end) total=${r.length}`)
-    res.end()
 });
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+const selectSegments = db.prepare("SELECT startTime,endTime,editable,labelId,id,pathId,treeText,removable FROM annotations WHERE fileId=? AND userId=?");
+
+const selectLabel = db.prepare("SELECT label FROM labels WHERE id=?");
+const selectPath = db.prepare("SELECT path FROM paths WHERE id=?");
+
+const load = db.transaction((filename, user) => {
+  let fileId = selectFileId.get([filename])?.id;
+  if (!fileId) {
+    fileId = insertFile.run([filename]).lastInsertRowid;
+  }
+  const userId = selectUserId.get([user]).id;
+
+  const segments = selectSegments.all([fileId, userId]);
+  for (const segment of segments) {
+    segment.editable = !!segment.editable;  // "double not" to cast to boolean
+
+    segment.labelText = selectLabel.get([segment.labelId]).label;
+    delete segment.labelId;
+
+    segment.path = selectPath.get([segment.pathId]).path.split("|");
+    delete segment.pathId;
+  }
+
+  return segments;
 });
 
+app.use("/load/", (req, res) => {
+  res.send(load(req.body["filename"], req.body["user"]));
+  res.end();
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
