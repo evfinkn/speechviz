@@ -304,8 +304,11 @@ const runPeaks = async function (fileName) {
           li.firstElementChild.dataset.id = newLabel;
           li.children[2].dataset.id = newLabel;
           li.children[3].dataset.id = newLabel;
-          li.children[4].id = `${newLabel}-nested`;
-          if (li.children[5]) { li.children[5].dataset.id = newLabel; }
+          if (li.children[5]) {
+            li.children[4].dataset.id = newLabel;
+            li.children[5].id = `${newLabel}-nested`;
+          }
+          else { li.children[4].id = `${newLabel}-nested`; }
 
           for (let segment of segmentsFromGroup(group, {visible: true, hidden: true})){
             segment.path[segment.path.length - 2] = newLabel;
