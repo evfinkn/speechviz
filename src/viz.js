@@ -259,11 +259,9 @@ const runPeaks = async function (fileName) {
   const popupContent = document.getElementById("popup-content");
   let labelsDataset;
   const initPopup = function (peaks, group) {
-    console.log(group);
     popup.style.display = "block";
     //if group is a speaker group
     if (group.includes("Speaker")){
-      console.log("It is a speaker");
       popupContent.appendChild(htmlToElement("<h2>Choose a label for this speaker: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
       if (labelsDataset.children && labelsDataset.children != "") {
@@ -291,28 +289,42 @@ const runPeaks = async function (fileName) {
       }
     }
     else if (document.getElementById(`${group}-span`).parentElement.parentElement.id == "Labeled-Speakers-nested"){ //if group is a label group
-      console.log(group + " is in the label group")
       popupContent.appendChild(htmlToElement("<h2>Rename label: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
       let span = document.getElementById(`${group}-span`);
-      console.log(span.innerHTML);
       popupContent.appendChild(htmlToElement("<input type='text' id='" + group + "-rename' value='" + span.innerHTML + "'>"));
       // rename segment when "enter" is pressed
       document.getElementById(`${group}-rename`).addEventListener("keypress", function (event) {
         if (event.key === "Enter") {
-          console.log("enter pressed");
           let newLabel = document.getElementById(`${group}-rename`).value;
           document.getElementById(`${group}-span`).innerHTML = newLabel;
           document.getElementById(`${group}-span`).id = `${newLabel}-span`;
-          document.getElementById(`${group}`).id = `${newLabel}`;
-          document.getElementById(`${group}-nested`).id = `${newLabel}-nested`;
+          const li = document.getElementById(`${group}`);
+          li.id = `${newLabel}`;
+          li.firstElementChild.dataset.id = newLabel;
+          li.children[2].dataset.id = newLabel;
+          li.children[3].dataset.id = newLabel;
+          li.children[4].id = `${newLabel}-nested`;
+          if (li.children[5]) { li.children[5].dataset.id = newLabel; }
 
           for (let segment of segmentsFromGroup(group, {visible: true, hidden: true})){
             segment.path[segment.path.length - 2] = newLabel;
+            segment.update({ "labelText": newLabel });
           }
 
           labelsDataset.children = labelsDataset.children.replace(group, newLabel);
-          console.log(labelsDataset.children);
+          groupsCheckboxes[newLabel] = groupsCheckboxes[group];
+          delete groupsCheckboxes[group];
+          groupsButtons[newLabel] = groupsButtons[group];
+          delete groupsButtons[group];
+          groupsColors[newLabel] = groupsColors[group];
+          delete groupsColors[group];
+
+          hiddenSegments[newLabel] = hiddenSegments[group];
+          delete hiddenSegments[group];
+          visibleSegments[newLabel] = visibleSegments[group];
+          delete visibleSegments[group];
+
           popupContent.innerHTML = "";
           popup.style.display = "none";
         }
@@ -369,7 +381,6 @@ const runPeaks = async function (fileName) {
       }
       if (labelsDataset.children && labelsDataset.children != "") {
       labelsDataset.children.split("|").forEach(function (label) {
-        console.log(document.getElementById(`${group}-span`).parentElement.id);
         if (label != document.getElementById(`${group}-span`).parentElement.id){
           // add radio button
           const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
@@ -497,8 +508,6 @@ const runPeaks = async function (fileName) {
 
     const parent = path.at(-1);  // parent needed to find where in tree to nest group
     // add group to the parents children
-    console.log("Parent is " + parent);
-    console.log("Group is " + group);
     const parentCheckbox = groupsCheckboxes[parent];
     const parentChildren = parentCheckbox.dataset.children;
     parentCheckbox.dataset.children = parentChildren === undefined ? group : `${parentChildren}|${group}`;
@@ -510,34 +519,33 @@ const runPeaks = async function (fileName) {
       spanHTML = `<button id="${group}-button" class="nolink"><span id="${group}-span" style="font-size:18px;" title="${"SNR: " + snr.toFixed(2)}">${group}</span></button>`
       snrs[group] = snr;
 
-      branch.innerHTML = `<input type="checkbox" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
 
       // event listener for clicking on a speaker
-      document.getElementById(`${group}-button`).addEventListener("click", function () { initPopup(peaks, group); });
+      document.getElementById(`${group}-button`).addEventListener("click", function () { initPopup(peaks, this.id.split("-")[0]); });
     }
     else if (parent == "Labeled-Speakers"){
-      console.log("render group called on a label " + group);
       spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
       branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
       // event listener for clicking on a label
-      document.getElementById(`${group}-span`).addEventListener("click", function () { initPopup(peaks, this.id.replace("-span", "")); });
+      document.getElementById(`${group}-span`).addEventListener("click", function () { initPopup(peaks, this.id.split("-")[0]); });
     }
     else {
       spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
-      branch.innerHTML = `<input type="checkbox" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" autocomplete="off" data-id="${group}">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
     }
 
     // add inputs for group to groupInputs and add event listeners to them
     const groupCheckbox = branch.firstElementChild;
-    groupCheckbox.addEventListener("click", function () { toggleSegments(peaks, group, this.checked); });
+    groupCheckbox.addEventListener("click", function () { toggleSegments(peaks, this.dataset.id, this.checked); });
 
     const groupPlay = branch.children[2];
     const groupLoop = branch.children[3];
-    groupPlay.addEventListener("click", function () { playGroup(peaks, group); }, { once: true });
-    groupLoop.addEventListener("click", function () { playGroup(peaks, group, true); }, { once: true });
+    groupPlay.addEventListener("click", function () { playGroup(peaks, this.dataset.id); }, { once: true });
+    groupLoop.addEventListener("click", function () { playGroup(peaks, this.dataset.id, true); }, { once: true });
 
     groupsCheckboxes[group] = groupCheckbox;
     groupsButtons[group] = [groupPlay, groupLoop];
@@ -567,9 +575,9 @@ const runPeaks = async function (fileName) {
     }
 
     if (removable) {
-      const remove = htmlToElement(`<a href="#">${groupRemoveIcon}</a>`);
+      const remove = htmlToElement(`<a href="#" data-id="${group}">${groupRemoveIcon}</a>`);
       branch.children[3].after(remove);
-      remove.addEventListener("click", function () { removeGroup(peaks, group, parent); });
+      remove.addEventListener("click", function () { removeGroup(peaks, this.dataset.id, parent); });
     }
     return;
   }
