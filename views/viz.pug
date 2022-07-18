@@ -26,7 +26,13 @@ html(lang="en")
                         audio#audio(controls="controls")
                             source(src=`audio/${audiofile}`, type=mimetype)
                             | Your browser does not support the audio element.
-
+                        div.dropdown
+                            button(class="dropbtn", data-action="show-dropdowns") Speed
+                            div.dropdown-content#speedDropdown
+                                button(data-action=".5times") .5
+                                button(data-action="1times") Normal
+                                button(data-action="2times") 2
+                                button(data-action="4times") 4
                         #controls
                             div
                                 a(href="javascript:;", style="text-decoration:none;pointer-events:none;", data-action="zoom-in")
