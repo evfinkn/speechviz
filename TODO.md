@@ -10,7 +10,6 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] Determine way to show id of segment when hovering over it
  - [ ] Move custom segments to label instead of copying
  - [ ] Changeable playback speed
  - [ ] Separate into multiple files
@@ -35,6 +34,7 @@
  - [ ] Fix custom segment not being checked when added
  - [ ] Document functions
  - [ ] Fix the segment's own label appearing in the segment's popup
+ - [x] Determine way to show id of segment when hovering over it
  - [x] Renamable labels
  - [x] Notes input text box in bottom right to write things down
  - [x] Add space between play, loop, and remove buttons
