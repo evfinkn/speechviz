@@ -15,7 +15,6 @@
  - [ ] Changeable playback speed
  - [ ] Separate into multiple files
  - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
- - [ ] Notes input text box in bottom right to write things down
  - [ ] Show segment start time and end time when hovering over its tree text
  - [ ] Change default custom segment duration (lower from 10 to maybe like 5?)
  - [ ] Make segment popup radio buttons appear on separate lines
@@ -30,13 +29,14 @@
  - [ ] Fix the label not appearing next to speaker after adding it to label
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
- - [ ] Renamable labels
  - [ ] Fix toggling label not toggling its segments' play and loop buttons
  - [ ] Fix loading not setting duration
  - [ ] Add reset button (with confirmation popup, I think javascript has a built-in prompt for said popup) that removes all saved segments
  - [ ] Fix custom segment not being checked when added
  - [ ] Document functions
  - [ ] Fix the segment's own label appearing in the segment's popup
+ - [x] Renamable labels
+ - [x] Notes input text box in bottom right to write things down
  - [x] Add space between play, loop, and remove buttons
  - [x] Remake labels removable
  - [x] Make updateDuration function
