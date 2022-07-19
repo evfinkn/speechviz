@@ -352,6 +352,29 @@ const runPeaks = async function (fileName) {
           popup.style.display = "none";
         }
       });
+      if (labelsDataset.children && labelsDataset.children != "") {
+        labelsDataset.children.split("|").forEach(function (label) {
+          if (label != group){
+            // add radio button
+            const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+            popupContent.append(radio);
+            popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+            popupContent.append(document.createElement("br"));
+            radio.addEventListener("change", function () {
+              const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
+              let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
+              for (let segment of segments) {
+                if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
+                  changeSpeaker(peaks, label, group, segment);
+                }
+              }
+              removeGroup(peaks, group, "Labeled-Speakers");
+              popupContent.innerHTML = "";
+              popup.style.display = "none";
+            });
+          }
+        });
+      }
     }
     else { //if group is a custom segment or labeled speaker segment or a speaker segment
       const segment = segmentsByID[group];
