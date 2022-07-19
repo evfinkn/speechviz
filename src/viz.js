@@ -892,7 +892,8 @@ const runPeaks = async function (fileName) {
       }
     }
     for (let i = 0; i < snrArray.length; i++) {
-      document.getElementById(`${snrArray[i][0]}-span`).innerHTML += "\n num. " + String(i + 1) + " snr";
+      const span = document.getElementById(`${snrArray[i][0]}-span`);
+      span.innerHTML = `&#${(i <= 19 ? 9312 : 12861) + i} ${span.innerHTML}`;
     }
 
     for (var key in snrs) {
