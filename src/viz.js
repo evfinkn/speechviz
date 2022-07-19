@@ -472,6 +472,7 @@ const runPeaks = async function (fileName) {
       titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) - parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1));
     }
     let titleRejoined = titleSplit.join(" ");
+    titleRejoined = titleRejoined.toFixed(2);
     span.title = titleRejoined;
   }
 
