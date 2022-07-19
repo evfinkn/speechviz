@@ -2,15 +2,24 @@ diff --git a/node_modules/peaks.js/.DS_Store b/node_modules/peaks.js/.DS_Store
 new file mode 100644
 index 0000000..e69de29
 diff --git a/node_modules/peaks.js/dist/peaks.esm.js b/node_modules/peaks.js/dist/peaks.esm.js
-index 70847f9..15cea74 100644
+index 70847f9..18ec394 100644
 --- a/node_modules/peaks.js/dist/peaks.esm.js
 +++ b/node_modules/peaks.js/dist/peaks.esm.js
+@@ -1134,7 +1134,7 @@ function WaveformPoints(peaks) {
+ 
+ 
+ WaveformPoints.prototype._getNextPointId = function () {
+-  return 'peaks.point.' + this._pointIdCounter++;
++  return 'point.' + this._pointIdCounter++;
+ };
+ /**
+  * Adds a new point object.
 @@ -1589,7 +1589,7 @@ function WaveformSegments(peaks) {
  
  
  WaveformSegments.prototype._getNextSegmentId = function () {
 -  return 'peaks.segment.' + this._segmentIdCounter++;
-+  return 'peaks.segment.' + this._segmentIdCounter;
++  return 'segment.' + this._segmentIdCounter;
  };
  
  var colors = ['#001f3f', // navy
@@ -280,25 +289,25 @@ index 70847f9..15cea74 100644
    return this._adapter.setSource(options);
  };
  
-@@ -2689,7 +2730,7 @@ function createSegmentLabel(options) {
-   return new Text({
-     x: 12,
-     y: 12,
--    text: options.segment.labelText,
-+    text: options.segment.labelText + "\n" + options.segment.id,
-     textAlign: 'center',
-     fontFamily: options.fontFamily || 'sans-serif',
-     fontSize: options.fontSize || 12,
 diff --git a/node_modules/peaks.js/dist/peaks.js b/node_modules/peaks.js/dist/peaks.js
-index 5206c82..df18c53 100644
+index 5206c82..2a73f0b 100644
 --- a/node_modules/peaks.js/dist/peaks.js
 +++ b/node_modules/peaks.js/dist/peaks.js
+@@ -1417,7 +1417,7 @@
+ 
+ 
+   WaveformPoints.prototype._getNextPointId = function () {
+-    return 'peaks.point.' + this._pointIdCounter++;
++    return 'point.' + this._pointIdCounter++;
+   };
+   /**
+    * Adds a new point object.
 @@ -1872,7 +1872,7 @@
  
  
    WaveformSegments.prototype._getNextSegmentId = function () {
 -    return 'peaks.segment.' + this._segmentIdCounter++;
-+    return 'peaks.segment.' + this._segmentIdCounter;
++    return 'segment.' + this._segmentIdCounter;
    };
  
    var colors = ['#001f3f', // navy
@@ -568,12 +577,3 @@ index 5206c82..df18c53 100644
      return this._adapter.setSource(options);
    };
  
-@@ -8456,7 +8497,7 @@
-     return new Text({
-       x: 12,
-       y: 12,
--      text: options.segment.labelText,
-+      text: options.segment.labelText + "\n" + options.segment.id,
-       textAlign: 'center',
-       fontFamily: options.fontFamily || 'sans-serif',
-       fontSize: options.fontSize || 12,
