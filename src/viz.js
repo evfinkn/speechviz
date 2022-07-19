@@ -466,13 +466,12 @@ const runPeaks = async function (fileName) {
     const span = document.getElementById(`${groupToUpdate}-span`);
     let titleSplit = span.title.split(" ");
     if (adding) {
-      titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) + parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1));
+      titleSplit[titleSplit.length - 1] = (parseFloat(titleSplit.at(-1)) + parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1))).toFixed(2);;
     }
     else {
-      titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) - parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1));
+      titleSplit[titleSplit.length - 1] = (parseFloat(titleSplit.at(-1)) - parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1))).toFixed(2);;
     }
     let titleRejoined = titleSplit.join(" ");
-    titleRejoined = titleRejoined.toFixed(2);
     span.title = titleRejoined;
   }
 
