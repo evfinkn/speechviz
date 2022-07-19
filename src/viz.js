@@ -372,7 +372,6 @@ const runPeaks = async function (fileName) {
         });
         if (labelsDataset.children && labelsDataset.children != "") {
           labelsDataset.children.split("|").forEach(function (label) {
-            console.log(segment.path);
             if (label != document.getElementById(`${group}-span`).parentElement.id) {
               // add radio button
               const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
@@ -419,7 +418,6 @@ const runPeaks = async function (fileName) {
         }
       }
       else { //it's a speaker segment
-        console.log(document.getElementById(`${group}-span`).parentElement.parentElement.parentElement.parentElement.id);
         popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
         popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
 
@@ -494,16 +492,11 @@ const runPeaks = async function (fileName) {
 
 
   const updateDuration = function(path, change) {
-    console.log(path);
-    console.log(`Change: ${change}`);
     for (const group of path) {
-      console.log(`${group} duration: ${durations[group]}`);
       durations[group] += change;
       const span = document.getElementById(`${group}-span`);
-      console.log(span.title);
       const titleSplit = span.title.split(" ");
       titleSplit[titleSplit.length - 1] = durations[group].toFixed(2);
-      console.log(titleSplit.join(" "));
       span.title = titleSplit.join(" ");
     }
   }
@@ -518,7 +511,9 @@ const runPeaks = async function (fileName) {
 
     if (!(group in visibleSegments)) { renderGroup(peaks, group, path, { "renderEmpty": true, "removable": segment.removable }); }
 
-    segment.treeText = segment.treeText || segment.id.replace("peaks.", "");
+    segment.treeText = segment.treeText || segment.id;
+    const newLabelText = segment.labelText == segment.treeText ? segment.labelText : `${segment.labelText}\n${segment.treeText}`;
+    segment.update({"labelText": newLabelText});
 
     const li = document.createElement("li");
     li.id = segment.id;
