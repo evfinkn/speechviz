@@ -256,7 +256,7 @@ const runPeaks = async function (fileName) {
 
   const sortTree = function (group) {
     // sort all segments under label
-    segments = segmentsFromGroup(group, { "hidden": true, "visible": true, "sort": true });
+    const segments = segmentsFromGroup(group, { "hidden": true, "visible": true, "sort": true });
     // (to sort by id-- sort by the span innerHTML of the button -- document.getElementById(`${segment.id}-spam`).innerHTML
     var temp = document.createElement("ul");
     segments.forEach(function (segment) {
@@ -298,8 +298,6 @@ const runPeaks = async function (fileName) {
                 const copied = copySegment(segment, ["path", "id"]);
                 Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
                 renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
-                addOrSubDuration("Labeled-Speakers", segment, true);
-                addOrSubDuration(label, segment, true);
                 sortTree(label);
               }
             }
@@ -424,8 +422,6 @@ const runPeaks = async function (fileName) {
                   "removable": true
                 });
                 renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
-                addOrSubDuration("Labeled-Speakers", segment, true);
-                addOrSubDuration(label, segment, true);
                 sortTree(label);
               }
               popupContent.innerHTML = "";
@@ -451,8 +447,7 @@ const runPeaks = async function (fileName) {
     segment.path = ["Segments", "Speakers", speaker, segment.id];
     document.getElementById(`${segment.id}`).remove();
     renderSegment(peaks, segment, speaker, ["Segments", "Speakers"]);
-    addOrSubDuration(speaker, segment, true);
-    addOrSubDuration(oldSpeaker, segment, false);
+    updateDuration(["Speakers", oldSpeaker], segment.startTime - segment.endTime);
     if (visibleSegments[oldSpeaker][segment.id]) { delete visibleSegments[oldSpeaker][segment.id] }
     if (hiddenSegments[oldSpeaker][segment.id]) { delete hiddenSegments[oldSpeaker][segment.id] }
     segment.update({ "labelText": speaker });
@@ -462,17 +457,19 @@ const runPeaks = async function (fileName) {
 
 
 
-  const addOrSubDuration = function (groupToUpdate, segmentMoving, adding) {
-    const span = document.getElementById(`${groupToUpdate}-span`);
-    let titleSplit = span.title.split(" ");
-    if (adding) {
-      titleSplit[titleSplit.length - 1] = (parseFloat(titleSplit.at(-1)) + parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1))).toFixed(2);;
+  const updateDuration = function(path, change) {
+    console.log(path);
+    console.log(`Change: ${change}`);
+    for (const group of path) {
+      console.log(`${group} duration: ${durations[group]}`);
+      durations[group] += change;
+      const span = document.getElementById(`${group}-span`);
+      console.log(span.title);
+      const titleSplit = span.title.split(" ");
+      titleSplit[titleSplit.length - 1] = durations[group].toFixed(2);
+      console.log(titleSplit.join(" "));
+      span.title = titleSplit.join(" ");
     }
-    else {
-      titleSplit[titleSplit.length - 1] = (parseFloat(titleSplit.at(-1)) - parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1))).toFixed(2);;
-    }
-    let titleRejoined = titleSplit.join(" ");
-    span.title = titleRejoined;
   }
 
 
@@ -516,6 +513,8 @@ const runPeaks = async function (fileName) {
     segmentsByID[segment.id] = segment;
     visibleSegments[group][segment.id] = segment;
 
+    updateDuration(path.slice(1).concat(group), segment.endTime - segment.startTime);
+
     if (segment.editable || segment.removable) {
       const remove = htmlToElement(`<a href="#" ">${segmentRemoveIcon}</a>`);
       loop.after(remove);
@@ -542,7 +541,7 @@ const runPeaks = async function (fileName) {
     const branch = htmlToElement(`<li id="${group}" style="font-size:18px;"></li>`);
     let spanHTML;
     if (snr) {
-      spanHTML = `<button id="${group}-button" class="nolink"><span id="${group}-span" style="font-size:18px;" title="${"SNR: " + snr.toFixed(2)}">${group}</span></button>`
+      spanHTML = `<button id="${group}-button" class="nolink"><span id="${group}-span" style="font-size:18px;" title="${"SNR: " + snr.toFixed(2)}\nDuration: 0.00">${group}</span></button>`
       snrs[group] = snr;
 
       branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
@@ -552,14 +551,14 @@ const runPeaks = async function (fileName) {
       document.getElementById(`${group}-button`).addEventListener("click", function () { initPopup(peaks, this.id.split("-")[0]); });
     }
     else if (parent == "Labeled-Speakers") {
-      spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
+      spanHTML = `<span id="${group}-span" style="font-size:18px;" title="Duration: 0.00">${group}</span>`;
       branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
       // event listener for clicking on a label
       document.getElementById(`${group}-span`).addEventListener("click", function () { initPopup(peaks, this.id.split("-")[0]); });
     }
     else {
-      spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
+      spanHTML = `<span id="${group}-span" style="font-size:18px;" title="Duration: 0.00">${group}</span>`;
       branch.innerHTML = `<input type="checkbox" autocomplete="off" data-id="${group}">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
     }
@@ -576,6 +575,8 @@ const runPeaks = async function (fileName) {
     groupsCheckboxes[group] = groupCheckbox;
     groupsButtons[group] = [groupPlay, groupLoop];
 
+    durations[group] = 0;
+
     if (!Array.isArray(items[0]) && !groupOfGroups) {
       hiddenSegments[group] = {};
       visibleSegments[group] = {};
@@ -588,16 +589,6 @@ const runPeaks = async function (fileName) {
       for (let [nestedGroup, nestedItems, nestedSNR] of items) {
         renderGroup(peaks, nestedGroup, path.concat(group), { "items": nestedItems, "snr": nestedSNR });
       }
-    }
-    const segments = segmentsFromGroup(group, { visible: true, hidden: true });
-    const sum = segments.reduce((prev, cur) => prev + cur.endTime - cur.startTime, 0);
-    const span = document.getElementById(`${group}-span`);
-    if (span.title == "") {
-      span.title += `Duration: ${sum.toFixed(2)}`;
-    }
-    else {
-      span.title += `\n Duration: ${sum.toFixed(2)}`;
-      durations[group] = sum;
     }
 
     if (removable) {
@@ -746,15 +737,16 @@ const runPeaks = async function (fileName) {
 
 
     //#region add custom segment
-    const customSpan = document.getElementById("Custom-Segments-span");
-    let customDuration = 0;
     let segmentCounter = 1;
+    const audioDuration = peaksInstance.player.getDuration();
     // Add (custom) segment
     document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
       const label = 'Custom Segment ' + segmentCounter++;
+      const curTime = peaksInstance.player.getCurrentTime();
+      const endTime = curTime + 2.5 > audioDuration ? audioDuration : curTime + 2.5;
       let segment = {
-        startTime: peaksInstance.player.getCurrentTime(),
-        endTime: peaksInstance.player.getCurrentTime() + 10,
+        startTime: curTime,
+        endTime: endTime,
         labelText: label,
         editable: true,
         treeText: label,
@@ -762,8 +754,7 @@ const runPeaks = async function (fileName) {
       };
       segment = peaksInstance.segments.add(segment);
       renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
-      customDuration += 10;
-      customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
+      sortTree("Custom Segments");
       newChanges = true;
     });
     //#endregion
@@ -785,7 +776,10 @@ const runPeaks = async function (fileName) {
           if (segment.id in segmentsByID) {
             changeSpeaker(peaksInstance, segment.path.at(-1), segmentsByID[segment.id].path.at(-2), segment);
           }
-          else { renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1)); }
+          else {
+            renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
+            sortTree(segment.path.at(-2));
+          }
         });
 
         toggleSegments(peaksInstance, "Segments", false);
@@ -814,11 +808,11 @@ const runPeaks = async function (fileName) {
 
       const oldDuration = parseFloat(segmentSpan.title.split(" ").at(-1));
       const newDuration = segment.endTime - segment.startTime;
-      customDuration += newDuration - oldDuration;
 
       segmentSpan.title = `Duration: ${newDuration.toFixed(2)}`;
-      customSpan.title = `Duration: ${customDuration.toFixed(2)}`;
+      updateDuration(segment.path.slice(1, -1), newDuration - oldDuration);
 
+      sortTree(segment.path.at(-2));
       newChanges = true;
     });
 
@@ -857,13 +851,14 @@ const runPeaks = async function (fileName) {
     durStdDev /= counter;
     snrStdDev = Math.sqrt(snrStdDev);
     durStdDev = Math.sqrt(durStdDev);
+    var durZScores = {};
     for (var key in snrs) {
       snrs[key] = (snrs[key] - snrMean) / snrStdDev;  // now snrs stores z scores of snrs
-      durations[key] = (durations[key] - durMean) / durStdDev;  // now durations stores z scores of durations
+      durZScores[key] = (durations[key] - durMean) / durStdDev;  // now durations stores z scores of durations
     }
     var overallZScores = {};
     for (var key in snrs) {
-      overallZScores[key] = snrs[key] + durations[key];
+      overallZScores[key] = snrs[key] + durZScores[key];
     }
     var maxSpeaker = "Speaker 1";
     var maxZ = overallZScores[maxSpeaker];
