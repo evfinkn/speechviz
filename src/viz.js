@@ -352,6 +352,7 @@ const runPeaks = async function (fileName) {
           popup.style.display = "none";
         }
       });
+      popupContent.append(document.createElement("br"));
       if (labelsDataset.children && labelsDataset.children != "") {
         labelsDataset.children.split("|").forEach(function (label) {
           if (label != group){
@@ -393,6 +394,7 @@ const runPeaks = async function (fileName) {
             segment.update({ "labelText": newLabel, "treeText": newLabel });
           }
         });
+        popupContent.append(document.createElement("br"));
         if (labelsDataset.children && labelsDataset.children != "") {
           labelsDataset.children.split("|").forEach(function (label) {
             console.log(segment.path);
@@ -401,6 +403,7 @@ const runPeaks = async function (fileName) {
               const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
               popupContent.append(radio);
               popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+              popupContent.append(document.createElement("br"));
               radio.addEventListener("change", function () {
                 changeSpeaker(peaks, label, segment.path.at(-2), segment);
                 popupContent.innerHTML = "";
@@ -423,6 +426,7 @@ const runPeaks = async function (fileName) {
             segment.update({ "labelText": newLabel, "treeText": newLabel });
           }
         });
+        popupContent.append(document.createElement("br"));
         if (labelsDataset.children && labelsDataset.children != "") {
           labelsDataset.children.split("|").forEach(function (label) {
             if (label != segment.path.at(-2)){
@@ -431,6 +435,7 @@ const runPeaks = async function (fileName) {
                 const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
                 popupContent.append(radio);
                 popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+                popupContent.append(document.createElement("br"));
                 radio.addEventListener("change", function () {
                   changeSpeaker(peaks, label, segment.path.at(-2), segment);
                   popupContent.innerHTML = "";
@@ -451,6 +456,7 @@ const runPeaks = async function (fileName) {
             const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
             popupContent.append(radio);
             popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
+            popupContent.append(document.createElement("br"));
             radio.addEventListener("change", function () {
               changeSpeaker(peaks, speaker, segment.path.at(-2), segment);
               popupContent.innerHTML = "";
@@ -465,6 +471,7 @@ const runPeaks = async function (fileName) {
               const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
               popupContent.append(radio);
               popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+              popupContent.append(document.createElement("br"));
               radio.addEventListener("change", function () {
                 const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
                 if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
