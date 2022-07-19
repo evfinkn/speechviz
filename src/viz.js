@@ -254,6 +254,26 @@ const runPeaks = async function (fileName) {
 
 
 
+  const sortTree = function (group) {
+    // sort all segments under label
+    segments = segmentsFromGroup(group, { "hidden": true, "visible": true, "sort": true });
+    // (to sort by id-- sort by the span innerHTML of the button -- document.getElementById(`${segment.id}-spam`).innerHTML
+    var temp = document.createElement("ul");
+    segments.forEach(function (segment) {
+      temp.append(document.getElementById(segment.id));
+    });
+    // add them back to the tree
+    var tree = document.getElementById(`${group}-nested`);
+    tree.innerHTML = "";
+    var children = Array.from(temp.children);
+    children.reverse();
+    for (let i = children.length - 1; i >= 0; i--) {
+      tree.appendChild(children[i]);
+    };
+  }
+
+
+
   //#region popup and label functions
   const popup = document.getElementById("popup");
   const popupContent = document.getElementById("popup-content");
@@ -261,7 +281,7 @@ const runPeaks = async function (fileName) {
   const initPopup = function (peaks, group) {
     popup.style.display = "block";
     //if group is a speaker group
-    if (group.includes("Speaker")){
+    if (group.includes("Speaker")) {
       popupContent.appendChild(htmlToElement("<h2>Choose a label for this speaker: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
       if (labelsDataset.children && labelsDataset.children != "") {
@@ -280,6 +300,7 @@ const runPeaks = async function (fileName) {
                 renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
                 addOrSubDuration("Labeled-Speakers", segment, true);
                 addOrSubDuration(label, segment, true);
+                sortTree(label);
               }
             }
             popupContent.innerHTML = "";
@@ -288,7 +309,7 @@ const runPeaks = async function (fileName) {
         });
       }
     }
-    else if (document.getElementById(`${group}-span`).parentElement.parentElement.id == "Labeled-Speakers-nested"){ //if group is a label group
+    else if (document.getElementById(`${group}-span`).parentElement.parentElement.id == "Labeled-Speakers-nested") { //if group is a label group
       popupContent.appendChild(htmlToElement("<h2>Rename label: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
       let span = document.getElementById(`${group}-span`);
@@ -310,7 +331,7 @@ const runPeaks = async function (fileName) {
           }
           else { li.children[4].id = `${newLabel}-nested`; }
 
-          for (let segment of segmentsFromGroup(group, {visible: true, hidden: true})){
+          for (let segment of segmentsFromGroup(group, { visible: true, hidden: true })) {
             segment.path[segment.path.length - 2] = newLabel;
             segment.update({ "labelText": newLabel });
           }
@@ -333,10 +354,10 @@ const runPeaks = async function (fileName) {
         }
       });
     }
-    else{
+    else {
       const segment = segmentsByID[group];
-      
-      if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Custom-Segments-nested"){ //it's a custom segment
+
+      if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Custom-Segments-nested") { //it's a custom segment
         // rename box code
         popupContent.appendChild(htmlToElement("<h2>Rename segment or move to label: </h2>"));
         popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
@@ -351,7 +372,7 @@ const runPeaks = async function (fileName) {
           }
         });
       }
-      else if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Labeled-Speakers-nested"){
+      else if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Labeled-Speakers-nested") {
         popupContent.appendChild(htmlToElement("<h2>Rename segment or move to a different label: </h2>"));
         popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
         let span = document.getElementById(`${segment.id}-span`);
@@ -365,53 +386,55 @@ const runPeaks = async function (fileName) {
           }
         });
       }
-      else{ //it's a speaker segment
-      popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
-      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+      else { //it's a speaker segment
+        popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
+        popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
 
-      Object.keys(snrs).forEach(function (speaker){
-        if (speaker != segment.path[2]){
-          const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
-        popupContent.append(radio);
-        popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
-        radio.addEventListener("change", function () {
-            changeSpeaker(peaks, speaker, segment.path.at(-2), segment);
-            popupContent.innerHTML = "";
-            popup.style.display = "none";
-          });
-        }
-      });
+        Object.keys(snrs).forEach(function (speaker) {
+          if (speaker != segment.path[2]) {
+            const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
+            popupContent.append(radio);
+            popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
+            radio.addEventListener("change", function () {
+              changeSpeaker(peaks, speaker, segment.path.at(-2), segment);
+              sortTree(speaker);
+              popupContent.innerHTML = "";
+              popup.style.display = "none";
+            });
+          }
+        });
       }
       if (labelsDataset.children && labelsDataset.children != "") {
-      labelsDataset.children.split("|").forEach(function (label) {
-        if (label != document.getElementById(`${group}-span`).parentElement.id){
-          // add radio button
-          const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
-          popupContent.append(radio);
-          popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
-          radio.addEventListener("change", function () {
-            const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
-            if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-              const copiedSegment = peaks.segments.add({
-                "startTime": segment.startTime,
-                "endTime": segment.endTime,
-                "editable": true,
-                "color": groupsColors[label],
-                "labelText": label,
-                "treeText": segment.treeText,
-                "removable": true
-              });
-              renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
-              addOrSubDuration("Labeled-Speakers", segment, true);
-              addOrSubDuration(label, segment, true);
-            }
-            popupContent.innerHTML = "";
-            popup.style.display = "none";
-          });
-        }
-      });
+        labelsDataset.children.split("|").forEach(function (label) {
+          if (label != document.getElementById(`${group}-span`).parentElement.id) {
+            // add radio button
+            const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
+            popupContent.append(radio);
+            popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+            radio.addEventListener("change", function () {
+              const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
+              if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
+                const copiedSegment = peaks.segments.add({
+                  "startTime": segment.startTime,
+                  "endTime": segment.endTime,
+                  "editable": true,
+                  "color": groupsColors[label],
+                  "labelText": label,
+                  "treeText": segment.treeText,
+                  "removable": true
+                });
+                renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
+                addOrSubDuration("Labeled-Speakers", segment, true);
+                addOrSubDuration(label, segment, true);
+                sortTree(label);
+              }
+              popupContent.innerHTML = "";
+              popup.style.display = "none";
+            });
+          }
+        });
+      }
     }
-  }
 
     // close popup button
     document.querySelectorAll(".close").forEach(function (button) {
@@ -439,13 +462,13 @@ const runPeaks = async function (fileName) {
 
 
 
-  const addOrSubDuration = function (groupToUpdate, segmentMoving, adding){
+  const addOrSubDuration = function (groupToUpdate, segmentMoving, adding) {
     const span = document.getElementById(`${groupToUpdate}-span`);
     let titleSplit = span.title.split(" ");
-    if (adding){
+    if (adding) {
       titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) + parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1));
     }
-    else{
+    else {
       titleSplit[titleSplit.length - 1] = parseFloat(titleSplit.at(-1)) - parseFloat(document.getElementById(`${segmentMoving.id}-span`).title.split(" ").at(-1));
     }
     let titleRejoined = titleSplit.join(" ");
@@ -528,7 +551,7 @@ const runPeaks = async function (fileName) {
       // event listener for clicking on a speaker
       document.getElementById(`${group}-button`).addEventListener("click", function () { initPopup(peaks, this.id.split("-")[0]); });
     }
-    else if (parent == "Labeled-Speakers"){
+    else if (parent == "Labeled-Speakers") {
       spanHTML = `<span id="${group}-span" style="font-size:18px;">${group}</span>`;
       branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="#" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="#" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
@@ -620,7 +643,7 @@ const runPeaks = async function (fileName) {
     // Event listeners for the utilities underneath peaks
     //#region zoom
     // Zoom
-    
+
     const zoomIn = document.querySelector("[data-action='zoom-in']");
     const zoomOut = document.querySelector("[data-action='zoom-out']");
     zoomIn.innerHTML = feather.icons["zoom-in"].toSvg({ "stroke": "gray" });
@@ -893,29 +916,29 @@ const runPeaks = async function (fileName) {
     });
 
     document.querySelector("[data-action='.5times']").addEventListener('click', function () {
-      let myaudio=document.getElementById("audio");
-      myaudio.playbackRate=0.5;
+      let myaudio = document.getElementById("audio");
+      myaudio.playbackRate = 0.5;
     });
 
     document.querySelector("[data-action='1times']").addEventListener('click', function () {
-      let myaudio=document.getElementById("audio");
-      myaudio.playbackRate=1;
+      let myaudio = document.getElementById("audio");
+      myaudio.playbackRate = 1;
     });
 
     document.querySelector("[data-action='2times']").addEventListener('click', function () {
-      let myaudio=document.getElementById("audio");
-      myaudio.playbackRate=2;
+      let myaudio = document.getElementById("audio");
+      myaudio.playbackRate = 2;
     });
 
     document.querySelector("[data-action='4times']").addEventListener('click', function () {
-      let myaudio=document.getElementById("audio");
-      myaudio.playbackRate=4;
+      let myaudio = document.getElementById("audio");
+      myaudio.playbackRate = 4;
     });
 
 
     //https://www.w3schools.com/howto/howto_js_dropdown.asp
     // Close the dropdown if the user clicks outside of it
-    window.onclick = function(event) {
+    window.onclick = function (event) {
       if (!event.target.matches('.dropbtn')) {
         var dropdowns = document.getElementsByClassName("dropdown-content");
         var i;
@@ -958,7 +981,7 @@ function showDropdown() {
 }
 
 // Close the dropdown if the user clicks outside of it
-window.onclick = function(event) {
+window.onclick = function (event) {
   if (!event.target.matches('.dropbtn')) {
     var dropdowns = document.getElementsByClassName("dropdown-content");
     var i;

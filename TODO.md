@@ -11,7 +11,6 @@
 
 ### Interface
  - [ ] Move custom segments to label instead of copying
- - [ ] Changeable playback speed
  - [ ] Separate into multiple files
  - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
  - [ ] Show segment start time and end time when hovering over its tree text
@@ -19,7 +18,6 @@
  - [ ] Make segment popup radio buttons appear on separate lines
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
- - [ ] Fix labels so it sorts chronologically again
  - [ ] When sorting labels, should it resort when a segment in it is dragged?
  - [ ] If possible, button to hide the segment drag things
  - [ ] Don't change labelText when renaming, just change treeText
@@ -34,6 +32,8 @@
  - [ ] Fix custom segment not being checked when added
  - [ ] Document functions
  - [ ] Fix the segment's own label appearing in the segment's popup
+ - [x] Changeable playback speed
+ - [x] Fix labels so it sorts chronologically again
  - [x] Determine way to show id of segment when hovering over it
  - [x] Renamable labels
  - [x] Notes input text box in bottom right to write things down
