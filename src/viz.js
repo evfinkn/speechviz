@@ -290,6 +290,7 @@ const runPeaks = async function (fileName) {
           const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
           popupContent.append(radio);
           popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+          popupContent.append(document.createElement("br"));
           radio.addEventListener("change", function () {
             const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
             let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
@@ -352,7 +353,7 @@ const runPeaks = async function (fileName) {
         }
       });
     }
-    else {
+    else { //if group is a custom segment or labeled speaker segment or a speaker segment
       const segment = segmentsByID[group];
 
       if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Custom-Segments-nested") { //it's a custom segment
@@ -369,8 +370,24 @@ const runPeaks = async function (fileName) {
             segment.update({ "labelText": newLabel, "treeText": newLabel });
           }
         });
+        if (labelsDataset.children && labelsDataset.children != "") {
+          labelsDataset.children.split("|").forEach(function (label) {
+            console.log(segment.path);
+            if (label != document.getElementById(`${group}-span`).parentElement.id) {
+              // add radio button
+              const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
+              popupContent.append(radio);
+              popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+              radio.addEventListener("change", function () {
+                changeSpeaker(peaks, label, segment.path.at(-2), segment);
+                popupContent.innerHTML = "";
+                popup.style.display = "none";
+              });
+            }
+          });
+        }
       }
-      else if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Labeled-Speakers-nested") {
+      else if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.parentElement.parentElement.id == "Labeled-Speakers-nested") {
         popupContent.appendChild(htmlToElement("<h2>Rename segment or move to a different label: </h2>"));
         popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
         let span = document.getElementById(`${segment.id}-span`);
@@ -383,8 +400,26 @@ const runPeaks = async function (fileName) {
             segment.update({ "labelText": newLabel, "treeText": newLabel });
           }
         });
+        if (labelsDataset.children && labelsDataset.children != "") {
+          labelsDataset.children.split("|").forEach(function (label) {
+            if (label != segment.path.at(-2)){
+              if (label != document.getElementById(`${group}-span`).parentElement.id) {
+                // add radio button
+                const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
+                popupContent.append(radio);
+                popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+                radio.addEventListener("change", function () {
+                  changeSpeaker(peaks, label, segment.path.at(-2), segment);
+                  popupContent.innerHTML = "";
+                  popup.style.display = "none";
+                });
+              }
+            }
+          });
+        }
       }
       else { //it's a speaker segment
+        console.log(document.getElementById(`${group}-span`).parentElement.parentElement.parentElement.parentElement.id);
         popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
         popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
 
@@ -395,41 +430,41 @@ const runPeaks = async function (fileName) {
             popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
             radio.addEventListener("change", function () {
               changeSpeaker(peaks, speaker, segment.path.at(-2), segment);
-              sortTree(speaker);
               popupContent.innerHTML = "";
               popup.style.display = "none";
             });
           }
         });
+        if (labelsDataset.children && labelsDataset.children != "") {
+          labelsDataset.children.split("|").forEach(function (label) {
+            if (label != document.getElementById(`${group}-span`).parentElement.id) {
+              // add radio button
+              const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
+              popupContent.append(radio);
+              popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+              radio.addEventListener("change", function () {
+                const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
+                if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
+                  const copiedSegment = peaks.segments.add({
+                    "startTime": segment.startTime,
+                    "endTime": segment.endTime,
+                    "editable": true,
+                    "color": groupsColors[label],
+                    "labelText": label,
+                    "treeText": segment.treeText,
+                    "removable": true
+                  });
+                  renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
+                  sortTree(label);
+                }
+                popupContent.innerHTML = "";
+                popup.style.display = "none";
+              });
+            }
+          });
+        }
       }
-      if (labelsDataset.children && labelsDataset.children != "") {
-        labelsDataset.children.split("|").forEach(function (label) {
-          if (label != document.getElementById(`${group}-span`).parentElement.id) {
-            // add radio button
-            const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
-            popupContent.append(radio);
-            popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
-            radio.addEventListener("change", function () {
-              const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
-              if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-                const copiedSegment = peaks.segments.add({
-                  "startTime": segment.startTime,
-                  "endTime": segment.endTime,
-                  "editable": true,
-                  "color": groupsColors[label],
-                  "labelText": label,
-                  "treeText": segment.treeText,
-                  "removable": true
-                });
-                renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
-                sortTree(label);
-              }
-              popupContent.innerHTML = "";
-              popup.style.display = "none";
-            });
-          }
-        });
-      }
+      
     }
 
     // close popup button
@@ -452,6 +487,7 @@ const runPeaks = async function (fileName) {
     if (hiddenSegments[oldSpeaker][segment.id]) { delete hiddenSegments[oldSpeaker][segment.id] }
     segment.update({ "labelText": speaker });
     moved[segment.id] = segment;
+    sortTree(speaker);
   }
   //#endregion
 

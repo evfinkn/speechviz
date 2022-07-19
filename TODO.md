@@ -10,6 +10,7 @@
  - [x] Add support for multiple files
 
 ### Interface
+ - [ ] When you save a label with no segments, it doesn't get saved/loaded
  - [ ] Move custom segments to label instead of copying
  - [ ] Separate into multiple files
  - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
