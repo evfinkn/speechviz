@@ -220,8 +220,6 @@ const runPeaks = async function (fileName) {
 
 
   const removeSegment = function (peaks, segment, group) {
-    const parent = document.getElementById(group);
-    const parentNested = document.getElementById(`${group}-nested`);
     const id = segment.id;
     // remove segment from lists
     peaks.segments.removeById(id);
@@ -229,7 +227,7 @@ const runPeaks = async function (fileName) {
     if (hiddenSegments[group][id]) { delete hiddenSegments[group][id]; }
     if (visibleSegments[group][id]) { delete visibleSegments[group][id]; }
     // update table and tree
-    parentNested.removeChild(segment.checkbox.parentElement);
+    segment.checkbox.parentElement.remove();
     newChanges = true;
   }
 
@@ -300,6 +298,7 @@ const runPeaks = async function (fileName) {
                 Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
                 renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
                 sortTree(label);
+                openNested(["Segments", "Labeled-Speakers", label]);
               }
             }
             popupContent.innerHTML = "";
@@ -313,7 +312,7 @@ const runPeaks = async function (fileName) {
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
       let span = document.getElementById(`${group}-span`);
       popupContent.appendChild(htmlToElement("<input type='text' id='" + group + "-rename' value='" + span.innerHTML + "'>"));
-      // rename segment when "enter" is pressed
+      // rename label
       document.getElementById(`${group}-rename`).addEventListener("keypress", function (event) {
         if (event.key === "Enter") {
           let newLabel = document.getElementById(`${group}-rename`).value;
@@ -405,6 +404,7 @@ const runPeaks = async function (fileName) {
               popupContent.append(document.createElement("br"));
               radio.addEventListener("change", function () {
                 changeSpeaker(peaks, label, segment.path.at(-2), segment);
+                openNested(["Segments", "Labeled-Speakers", label]);
                 popupContent.innerHTML = "";
                 popup.style.display = "none";
               });
@@ -437,6 +437,7 @@ const runPeaks = async function (fileName) {
                 popupContent.append(document.createElement("br"));
                 radio.addEventListener("change", function () {
                   changeSpeaker(peaks, label, segment.path.at(-2), segment);
+                  openNested(["Segments", "Labeled-Speakers", label]);
                   popupContent.innerHTML = "";
                   popup.style.display = "none";
                 });
@@ -457,6 +458,7 @@ const runPeaks = async function (fileName) {
             popupContent.append(document.createElement("br"));
             radio.addEventListener("change", function () {
               changeSpeaker(peaks, speaker, segment.path.at(-2), segment);
+              openNested(["Segments", "Speakers", speaker]);
               popupContent.innerHTML = "";
               popup.style.display = "none";
             });
@@ -484,6 +486,7 @@ const runPeaks = async function (fileName) {
                   });
                   renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
                   sortTree(label);
+                  openNested(["Segments", "Labeled-Speakers", label]);
                 }
                 popupContent.innerHTML = "";
                 popup.style.display = "none";
@@ -662,6 +665,14 @@ const runPeaks = async function (fileName) {
 
 
 
+  const openNested = function (path) {
+    for (const group of path) {
+      document.getElementById(`${group}-nested`).classList.add("active");
+    }
+  }
+
+
+
   const options = {
     zoomview: {
       container: document.getElementById('zoomview-container'),
@@ -815,7 +826,8 @@ const runPeaks = async function (fileName) {
       };
       segment = peaksInstance.segments.add(segment);
       renderSegment(peaksInstance, segment, "Custom-Segments", ["Segments"]);
-      sortTree("Custom Segments");
+      sortTree("Custom-Segments");
+      openNested(["Segments", "Custom-Segments"]);
       newChanges = true;
     });
     //#endregion
