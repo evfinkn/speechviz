@@ -1121,10 +1121,6 @@ window.onload = function () {
   });
 };
 
-function showDropdown() {
-  document.getElementById("speedDropdown").classList.toggle("show");
-}
-
 // Close the dropdown if the user clicks outside of it
 window.onclick = function (event) {
   if (!event.target.matches('.dropbtn')) {
