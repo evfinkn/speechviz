@@ -865,6 +865,7 @@ const runPeaks = async function (fileName) {
     //#endregion
 
 
+    const notes = document.getElementById("notes");
     //#region load annotations
     (function () {
       const record = { 'user': user, 'filename': fileName }
@@ -877,8 +878,11 @@ const runPeaks = async function (fileName) {
       loadRequest.send(json)
       loadRequest.onload = function () {
         let jsonData = JSON.parse(loadRequest.response);
+
+        notes.value = jsonData.notes || notes.value;
+
         const regex = /Custom Segment /;
-        peaksInstance.segments.add(jsonData, { "overwrite": true }).forEach(function (segment) {
+        peaksInstance.segments.add(jsonData.segments, { "overwrite": true }).forEach(function (segment) {
           if (segment.id in segmentsByID) {
             changeSpeaker(peaksInstance, segment.path.concat(segment.id), segmentsByID[segment.id].path, segment);
           }
@@ -1022,7 +1026,7 @@ const runPeaks = async function (fileName) {
         segments.push(copied);
       }
 
-      const record = { 'user': user, 'filename': fileName, 'segments': segments }
+      const record = { 'user': user, 'filename': fileName, 'segments': segments, "notes": notes.value }
       const json = JSON.stringify(record);
       var request = new XMLHttpRequest();
       request.open('POST', 'save', true);
