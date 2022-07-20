@@ -10,8 +10,8 @@
  - [x] Add support for multiple files
 
 ### Interface
+ - [ ] Admin account flip between all annotations that you can view
  - [ ] Separate into multiple files
- - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
  - [ ] If possible, button to hide the segment drag things
@@ -20,6 +20,7 @@
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
  - [ ] Document functions
  
+ - [x] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
  - [x] Fix the segment's own label appearing in the segment's popup
  - [x] Add reset button (with confirmation popup, I think javascript has a built-in prompt for said popup) that removes all saved segments
  - [x] Show segment start time and end time when hovering over its tree text

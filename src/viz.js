@@ -981,8 +981,8 @@ const runPeaks = async function (fileName) {
     //#endregion
 
     document.querySelector('button[data-action="save"]').addEventListener('click', function () {
-      const regex = /Speaker |VAD|Non-VAD/;
-      const groups = Object.keys(visibleSegments).filter(group => !group.match(regex));
+      const groupRegex = /Speaker |VAD|Non-VAD/;
+      const groups = Object.keys(visibleSegments).filter(group => !group.match(groupRegex));
       let segments = [];
       for (const group of groups) {
         segments = segments.concat(segmentsFromGroup(group, { "visible": true, "hidden": true, "simple": true }));
@@ -993,6 +993,28 @@ const runPeaks = async function (fileName) {
         .sort((seg1, seg2) => seg1.id - seg2.id)
         .map(seg => segments[seg.index])
         .forEach(function (segment) { segment.id = `peaks.segment.${idCounter++}`; });
+
+      const customRegex = /Custom Segment /;
+      let numCustom = 1;
+      const customChanged = {};
+      segments.forEach(function (segment) {
+          if (segment.labelText in customChanged) {
+            segment.labelText = customChanged[segment.labelText];
+          }
+          else if (segment.labelText.match(customRegex)) {
+            const nextCustom = `Custom Segment ${numCustom++}`;
+            customChanged[segment.labelText] = nextCustom;
+            segment.labelText = nextCustom;
+          }
+          if (segment.treeText in customChanged) {
+            segment.treeText = customChanged[segment.treeText];
+          }
+          else if (segment.treeText.match(customRegex)) {
+            const nextCustom = `Custom Segment ${numCustom++}`;
+            customChanged[segment.treeText] = nextCustom;
+            segment.treeText = nextCustom;
+          }
+        })
 
       for (const segment of Object.values(moved)) {
         const copied = copySegment(segment, ["color"]);
