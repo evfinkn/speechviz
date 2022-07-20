@@ -57,8 +57,11 @@ app.get("/filelist", (req, res) => {
   res.send(fs.readdirSync("data/audio").filter(fileName => fileName != ".DS_Store"));
 });
 
+app.get("/user", (req, res) => { res.send(req.session.user); });
+
 app.get(/\/(audio|segments|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
+//#region saving, loading, and resetting
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
 const insertFile = db.prepare("INSERT INTO audiofiles(audiofile) VALUES(?)");
 
@@ -140,7 +143,7 @@ const load = db.transaction((filename, user) => {
   }
   loaded.segments = segments;
 
-  loaded.notes = selectNotes.get([fileId, userId]).notes;
+  loaded.notes = selectNotes.get([fileId, userId])?.notes;
 
   return loaded;
 });
@@ -183,6 +186,7 @@ app.use("/reset/", (req, res) => {
   reset(req.body["filename"], req.body["user"])
   res.end();
 });
+//#endregion
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

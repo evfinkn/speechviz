@@ -29,6 +29,7 @@ const runPeaks = async function (fileName) {
     ["Non-VAD", [{...}, {...}]]
   ]   */
   const importedSegments = await fetch(`/segments/${name}-segments.json`).then(response => response.json());
+  const user = await fetch("/user").then(response => response.text());
 
   // object containing ALL segments (hidden and visible)    {id: segment}
   const segmentsByID = {};
@@ -571,7 +572,6 @@ const runPeaks = async function (fileName) {
     // }
     // create the tree item for the segment
 
-    console.log(group);
     if (!(group in visibleSegments)) { renderGroup(peaks, group, path, { "renderEmpty": true, "removable": segment.removable }); }
 
     segment.treeText = segment.treeText || segment.id;
@@ -1081,7 +1081,7 @@ const runPeaks = async function (fileName) {
       });
     }
 
-    //https://www.w3schools.com/howto/howto_js_dropdown.asp
+    // https://www.w3schools.com/howto/howto_js_dropdown.asp
     // Close the dropdown if the user clicks outside of it
     window.onclick = function (event) {
       if (!event.target.matches('.dropbtn')) {
@@ -1107,7 +1107,7 @@ const runPeaks = async function (fileName) {
 
 const urlParams = new URLSearchParams(window.location.search);
 const fileName = urlParams.get("audiofile");
-var user = document.getElementById("user").innerHTML;
+// var user = document.getElementById("user").innerHTML;
 
 // https://stackoverflow.com/a/7317311
 window.onload = function () {
