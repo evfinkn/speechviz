@@ -567,11 +567,7 @@ const runPeaks = async function (fileName) {
 
 
   const renderSegment = function (peaks, segment, group, path) {
-    // if (group.includes("Custom") || group.includes("Labeled")){ //not sure if we need but this used to be in for custom and labeled
-    //   document.getElementById(`${group}-nested`).classList.add("active");
-    // }
     // create the tree item for the segment
-
     if (!(group in visibleSegments)) { renderGroup(peaks, group, path, { "renderEmpty": true, "removable": segment.removable }); }
 
     segment.treeText = segment.treeText || segment.id;
