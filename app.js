@@ -53,6 +53,13 @@ app.use('/', index);
 app.use('/viz', viz);
 app.use('/login', login);
 
+app.get('/logout', (req, res) => {
+  req.session.authenticated = false;
+  delete req.session.user;
+  res.redirect('/login');
+  return;
+});
+
 app.get("/filelist", (req, res) => {
   res.send(fs.readdirSync("data/audio").filter(fileName => fileName != ".DS_Store"));
 });

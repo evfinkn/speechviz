@@ -12,7 +12,7 @@ router.get('/credentials', (req, res, next) => {
   if (row) {
     const expectedPassword = row.password;
 
-    if (user === user && (password === expectedPassword)) {  // success
+    if (password === expectedPassword) {  // success
       req.session.authenticated = true;
       req.session.user = user;
       res.redirect('/');

@@ -42,7 +42,7 @@ const runPeaks = async function (fileName) {
       user = sessionUser;
     }
     else {
-      document.getElementById("user").innerHTML = `admin (viewing ${user})`;
+      document.getElementById("user").innerHTML = `admin${user == "admin" ? "" : " (viewing " + user + ")"}`;
     }
   }
 
