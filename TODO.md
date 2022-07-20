@@ -17,7 +17,6 @@
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
  - [ ] If possible, button to hide the segment drag things
  - [ ] When renaming segment in a label, don't change labelText when renaming, just change treeText ?
- - [ ] Fix the label not appearing next to speaker after adding it to label
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
  - [ ] Document functions
