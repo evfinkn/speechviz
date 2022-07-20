@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var index = require('./routes/index-route');
 var viz = require('./routes/viz-route');
 var login = require('./routes/login-route');
+var changePassword = require('./routes/change-password-route');
 var app = express();
 
 var Database = require('better-sqlite3');
@@ -52,12 +53,21 @@ app.use(checkAuthentification)
 app.use('/', index);
 app.use('/viz', viz);
 app.use('/login', login);
+app.use("/change-password/", changePassword);
+
+app.get('/logout', (req, res) => {
+  req.session.authenticated = false;
+  delete req.session.user;
+  res.redirect('/login');
+  return;
+});
 
 app.get("/filelist", (req, res) => {
   res.send(fs.readdirSync("data/audio").filter(fileName => fileName != ".DS_Store"));
 });
 
 app.get("/user", (req, res) => { res.send(req.session.user); });
+app.get("/users", (req, res) => { res.send(db.prepare("SELECT user FROM users").all().map(user => user.user)); });
 
 app.get(/\/(audio|segments|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
