@@ -308,6 +308,29 @@ const runPeaks = async function (fileName) {
         });
       }
     }
+    else if (group.includes("Custom-Segments") && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Segments-nested"){
+      popupContent.appendChild(htmlToElement("<h2>Move segments to label: </h2>"));
+      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+      if (labelsDataset.children && labelsDataset.children != "") {
+        labelsDataset.children.split("|").forEach(function (label) {
+          // add radio button
+          const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
+          popupContent.append(radio);
+          popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
+          popupContent.append(document.createElement("br"));
+          radio.addEventListener("change", function () {
+            const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
+            let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
+            for (let segment of segments) {
+              if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
+                console.log(segment);
+                changeSpeaker(peaks, label, group, segment);
+              }
+            }
+          });
+        });
+      }
+    }
     else if (document.getElementById(`${group}-span`).parentElement.parentElement.id == "Labeled-Speakers-nested") { //if group is a label group
       popupContent.appendChild(htmlToElement("<h2>Rename label: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
@@ -624,6 +647,7 @@ const runPeaks = async function (fileName) {
       document.getElementById(`${parent}-nested`).append(branch);
     }
 
+
     // add inputs for group to groupInputs and add event listeners to them
     const groupCheckbox = branch.firstElementChild;
     groupCheckbox.addEventListener("click", function () { toggleSegments(peaks, this.dataset.id, this.checked); });
@@ -818,6 +842,7 @@ const runPeaks = async function (fileName) {
       sortTree("Custom Segments");
       newChanges = true;
     });
+    document.getElementById("Custom-Segments-span").addEventListener("click", function () { initPopup(peaksInstance, "Custom-Segments") });
     //#endregion
 
 
