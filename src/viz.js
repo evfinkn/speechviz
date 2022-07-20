@@ -1023,27 +1023,6 @@ const runPeaks = async function (fileName) {
       });
     }
 
-    // document.querySelector("[data-action='.5times']").addEventListener('click', function () {
-    //   let myaudio = document.getElementById("audio");
-    //   myaudio.playbackRate = 0.5;
-    // });
-
-    // document.querySelector("[data-action='1times']").addEventListener('click', function () {
-    //   let myaudio = document.getElementById("audio");
-    //   myaudio.playbackRate = 1;
-    // });
-
-    // document.querySelector("[data-action='2times']").addEventListener('click', function () {
-    //   let myaudio = document.getElementById("audio");
-    //   myaudio.playbackRate = 2;
-    // });
-
-    // document.querySelector("[data-action='4times']").addEventListener('click', function () {
-    //   let myaudio = document.getElementById("audio");
-    //   myaudio.playbackRate = 4;
-    // });
-
-
     //https://www.w3schools.com/howto/howto_js_dropdown.asp
     // Close the dropdown if the user clicks outside of it
     window.onclick = function (event) {
