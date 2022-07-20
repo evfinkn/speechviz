@@ -273,77 +273,79 @@ const runPeaks = async function (fileName) {
     };
   }
 
-
-
-  //#region popup and label functions
-  const popup = document.getElementById("popup");
-  const popupContent = document.getElementById("popup-content");
-  let labelsDataset;
+   //#region popup and label functions
+   const popup = document.getElementById("popup");
+   const popupContent = document.getElementById("popup-content");
+   let labelsDataset;
   const initPopup = function (peaks, group) {
+    let instructions; //what the popup will display as instructions at the top
+    let segment; //if it is a segment moving, the segment is stored here
+    let copyingToLabel = false; //if the segments are being copied to a label this is true
+    let movingToLabel = false; //if the segments are being moved to a label this is true
+    let movingToSpeaker = false; //if the segments are being moved to a speaker this is true
+    let removingGroup = false; //if the group should be removed after being moved this is true
+    let canRenameSegment = false; //this thing could be renamed e.g. a segment in a label (exculding renaming a label, which is covered below)
+    let canRenameLabel = false; //renaming a label takes extra steps, if true a label is being renamed
+
+    if (group.includes("Speaker")){ //A pre generated speaker label, e.g. Speaker 1
+      instructions = "Choose a label for this speaker: ";
+      copyingToLabel = true;
+    }
+    else if (group.includes("Custom-Segments") && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Segments-nested"){ //Custom-Segments
+      instructions = "Move custom segments to label: ";
+      movingToLabel = true;
+    }
+    else if (document.getElementById(`${group}-span`).parentElement.parentElement.id == "Labeled-Speakers-nested") { //user generated label
+      instructions = "Rename label or combine it with another label: ";
+      movingToLabel = true;
+      removingGroup = true;
+      canRenameLabel = true;
+    }
+    else{//is a segment
+      segment = segmentsByID[group];
+      if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Custom-Segments-nested") { //custom segment e.g. Custom Segment 1 
+        instructions = "Rename segment or move to label: ";
+        movingToLabel = true;
+        canRenameSegment = true;
+      }
+      else if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.parentElement.parentElement.id == "Labeled-Speakers-nested") { //segment from a user generated label
+        instructions = "Rename segment or move to a different label: ";
+        movingToLabel = true;
+        canRenameSegment = true;
+      }
+      else{ // segment from a speaker
+        instructions = "Choose a new speaker/label for this segment: ";
+        copyingToLabel = true;
+        movingToSpeaker = true;
+      }
+    }
     popup.style.display = "block";
-    //if group is a speaker group
-    if (group.includes("Speaker")) {
-      popupContent.appendChild(htmlToElement("<h2>Choose a label for this speaker: </h2>"));
-      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-      if (labelsDataset.children && labelsDataset.children != "") {
-        labelsDataset.children.split("|").forEach(function (label) {
-          // add radio button
-          const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
-          popupContent.append(radio);
-          popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
-          popupContent.append(document.createElement("br"));
-          radio.addEventListener("change", function () {
-            const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
-            let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
-            for (let segment of segments) {
-              if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-                const copied = copySegment(segment, ["path", "id"]);
-                Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
-                renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
-                sortTree(label);
-                openNested(["Segments", "Labeled-Speakers", label]);
-              }
-            }
-            popupContent.innerHTML = "";
-            popup.style.display = "none";
-          });
-        });
-      }
+    popupContent.appendChild(htmlToElement(`<h2>${instructions}</h2>`));
+    popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+
+    if (canRenameSegment){
+      let span = document.getElementById(`${segment.id}-span`);
+      popupContent.appendChild(htmlToElement("<input type='text' id='" + segment.id + "-rename' value='" + span.innerHTML + "'>"));
+      // rename segment when "enter" is pressed
+      document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          let newLabel = document.getElementById(`${segment.id}-rename`).value;
+          document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
+          segment.update({ "labelText": newLabel, "treeText": newLabel });
+        }
+      });
+      popupContent.append(document.createElement("br"));
     }
-    else if (group.includes("Custom-Segments") && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Segments-nested"){
-      popupContent.appendChild(htmlToElement("<h2>Move segments to label: </h2>"));
-      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-      if (labelsDataset.children && labelsDataset.children != "") {
-        labelsDataset.children.split("|").forEach(function (label) {
-          // add radio button
-          const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
-          popupContent.append(radio);
-          popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
-          popupContent.append(document.createElement("br"));
-          radio.addEventListener("change", function () {
-            const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
-            let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
-            for (let segment of segments) {
-              if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-                console.log(segment);
-                changeSpeaker(peaks, ["Segments", "Labeled-Speakers", label, segment.id], segment.path, segment);
-              }
-            }
-            popupContent.innerHTML = "";
-            popup.style.display = "none";
-          });
-        });
-      }
-    }
-    else if (document.getElementById(`${group}-span`).parentElement.parentElement.id == "Labeled-Speakers-nested") { //if group is a label group
-      popupContent.appendChild(htmlToElement("<h2>Rename label: </h2>"));
-      popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
+    else if (canRenameLabel){
       let span = document.getElementById(`${group}-span`);
       popupContent.appendChild(htmlToElement("<input type='text' id='" + group + "-rename' value='" + span.innerHTML + "'>"));
       // rename label
       document.getElementById(`${group}-rename`).addEventListener("keypress", function (event) {
         if (event.key === "Enter") {
           let newLabel = document.getElementById(`${group}-rename`).value;
+          console.log(newLabel);
+          console.log(groupsCheckboxes);
+          if (newLabel in groupsCheckboxes) { return; }
           document.getElementById(`${group}-span`).innerHTML = newLabel;
           document.getElementById(`${group}-span`).id = `${newLabel}-span`;
           const li = document.getElementById(`${group}`);
@@ -380,152 +382,90 @@ const runPeaks = async function (fileName) {
         }
       });
       popupContent.append(document.createElement("br"));
-      if (labelsDataset.children && labelsDataset.children != "") {
-        labelsDataset.children.split("|").forEach(function (label) {
-          if (label != group){
-            // add radio button
+    }
+    else if (movingToSpeaker){
+      Object.keys(snrs).forEach(function (speaker) {
+        if (speaker != segment.path[2]) {
+          const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
+          popupContent.append(radio);
+          popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
+          popupContent.append(document.createElement("br"));
+          radio.addEventListener("change", function () {
+            changeSpeaker(peaks, ["Segments", "Speakers", speaker, segment.id], segment.path, segment);
+            openNested(["Segments", "Speakers", speaker]);
+            popupContent.innerHTML = "";
+            popup.style.display = "none";
+          });
+        }
+      });
+    }
+
+    if (labelsDataset.children && labelsDataset.children != "") { //if there are labels
+      labelsDataset.children.split("|").forEach(function (label) { //loop through with one label at a time
+        if (label != document.getElementById(`${group}-span`).parentElement.id) {  
+          if (segment == null){ //this isn't a segment, it is a group e.g. a Speaker was clicked on
             const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
             popupContent.append(radio);
             popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
             popupContent.append(document.createElement("br"));
             radio.addEventListener("change", function () {
+          
               const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
               let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
               for (let segment of segments) {
                 if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-                  changeSpeaker(peaks, ["Speakers", "Labeled-Speakers", label, segment.id], segment.path, segment);
+                  if (copyingToLabel){
+                    const copied = copySegment(segment, ["path", "id"]);
+                    Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
+                    renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
+                    sortTree(label);
+                    openNested(["Segments", "Labeled-Speakers", label]);
+                  }
+                  else if (movingToLabel){
+                    if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
+                      changeSpeaker(peaks, ["Segments", "Labeled-Speakers", label, segment.id], segment.path, segment);
+                    }
+                  }
                 }
               }
-              removeGroup(peaks, group, "Labeled-Speakers");
+              if (removingGroup) { removeGroup(peaks, group, "Labeled-Speakers") }
               popupContent.innerHTML = "";
               popup.style.display = "none";
             });
           }
-        });
-      }
-    }
-    else { //if group is a custom segment or labeled speaker segment or a speaker segment
-      const segment = segmentsByID[group];
-
-      if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Custom-Segments-nested") { //it's a custom segment
-        // rename box code
-        popupContent.appendChild(htmlToElement("<h2>Rename segment or move to label: </h2>"));
-        popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-        let span = document.getElementById(`${segment.id}-span`);
-        popupContent.appendChild(htmlToElement("<input type='text' id='" + segment.id + "-rename' value='" + span.innerHTML + "'>"));
-        // rename segment when "enter" is pressed
-        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            let newLabel = document.getElementById(`${segment.id}-rename`).value;
-            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
-            segment.update({ "labelText": newLabel, "treeText": newLabel });
-          }
-        });
-        popupContent.append(document.createElement("br"));
-        if (labelsDataset.children && labelsDataset.children != "") {
-          labelsDataset.children.split("|").forEach(function (label) {
-            if (label != document.getElementById(`${group}-span`).parentElement.id) {
+          else if (segment != null){ //this is a segment
+            if (label != segment.path.at(-2)){
               // add radio button
               const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
               popupContent.append(radio);
               popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
               popupContent.append(document.createElement("br"));
+              console.log("we are with a segment");
+              console.log(segment);
+              console.log(copyingToLabel);
+              console.log(movingToLabel);
               radio.addEventListener("change", function () {
-                changeSpeaker(peaks, ["Speakers", "Labeled-Speakers", label, segment.id], segment.path, segment);
-                openNested(["Segments", "Labeled-Speakers", label]);
-                popupContent.innerHTML = "";
-                popup.style.display = "none";
-              });
-            }
-          });
-        }
-      }
-      else if (segment.editable && document.getElementById(`${group}-span`).parentElement.parentElement.parentElement.parentElement.id == "Labeled-Speakers-nested") {
-        popupContent.appendChild(htmlToElement("<h2>Rename segment or move to a different label: </h2>"));
-        popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-        let span = document.getElementById(`${segment.id}-span`);
-        popupContent.appendChild(htmlToElement("<input type='text' id='" + segment.id + "-rename' value='" + span.innerHTML + "'>"));
-        // rename segment when "enter" is pressed
-        document.getElementById(`${segment.id}-rename`).addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            let newLabel = document.getElementById(`${segment.id}-rename`).value;
-            document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
-            segment.update({ "labelText": newLabel, "treeText": newLabel });
-          }
-        });
-        popupContent.append(document.createElement("br"));
-        if (labelsDataset.children && labelsDataset.children != "") {
-          labelsDataset.children.split("|").forEach(function (label) {
-            if (label != segment.path.at(-2)){
-              if (label != document.getElementById(`${group}-span`).parentElement.id) {
-                // add radio button
-                const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
-                popupContent.append(radio);
-                popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
-                popupContent.append(document.createElement("br"));
-                radio.addEventListener("change", function () {
+                if (copyingToLabel){
+                  const copied = copySegment(segment, ["path", "id"]);
+                  Object.assign(copied, { "editable": true, "color": groupsColors[label], "labelText": label, "removable": true });
+                  renderSegment(peaks, peaks.segments.add(copied), label, ["Segments", "Labeled-Speakers"]);
+                  sortTree(label);
+                  openNested(["Segments", "Labeled-Speakers", label]);
+                }
+                else if (movingToLabel){
                   changeSpeaker(peaks, ["Speakers", "Labeled-Speakers", label, segment.id], segment.path, segment);
                   openNested(["Segments", "Labeled-Speakers", label]);
                   popupContent.innerHTML = "";
                   popup.style.display = "none";
-                });
-              }
-            }
-          });
-        }
-      }
-      else { //it's a speaker segment
-        popupContent.appendChild(htmlToElement("<h2>Choose a new speaker/label for this segment: </h2>"));
-        popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
-
-        Object.keys(snrs).forEach(function (speaker) {
-          if (speaker != segment.path[2]) {
-            const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${speaker}-radio" autocomplete="off">`);
-            popupContent.append(radio);
-            popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
-            popupContent.append(document.createElement("br"));
-            radio.addEventListener("change", function () {
-              changeSpeaker(peaks, ["Segments", "Speakers", speaker, segment.id], segment.path, segment);
-              openNested(["Segments", "Speakers", speaker]);
-              popupContent.innerHTML = "";
-              popup.style.display = "none";
-            });
-          }
-        });
-        if (labelsDataset.children && labelsDataset.children != "") {
-          labelsDataset.children.split("|").forEach(function (label) {
-            if (label != document.getElementById(`${group}-span`).parentElement.id) {
-              // add radio button
-              const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
-              popupContent.append(radio);
-              popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
-              popupContent.append(document.createElement("br"));
-              radio.addEventListener("change", function () {
-                const labelSegments = segmentsFromGroup(label, { "visible": true, "hidden": true });
-                if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-                  const copiedSegment = peaks.segments.add({
-                    "startTime": segment.startTime,
-                    "endTime": segment.endTime,
-                    "editable": true,
-                    "color": groupsColors[label],
-                    "labelText": label,
-                    "treeText": segment.treeText,
-                    "removable": true
-                  });
-                  renderSegment(peaks, copiedSegment, label, ["Segments", "Labeled-Speakers"]);
-                  sortTree(label);
-                  openNested(["Segments", "Labeled-Speakers", label]);
                 }
                 popupContent.innerHTML = "";
                 popup.style.display = "none";
               });
             }
-          });
+          }
         }
-      }
-      
+      });
     }
-
     // close popup button
     document.querySelectorAll(".close").forEach(function (button) {
       button.addEventListener("click", function () {
@@ -533,7 +473,10 @@ const runPeaks = async function (fileName) {
         popup.style.display = "none";
       });
     });
-  }
+  };
+
+ 
+  
 
 
 
