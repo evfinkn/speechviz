@@ -845,6 +845,7 @@ const runPeaks = async function (fileName) {
       loadRequest.send(json)
       loadRequest.onload = function () {
         let jsonData = JSON.parse(loadRequest.response);
+        const regex = /Custom Segment /;
         peaksInstance.segments.add(jsonData, { "overwrite": true }).forEach(function (segment) {
           if (segment.id in segmentsByID) {
             changeSpeaker(peaksInstance, segment.path.at(-1), segmentsByID[segment.id].path.at(-2), segment);
@@ -853,6 +854,7 @@ const runPeaks = async function (fileName) {
             renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
             sortTree(segment.path.at(-2));
           }
+          if (segment.labelText.match(regex)) { segmentCounter++; }
         });
 
         toggleSegments(peaksInstance, "Segments", false);
@@ -978,6 +980,36 @@ const runPeaks = async function (fileName) {
         console.log('Annotations saved');
       };
       newChanges = false;
+    });
+
+    document.querySelector(`button[data-action="reset-moved"]`).addEventListener("click", function () {
+      if (confirm("This will reset all moved speaker segments.\nAre you sure you want to continue?")) {
+        const record = { "user": user, "filename": fileName, "highestId": highestId };
+        const json = JSON.stringify(record);
+        var request = new XMLHttpRequest();
+        request.open("DELETE", "reset-moved", true);
+        request.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+
+        request.send(json);
+        request.onload = function () {
+          location.reload();
+        }
+      }
+    });
+
+    document.querySelector(`button[data-action="reset"]`).addEventListener("click", function () {
+      if (confirm("This will delete ALL saved segments.\nAre you sure you want to continue?")) {
+        const record = { "user": user, "filename": fileName };
+        const json = JSON.stringify(record);
+        var request = new XMLHttpRequest();
+        request.open("DELETE", "reset", true);
+        request.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+
+        request.send(json);
+        request.onload = function () {
+          location.reload();
+        }
+      }
     });
 
     document.querySelector("[data-action='show-dropdowns']").addEventListener('click', function () {
