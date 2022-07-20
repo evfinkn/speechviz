@@ -116,22 +116,24 @@ const runPeaks = async function (fileName) {
   const groupRemoveIcon = feather.icons.x.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
 
   const playGroup = function (peaks, group, loop = false) {
-    peaks.once("player.pause", function () {
-      const segments = segmentsFromGroup(group, { visible: true, sort: true });
-      peaks.player.playSegments(segments, loop);
-      const button = loop ? groupsButtons[group][1] : groupsButtons[group][0];
-      button.innerHTML = groupPauseIcon;
-
-      const pause = function () { peaks.player.pause(); }
-      button.addEventListener("click", pause, { once: true });
+    const segments = segmentsFromGroup(group, { visible: true, sort: true });
+    if (segments.length != 0) {
       peaks.once("player.pause", function () {
-        button.innerHTML = loop ? groupLoopIcon : groupPlayIcon;
-        button.removeEventListener("click", pause);
-        button.addEventListener("click", function () { playGroup(peaks, group, loop); }, { once: true });
+        peaks.player.playSegments(segments, loop);
+        const button = loop ? groupsButtons[group][1] : groupsButtons[group][0];
+        button.innerHTML = groupPauseIcon;
+
+        const pause = function () { peaks.player.pause(); }
+        button.addEventListener("click", pause, { once: true });
+        peaks.once("player.pause", function () {
+          button.innerHTML = loop ? groupLoopIcon : groupPlayIcon;
+          button.removeEventListener("click", pause);
+          button.addEventListener("click", function () { playGroup(peaks, group, loop); }, { once: true });
+        });
       });
-    });
-    if (!peaks.player.isPlaying()) { peaks.player.play(); }
-    peaks.player.pause();
+      if (!peaks.player.isPlaying()) { peaks.player.play(); }
+      peaks.player.pause();
+    }
   }
   //#endregion
 
@@ -323,9 +325,11 @@ const runPeaks = async function (fileName) {
             for (let segment of segments) {
               if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
                 console.log(segment);
-                changeSpeaker(peaks, label, group, segment);
+                changeSpeaker(peaks, ["Segments", "Labeled-Speakers", label, segment.id], segment.path, segment);
               }
             }
+            popupContent.innerHTML = "";
+            popup.style.display = "none";
           });
         });
       }
@@ -567,6 +571,7 @@ const runPeaks = async function (fileName) {
     // }
     // create the tree item for the segment
 
+    console.log(group);
     if (!(group in visibleSegments)) { renderGroup(peaks, group, path, { "renderEmpty": true, "removable": segment.removable }); }
 
     segment.treeText = segment.treeText || segment.id;
