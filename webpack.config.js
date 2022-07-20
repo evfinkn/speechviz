@@ -2,10 +2,13 @@ const path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: './src/viz.js',
+  entry: {
+      viz: './src/viz.js',
+      index: './src/index.js'
+  },
   stats: 'errors-only',
   output: {
-    filename: 'viz.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'public/js'),
   },
 };

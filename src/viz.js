@@ -9,6 +9,9 @@ var durations = {};
 
 let newChanges = false;
 
+const urlParams = new URLSearchParams(window.location.search);
+const fileName = urlParams.get("audiofile");
+
 
 
 const runPeaks = async function (fileName) {
@@ -29,7 +32,19 @@ const runPeaks = async function (fileName) {
     ["Non-VAD", [{...}, {...}]]
   ]   */
   const importedSegments = await fetch(`/segments/${name}-segments.json`).then(response => response.json());
-  const user = await fetch("/user").then(response => response.text());
+  let user = urlParams.get("user");
+  const sessionUser = await fetch("/user").then(response => response.text());
+  if (!user) {
+    user = sessionUser;
+  }
+  else {
+    if (sessionUser != "admin" && user != sessionUser) {
+      user = sessionUser;
+    }
+    else {
+      document.getElementById("user").innerHTML = `admin (viewing ${user})`;
+    }
+  }
 
   // object containing ALL segments (hidden and visible)    {id: segment}
   const segmentsByID = {};
@@ -1101,9 +1116,6 @@ const runPeaks = async function (fileName) {
 
 
 
-const urlParams = new URLSearchParams(window.location.search);
-const fileName = urlParams.get("audiofile");
-// var user = document.getElementById("user").innerHTML;
 
 // https://stackoverflow.com/a/7317311
 window.onload = function () {
