@@ -325,7 +325,7 @@ const runPeaks = async function (fileName) {
         });
       }
     }
-    else if (group.includes("Custom-Segments") && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Segments-nested"){
+    else if (group.includes("Custom-Segments") && document.getElementById(`${group}-span`).parentElement.parentElement.id == "Segments-nested") {
       popupContent.appendChild(htmlToElement("<h2>Move segments to label: </h2>"));
       popupContent.appendChild(htmlToElement("<a id='close' class='close'>&times</a>"));
       if (labelsDataset.children && labelsDataset.children != "") {
@@ -397,7 +397,7 @@ const runPeaks = async function (fileName) {
       popupContent.append(document.createElement("br"));
       if (labelsDataset.children && labelsDataset.children != "") {
         labelsDataset.children.split("|").forEach(function (label) {
-          if (label != group){
+          if (label != group) {
             // add radio button
             const radio = htmlToElement(`<input type="radio" name="${group}-radios" id="${label}-radio" autocomplete="off">`);
             popupContent.append(radio);
@@ -471,7 +471,7 @@ const runPeaks = async function (fileName) {
         popupContent.append(document.createElement("br"));
         if (labelsDataset.children && labelsDataset.children != "") {
           labelsDataset.children.split("|").forEach(function (label) {
-            if (label != segment.path.at(-2)){
+            if (label != segment.path.at(-2)) {
               if (label != document.getElementById(`${group}-span`).parentElement.id) {
                 // add radio button
                 const radio = htmlToElement(`<input type="radio" name="${segment.id}-radios" id="${label}-radio" autocomplete="off">`);
@@ -538,7 +538,7 @@ const runPeaks = async function (fileName) {
           });
         }
       }
-      
+
     }
 
     // close popup button
@@ -569,7 +569,7 @@ const runPeaks = async function (fileName) {
 
 
 
-  const updateDuration = function(path, change) {
+  const updateDuration = function (path, change) {
     for (const group of path) {
       durations[group] += change;
       const span = document.getElementById(`${group}-span`);
@@ -587,7 +587,7 @@ const runPeaks = async function (fileName) {
 
     segment.treeText = segment.treeText || segment.id;
     const newLabelText = segment.labelText == segment.treeText ? segment.labelText : `${segment.labelText}\n${segment.treeText}`;
-    segment.update({"labelText": newLabelText});
+    segment.update({ "labelText": newLabelText });
 
     const li = document.createElement("li");
     li.id = segment.id;
@@ -1013,23 +1013,23 @@ const runPeaks = async function (fileName) {
       let numCustom = 1;
       const customChanged = {};
       segments.forEach(function (segment) {
-          if (segment.labelText in customChanged) {
-            segment.labelText = customChanged[segment.labelText];
-          }
-          else if (segment.labelText.match(customRegex)) {
-            const nextCustom = `Custom Segment ${numCustom++}`;
-            customChanged[segment.labelText] = nextCustom;
-            segment.labelText = nextCustom;
-          }
-          if (segment.treeText in customChanged) {
-            segment.treeText = customChanged[segment.treeText];
-          }
-          else if (segment.treeText.match(customRegex)) {
-            const nextCustom = `Custom Segment ${numCustom++}`;
-            customChanged[segment.treeText] = nextCustom;
-            segment.treeText = nextCustom;
-          }
-        })
+        if (segment.labelText in customChanged) {
+          segment.labelText = customChanged[segment.labelText];
+        }
+        else if (segment.labelText.match(customRegex)) {
+          const nextCustom = `Custom Segment ${numCustom++}`;
+          customChanged[segment.labelText] = nextCustom;
+          segment.labelText = nextCustom;
+        }
+        if (segment.treeText in customChanged) {
+          segment.treeText = customChanged[segment.treeText];
+        }
+        else if (segment.treeText.match(customRegex)) {
+          const nextCustom = `Custom Segment ${numCustom++}`;
+          customChanged[segment.treeText] = nextCustom;
+          segment.treeText = nextCustom;
+        }
+      })
 
       for (const segment of Object.values(moved)) {
         const copied = copySegment(segment, ["color"]);
