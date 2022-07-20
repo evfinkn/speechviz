@@ -23,8 +23,8 @@
  - [ ] Fix toggling label not toggling its segments' play and loop buttons
  - [ ] Fix custom segment not being checked when added
  - [ ] Document functions
- - [ ] Fix the segment's own label appearing in the segment's popup
  
+ - [x] Fix the segment's own label appearing in the segment's popup
  - [x] Add reset button (with confirmation popup, I think javascript has a built-in prompt for said popup) that removes all saved segments
  - [x] Show segment start time and end time when hovering over its tree text
  - [x] Make segment popup radio buttons appear on separate lines
