@@ -10,7 +10,6 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] When you save a label with no segments, it doesn't get saved/loaded
  - [ ] Separate into multiple files
  - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
  - [ ] When playing group, show segment currently playing
