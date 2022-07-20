@@ -138,6 +138,43 @@ app.use("/load/", (req, res) => {
   res.end();
 });
 
+const deleteSegment = db.prepare("DELETE FROM annotations WHERE id=?");
+
+const resetMoved = db.transaction((filename, user, highestId) => {
+  let fileId = selectFileId.get([filename])?.id;
+  if (!fileId) {
+    fileId = insertFile.run([filename]).lastInsertRowid;
+  }
+  const userId = selectUserId.get([user]).id;
+
+  const segments = selectSegments.all([fileId, userId]);
+  for (const segment of segments) {
+    if (parseInt(segment.id.split(".").at(-1)) <= highestId) {
+      deleteSegment.run([segment.id]);
+    }
+  }
+});
+
+app.use("/reset-moved/", (req, res) => {
+  resetMoved(req.body["filename"], req.body["user"], req.body["highestId"])
+  res.end();
+});
+
+const reset = db.transaction((filename, user) => {
+  let fileId = selectFileId.get([filename])?.id;
+  if (!fileId) {
+    fileId = insertFile.run([filename]).lastInsertRowid;
+  }
+  const userId = selectUserId.get([user]).id;
+
+  deleteSegments.run([fileId, userId]);
+});
+
+app.use("/reset/", (req, res) => {
+  reset(req.body["filename"], req.body["user"])
+  res.end();
+});
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');

@@ -13,8 +13,6 @@
  - [ ] When you save a label with no segments, it doesn't get saved/loaded
  - [ ] Separate into multiple files
  - [ ] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
- - [ ] Show segment start time and end time when hovering over its tree text
- - [ ] Make segment popup radio buttons appear on separate lines
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
  - [ ] If possible, button to hide the segment drag things
@@ -22,11 +20,12 @@
  - [ ] Fix the label not appearing next to speaker after adding it to label
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
- - [ ] Fix toggling label not toggling its segments' play and loop buttons
- - [ ] Add reset button (with confirmation popup, I think javascript has a built-in prompt for said popup) that removes all saved segments
- - [ ] Fix custom segment not being checked when added
  - [ ] Document functions
- - [ ] Fix the segment's own label appearing in the segment's popup
+ 
+ - [x] Fix the segment's own label appearing in the segment's popup
+ - [x] Add reset button (with confirmation popup, I think javascript has a built-in prompt for said popup) that removes all saved segments
+ - [x] Show segment start time and end time when hovering over its tree text
+ - [x] Make segment popup radio buttons appear on separate lines
  - [x] Move custom segments to label instead of copying
  - [x] Fix drag for the end of a segment is off screen when adding segment at the end of file
  - [x] Change default custom segment duration (lower from 10 to maybe like 5?)
