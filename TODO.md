@@ -20,7 +20,6 @@
  - [ ] Fix the label not appearing next to speaker after adding it to label
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
- - [ ] Fix custom segment not being checked when added
  - [ ] Document functions
  
  - [x] Fix the segment's own label appearing in the segment's popup
