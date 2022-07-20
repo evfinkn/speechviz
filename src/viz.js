@@ -1016,25 +1016,32 @@ const runPeaks = async function (fileName) {
       document.getElementById("speedDropdown").classList.toggle("show");
     });
 
-    document.querySelector("[data-action='.5times']").addEventListener('click', function () {
-      let myaudio = document.getElementById("audio");
-      myaudio.playbackRate = 0.5;
-    });
+    const spdbtns = document.getElementsByClassName("spdbtn");
+    for (let i = 0; i < spdbtns.length; i++) {
+      spdbtns[i].addEventListener("click", function () {
+        audio.playbackRate = parseFloat(this.innerHTML.replace("x", ""));
+      });
+    }
 
-    document.querySelector("[data-action='1times']").addEventListener('click', function () {
-      let myaudio = document.getElementById("audio");
-      myaudio.playbackRate = 1;
-    });
+    // document.querySelector("[data-action='.5times']").addEventListener('click', function () {
+    //   let myaudio = document.getElementById("audio");
+    //   myaudio.playbackRate = 0.5;
+    // });
 
-    document.querySelector("[data-action='2times']").addEventListener('click', function () {
-      let myaudio = document.getElementById("audio");
-      myaudio.playbackRate = 2;
-    });
+    // document.querySelector("[data-action='1times']").addEventListener('click', function () {
+    //   let myaudio = document.getElementById("audio");
+    //   myaudio.playbackRate = 1;
+    // });
 
-    document.querySelector("[data-action='4times']").addEventListener('click', function () {
-      let myaudio = document.getElementById("audio");
-      myaudio.playbackRate = 4;
-    });
+    // document.querySelector("[data-action='2times']").addEventListener('click', function () {
+    //   let myaudio = document.getElementById("audio");
+    //   myaudio.playbackRate = 2;
+    // });
+
+    // document.querySelector("[data-action='4times']").addEventListener('click', function () {
+    //   let myaudio = document.getElementById("audio");
+    //   myaudio.playbackRate = 4;
+    // });
 
 
     //https://www.w3schools.com/howto/howto_js_dropdown.asp

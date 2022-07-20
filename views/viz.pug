@@ -27,12 +27,24 @@ html(lang="en")
                             source(src=`audio/${audiofile}`, type=mimetype)
                             | Your browser does not support the audio element.
                         div.dropdown
-                            button(class="dropbtn", data-action="show-dropdowns") Speed
+                            button.dropbtn(data-action="show-dropdowns") Speed
                             div.dropdown-content#speedDropdown
-                                button(data-action=".5times") .5
-                                button(data-action="1times") Normal
-                                button(data-action="2times") 2
-                                button(data-action="4times") 4
+                                button.spdbtn 0.25x
+                                br
+                                button.spdbtn 0.5x
+                                br
+                                button.spdbtn 0.75x
+                                br
+                                button.spdbtn 1x
+                                br
+                                button.spdbtn 1.25x
+                                br
+                                button.spdbtn 1.5x
+                                br
+                                button.spdbtn 1.75x
+                                br
+                                button.spdbtn 2x
+                                br
                         textarea(rows="8", cols="80") This is for any notes you wish to jot down
                         #controls
                             div
