@@ -67,7 +67,7 @@ const runPeaks = async function (fileName) {
     if (simple) {
       segments = segments.map(segment => {
         const copied = copySegment(segment);
-        Object.assign(copied, { "path": segment.path.slice(0, -1) });
+        Object.assign(copied, { "labelText": segment.labelText.split("\n")[0], "path": segment.path.slice(0, -1) });
         return copied;
       });
     }
@@ -365,7 +365,7 @@ const runPeaks = async function (fileName) {
               let segments = segmentsFromGroup(group, { "visible": true, "hidden": true });
               for (let segment of segments) {
                 if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
-                  changeSpeaker(peaks, label, group, segment);
+                  changeSpeaker(peaks, ["Speakers", "Labeled-Speakers", label, segment.id], segment.path, segment);
                 }
               }
               removeGroup(peaks, group, "Labeled-Speakers");
@@ -403,7 +403,7 @@ const runPeaks = async function (fileName) {
               popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
               popupContent.append(document.createElement("br"));
               radio.addEventListener("change", function () {
-                changeSpeaker(peaks, label, segment.path.at(-2), segment);
+                changeSpeaker(peaks, ["Speakers", "Labeled-Speakers", label, segment.id], segment.path, segment);
                 openNested(["Segments", "Labeled-Speakers", label]);
                 popupContent.innerHTML = "";
                 popup.style.display = "none";
@@ -436,7 +436,7 @@ const runPeaks = async function (fileName) {
                 popupContent.append(htmlToElement(`<label for="${label}-radio">${label}</label>`));
                 popupContent.append(document.createElement("br"));
                 radio.addEventListener("change", function () {
-                  changeSpeaker(peaks, label, segment.path.at(-2), segment);
+                  changeSpeaker(peaks, ["Speakers", "Labeled-Speakers", label, segment.id], segment.path, segment);
                   openNested(["Segments", "Labeled-Speakers", label]);
                   popupContent.innerHTML = "";
                   popup.style.display = "none";
@@ -457,7 +457,7 @@ const runPeaks = async function (fileName) {
             popupContent.append(htmlToElement(`<label for="${speaker}-radio">${speaker}</label>`));
             popupContent.append(document.createElement("br"));
             radio.addEventListener("change", function () {
-              changeSpeaker(peaks, speaker, segment.path.at(-2), segment);
+              changeSpeaker(peaks, ["Segments", "Speakers", speaker, segment.id], segment.path, segment);
               openNested(["Segments", "Speakers", speaker]);
               popupContent.innerHTML = "";
               popup.style.display = "none";
@@ -509,16 +509,18 @@ const runPeaks = async function (fileName) {
 
 
 
-  const changeSpeaker = function (peaks, speaker, oldSpeaker, segment) {
-    segment.path = ["Segments", "Speakers", speaker, segment.id];
+  const changeSpeaker = function (peaks, newPath, oldPath, segment) {
+    const newParent = newPath.at(-2);
+    const oldParent = oldPath.at(-2);
+    segment.path = newPath;
     document.getElementById(`${segment.id}`).remove();
-    renderSegment(peaks, segment, speaker, ["Segments", "Speakers"]);
-    updateDuration(["Speakers", oldSpeaker], segment.startTime - segment.endTime);
-    if (visibleSegments[oldSpeaker][segment.id]) { delete visibleSegments[oldSpeaker][segment.id] }
-    if (hiddenSegments[oldSpeaker][segment.id]) { delete hiddenSegments[oldSpeaker][segment.id] }
-    segment.update({ "labelText": speaker });
-    moved[segment.id] = segment;
-    sortTree(speaker);
+    renderSegment(peaks, segment, newParent, newPath.slice(0, -2));
+    updateDuration(oldPath.slice(1, -2), segment.startTime - segment.endTime);
+    if (visibleSegments[oldParent][segment.id]) { delete visibleSegments[oldParent][segment.id]; }
+    if (hiddenSegments[oldParent][segment.id]) { delete hiddenSegments[oldParent][segment.id]; }
+    segment.update({ "labelText": newParent });
+    if (oldPath.includes("Speakers")) { moved[segment.id] = segment };
+    sortTree(newParent);
   }
   //#endregion
 
@@ -848,7 +850,7 @@ const runPeaks = async function (fileName) {
         const regex = /Custom Segment /;
         peaksInstance.segments.add(jsonData, { "overwrite": true }).forEach(function (segment) {
           if (segment.id in segmentsByID) {
-            changeSpeaker(peaksInstance, segment.path.at(-1), segmentsByID[segment.id].path.at(-2), segment);
+            changeSpeaker(peaksInstance, segment.path.concat(segment.id), segmentsByID[segment.id].path, segment);
           }
           else {
             renderSegment(peaksInstance, segment, segment.path.at(-1), segment.path.slice(0, -1));
