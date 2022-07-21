@@ -18,6 +18,6 @@ const zoomOutIcon = feather.icons["zoom-out"].toSvg({ "stroke": "black" });
 const undoIcon = feather.icons["corner-up-left"].toSvg({ "stroke": "gray" });
 const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "gray" });
 
-const settingsIcon = feather.icons.settings.toSvg({ "stroke": "black", "fill": "black" });
+const settingsIcon = feather.icons.settings.toSvg({ "stroke": "black" });
 
 export { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, undoIcon, redoIcon, settingsIcon };
