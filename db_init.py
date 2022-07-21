@@ -45,6 +45,7 @@ def init_database():
         path TEXT,
         UNIQUE(path)
     )''')
+    conn.commit()
 
     # create annotations table
     c.execute('''CREATE TABLE IF NOT EXISTS annotations(
@@ -62,6 +63,16 @@ def init_database():
         FOREIGN KEY(userId) references users(id),
         FOREIGN KEY(labelId) references labels(id),
         FOREIGN KEY(pathId) references paths(id)
+    )''')
+    conn.commit()
+
+    # create notes table
+    c.execute('''CREATE TABLE IF NOT EXISTS notes(
+        fileId INTEGER,
+        userId INTEGER,
+        notes TEXT,
+        FOREIGN KEY(fileId) references audiofiles(id),
+        FOREIGN KEY(userId) references users(id)
     )''')
     conn.commit()
 

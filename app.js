@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var index = require('./routes/index-route');
 var viz = require('./routes/viz-route');
 var login = require('./routes/login-route');
+var changePassword = require('./routes/change-password-route');
 var app = express();
 
 var Database = require('better-sqlite3');
@@ -52,19 +53,32 @@ app.use(checkAuthentification)
 app.use('/', index);
 app.use('/viz', viz);
 app.use('/login', login);
+app.use("/change-password/", changePassword);
+
+app.get('/logout', (req, res) => {
+  req.session.authenticated = false;
+  delete req.session.user;
+  res.redirect('/login');
+  return;
+});
 
 app.get("/filelist", (req, res) => {
   res.send(fs.readdirSync("data/audio").filter(fileName => fileName != ".DS_Store"));
 });
 
+app.get("/user", (req, res) => { res.send(req.session.user); });
+app.get("/users", (req, res) => { res.send(db.prepare("SELECT user FROM users").all().map(user => user.user)); });
+
 app.get(/\/(audio|segments|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
+//#region saving, loading, and resetting
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
 const insertFile = db.prepare("INSERT INTO audiofiles(audiofile) VALUES(?)");
 
 const selectUserId = db.prepare("SELECT id FROM users WHERE user=?");
 
 const deleteSegments = db.prepare('DELETE FROM annotations WHERE fileId=? AND userId=?');
+const deleteNotes = db.prepare("DELETE FROM notes WHERE fileId=? AND userId=?");
 
 const selectLabelId = db.prepare("SELECT id FROM labels WHERE label=?");
 const insertLabel = db.prepare("INSERT INTO labels(label) VALUES(?)");
@@ -73,8 +87,9 @@ const selectPathId = db.prepare("SELECT id FROM paths WHERE path=?");
 const insertPath = db.prepare("INSERT INTO paths(path) VALUES(?)");
 
 const insertSegment = db.prepare("INSERT INTO annotations(fileId,userId,startTime,endTime,editable,labelId,id,pathId,treeText,removable) VALUES(?,?,?,?,?,?,?,?,?,?)");
+const insertNotes = db.prepare("INSERT INTO notes(fileId,userId,notes) VALUES(?,?,?)");
 
-const save = db.transaction((filename, user, segments) => {
+const save = db.transaction((filename, user, segments, notes) => {
   let fileId = selectFileId.get([filename])?.id;
   if (!fileId) {
     fileId = insertFile.run([filename]).lastInsertRowid;
@@ -82,6 +97,7 @@ const save = db.transaction((filename, user, segments) => {
   const userId = selectUserId.get([user]).id;
 
   deleteSegments.run([fileId, userId]);
+  deleteNotes.run([fileId, userId]);
 
   for (const segment of segments) {
     const label = segment.labelText;
@@ -101,9 +117,11 @@ const save = db.transaction((filename, user, segments) => {
 
     insertSegment.run([fileId, userId, segment.startTime, segment.endTime, segment.editable, labelId, segment.id, pathId, segment.treeText, segment.removable]);
   }
+
+  insertNotes.run([fileId, userId, notes]);
 });
 app.use("/save/", (req, res) => {
-  save(req.body["filename"], req.body["user"], req.body["segments"]);
+  save(req.body["filename"], req.body["user"], req.body["segments"], req.body["notes"]);
   res.end();
 });
 
@@ -112,12 +130,16 @@ const selectSegments = db.prepare("SELECT startTime,endTime,editable,labelId,id,
 const selectLabel = db.prepare("SELECT label FROM labels WHERE id=?");
 const selectPath = db.prepare("SELECT path FROM paths WHERE id=?");
 
+const selectNotes = db.prepare("SELECT notes FROM notes WHERE fileId=? AND userId=?");
+
 const load = db.transaction((filename, user) => {
   let fileId = selectFileId.get([filename])?.id;
   if (!fileId) {
     fileId = insertFile.run([filename]).lastInsertRowid;
   }
   const userId = selectUserId.get([user]).id;
+
+  const loaded = {};
 
   const segments = selectSegments.all([fileId, userId]);
   for (const segment of segments) {
@@ -129,10 +151,12 @@ const load = db.transaction((filename, user) => {
     segment.path = selectPath.get([segment.pathId]).path.split("|");
     delete segment.pathId;
   }
+  loaded.segments = segments;
 
-  return segments;
+  loaded.notes = selectNotes.get([fileId, userId])?.notes;
+
+  return loaded;
 });
-
 app.use("/load/", (req, res) => {
   res.send(load(req.body["filename"], req.body["user"]));
   res.end();
@@ -154,7 +178,6 @@ const resetMoved = db.transaction((filename, user, highestId) => {
     }
   }
 });
-
 app.use("/reset-moved/", (req, res) => {
   resetMoved(req.body["filename"], req.body["user"], req.body["highestId"])
   res.end();
@@ -169,11 +192,11 @@ const reset = db.transaction((filename, user) => {
 
   deleteSegments.run([fileId, userId]);
 });
-
 app.use("/reset/", (req, res) => {
   reset(req.body["filename"], req.body["user"])
   res.end();
 });
+//#endregion
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
