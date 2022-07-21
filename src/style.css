@@ -5,7 +5,7 @@ body {
 #speed-button {
   background-color: #3478f6;
   color: white;
-  padding: 16px;
+  padding: 10px;
   font-size: 16px;
   border: none;
   cursor: pointer;
@@ -111,6 +111,22 @@ p code {
 	height: 470px;
 }
 
+.column3 {
+	float: left;
+	width: 40%;
+	padding: 10px;
+	overflow-y:auto;
+	height: 470px;
+}
+
+.column4 {
+	float: right;
+	width: 55%;
+	padding: 10px;
+	overflow-y:auto;
+	height: 470px;
+}
+
 .row:after {
 	content: "";
 	display: inline;
@@ -159,11 +175,10 @@ ul, #Segments {
 }
 .popup-content {
   margin: 100px auto;
-  border: 1px solid #999;
+  border: 1px solid #fff;
   width: 30%;
   padding: 100px;
-  box-shadow: 0 2px 5px #f5f5f5;
-  background: #c9daf4;
+  background: #fff;
 }
 
 .close {
