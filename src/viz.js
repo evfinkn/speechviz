@@ -1,6 +1,6 @@
 import Peaks from "peaks.js";
 import { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment } from "./util";
-const feather = require('feather-icons');
+import { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon } from "./icon";
 
 const audio = document.getElementById('audio');
 
@@ -96,11 +96,6 @@ const runPeaks = async function (fileName) {
   }
 
   //#region playing segments and groups
-  const segmentPlayIcon = feather.icons.play.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
-  const segmentPauseIcon = feather.icons.pause.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
-  const segmentLoopIcon = feather.icons.repeat.toSvg({ "width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5 });
-  const segmentRemoveIcon = feather.icons.x.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
-
   /**
    * play audio of segment
    * @param {Peaks} peaks - instance of Peaks
@@ -119,12 +114,12 @@ const runPeaks = async function (fileName) {
       }
       peaks.player.playSegment(segment, loop);
       const button = loop ? segment.buttons[1] : segment.buttons[0];
-      button.innerHTML = segmentPauseIcon;
+      button.innerHTML = segmentIcons.pause;
 
       const pause = function () { peaks.player.pause(); }
       button.addEventListener("click", pause, { once: true });
       peaks.once("player.pause", function () {
-        button.innerHTML = loop ? segmentLoopIcon : segmentPlayIcon;
+        button.innerHTML = loop ? segmentIcons.loop : segmentIcons.play;
         button.removeEventListener("click", pause);
         button.addEventListener("click", function () { playSegment(peaks, segment, loop); }, { once: true });
       });
@@ -133,13 +128,6 @@ const runPeaks = async function (fileName) {
     if (!peaks.player.isPlaying()) { peaks.player.play(); }
     peaks.player.pause();
   }
-
-
-
-  const groupPlayIcon = feather.icons.play.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
-  const groupPauseIcon = feather.icons.pause.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
-  const groupLoopIcon = feather.icons.repeat.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
-  const groupRemoveIcon = feather.icons.x.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
 
   /**
    * plays audio of all segments nested under specified group (consecutively)
@@ -152,12 +140,12 @@ const runPeaks = async function (fileName) {
       peaks.once("player.pause", function () {
         peaks.player.playSegments(segments, loop);
         const button = loop ? groupsButtons[group][1] : groupsButtons[group][0];
-        button.innerHTML = groupPauseIcon;
+        button.innerHTML = groupIcons.pause;
 
         const pause = function () { peaks.player.pause(); }
         button.addEventListener("click", pause, { once: true });
         peaks.once("player.pause", function () {
-          button.innerHTML = loop ? groupLoopIcon : groupPlayIcon;
+          button.innerHTML = loop ? groupIcons.loop : groupIcons.play;
           button.removeEventListener("click", pause);
           button.addEventListener("click", function () { playGroup(peaks, group, loop); }, { once: true });
         });
@@ -645,7 +633,7 @@ const runPeaks = async function (fileName) {
     const li = document.createElement("li");
     li.id = segment.id;
     li.style.fontSize = "12px";
-    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" autocomplete="off" checked><span id="${segment.id}-span" title="Start time: ${segment.startTime.toFixed(2)}\nEnd time: ${segment.endTime.toFixed(2)}\nDuration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.treeText}</span> <a href="javascript:;" style="text-decoration:none;">${segmentPlayIcon}   </a><a href="javascript:;" style="text-decoration:none;">${segmentLoopIcon}   </a><ul id="${segment.id}-nested" class="nested active"></ul>`;
+    li.innerHTML = `<input style="transform:scale(0.85);" type="checkbox" autocomplete="off" checked><span id="${segment.id}-span" title="Start time: ${segment.startTime.toFixed(2)}\nEnd time: ${segment.endTime.toFixed(2)}\nDuration: ${(segment.endTime - segment.startTime).toFixed(2)}">${segment.treeText}</span> <a href="javascript:;" style="text-decoration:none;">${segmentIcons.play}   </a><a href="javascript:;" style="text-decoration:none;">${segmentIcons.loop}   </a><ul id="${segment.id}-nested" class="nested active"></ul>`;
     document.getElementById(`${group}-nested`).append(li);
 
     // segment checkboxes
@@ -674,7 +662,7 @@ const runPeaks = async function (fileName) {
     updateDuration(path.slice(1).concat(group), segment.endTime - segment.startTime);
 
     if (segment.editable || segment.removable) {
-      const remove = htmlToElement(`<a href="javascript:;" ">${segmentRemoveIcon}</a>`);
+      const remove = htmlToElement(`<a href="javascript:;" ">${segmentIcons.remove}</a>`);
       loop.after(remove);
       remove.addEventListener("click", function () { removeSegment(peaks, segment, group); });
       segment.durationSpan = li.children[1];
@@ -707,7 +695,7 @@ const runPeaks = async function (fileName) {
       spanHTML = `<button id="${group}-button" class="nolink"><span id="${group}-span" style="font-size:18px;" title="${"SNR: " + snr.toFixed(2)}\nDuration: 0.00">${group}</span></button>`
       snrs[group] = snr;
 
-      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupIcons.play}   </a><a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupIcons.loop}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
 
       // event listener for clicking on a speaker
@@ -715,14 +703,14 @@ const runPeaks = async function (fileName) {
     }
     else if (parent == "Labeled-Speakers") {
       spanHTML = `<span id="${group}-span" style="font-size:18px;" title="Duration: 0.00">${group}</span>`;
-      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" data-id="${group}" autocomplete="off">${spanHTML} <a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupIcons.play}   </a><a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupIcons.loop}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
       // event listener for clicking on a label
       document.getElementById(`${group}-span`).addEventListener("click", function () { initPopup(peaks, this.id.split("-")[0]); });
     }
     else {
       spanHTML = `<span id="${group}-span" style="font-size:18px;" title="Duration: 0.00">${group}</span>`;
-      branch.innerHTML = `<input type="checkbox" autocomplete="off" data-id="${group}">${spanHTML} <a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupPlayIcon}   </a><a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupLoopIcon}   </a><ul id="${group}-nested" class="nested"></ul>`;
+      branch.innerHTML = `<input type="checkbox" autocomplete="off" data-id="${group}">${spanHTML} <a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupIcons.play}   </a><a href="javascript:;" style="text-decoration:none;" data-id="${group}">${groupIcons.loop}   </a><ul id="${group}-nested" class="nested"></ul>`;
       document.getElementById(`${parent}-nested`).append(branch);
     }
 
@@ -756,7 +744,7 @@ const runPeaks = async function (fileName) {
     }
 
     if (removable) {
-      const remove = htmlToElement(`<a href="javascript:;" data-id="${group}">${groupRemoveIcon}</a>`);
+      const remove = htmlToElement(`<a href="javascript:;" data-id="${group}">${groupIcons.remove}</a>`);
       branch.children[3].after(remove);
       remove.addEventListener("click", function () { removeGroup(peaks, this.dataset.id, parent); });
     }
@@ -812,9 +800,9 @@ const runPeaks = async function (fileName) {
 
     const zoomIn = document.querySelector("[data-action='zoom-in']");
     const zoomOut = document.querySelector("[data-action='zoom-out']");
-    zoomIn.innerHTML = feather.icons["zoom-in"].toSvg({ "stroke": "gray" });
+    zoomIn.innerHTML = zoomInIcon;
     const zoomInSvg = zoomIn.firstElementChild;
-    zoomOut.innerHTML = feather.icons["zoom-out"].toSvg({ "stroke": "black" });
+    zoomOut.innerHTML = zoomOutIcon;
     const zoomOutSvg = zoomOut.firstElementChild;
     zoomIn.addEventListener('click', function () {
       peaksInstance.zoom.zoomIn();
@@ -1170,8 +1158,8 @@ const runPeaks = async function (fileName) {
 
     const segmentsPlay = groupsButtons["Segments"][0];
     const segmentsLoop = groupsButtons["Segments"][1];
-    segmentsPlay.innerHTML = feather.icons.play.toSvg({ "width": 17, "height": 17, "stroke": "black", "fill": "black" });
-    segmentsLoop.innerHTML = feather.icons.repeat.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
+    segmentsPlay.innerHTML = groupIcons.play;
+    segmentsLoop.innerHTML = groupIcons.loop;
   });
 }
 
