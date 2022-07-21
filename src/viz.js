@@ -1,5 +1,5 @@
 import Peaks from "peaks.js";
-import { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment } from "./util";
+import { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment, toggleButton } from "./util";
 import { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
 const audio = document.getElementById('audio');
@@ -173,10 +173,7 @@ const runPeaks = async function (fileName) {
         visibleSegments[parent][group] = segment;
         peaks.segments.add(segment);
         segment.buttons.forEach(function (button) {
-          button.style.pointerEvents = "auto";
-          const buttonIcon = button.firstElementChild;
-          buttonIcon.style.stroke = "black";
-          if (buttonIcon.getAttribute("fill") != "none") { buttonIcon.style.fill = "black"; }
+          toggleButton(button, true);
         });
         delete hiddenSegments[parent][group];
       }
@@ -184,10 +181,7 @@ const runPeaks = async function (fileName) {
         hiddenSegments[parent][group] = segment;
         peaks.segments.removeById(group);
         segment.buttons.forEach(function (button) {
-          button.style.pointerEvents = "none";
-          const buttonIcon = button.firstElementChild;
-          buttonIcon.style.stroke = "gray";
-          if (buttonIcon.getAttribute("fill") != "none") { buttonIcon.style.fill = "gray"; }
+          toggleButton(button, false)
         });
         delete visibleSegments[parent][group];
       }
@@ -195,24 +189,8 @@ const runPeaks = async function (fileName) {
     else {  // group is not a segment id
       const groupCheckbox = groupsCheckboxes[group];
       groupCheckbox.checked = checked;
-      if (checked) {
-        groupCheckbox.parentElement.querySelector("ul").classList.add("active");
-        groupsButtons[group].forEach(function (button) {
-          button.style.pointerEvents = "auto";
-          const buttonIcon = button.firstElementChild;
-          buttonIcon.style.stroke = "black";
-          if (buttonIcon.getAttribute("fill") != "none") { buttonIcon.style.fill = "black"; }
-        });
-      }
-      else {
-        groupCheckbox.parentElement.querySelector("ul").classList.remove("active");
-        groupsButtons[group].forEach(function (button) {
-          button.style.pointerEvents = "none";
-          const buttonIcon = button.firstElementChild;
-          buttonIcon.style.stroke = "gray";
-          if (buttonIcon.getAttribute("fill") != "none") { buttonIcon.style.fill = "gray"; }
-        });
-      }
+      groupCheckbox.parentElement.querySelector("ul").classList.toggle("active", checked);
+      groupsButtons[group].forEach(function (button) { toggleButton(button, checked); });
 
       if (!(group in visibleSegments)) {  // group is a group of groups
         const children = groupCheckbox.dataset.children;
@@ -808,24 +786,20 @@ const runPeaks = async function (fileName) {
       peaksInstance.zoom.zoomIn();
       const zoomLevel = peaksInstance.zoom.getZoom();
       if (zoomLevel == 0) {
-        zoomIn.style.pointerEvents = "none";
-        zoomInSvg.style.stroke = "gray";
+        toggleButton(zoomIn, false);
       }
       else if (zoomLevel == 3) {
-        zoomOut.style.pointerEvents = "auto";
-        zoomOutSvg.style.stroke = "black";
+        toggleButton(zoomOut, true)
       }
     });
     zoomOut.addEventListener('click', function () {
       peaksInstance.zoom.zoomOut();
       const zoomLevel = peaksInstance.zoom.getZoom();
       if (zoomLevel == 4) {
-        zoomOut.style.pointerEvents = "none";
-        zoomOutSvg.style.stroke = "gray";
+        toggleButton(zoomOut, false);
       }
       else if (zoomLevel == 1) {
-        zoomIn.style.pointerEvents = "auto";
-        zoomInSvg.style.stroke = "black";
+        toggleButton(zoomIn, true)
       }
     });
     //#endregion
