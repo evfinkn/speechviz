@@ -10,7 +10,10 @@ var durations = {};
 let newChanges = false;
 
 
-
+/**
+ * initializes and runs interface
+ * @param {String} fileName - identifier for audio, segments, and waveform files
+ */
 const runPeaks = async function (fileName) {
   const name = fileName.replace(/\.[^/.]+$/, "");  // name of the file without the extension
 
@@ -46,8 +49,10 @@ const runPeaks = async function (fileName) {
 
   const moved = {};
 
-
-
+  /**
+   * returns the segments belonging to a specified group and sorts them chronologically
+   * @param {String} group - name of group
+   */
   const segmentsFromGroup = function (group, { visible = false, hidden = false, sort = false, simple = false } = {}) {
     let segments = [];
 
@@ -80,6 +85,11 @@ const runPeaks = async function (fileName) {
   const segmentLoopIcon = feather.icons.repeat.toSvg({ "width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5 });
   const segmentRemoveIcon = feather.icons.x.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
 
+  /**
+   * play audio of segment
+   * @param {Peaks} peaks - instance of Peaks
+   * @param {Segment} segment - segment to be played
+   */
   const playSegment = function (peaks, segment, loop = false) {
     // Have to put in event listener because need to call
     // peaks.player.pause() to switch other pause buttons 
@@ -115,6 +125,11 @@ const runPeaks = async function (fileName) {
   const groupLoopIcon = feather.icons.repeat.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
   const groupRemoveIcon = feather.icons.x.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
 
+  /**
+   * plays audio of all segments nested under specified group (consecutively)
+   * @param {Peaks} peaks - instance of Peaks
+   * @param {String} group - name of group
+   */
   const playGroup = function (peaks, group, loop = false) {
     peaks.once("player.pause", function () {
       const segments = segmentsFromGroup(group, { visible: true, sort: true });
@@ -135,8 +150,12 @@ const runPeaks = async function (fileName) {
   }
   //#endregion
 
-
-
+  /**
+   * checks/unchecks checkboxes and adds/removes segments or groups to/from peaks
+   * @param {Peaks} peaks - instance of Peaks
+   * @param {String} group - name of group
+   * @param {String} checked - indicates whether checkbox has been checked or not
+   */
   const toggleSegments = function (peaks, group, checked) {
     // groupsCheckboxes has a key for every group, so if not in there, group is a segment id
     if (!(group in groupsCheckboxes)) {
@@ -218,7 +237,12 @@ const runPeaks = async function (fileName) {
   }
 
 
-
+  /**
+   * removes segment from tree, peaks, and waveform
+   * @param {Peaks} peaks - instance of Peaks
+   * @param {Segment} segment - segment to be removed
+   * @param {String} group - name of group segment belongs to
+   */
   const removeSegment = function (peaks, segment, group) {
     const id = segment.id;
     // remove segment from lists
@@ -232,7 +256,12 @@ const runPeaks = async function (fileName) {
   }
 
 
-
+  /**
+   * removes group (and its segments) from tree, peaks, and waveform
+   * @param {Peaks} peaks - instance of Peaks
+   * @param {String} group - name of group to be removed
+   * @param {String} parent - name of parent group of specified group (to be removed)
+   */
   const removeGroup = function (peaks, group, parent) {
     for (let segment of segmentsFromGroup(group, { visible: true, hidden: true })) {
       removeSegment(peaks, segment, group);
@@ -251,7 +280,10 @@ const runPeaks = async function (fileName) {
   }
 
 
-
+  /**
+   * sorts segments consecutively within a group
+   * @param {String} group - name of group to be sorted
+   */
   const sortTree = function (group) {
     // sort all segments under label
     const segments = segmentsFromGroup(group, { "hidden": true, "visible": true, "sort": true });
@@ -276,6 +308,11 @@ const runPeaks = async function (fileName) {
   const popup = document.getElementById("popup");
   const popupContent = document.getElementById("popup-content");
   let labelsDataset;
+  /**
+   * initialize popup to rename segments/labels and move segments/groups
+   * @param {Peaks} peaks - instance of Peaks
+   * @param {String} group - name of group
+   */
   const initPopup = function (peaks, group) {
     popup.style.display = "block";
     //if group is a speaker group
@@ -531,7 +568,13 @@ const runPeaks = async function (fileName) {
   }
 
 
-
+  /**
+   * move segment to a different speaker
+   * @param {Peaks} peaks - instance of peaks
+   * @param {Array} newPath - path of original speaker (array of strings)
+   * @param {Array} oldPath - path of new speaker (array of strings)
+   * @param {Segment} segment - segment to be moved
+   */
   const changeSpeaker = function (peaks, newPath, oldPath, segment) {
     const newParent = newPath.at(-2);
     const oldParent = oldPath.at(-2);
@@ -548,7 +591,11 @@ const runPeaks = async function (fileName) {
   //#endregion
 
 
-
+  /**
+   * update duration of segment/group after groups/segments have been edited
+   * @param {Array} path - path of group
+   * @param {Number} change - amount duration has changed 
+   */
   const updateDuration = function(path, change) {
     for (const group of path) {
       durations[group] += change;
@@ -560,7 +607,13 @@ const runPeaks = async function (fileName) {
   }
 
 
-
+  /**
+   * adds properties to segment and adds segment to tree
+   * @param {Peaks} peaks - instance of peaks
+   * @param {Segment} segment - segment object 
+   * @param {String} group - group segment is nested under
+   * @param {Array} path - path of segment in tree
+   */
   const renderSegment = function (peaks, segment, group, path) {
     // if (group.includes("Custom") || group.includes("Labeled")){ //not sure if we need but this used to be in for custom and labeled
     //   document.getElementById(`${group}-nested`).classList.add("active");
@@ -613,7 +666,12 @@ const runPeaks = async function (fileName) {
   }
 
 
-
+  /**
+   * adds properties to group, adds group to tree, renders segments nested under group
+   * @param {Peaks} peaks - instance of Peaks
+   * @param {String} group - name of group
+   * @param {Array} path - path of group in tree
+   */
   const renderGroup = function (peaks, group, path, { items = [], snr = null, renderEmpty = false, groupOfGroups = false, removable = false } = {}) {
     if (group in groupsCheckboxes) { return; }  // group already exists
     if (items.length == 0 && !renderEmpty) { return; } 	// if group has no segments, return
@@ -690,7 +748,10 @@ const runPeaks = async function (fileName) {
   }
 
 
-
+  /**
+   * checks all groups/segments nested under a specified group
+   * @param {Array} path - path in tree
+   */
   const openNested = function (path) {
     for (const group of path) {
       document.getElementById(`${group}-nested`).classList.add("active");
