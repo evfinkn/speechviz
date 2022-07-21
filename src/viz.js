@@ -1130,16 +1130,16 @@ const runPeaks = async function (fileName) {
       }
     });
 
+    const speedButton = document.getElementById("speed-button");
     const speedDropdown = document.getElementById("speed-dropdown");
-    document.querySelector('[data-action="show-speeds"]').addEventListener("click", function () {
+    speedButton.addEventListener("click", function () {
       speedDropdown.classList.toggle("show");
     });
 
-    const settingsButton = document.querySelector('a[data-action="show-settings"]');
+    const settingsButton = document.getElementById("settings-button");
     settingsButton.innerHTML = settingsIcon;
     const settingsDropdown = document.getElementById("settings-dropdown");
     settingsButton.addEventListener("click", function () {
-      console.log("clicked");
       settingsDropdown.classList.toggle("show");
     });
 
@@ -1154,7 +1154,7 @@ const runPeaks = async function (fileName) {
     // Close the dropdown if the user clicks outside of it
     const dropdowns = document.getElementsByClassName("dropdown-content");
     window.onclick = function (event) {
-      if (!event.target.matches('#speed-button,#settings-button,#settings-dropdown')) {
+      if (!speedButton.contains(event.target) && !settingsButton.contains(event.target) && !settingsDropdown.contains(event.target)) {
         for (let i = 0; i < dropdowns.length; i++) {
           const openDropdown = dropdowns[i];
           if (openDropdown.classList.contains('show')) {
