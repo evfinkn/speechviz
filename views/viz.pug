@@ -26,9 +26,9 @@ html(lang="en")
                         audio#audio(controls="controls")
                             source(src=`audio/${audiofile}`, type=mimetype)
                             | Your browser does not support the audio element.
-                        div.dropdown
-                            button.dropbtn(data-action="show-dropdowns") Speed
-                            div.dropdown-content#speedDropdown
+                        .dropdown
+                            button.dropbtn(data-action="show-speeds") Speed
+                            .dropdown-content.speed-content#speed-dropdown
                                 button.spdbtn 0.25x
                                 br
                                 button.spdbtn 0.5x
@@ -50,26 +50,28 @@ html(lang="en")
                             div
                                 a(href="javascript:;", style="text-decoration:none;pointer-events:none;", data-action="zoom-in")
                                 a(href="javascript:;", style="text-decoration:none;", data-action="zoom-out")
-                                label(for="amplitude-scale") Amplitude scale
-                                input#amplitude-scale(type="range", min="0", max="10", step="1")
-                            div
-                                input#auto-scroll(type="checkbox", checked)
-                                label(for="auto-scroll") Auto-scroll
-                                input#enable-seek(type="checkbox", checked)
-                                label(for="enable-seek") Enable click to seek
-                                input#seek-time(type="text", value="0.0")
-                                button(data-action="seek") Seek
+                                .dropdown
+                                    a#settings-button(href="javascript:;", style="text-decoration:none;", data-action="show-settings")
+                                    .dropdown-content#settings-dropdown
+                                        div
+                                            label(for="amplitude-scale") Amplitude scale
+                                            input#amplitude-scale(type="range", min="0", max="10", step="1")
+                                        input#auto-scroll(type="checkbox", checked)
+                                        label(for="auto-scroll") Auto-scroll
+                                        input#enable-seek(type="checkbox", checked)
+                                        label(for="enable-seek") Enable click to seek
+                                        input#seek-time(type="text", value="0.0")
+                                        button(data-action="seek") Seek
+                                        br
+                                        button(data-action="reset-moved") Reset moved
+                                        button(data-action="reset") Reset all
                             div
                                 button(data-action="add-segment") Add Segment
                             div
-                                input(type="text",id ="label", placeholder = "label") 
+                                input(type="text",id ="label", placeholder = "label")
                                 button(data-action="add-label") Add Labeled Speaker
                             div
                                 button(data-action="save") Save
-                            br
-                            div
-                                button(data-action="reset-moved") Reset moved
-                                button(data-action="reset") Reset all
                         .popup#popup
                             .popup-content#popup-content
 

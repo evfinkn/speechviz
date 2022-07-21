@@ -1,6 +1,6 @@
 import Peaks from "peaks.js";
 import { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment } from "./util";
-import { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon } from "./icon";
+import { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
 const audio = document.getElementById('audio');
 
@@ -1044,7 +1044,7 @@ const runPeaks = async function (fileName) {
     primarySpeakerSpan.style.color = "violet";
     //#endregion
 
-    document.querySelector('button[data-action="save"]').addEventListener('click', function () {
+    document.querySelector('button[data-action="save"]').addEventListener("click", function () {
       const groupRegex = /Speaker |VAD|Non-VAD/;
       const groups = Object.keys(visibleSegments).filter(group => !group.match(groupRegex));
       let segments = [];
@@ -1130,8 +1130,17 @@ const runPeaks = async function (fileName) {
       }
     });
 
-    document.querySelector("[data-action='show-dropdowns']").addEventListener('click', function () {
-      document.getElementById("speedDropdown").classList.toggle("show");
+    const speedDropdown = document.getElementById("speed-dropdown");
+    document.querySelector('[data-action="show-speeds"]').addEventListener("click", function () {
+      speedDropdown.classList.toggle("show");
+    });
+
+    const settingsButton = document.querySelector('a[data-action="show-settings"]');
+    settingsButton.innerHTML = settingsIcon;
+    const settingsDropdown = document.getElementById("settings-dropdown");
+    settingsButton.addEventListener("click", function () {
+      console.log("clicked");
+      settingsDropdown.classList.toggle("show");
     });
 
     const spdbtns = document.getElementsByClassName("spdbtn");
@@ -1143,12 +1152,11 @@ const runPeaks = async function (fileName) {
 
     // https://www.w3schools.com/howto/howto_js_dropdown.asp
     // Close the dropdown if the user clicks outside of it
+    const dropdowns = document.getElementsByClassName("dropdown-content");
     window.onclick = function (event) {
-      if (!event.target.matches('.dropbtn')) {
-        var dropdowns = document.getElementsByClassName("dropdown-content");
-        var i;
-        for (i = 0; i < dropdowns.length; i++) {
-          var openDropdown = dropdowns[i];
+      if (!event.target.matches('#speed-button,#settings-button,#settings-dropdown')) {
+        for (let i = 0; i < dropdowns.length; i++) {
+          const openDropdown = dropdowns[i];
           if (openDropdown.classList.contains('show')) {
             openDropdown.classList.remove('show');
           }
