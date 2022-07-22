@@ -1,6 +1,7 @@
 import Peaks from "peaks.js";
 import { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment, toggleButton } from "./util";
 import { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
+import createSegmentMarker from "./CustomSegmentMarker";
 
 const audio = document.getElementById('audio');
 
@@ -761,7 +762,10 @@ const runPeaks = async function (fileName) {
     pointMarkerColor: '#006eb0',
     showPlayheadTime: true,
     waveformCache: true,
-    zoomLevels: [256, 512, 1024, 2048, 4096]
+    zoomLevels: [256, 512, 1024, 2048, 4096],
+    segmentStartMarkerColor: "rgba(120, 120, 120, 1)",
+    segmentEndMarkerColor: "rgba(120, 120, 120, 1)",
+    createSegmentMarker: createSegmentMarker
   };
 
 
