@@ -45,8 +45,8 @@ const runPeaks = async function (fileName) {
     if (sessionUser != "admin" && user != sessionUser) {
       user = sessionUser;
     }
-    else {
-      document.getElementById("user").innerHTML = `admin${user == "admin" ? "" : " (viewing " + user + ")"}`;
+    else if (user != "admin") {
+      document.getElementById("user").innerHTML = `admin (viewing ${user})`;
     }
   }
 
@@ -542,7 +542,6 @@ const runPeaks = async function (fileName) {
           });
         }
       }
-
     }
 
     // close popup button
@@ -727,7 +726,6 @@ const runPeaks = async function (fileName) {
       branch.children[3].after(remove);
       remove.addEventListener("click", function () { removeGroup(peaks, this.dataset.id, parent); });
     }
-    return;
   }
 
 
@@ -783,9 +781,7 @@ const runPeaks = async function (fileName) {
     const zoomIn = document.querySelector("[data-action='zoom-in']");
     const zoomOut = document.querySelector("[data-action='zoom-out']");
     zoomIn.innerHTML = zoomInIcon;
-    const zoomInSvg = zoomIn.firstElementChild;
     zoomOut.innerHTML = zoomOutIcon;
-    const zoomOutSvg = zoomOut.firstElementChild;
     zoomIn.addEventListener('click', function () {
       peaksInstance.zoom.zoomIn();
       const zoomLevel = peaksInstance.zoom.getZoom();

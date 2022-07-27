@@ -11,11 +11,16 @@ const htmlToElement = function (html) {
     return template.content.firstElementChild;
 }
 
-// property is the segment property to sort by, i.e. 'startTime' or 'labelText'
+// property is the property to compare, i.e. 'startTime' or 'labelText'
 const compareProperty = function (obj1, obj2, property) {
     if (obj1[property] > obj2[property]) { return 1; }
     if (obj1[property] < obj2[property]) { return -1; }
     return 0;
+}
+
+const sortByProp = function (array, prop) {
+    array.sort((obj1, obj2) => compareProperty(obj1, obj2, prop));
+    return array;
 }
 
 const propertiesEqual = function (obj1, obj2, properties) {
@@ -26,7 +31,7 @@ const propertiesEqual = function (obj1, obj2, properties) {
 }
 
 const segProperties = ["startTime", "endTime", "editable", "color", "labelText", "id", "path", "treeText", "removable"];
-const copySegment = function(seg, exclude = []) {
+const copySegment = function (seg, exclude = []) {
     const copied = {};
     segProperties.forEach(function (prop) {
         if (!exclude.includes(prop)) { copied[prop] = seg[prop]; }
@@ -34,7 +39,7 @@ const copySegment = function(seg, exclude = []) {
     return copied;
 }
 
-const toggleButton = function(button, force = null) {
+const toggleButton = function (button, force = null) {
     const on = force != null ? force : !button.style.pointerEvents == "auto";
     button.style.pointerEvents = on ? "auto" : "none";
     const svg = button.firstElementChild;
@@ -42,5 +47,14 @@ const toggleButton = function(button, force = null) {
     if (svg.getAttribute("fill") != "none") { svg.style.fill = on ? "black" : "gray"; }
 }
 
-export { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment, toggleButton };
+const arraySum = function (array, func = null, ...args) {
+    if (func) { return array.reduce((sum, curNum) => sum + func(curNum, ...args), 0); }
+    else { return array.reduce((sum, curNum) => sum + curNum, 0); }
+}
+
+const arrayMean = function (array, func = null, ...args) {
+    return arraySum(array, func, ...args) / array.length;
+}
+
+export { getRandomColor, htmlToElement, compareProperty, sortByProp, propertiesEqual, copySegment, toggleButton, arraySum, arrayMean };
 
