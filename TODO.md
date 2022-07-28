@@ -13,12 +13,13 @@
  - [ ] Separate into multiple files
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
- - [ ] If possible, button to hide the segment drag things
- - [ ] When renaming segment in a label, don't change labelText when renaming, just change treeText ?
- - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
- - [ ] Document functions
  
+  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
+ - [ ] If possible, button to hide the segment drag things
+
+ 
+ - [x] Document functions
  - [x] Admin account flip between all annotations that you can view
  - [x] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
  - [x] Fix the segment's own label appearing in the segment's popup

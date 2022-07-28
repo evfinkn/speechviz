@@ -34,5 +34,13 @@ const copySegment = function(seg, exclude = []) {
     return copied;
 }
 
-export { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment };
+const toggleButton = function(button, force = null) {
+    const on = force != null ? force : !button.style.pointerEvents == "auto";
+    button.style.pointerEvents = on ? "auto" : "none";
+    const svg = button.firstElementChild;
+    svg.style.stroke = on ? "black" : "gray";
+    if (svg.getAttribute("fill") != "none") { svg.style.fill = on ? "black" : "gray"; }
+}
+
+export { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySegment, toggleButton };
 
