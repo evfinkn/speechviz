@@ -26,6 +26,24 @@ html(lang="en")
                         audio#audio(controls="controls")
                             source(src=`audio/${audiofile}`, type=mimetype)
                             | Your browser does not support the audio element.
+                        .dropdown
+                            button#speed-button(data-action="show-speeds") Speed
+                            .dropdown-content.speed-content#speed-dropdown
+                                button.spdbtn 0.25x
+                                br
+                                button.spdbtn 0.5x
+                                br
+                                button.spdbtn 0.75x
+                                br
+                                button.spdbtn 1x
+                                br
+                                button.spdbtn 1.25x
+                                br
+                                button.spdbtn 1.5x
+                                br
+                                button.spdbtn 1.75x
+                                br
+                                button.spdbtn 2x  
                         .row
                             .column3
                                 #controls
@@ -51,20 +69,24 @@ html(lang="en")
                                     div
                                         a(href="javascript:;", style="text-decoration:none;pointer-events:none;", data-action="zoom-in")
                                         a(href="javascript:;", style="text-decoration:none;", data-action="zoom-out")
-                                        .dropdown
+                                        .dropdown(style="min-width: 100px;")
                                             a#settings-button(href="javascript:;", style="text-decoration:none;", data-action="show-settings")
-                                            .dropdown-content#settings-dropdown
+                                            .settings-content#settings-dropdown(style="min-width: 200px;")
                                                 div
                                                     label(for="amplitude-scale") Amplitude scale
                                                     input#amplitude-scale(type="range", min="0", max="10", step="1")
                                                 input#auto-scroll(type="checkbox", checked)
                                                 label(for="auto-scroll") Auto-scroll
+                                                br
                                                 input#enable-seek(type="checkbox", checked)
                                                 label(for="enable-seek") Enable click to seek
+                                                br
                                                 input#seek-time(type="text", value="0.0")
                                                 button(data-action="seek") Seek
                                                 br
+                                                br
                                                 button(data-action="reset-moved") Reset moved
+                                                br
                                                 button(data-action="reset") Reset all
                                     div
                                         button(data-action="add-segment") Add Segment
@@ -74,6 +96,7 @@ html(lang="en")
                                     div
                                         button(data-action="save") Save
                             .column4
+                                .dropdown
                                 textarea#notes(rows="8", cols="60") This is for any notes you wish to jot down
                         .popup#popup
                             .popup-content#popup-content
