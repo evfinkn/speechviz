@@ -2,7 +2,7 @@
 
 import TreeItem from "./treeItem";
 import { groupIcons } from "./icon";
-import { arrayMean, sortByProp } from "./util";
+import { sortByProp } from "./util";
 import globals from "./globals";
 
 const peaks = globals.peaks;

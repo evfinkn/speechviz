@@ -4,7 +4,6 @@ import Group from "./Group";
 import Groups from "./Groups";
 import globals from "./globals";
 import Segment from "./Segment";
-import TreeItem from "./treeItem";
 
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
