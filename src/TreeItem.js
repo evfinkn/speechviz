@@ -1,5 +1,3 @@
-// console.log("in TreeItem.js");
-
 import { groupIcons } from "./icon";
 import { htmlToElement, sortByProp, toggleButton } from "./util";
 

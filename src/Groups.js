@@ -1,5 +1,3 @@
-// console.log("in Groups.js");
-
 import TreeItem from "./treeItem";
 import { groupIcons } from "./icon";
 import globals from "./globals";

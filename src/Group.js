@@ -1,5 +1,3 @@
-// console.log("in Group.js");
-
 import TreeItem from "./treeItem";
 import { groupIcons } from "./icon";
 import { sortByProp } from "./util";

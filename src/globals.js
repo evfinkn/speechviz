@@ -1,5 +1,3 @@
-// console.log("in globals.js");
-
 import Peaks from "peaks.js";
 import createSegmentMarker from "./CustomSegmentMarker";
 

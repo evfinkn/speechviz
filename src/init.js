@@ -1,5 +1,3 @@
-// console.log("in init.js");
-
 import Group from "./Group";
 import Groups from "./Groups";
 import globals from "./globals";

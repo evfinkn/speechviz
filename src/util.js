@@ -1,5 +1,3 @@
-// console.log("in util.js");
-
 const getRandomColor = function () {
     const r = Math.floor(Math.random() * 256);
     const g = Math.floor(Math.random() * 256);

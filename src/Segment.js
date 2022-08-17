@@ -1,5 +1,3 @@
-// console.log("in Segment.js");
-
 import globals from "./globals";
 import TreeItem from "./TreeItem";
 import { segmentIcons } from "./icon";
