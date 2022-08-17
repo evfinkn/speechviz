@@ -1,3 +1,5 @@
+// console.log("in util.js");
+
 const getRandomColor = function () {
     const r = Math.floor(Math.random() * 256);
     const g = Math.floor(Math.random() * 256);
@@ -35,7 +37,7 @@ const copySegment = function (seg, exclude = []) {
     const copied = {};
     segProperties.forEach(function (prop) {
         if (!exclude.includes(prop)) { copied[prop] = seg[prop]; }
-    })
+    });
     return copied;
 }
 

@@ -1,3 +1,5 @@
+// console.log("in Segment.js");
+
 import globals from "./globals";
 import TreeItem from "./TreeItem";
 import { segmentIcons } from "./icon";
@@ -8,7 +10,7 @@ const Segment = class Segment extends TreeItem {
 
     static byId = {};
     static icons = segmentIcons;
-    static #highestId
+    static #highestId;
     static get highestId() {
         if (Segment.#highestId) { return Segment.#highestId; }
         const ids = Object.keys(Segment.byId);
@@ -16,6 +18,7 @@ const Segment = class Segment extends TreeItem {
         Segment.#highestId = Math.max(...idNums);
         return Segment.#highestId;
     }
+    static #props = ["startTime", "endTime", "editable", "color", "labelText", "id", "path", "treeText", "removable"];
 
     segment;
 
@@ -27,9 +30,9 @@ const Segment = class Segment extends TreeItem {
             segment.update({ labelText: `${segment.labelText}\n${text}` });
         }
 
-        super(segment.id, { parent, text, removable, checked, duration: segment.endTime - segment.startTime });
-        Segment.byId[segment.id] = this;
+        super(segment.id, { parent, text, removable, checked, duration: segment.endTime - segment.startTime, props: { segment } });
         this.segment = segment;
+        Segment.byId[segment.id] = this;
     }
 
     get startTime() { return this.segment.startTime; }
@@ -43,14 +46,28 @@ const Segment = class Segment extends TreeItem {
     set parent(newParent) {
         const id = this.id;
         const parent = this.parent;
+        if (parent) {
+            if (parent.hidden[id]) { delete parent.hidden[id]; }
+            else { delete parent.visible[id]; }
+        }
 
-        if (parent.hidden[id]) { delete parent.hidden[id]; }
-        else { delete parent.visible[id]; }
-
-        super.parent = newParent;
-        segment.update({ labelText: `${newParent.id}\n${this.text}`, color: newParent.color });
+        this.segment.update({ labelText: `${newParent.id}\n${this.text}` });  //, color: newParent.color });
         if (this.checked) { newParent.visible[this.id] = this; }
         else { newParent.hidden[this.id] = this; }
+        super.parent = newParent;
+    }
+
+    toSimple(exclude = []) {
+        const simple = {};
+        Segment.#props.forEach(prop => {
+            if (!exclude.includes(prop)) {
+                if (this.segment[prop]) { simple[prop] = this.segment[prop]; }
+                else {
+                    simple[prop] = this[prop];
+                }
+            }
+        });
+        return simple;
     }
 
     style() {
@@ -65,16 +82,28 @@ const Segment = class Segment extends TreeItem {
         if (parent.hidden[id]) { delete parent.hidden[id]; }
         else { delete parent.visible[id]; }
 
-        peaks.segments.removeById(id);
+        if (peaks.segments.getSegment(id) === this.segment) { peaks.segments.removeById(id); }
         delete Segment.byId[id];
         super.remove();
     }
 
     toggle(force = null) {
         if (!this.toggleTree(force)) { return; }
-        const checked = this.checked;
-        if (checked) { peaks.segments.add(segment); }
-        else { peaks.segments.removeById(id); }
+
+        const id = this.id;
+        const parent = this.parent;
+        const checked = force === null ? this.checked : force;
+        
+        if (checked) {
+            peaks.segments.add(segment);
+            delete parent.hidden[id];
+            parent.visible[id] = this;
+        }
+        else {
+            peaks.segments.removeById(id);
+            delete parent.visible[id];
+            parent.hidden[id] = this;
+        }
     }
 
     play(loop = false) {
@@ -84,22 +113,30 @@ const Segment = class Segment extends TreeItem {
         // the event listener instantly changes the new pause
         // button (from this function call) to change back to
         // a play button.
-        peaks.once("player.pause", function () {
+        peaks.once("player.pause", () => {
             peaks.player.playSegment(this.segment, loop);
             const button = loop ? this.loopButton : this.playButton;
             button.innerHTML = segmentIcons.pause;
 
             const pause = function () { peaks.player.pause(); }
             button.addEventListener("click", pause, { once: true });
-            peaks.once("player.pause", function () {
+            peaks.once("player.pause", () => {
                 button.innerHTML = loop ? segmentIcons.loop : segmentIcons.play;
                 button.removeEventListener("click", pause);
-                button.addEventListener("click", function () { this.play(loop); }, { once: true });
+                button.addEventListener("click", () => { this.play(loop); }, { once: true });
             });
         });
         // peaks.player.pause() only pauses if playing, so have to play audio if not already
         if (!peaks.player.isPlaying()) { peaks.player.play(); }
         peaks.player.pause();
+    }
+
+    updateDuration() {
+        const newDuration = this.endTime - this.startTime;
+        const durationChange = newDuration - this.duration;
+        this.duration = newDuration;
+        this.updateSpanTitle();
+        this.parent.updateDuration(durationChange);
     }
 
     updateSpanTitle() {

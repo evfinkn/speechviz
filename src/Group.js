@@ -1,3 +1,5 @@
+// console.log("in Group.js");
+
 import TreeItem from "./treeItem";
 import { groupIcons } from "./icon";
 import { arrayMean, sortByProp } from "./util";
@@ -44,6 +46,11 @@ const Group = class Group extends TreeItem {
             }
         }
 
+        for (let i = 0; i < snrArray.length; i++) {
+            const group = Group.byId[snrArray[i][0]]
+            group.span.innerHTML = `&#${(i <= 19 ? 9312 : 12861) + i} ${group.span.innerHTML}`;
+        }
+
         for (const key in snrs) {
             counter++;
             snrMean += snrs[key];
@@ -76,7 +83,7 @@ const Group = class Group extends TreeItem {
         }
 
         let maxSpeaker = groups[0];
-        let maxZ = overallZScores[maxSpeaker];
+        let maxZ = overallZScores[maxSpeaker.id];
         for (const key of Object.keys(snrZScores)) {
             if (maxZ < overallZScores[key]) {
                 maxSpeaker = key;
@@ -109,14 +116,15 @@ const Group = class Group extends TreeItem {
 
     toggle(force = null) {
         if (!this.toggleTree(force)) { return; }
-        const checked = this.checked;
+        const checked = force === null ? this.checked : force;
+        this.children.forEach(function (child) { child.toggleTree(checked); });
         if (checked) {
-            peaks.segments.add(Object.values(this.hidden));
+            peaks.segments.add(Object.values(this.hidden).map(hidden => hidden.segment));
             this.visible = Object.assign({}, this.visible, this.hidden);
             this.hidden = {};
         }
         else {
-            this.visible.forEach(function (segment) {
+            Object.values(this.visible).forEach(function (segment) {
                 peaks.segments.removeById(segment.id);
             });
             this.hidden = Object.assign({}, this.hidden, this.visible);
@@ -129,17 +137,17 @@ const Group = class Group extends TreeItem {
 
         const segments = sortByProp(Object.values(this.visible), "startTime");
         // See Segment.play for reasoning behind event listener
-        peaks.once("player.pause", function () {
+        peaks.once("player.pause", () => {
             peaks.player.playSegments(segments, loop);
             const button = loop ? this.loopButton : this.playButton;
             button.innerHTML = groupIcons.pause;
 
             const pause = function () { peaks.player.pause(); }  // make function here so can be removed
             button.addEventListener("click", pause, { once: true });
-            peaks.once("player.pause", function () {
+            peaks.once("player.pause", () => {
                 button.innerHTML = loop ? groupIcons.loop : groupIcons.play;
                 button.removeEventListener("click", pause);
-                button.addEventListener("click", function () { this.play(loop); }, { once: true });
+                button.addEventListener("click", () => { this.play(loop); }, { once: true });
             });
         });
         if (!peaks.player.isPlaying()) { peaks.player.play(); }
@@ -157,8 +165,8 @@ const Group = class Group extends TreeItem {
 
     getSegments({ hidden = false, visible = false } = {}) {
         const segments = [];
-        if (hidden) { segments.push(...this.hidden); }
-        if (visible) { segments.push(...this.visible); }
+        if (hidden) { segments.push(...Object.values(this.hidden)); }
+        if (visible) { segments.push(...Object.values(this.visible)); }
         return segments;
     }
 }

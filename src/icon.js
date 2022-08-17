@@ -1,3 +1,5 @@
+// console.log("in icon.js");
+
 const feather = require('feather-icons');
 
 const segmentPlayIcon = feather.icons.play.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });

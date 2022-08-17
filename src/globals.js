@@ -1,10 +1,14 @@
+// console.log("in globals.js");
+
 import Peaks from "peaks.js";
 import createSegmentMarker from "./CustomSegmentMarker";
 
 const globals = { dirty: false };
 
 const urlParams = new URLSearchParams(window.location.search);
-const basename = urlParams.get("audiofile").replace(/\.[^/.]+$/, "");  // name of the file without the extension;
+const filename = urlParams.get("audiofile");
+globals.filename = filename;
+const basename = filename.replace(/\.[^/.]+$/, "");  // name of the file without the extension;
 globals.basename = basename;
 
 let user = urlParams.get("user");
@@ -47,9 +51,12 @@ const options = {
     createSegmentMarker: createSegmentMarker
 };
 
+let initialized = false;
+
 Peaks.init(options, function (err, peaksInstance) {
     if (err) { throw err; }
     globals.peaks = peaksInstance;
+    initialized = true;
 });
-
+while (!initialized) { await new Promise(r => setTimeout(r, 250)); }  // https://stackoverflow.com/a/39914235
 export default globals;

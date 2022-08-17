@@ -1,10 +1,16 @@
+// console.log("in init.js");
+
 import Group from "./Group";
 import Groups from "./Groups";
 import globals from "./globals";
 import Segment from "./Segment";
 import TreeItem from "./treeItem";
 
+import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
+
 const peaks = globals.peaks;
+const user = globals.user;
+const filename = globals.filename;
 
 const createTree = function (id, parent, children, snr) {
     if (!Array.isArray(children[0])) {
@@ -21,18 +27,23 @@ const createTree = function (id, parent, children, snr) {
     }
 }
 
-const importedSegments = await fetch(`/segments/${basename}-segments.json`).then(response => response.json());
+const importedSegments = await fetch(`/segments/${globals.basename}-segments.json`).then(response => response.json());
 
-const segmentsTree = new TreeItem("Segments");
-document.getElementById("tree").append(segmentsTree);
+const segmentsTree = new Groups("Segments");
+document.getElementById("tree").append(segmentsTree.li);
 
-new Group("Custom", { parent: segmentsTree });
-new Groups("Labled", { parent: segmentsTree });
+const custom = new Group("Custom", { parent: segmentsTree });
+const labeled = new Groups("Labled", { parent: segmentsTree });
 
 for (let [group, children, snr] of importedSegments) {
     createTree(group, segmentsTree, children, snr);
-    renderGroup(peaks, group, ["Segments"], { "children": children, "snr": snr });
 }
+
+Group.rankSnrs();
+const highestId = Segment.highestId;
+
+// segmentsTree.children.forEach(child => child.toggle(false));
+
 
 
 
@@ -65,13 +76,13 @@ zoomOut.addEventListener('click', function () {
 
 
 const seekTime = document.getElementById('seek-time');
-const overview = peaks.views.getView('overview');
-const zoomview = peaks.views.getView('zoomview');
-// Seek
 document.querySelector('button[data-action="seek"]').addEventListener('click', function () {
     const seconds = parseFloat(seekTime.value);
     if (!Number.isNaN(seconds)) { peaks.player.seek(seconds); }
 });
+
+const overview = peaks.views.getView('overview');
+const zoomview = peaks.views.getView('zoomview');
 document.getElementById('enable-seek').addEventListener('change', function () {
     zoomview.enableSeek(this.checked);
     overview.enableSeek(this.checked);
@@ -103,14 +114,13 @@ document.getElementById('amplitude-scale').addEventListener('input', function ()
 
 const labelInput = document.getElementById("label");
 document.querySelector("button[data-action='add-label']").addEventListener('click', function () {
-    renderGroup(peaks, labelInput.value, ["Segments", "Labeled-Speakers"], { "renderEmpty": true, "removable": true });
+    new Group(labelInput.value, { parent: labeled, removable: true });
     labelInput.value = "";  // clear text box after submitting
 });
 
 
 let segmentCounter = 1;
 const audioDuration = peaks.player.getDuration();
-// Add (custom) segment
 document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
     const label = 'Custom Segment ' + segmentCounter++;
     const curTime = peaks.player.getCurrentTime();
@@ -124,17 +134,18 @@ document.querySelector('button[data-action="add-segment"]').addEventListener('cl
         removable: true,
     };
     segment = peaks.segments.add(segment);
-    renderSegment(peaks, segment, "Custom-Segments", ["Segments"]);
-    sortTree("Custom-Segments");
-    openNested(["Segments", "Custom-Segments"]);
-    newChanges = true;
+    new Segment(segment, { parent: custom })
+    custom.sort("startTime");
+    custom.open();
+
+    // newChanges = true;
 });
-document.getElementById("Custom-Segments-span").addEventListener("click", function () { initPopup(peaks, "Custom-Segments") });
 
 
 const notes = document.getElementById("notes");
+
 (function () {
-    const record = { 'user': user, 'filename': fileName }
+    const record = { 'user': user, 'filename': filename }
     const json = JSON.stringify(record);
     var loadRequest = new XMLHttpRequest();
 
@@ -143,60 +154,97 @@ const notes = document.getElementById("notes");
 
     loadRequest.send(json)
     loadRequest.onload = function () {
-        let jsonData = JSON.parse(loadRequest.response);
+        const jsonData = JSON.parse(loadRequest.response);
 
         notes.value = jsonData.notes || notes.value;
 
         const regex = /Custom Segment /;
         peaks.segments.add(jsonData.segments, { "overwrite": true }).forEach(function (segment) {
-            if (segment.id in segmentsByID) {
-                changeSpeaker(peaks, segment.path.concat(segment.id), segmentsByID[segment.id].path, segment);
+            let parent = segment.path.at(-1);
+            if (!(parent in Group.byId)) {
+                parent = new Group(parent, { parent: Groups.byId[segment.path.at(-2)] })
+            }
+            else { parent = Group.byId[parent]; }
+            
+            if (segment.id in Segment.byId) {
+                const treeSegment = Segment.byId[segment.id];
+                treeSegment.segment = segment;
+                treeSegment.parent = parent;
             }
             else {
-                renderSegment(peaks, segment, segment.path.at(-1), segment.path.slice(0, -1));
-                sortTree(segment.path.at(-2));
+                new Segment(segment, { parent });
             }
+            parent.sort("startTime");
+            
             if (segment.labelText.match(regex)) { segmentCounter++; }
         });
 
-        toggleSegments(peaks, "Segments", false);
-
-        document.getElementById("Segments-nested").classList.add("active");
-
-        groupsCheckboxes["Segments"].checked = true;
-        groupsCheckboxes["Segments"].addEventListener("click", function () { toggleSegments(peaks, "Segments", this.checked); });
-
-        segmentsPlay.style.pointerEvents = "auto";
-        segmentsLoop.style.pointerEvents = "auto";
-        const segmentsPlayIcon = segmentsPlay.firstElementChild;
-        const segmentsLoopIcon = segmentsLoop.firstElementChild;
-        segmentsPlayIcon.style.stroke = "black";
-        segmentsPlayIcon.style.fill = "black";
-        segmentsLoopIcon.style.stroke = "black";
-        segmentsPlay.addEventListener("click", function () { playGroup(peaks, "Segments"); });
-        segmentsLoop.addEventListener("click", function () { playGroup(peaks, "Segments", true); });
+        segmentsTree.children.forEach(child => child.toggle(false));
     };
 })();
 
 
 peaks.on("segments.dragend", function (event) {
-    const segment = event.segment;
-    const segmentSpan = segment.durationSpan;
+    const id = event.segment.id;
+    Segment.byId[id].updateDuration();
+    // newChanges = true;
+});
 
-    const oldDuration = parseFloat(segmentSpan.title.split(" ").at(-1));
-    const newDuration = segment.endTime - segment.startTime;
 
-    segmentSpan.title = `Start time: ${segment.startTime.toFixed(2)}\nEnd time: ${segment.endTime.toFixed(2)}\nDuration: ${(newDuration).toFixed(2)}`;
-    updateDuration(segment.path.slice(1), newDuration - oldDuration);
+document.querySelector('button[data-action="save"]').addEventListener("click", function () {
+    const groupRegex = /Speaker |VAD|Non-VAD/;
+    const groups = Object.values(Group.byId).filter(group => !group.id.match(groupRegex));
+    let segments = [];
+    groups.forEach(group => segments.push(...group.getSegments({ hidden: true, visible: true })));
 
-    sortTree(segment.path.at(-2));
-    newChanges = true;
+    segments = segments.map(segment => segment.toSimple(["color"]));
+
+    let idCounter = highestId + 1;
+    segments.map((segment, index) => { return { "index": index, "id": parseInt(segment.id.split(".").at(-1)) }; })
+        .sort((seg1, seg2) => seg1.id - seg2.id)
+        .map(seg => segments[seg.index])
+        .forEach(function (segment) { segment.id = `peaks.segment.${idCounter++}`; });
+
+    const customRegex = /Custom Segment /;
+    let numCustom = 1;
+    const customChanged = {};
+    segments.forEach(function (segment) {
+        if (segment.labelText in customChanged) {
+            segment.labelText = customChanged[segment.labelText];
+        }
+        else if (segment.labelText.match(customRegex)) {
+            const nextCustom = `Custom Segment ${numCustom++}`;
+            customChanged[segment.labelText] = nextCustom;
+            segment.labelText = nextCustom;
+        }
+        if (segment.treeText in customChanged) {
+            segment.treeText = customChanged[segment.treeText];
+        }
+        else if (segment.treeText.match(customRegex)) {
+            const nextCustom = `Custom Segment ${numCustom++}`;
+            customChanged[segment.treeText] = nextCustom;
+            segment.treeText = nextCustom;
+        }
+    })
+
+    const record = { 'user': user, 'filename': filename, 'segments': segments, "notes": notes.value }
+    const json = JSON.stringify(record);
+    var request = new XMLHttpRequest();
+    request.open('POST', 'save', true);
+    request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+
+    request.send(json);
+    request.onload = function () {
+        // done
+        console.log('Annotations saved');
+    };
+    // newChanges = false;
 });
 
 
 document.querySelector(`button[data-action="reset-moved"]`).addEventListener("click", function () {
     if (confirm("This will reset all moved speaker segments.\nAre you sure you want to continue?")) {
-        const record = { "user": user, "filename": fileName, "highestId": highestId };
+        const record = { "user": user, "filename": filename, "highestId": highestId };
         const json = JSON.stringify(record);
         var request = new XMLHttpRequest();
         request.open("DELETE", "reset-moved", true);
@@ -211,7 +259,7 @@ document.querySelector(`button[data-action="reset-moved"]`).addEventListener("cl
 
 document.querySelector(`button[data-action="reset"]`).addEventListener("click", function () {
     if (confirm("This will delete ALL saved segments.\nAre you sure you want to continue?")) {
-        const record = { "user": user, "filename": fileName };
+        const record = { "user": user, "filename": filename };
         const json = JSON.stringify(record);
         var request = new XMLHttpRequest();
         request.open("DELETE", "reset", true);
@@ -262,28 +310,14 @@ window.onclick = function (event) {
 }
 
 
-// https://stackoverflow.com/a/7317311
-window.onload = function () {
-    window.addEventListener("beforeunload", function (event) {
-      if (!newChanges) { return undefined; }
-  
-      var confirmationMessage = "You have unsaved changes. If you leave before saving, these changes will be lost.";
-      // returnValue and return for cross compatibility 
-      (event || window.event).returnValue = confirmationMessage;
-      return confirmationMessage;
-    });
-  };
-  
-  // Close the dropdown if the user clicks outside of it
-  window.onclick = function (event) {
-    if (!event.target.matches('.dropbtn')) {
-      var dropdowns = document.getElementsByClassName("dropdown-content");
-      var i;
-      for (i = 0; i < dropdowns.length; i++) {
-        var openDropdown = dropdowns[i];
-        if (openDropdown.classList.contains('show')) {
-          openDropdown.classList.remove('show');
-        }
-      }
-    }
-  }
+// // https://stackoverflow.com/a/7317311
+// window.onload = function () {
+//     window.addEventListener("beforeunload", function (event) {
+//         if (!newChanges) { return undefined; }
+
+//         var confirmationMessage = "You have unsaved changes. If you leave before saving, these changes will be lost.";
+//         // returnValue and return for cross compatibility 
+//         (event || window.event).returnValue = confirmationMessage;
+//         return confirmationMessage;
+//     });
+// };
