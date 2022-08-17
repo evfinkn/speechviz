@@ -32,15 +32,6 @@ const propertiesEqual = function (obj1, obj2, properties) {
     return true;
 }
 
-const segProperties = ["startTime", "endTime", "editable", "color", "labelText", "id", "path", "treeText", "removable"];
-const copySegment = function (seg, exclude = []) {
-    const copied = {};
-    segProperties.forEach(function (prop) {
-        if (!exclude.includes(prop)) { copied[prop] = seg[prop]; }
-    });
-    return copied;
-}
-
 const toggleButton = function (button, force = null) {
     const on = force != null ? force : !button.style.pointerEvents == "auto";
     button.style.pointerEvents = on ? "auto" : "none";
