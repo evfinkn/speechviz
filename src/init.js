@@ -165,7 +165,7 @@ const notes = document.getElementById("notes");
                 parent = new Group(parent, { parent: Groups.byId[segment.path.at(-2)] })
             }
             else { parent = Group.byId[parent]; }
-            
+
             if (segment.id in Segment.byId) {
                 const treeSegment = Segment.byId[segment.id];
                 treeSegment.segment = segment;
@@ -175,7 +175,7 @@ const notes = document.getElementById("notes");
                 new Segment(segment, { parent });
             }
             parent.sort("startTime");
-            
+
             if (segment.labelText.match(regex)) { segmentCounter++; }
         });
 

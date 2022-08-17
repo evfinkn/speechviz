@@ -59,4 +59,3 @@ const arrayMean = function (array, func = null, ...args) {
 }
 
 export { getRandomColor, htmlToElement, compareProperty, sortByProp, propertiesEqual, copySegment, toggleButton, arraySum, arrayMean };
-

@@ -13,7 +13,7 @@ const Groups = class Groups extends TreeItem {
     static icons = groupIcons;
 
     constructor(id, { parent = null, children = null, text = null, removable = false, checked = true, duration = 0 } = {}) {
-        super(id, { parent, children, text, removable, checked, duration});
+        super(id, { parent, children, text, removable, checked, duration });
 
         Groups.byId[id] = this;
     }
