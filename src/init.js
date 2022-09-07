@@ -30,13 +30,13 @@ const segmentsTree = new Groups("Segments");
 document.getElementById("tree").append(segmentsTree.li);
 
 const custom = new Group("Custom", { parent: segmentsTree });
-const labeled = new Groups("Labled", { parent: segmentsTree });
+const labeled = new Groups("Labeled", { parent: segmentsTree });
 
 for (let [group, children, snr] of importedSegments) {
     createTree(group, segmentsTree, children, snr);
 }
 
-Group.rankSnrs();
+// Group.rankSnrs();
 const highestId = Segment.highestId;
 
 // segmentsTree.children.forEach(child => child.toggle(false));
