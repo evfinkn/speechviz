@@ -87,16 +87,15 @@ const Group = class Group extends TreeItem {
             overallZScores[key] = snrZScores[key] + durZScores[key];
         }
 
-        let maxSpeaker = groups[0];
-        let maxZ = overallZScores[maxSpeaker.id];
+        let maxSpeaker = groups[0].id;
+        let maxZ = overallZScores[maxSpeaker];
         for (const key of Object.keys(snrZScores)) {
             if (maxZ < overallZScores[key]) {
                 maxSpeaker = key;
                 maxZ = overallZScores[key];
             }
         }
-        console.log(maxSpeaker);
-        maxSpeaker.span.style.color = "violet";
+        Group.byId[maxSpeaker].span.style.color = "violet";
     }
 
     /**

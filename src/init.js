@@ -36,7 +36,7 @@ for (let [group, children, snr] of importedSegments) {
     createTree(group, segmentsTree, children, snr);
 }
 
-// Group.rankSnrs();
+Group.rankSnrs();
 const highestId = Segment.highestId;
 
 // segmentsTree.children.forEach(child => child.toggle(false));
