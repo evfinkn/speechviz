@@ -96,4 +96,19 @@ const arrayMean = function (array, func = null, ...args) {
     return arraySum(array, func, ...args) / array.length;
 }
 
-export { getRandomColor, htmlToElement, compareProperty, sortByProp, propertiesEqual, toggleButton, arraySum, arrayMean };
+/**
+ * Construct a new object by setting each key to its value run through a function
+ * @param {Object} obj - The original object
+ * @param {function(any, ...any):any} func - Function to call on each value
+ * @param  {...any} args - Extra arguments to pass to `func`
+ * @returns {Object} The new object
+ */
+const objectMap = function (obj, func, ...args) {
+    const mapped = {};
+    for (const [key, value] of Object.entries(obj)) {
+        mapped[key] = func(value, ...args);
+    }
+    return mapped;
+}
+
+export { getRandomColor, htmlToElement, compareProperty, sortByProp, propertiesEqual, toggleButton, arraySum, arrayMean, objectMap };
