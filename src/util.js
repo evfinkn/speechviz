@@ -37,10 +37,12 @@ const compareProperty = function (obj1, obj2, property) {
  * Sorts an array in place by a property of its elements
  * @param {Object[]} array - Array to sort
  * @param {string} property - Name of property to sort by
+ * @param {boolean} [reverse=false] - If false, sorts array in ascending order. Otherwise, sorts descending
  * @returns {Object[]} The reference to the original array, now sorted
  */
-const sortByProp = function (array, property) {
-    array.sort((obj1, obj2) => compareProperty(obj1, obj2, property));
+const sortByProp = function (array, property, reverse = false) {
+    reverse = reverse ? -1 : 1;
+    array.sort((obj1, obj2) => compareProperty(obj1, obj2, property) * reverse);
     return array;
 }
 
