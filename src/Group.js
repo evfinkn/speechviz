@@ -1,6 +1,6 @@
 import TreeItem from "./treeItem";
 import { groupIcons } from "./icon";
-import { sortByProp } from "./util";
+import { sortByProp, arrayMean, objectMap } from "./util";
 import globals from "./globals";
 
 const peaks = globals.peaks;
@@ -26,7 +26,7 @@ const Group = class Group extends TreeItem {
             durations[group.id] = group.duration;
         });
 
-        /* sortByProp(groups, "snr");
+        sortByProp(groups, "snr");
         for (let i = 0; i < groups.length; i++) {
             groups[i].text = `&#${(i <= 19 ? 9312 : 12861) + i} ${groups[i].text}`
         }
@@ -34,53 +34,13 @@ const Group = class Group extends TreeItem {
         const snrMean = arrayMean(Object.values(snrs));
         const durMean = arrayMean(Object.values(durations));
 
-        const stdDev = (num, mean) => (num - mean) ** 2;
-        const snrStdDev = Math.sqrt(arrayMean(Object.values(snrs), stdDev, snrMean));
-        const durStdDev = Math.sqrt(arrayMean(Object.values(durations), stdDev, durMean)); */
+        const standardDeviation = (num, mean) => (num - mean) ** 2;
+        const snrStdDev = Math.sqrt(arrayMean(Object.values(snrs), standardDeviation, snrMean));
+        const durStdDev = Math.sqrt(arrayMean(Object.values(durations), standardDeviation, durMean));
 
-        let snrMean = 0;
-        let durMean = 0;
-        let counter = 0;
-
-        var snrArray = Object.entries(snrs);
-        for (let i = 0; i < snrArray.length; i++) {
-            for (let j = 0; j < snrArray.length - i - 1; j++) {
-                if (snrArray[j + 1][1] > snrArray[j][1]) {
-                    [snrArray[j + 1], snrArray[j]] = [snrArray[j], snrArray[j + 1]]
-                }
-            }
-        }
-
-        for (let i = 0; i < snrArray.length; i++) {
-            const group = Group.byId[snrArray[i][0]]
-            group.span.innerHTML = `&#${(i <= 19 ? 9312 : 12861) + i} ${group.span.innerHTML}`;
-        }
-
-        for (const key in snrs) {
-            counter++;
-            snrMean += snrs[key];
-            durMean += durations[key];
-        }
-        snrMean /= counter;
-        durMean /= counter;
-
-        let snrStdDev = 0;
-        let durStdDev = 0;
-        for (const key in snrs) {
-            snrStdDev += (snrs[key] - snrMean) ** 2;
-            durStdDev += (durations[key] - durMean) ** 2;
-        }
-        snrStdDev /= counter;
-        durStdDev /= counter;
-        snrStdDev = Math.sqrt(snrStdDev);
-        durStdDev = Math.sqrt(durStdDev);
-
-        const snrZScores = {};
-        const durZScores = {};
-        for (const key in snrs) {
-            snrZScores[key] = (snrs[key] - snrMean) / snrStdDev;
-            durZScores[key] = (durations[key] - durMean) / durStdDev;
-        }
+        const zScore = (num, mean, stdDev) => (num - mean) / stdDev;
+        const snrZScores = objectMap(snrs, zScore, snrMean, snrStdDev);
+        const durZScores = objectMap(durations, zScore, durMean, durStdDev);
 
         const overallZScores = {};
         for (const key in snrZScores) {

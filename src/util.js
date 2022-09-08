@@ -75,7 +75,7 @@ const toggleButton = function (button, force = null) {
  * Sums the elements of an array, optionally calling a function on each element
  * @param {number[]} array - Array to calculate sum of
  * @param {function(number, ...any):number=} func - Function to call on each element
- * @param  {...any} args - Extra arguments to pass to func
+ * @param  {...any} args - Extra arguments to pass to `func`
  * @returns {number} The sum of the elements of the array
  */
 const arraySum = function (array, func = null, ...args) {
@@ -87,7 +87,7 @@ const arraySum = function (array, func = null, ...args) {
  * Calculates the mean of an array, optionally calling a function on each element
  * @param {number[]} array - Array to calculate mean of
  * @param {function(number, ...any):number=} func - Function to call on each element
- * @param  {...any} args - Extra arguments to pass to func
+ * @param  {...any} args - Extra arguments to pass to `func`
  * @returns {number} The mean of the elements of the array
  */
 const arrayMean = function (array, func = null, ...args) {
