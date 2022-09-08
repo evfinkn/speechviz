@@ -26,7 +26,7 @@ const Group = class Group extends TreeItem {
             durations[group.id] = group.duration;
         });
 
-        sortByProp(groups, "snr");
+        sortByProp(groups, "snr", true);
         for (let i = 0; i < groups.length; i++) {
             groups[i].text = `&#${(i <= 19 ? 9312 : 12861) + i} ${groups[i].text}`
         }
