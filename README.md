@@ -11,7 +11,7 @@ npm install
 npm run mkdir
 python db_init.py
 ```
-To use process_audio and the pipeline, you'll need to first make a conda environment. If installing on Linux or Windows, you can create the environment using the environment.yml file:
+To use process_audio and the pipeline, you'll need to first make a conda environment. If installing on Linux or Windows, you can create the environment using the environment.yml file (you will still need to install audiowaveform and ffmpeg manually):
 ```
 conda env create -f environment.yml
 ```
