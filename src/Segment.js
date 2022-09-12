@@ -223,7 +223,7 @@ const Segment = class Segment extends TreeItem {
         const checked = force === null ? this.checked : force;
 
         if (checked) {
-            peaks.segments.add(segment);
+            peaks.segments.add(this.segment);
             delete parent.hidden[id];
             parent.visible[id] = this;
         }
