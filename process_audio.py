@@ -1,4 +1,4 @@
-from pyannote.audio import Pipeline
+# from pyannote.audio import Pipeline
 import numpy as np
 import librosa
 import json
@@ -84,14 +84,19 @@ def snr_from_times(signal_times, samples, sr, *, noise_rms=None):
 
 
 def get_diarization(file_path, samples, sr, quiet, verbose):
-    global diar_pipe  # use global pipeline so it doesn't need to be re-initialized (which is time-consuming)
-    
+    # use global pipeline so it doesn't need to be re-initialized (which is time-consuming)
+    global diar_pipe, Pipeline
+
+    if not "Pipeline" in globals():
+        from pyannote.audio import Pipeline
+        
     random.seed(2)
     
     if not "diar_pipe" in globals():  # diar_pipe hasn't been initialized yet
         if not quiet or verbose:
             print("Initializing diarization pipeline")
-        diar_pipe = Pipeline.from_pretrained("pyannote/speaker-diarization")
+        diar_pipe = Pipeline.from_pretrained("pyannote/speaker-diarization@2022.07")
+    
     if not quiet or verbose:
         print("Running the diarization pipeline")
         start_time = time.perf_counter()
@@ -161,12 +166,17 @@ def get_diarization(file_path, samples, sr, quiet, verbose):
 
 
 def get_vad(file_path, duration, quiet, verbose):
-    global vad_pipe  # use global pipeline so it doesn't need to be re-initialized (which is time-consuming)
+    # use global pipeline so it doesn't need to be re-initialized (which is time-consuming)
+    global vad_pipe, Pipeline
+    
+    if not "Pipeline" in globals():
+        from pyannote.audio import Pipeline
     
     if not "vad_pipe" in globals():  # vad_pipe hasn't been initialized yet
         if not quiet or verbose:
             print("Initializing VAD pipeline")
         vad_pipe = Pipeline.from_pretrained("pyannote/voice-activity-detection")
+    
     if not quiet or verbose:
         print("Running the VAD pipeline")
         start_time = time.perf_counter()
@@ -223,7 +233,7 @@ def process_audio(*args, scan_dir=True, reprocess=False, quiet=False, verbose=Fa
     # if given text file, run the function on each line
     if file_ext == ".txt":
         if not quiet or verbose:
-            print(f"{file_path} is a text file. Running process_audio on each line...")
+            print(f"{file_path} is a text file. Running process_audio on the file on each line...")
         with open(file_path) as file:
             for line in file.read().split("\n"):
                 process_audio(line, scan_dir=scan_dir, reprocess=reprocess, quiet=quiet, verbose=verbose)
@@ -233,16 +243,33 @@ def process_audio(*args, scan_dir=True, reprocess=False, quiet=False, verbose=Fa
     elif file_ext == "" and scan_dir:
         ls = subprocess.run(["ls", file_path], stdout=subprocess.PIPE).stdout.decode().split("\n")[:-1]  # get files in dir
         if "audio" in ls:  # if "audio" dir is in file_path, run process_audio on "audio" dir
+            if not quiet or verbose:
+                print(f"Detected audio directory. Running process_audio on {file_path}/audio")
             process_audio(f"{file_path}/audio", scan_dir=scan_dir, reprocess=reprocess, quiet=quiet, verbose=verbose)
-        else:
+        if "video" in ls:  # if "video" dir is in file_path, run process_aduio on "video" dir
+            if not quiet or verbose:
+                if "audio" in ls:
+                    print()
+                print(f"Detected video directory. Running process_audio on {file_path}/video")
+            process_audio(f"{file_path}/video", scan_dir=scan_dir, reprocess=reprocess, quiet=quiet, verbose=verbose)
+        if "audio" not in ls and "video" not in ls:
             if not quiet or verbose:
                 print(f"{file_path} is a directory. Running process_audio on each file...")
             for file in ls:
                 process_audio(f"{file_path}/{file}", scan_dir=False, reprocess=reprocess, quiet=quiet, verbose=verbose)
         return
     
+    elif file_ext.casefold() in (".mp4", ".mov"):
+        if not quiet or verbose:
+            print(f"{file_path} is a video. Extracting the audio")
+            
+        audio_path = f"{file_dir}/{file_name}.wav"
+        subprocess.run(["ffmpeg", "-y", "-i", file_path, audio_path], capture_output=not verbose, check=True)
+        process_audio(audio_path, reprocess=reprocess, quiet=quiet, verbose=verbose)
+        subprocess.run(["rm", "-f", audio_path], capture_output=True)
+    
     # if file_path is a sound file, process it
-    elif file_ext.casefold() in (".mp3", ".wav", ".flac", ".ogg", ".opus"):
+    elif file_ext.casefold() in (".mp3", ".wav", ".flac", ".ogg", ".opus", ".mp4", ".mov"):
         # check if output is being split between audio, waveforms, and segments directories
         # and if so, get the base directory for the three subdirectories
         if not quiet or verbose:
@@ -251,7 +278,7 @@ def process_audio(*args, scan_dir=True, reprocess=False, quiet=False, verbose=Fa
         
         separate_dirs = False
         if not "regex" in globals():
-            regex = re.compile(r".*(?=/audio$)")    
+            regex = re.compile(r".*(?=/(audio|video)$)")    
         match = regex.match(file_dir)
         if match:
             data_dir = match[0]  # data_dir is file_path for the dir containing audio, waveforms, and segments dirs
