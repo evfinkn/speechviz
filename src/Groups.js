@@ -1,4 +1,5 @@
-import TreeItem from "./treeItem";
+import TreeItem from "./TreeItem";
+import Group from "./Group";
 import { groupIcons } from "./icon";
 import globals from "./globals";
 import { sortByProp } from "./util";
@@ -15,6 +16,16 @@ const Groups = class Groups extends TreeItem {
     static byId = {};
     /** HTML strings for the play, pause, loop, and remove icons for `Groups` in the tree */
     static icons = groupIcons;
+    static expand(groups, exclude = []) {
+        const expanded = [];
+        for (const group of groups) {
+            if (group instanceof Group) {
+                if (!exclude.includes(group)) { expanded.push(group); }
+            }
+            else { expanded.push(...Groups.expand(group.children, exclude)); }
+        }
+        return expanded;
+    }
 
     /**
      * @param {string} id - The unique identifier to give this `Groups`

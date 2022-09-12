@@ -1,6 +1,10 @@
 import globals from "./globals";
 import TreeItem from "./TreeItem";
+import Group from "./Group";
+import Groups from "./Groups";
+import Popup from "./Popup";
 import { segmentIcons } from "./icon";
+import { propertiesEqual } from "./util";
 
 const peaks = globals.peaks;
 
@@ -38,6 +42,10 @@ const Segment = class Segment extends TreeItem {
      * @type {Peaks.Segment}
      */
     segment;
+    /** Array of ids of `Group`s and `Groups`s that this segment can be moved to */
+    moveTo;
+    /** Array of ids of `Group`s and `Groups`s that this segment can be copied to */
+    copyTo;
 
     /**
      * @param {Peaks.Segment} segment - An instance of a `Peaks.Segment`
@@ -45,24 +53,35 @@ const Segment = class Segment extends TreeItem {
      * @param {Group=} options.parent - The `Group` this `Segment` belongs to
      * @param {string=} options.text - The text displayed in the tree for this item
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be removed from the tree
+     * @param {boolean} [options.renamable=false] - Boolean indicating if this can be renamed
+     * @param {string[]=} options.moveTo - 
+     * @param {string[]=} options.copyTo - 
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(segment, { parent = null, text = null, removable = false } = {}) {
+    constructor(segment, { parent = null, text = null, removable = false, renamable = false, moveTo = null, copyTo = null } = {}) {
         text = text || segment.treeText;
-        removable = segment.removable || removable;
+        removable = segment.removable != null ? segment.removable : removable;
 
         if (segment.labelText != text) {
             segment.update({ labelText: `${segment.labelText}\n${text}` });
         }
 
         // don't render yet because some methods rely on this.segment but can't use 'this' until after super() call
-        super(segment.id, { text, removable, render: false });
+        super(segment.id, { text, removable, renamable, render: false });
         this.segment = segment;
         Segment.byId[segment.id] = this;
 
         this.render();
         this.updateDuration();
         this.parent = parent;
+
+        this.moveTo = moveTo;
+        this.copyTo = copyTo;
+
+        if (this.renamable || this.moveTo || this.copyTo) {
+            this.popup = new Popup(this);
+            this.li.append(this.popup.popup);
+        }
     }
 
     /**
@@ -105,13 +124,17 @@ const Segment = class Segment extends TreeItem {
     get parent() { return super.parent; }
     set parent(newParent) {
         const id = this.id;
+        const segment = this.segment;
         const parent = this.parent;
         if (parent) {
             if (parent.hidden[id]) { delete parent.hidden[id]; }
             else { delete parent.visible[id]; }
         }
 
-        this.segment.update({ labelText: `${newParent.id}\n${this.text}` });  //, color: newParent.color });
+        if (newParent.color) { segment.update({ color: newParent.color }); }
+        else { newParent.color = segment.color; }
+
+        segment.update({ labelText: `${newParent.id}\n${this.text}` });
         if (this.checked) { newParent.visible[this.id] = this; }
         else { newParent.hidden[this.id] = this; }
         super.parent = newParent;  // call TreeItem's setter for parent
@@ -134,10 +157,45 @@ const Segment = class Segment extends TreeItem {
         return simple;
     }
 
+    /**
+     * Copies this `Segment` to a `Group`
+     * @param {Group} copyParent - `Group` to add the copy to
+     * @returns {(Segment|null)} Null if `copyParent` already has a copy of this `Segment`, otherwise the copied `Segment`
+     */
+    copy(copyParent) {
+        if (!copyParent.children.some(child => propertiesEqual(this.segment, child.segment, ["startTime", "endTime"]))) {
+            const newSegment = peaks.segments.add(this.toSimple(["id", "path"]));
+            return new Segment(newSegment, { parent: copyParent })
+        }
+        return null;
+    }
+
+
+    // Moveable and Copyable interface???? Because Group is gonna use this exact same functionality, no need to write it twice
+
+    
+    /** */
+    expandMoveTo() {
+        const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
+        const expanded = Groups.expand(moveToAsTreeItems, [this.parent.id]);
+        return TreeItem.treeItemsToIds(expanded);
+    }
+    /** */
+    expandCopyTo() {
+        const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
+        const expanded = Groups.expand(copyToAsTreeItems, [this.parent.id]);
+        return TreeItem.treeItemsToIds(expanded);
+    }
+
     /** Initialize the CSS styling of the `Segment` */
     style() {
         this.li.style.fontSize = "12px";
         this.checkbox.style.transform = "scale(0.85)";
+    }
+
+    rename(newText) {
+        super.text = newText;
+        this.segment.update({ "labelText": newText });
     }
 
     /** Removes this `Segment` from the tree and from Peaks */

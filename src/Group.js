@@ -1,4 +1,5 @@
-import TreeItem from "./treeItem";
+import TreeItem from "./TreeItem";
+import Groups from "./Groups";
 import { groupIcons } from "./icon";
 import { sortByProp, arrayMean, objectMap } from "./util";
 import globals from "./globals";
@@ -58,6 +59,8 @@ const Group = class Group extends TreeItem {
         Group.byId[maxSpeaker].span.style.color = "violet";
     }
 
+    /** */
+    popup;
     /**
      * The signal-to-noise ratio of the `Group`
      * @type {(number|null)}
@@ -73,6 +76,12 @@ const Group = class Group extends TreeItem {
      * @type {Object}
      */
     visible = {};
+    /** Array of ids of `Group`s and `Groups`s that this segment can be moved to */
+    moveTo;
+    /** Array of ids of `Group`s and `Groups`s that this segment can be copied to */
+    copyTo;
+    /** */
+    color;
 
     /**
      * @param {string} id - The unique identifier to give this `Group`
@@ -82,19 +91,64 @@ const Group = class Group extends TreeItem {
      * @param {number=} options.snr - The signal-to-noise ratio
      * @param {string=} options.text - The text to display in the tree. If null, uses `id` instead
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be removed from the tree
+     * @param {boolean} [options.removable=false] - Boolean indicating if this can be renamed
+     * @param {string[]=} options.moveTo - 
+     * @param {string[]=} options.copyTo - 
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, snr = null, text = null, removable = false } = {}) {
-        super(id, { parent, children, text, removable });
+    constructor(id, { parent = null, children = null, snr = null, text = null, removable = false, renamable = false, moveTo = [], copyTo = [] } = {}) {
+        super(id, { parent, children, text, removable, renamable });
 
         Group.byId[id] = this;
         this.snr = snr;
         this.sort("startTime");
+
+        this.moveTo = moveTo;
+        this.copyTo = copyTo;
+    }
+
+    /**
+     * Copies all of the `Segment`s of this `Group` to another
+     * @param {Group} copyParent - `Group` to add the copied `Segment`s to
+     * @returns {Segment[]} The copied `Segment`s
+     */
+     copy(copyParent) {
+        const copiedSegments = [];
+        for (const child of this.children) {
+            const copiedChild = child.copyTo(copyParent);
+            if (copiedChild) { copiedSegments.push(copiedChild); }
+        }
+        return copiedSegments;
+     }
+
+    /** */
+    expandMoveTo() {
+        const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
+        const expanded = Groups.expand(moveToAsTreeItems, [this.parent.id]);
+        return TreeItem.treeItemsToIds(expanded);
+    }
+    /** */
+    expandCopyTo() {
+        const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
+        const expanded = Groups.expand(copyToAsTreeItems, [this.parent.id]);
+        return TreeItem.treeItemsToIds(expanded);
     }
 
     /** Initialize the CSS styling of the `Group` */
     style() {
         this.li.style.fontSize = "18px";
+    }
+
+    /**
+     * Renames the `Group`, replacing its id and text in the tree as well as its segments' labelText
+     * @param {*} newId - The new id
+     * @returns {boolean} Boolean indicating if renaming was successful
+     */
+    rename(newId) {
+        try { super.rename(newId); }
+        catch (error) { return false; }  // renaming unsuccessful
+        this.getSegments({ hidden: true, visible: true }).forEach(segment => segment.update({ "labelText": newId }));
+        return true;
     }
 
     /** Removes this `Group` from the tree and from Peaks (removes all `Segment`s belonging to this `Group`) */

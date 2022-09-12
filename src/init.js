@@ -11,10 +11,18 @@ const filename = globals.filename;
 
 const createTree = function (id, parent, children, snr) {
     if (!Array.isArray(children[0])) {
-        const group = new Group(id, { parent, snr });
-        peaks.segments.add(children).forEach(function (segment) {
-            new Segment(segment, { parent: group });
-        });
+        if (id.includes("Speaker ")) {
+            const group = new Group(id, { parent, snr, copyTo: ["Labeled"] });
+            peaks.segments.add(children).forEach(function (segment) {
+                new Segment(segment, { parent: group, moveTo: ["Speakers"], copyTo: ["Labeled"] });
+            });
+        }
+        else {
+            const group = new Group(id, { parent, snr });
+            peaks.segments.add(children).forEach(function (segment) {
+                new Segment(segment, { parent: group });
+            });
+        }
     }
     else {
         const group = new Groups(id, { parent });
@@ -111,7 +119,7 @@ document.getElementById('amplitude-scale').addEventListener('input', function ()
 
 const labelInput = document.getElementById("label");
 document.querySelector("button[data-action='add-label']").addEventListener('click', function () {
-    new Group(labelInput.value, { parent: labeled, removable: true });
+    new Group(labelInput.value, { parent: labeled, removable: true, renamable: true, copyTo: ["Labeled"] });
     labelInput.value = "";  // clear text box after submitting
 });
 
@@ -131,7 +139,7 @@ document.querySelector('button[data-action="add-segment"]').addEventListener('cl
         removable: true,
     };
     segment = peaks.segments.add(segment);
-    new Segment(segment, { parent: custom })
+    new Segment(segment, { parent: custom, renamable: true, moveTo: ["Labeled"] });
     custom.sort("startTime");
     custom.open();
 

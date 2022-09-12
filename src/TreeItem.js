@@ -1,3 +1,4 @@
+import Popup from "./Popup";
 import { groupIcons } from "./icon";
 import { htmlToElement, sortByProp, toggleButton } from "./util";
 
@@ -6,6 +7,17 @@ const TreeItem = class TreeItem {
 
     /** An object containing all `TreeItem`s by their id. Key is id, value is corresponding `TreeItem`:  {id: `TreeItem`} */
     static byId = {};
+    /** */
+    static idsToTreeItems(ids) {
+        const treeItems = [];
+        ids.forEach(id => treeItems.push(TreeItem.byId[id]));
+        return treeItems;
+    }
+    static treeItemsToIds(treeItems) {
+        const ids = [];
+        treeItems.forEach(treeItem => ids.push(treeItem.id));
+        return ids;
+    }
     /** 
      * Checks if a TreeItem by the given id exists
      * @param {string} id - id to check existence of
@@ -29,10 +41,12 @@ const TreeItem = class TreeItem {
     children = [];
 
     #text;
-    /** Boolean indicating if this can be removed from the tree */
-    removable;
     /** How long this `TreeItem`'s audio lasts, in seconds */
     duration = 0;
+    /** Boolean indicating if this can be removed from the tree */
+    removable;
+    /** Boolean indicating if this can be renamed */
+    renamable;
 
     /**
      * The li of this `TreeItem`
@@ -84,6 +98,8 @@ const TreeItem = class TreeItem {
      * @type {Element}
      */
     nested;
+    /** */
+    popup;
 
     /**
      * @param {string} id - The unique identifier to give the `TreeItem`
@@ -92,10 +108,11 @@ const TreeItem = class TreeItem {
      * @param {TreeItem[]=} options.children - An array of `TreeItem`s to put in this' nested content
      * @param {string=} options.text - The text to display in the tree. If null, uses `id` instead
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be removed from the tree
+     * @param {boolean} [options.renamable=false] - Boolean indicating if this can renamed
      * @param {boolean} [options.render=true] - If true, calls render() in constructor. Otherwise, render() is not called
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, text = null, removable = false, render = true } = {}) {
+    constructor(id, { parent = null, children = null, text = null, removable = false, renamable = false, render = true } = {}) {
         if (TreeItem.exists(id)) {
             throw new Error(`A TreeItem with the id ${id} already exists`);
         }
@@ -106,9 +123,16 @@ const TreeItem = class TreeItem {
 
         this.#text = text || id;
         this.removable = removable;
+        this.renamable = renamable;
 
         if (render) { this.render(); }
-        if (parent) { this.parent = parent; }
+        if (parent) {
+            this.parent = parent;
+            if (this.renamable || this.moveTo || this.copyTo) {
+                this.popup = new Popup(this);
+                this.li.append(this.popup.popup);
+            }
+        }
 
         if (children) { children.forEach(function (child) { this.addChild(child); }); }
     }
@@ -167,7 +191,9 @@ const TreeItem = class TreeItem {
         this.checkbox.addEventListener("click", () => { this.toggle(); });
 
         this.span = li.children[1];
-        this.span.addEventListener("click", () => { this.popup(); });
+        this.span.addEventListener("click", () => {
+            if (this.popup) { this.popup.show(); }
+        });
         this.updateSpanTitle();
 
         // segment play/loop buttons
@@ -200,11 +226,17 @@ const TreeItem = class TreeItem {
 
     /**
      * Renames the `TreeItem`, replacing its id and text in the tree
-     * @param {String} newId - The new id
+     * @param {string} newId - The new id
+     * @returns {boolean} Boolean indicating if renaming was successful
+     * @throws Throws an error if this `TreeItem` cannot be renamed
+     * @throws Throws an error if a `TreeItem` with `newId` already exists
      */
     rename(newId) {
+        if (!this.renamable) {
+            throw new Error(`TreeItem ${this.id} is not renamable`);
+        }
         if (TreeItem.exists(newId)) {
-            throw new Error(`A TreeItem with the id ${id} already exists`);
+            throw new Error(`A TreeItem with the id ${newId} already exists`);
         }
         delete TreeItem.byId[this.id];
         delete this.constructor.byId[this.id];
@@ -212,6 +244,7 @@ const TreeItem = class TreeItem {
         this.constructor.byId[newId] = this;
         this.id = newId;
         this.text = newId;
+        return true;
     }
 
     /**
