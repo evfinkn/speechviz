@@ -48,15 +48,35 @@ fetch("/filelist")
         return res.json();  // return json from response
     })
     // add radio buttons for each file
-    .then(fileList => {
+    .then(fileList => {  // fileList is data from the json
+        const audiofiles = fileList.audio;
+        const videofiles = fileList.video;
         const fieldset = document.getElementById("file-selection");
-        fileList.forEach(function (fileName) {  // fileList is data from the json
-            const div = document.createElement("div");
-            div.innerHTML = `<input type="radio" id="${fileName}" name="file-selection" value="${fileName}"></input><label for="${fileName}">${fileName}</label>`;
-            div.firstElementChild.addEventListener("change", function () {
-                window.location.replace(`/viz?audiofile=${this.value}${user ? "&user=" + user : ""}`);
+
+        if (audiofiles?.length !== 0) {
+            fieldset.append(htmlToElement("<strong>Audio files</strong>"));
+
+            audiofiles.forEach(function (fileName) {
+                const div = htmlToElement(`<div><input type="radio" id="${fileName}" name="file-selection" value="${fileName}"></input><label for="${fileName}">${fileName}</label></div>`);
+                div.firstElementChild.addEventListener("change", function () {
+                    window.location.replace(`/viz?${user ? "user=" + user + "&" : ""}file=${this.value}&type=audio`);
+                });
+                fieldset.append(div);
             });
-            fieldset.append(div);
-        });
+
+            fieldset.append(document.createElement("br"));
+        }
+
+        if (videofiles?.length !== 0) {
+            fieldset.append(htmlToElement("<strong>Video files</strong>"));
+
+            videofiles.forEach(function (fileName) {
+                const div = htmlToElement(`<div><input type="radio" id="${fileName}" name="file-selection" value="${fileName}"></input><label for="${fileName}">${fileName}</label></div>`);
+                div.firstElementChild.addEventListener("change", function () {
+                    window.location.replace(`/viz?${user ? "user=" + user + "&" : ""}file=${this.value}&type=video`);
+                });
+                fieldset.append(div);
+            });
+        }
     })
     .catch(error => { console.error('Error during fetch: ', error); });  // catch err thrown by res if any

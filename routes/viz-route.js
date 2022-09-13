@@ -5,11 +5,20 @@ const mime = require("mime/lite");
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-    audiofile = req.query.audiofile;
-    if (fs.readdirSync("data/audio").includes(audiofile)) {
-        res.render("viz", {"audiofile": audiofile, "mimetype": mime.getType(audiofile), "user": req.session.user});
+    file = req.query.file;
+
+    if (req.query.type === "video") {
+        if (fs.readdirSync("data/video").includes(file)) {
+            res.render("viz", { "user": req.session.user, "file": file, "mimetype": mime.getType(file), isVideo: true });
+        }
+        else { res.redirect("/"); }
     }
-    else { res.redirect("/"); }
+    else {
+        if (fs.readdirSync("data/audio").includes(file)) {
+            res.render("viz", { "user": req.session.user, "file": file, "mimetype": mime.getType(file), isVideo: false });
+        }
+        else { res.redirect("/"); }
+    }
 });
 
 module.exports = router;

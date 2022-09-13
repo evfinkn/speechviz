@@ -63,13 +63,17 @@ app.get('/logout', (req, res) => {
 });
 
 app.get("/filelist", (req, res) => {
-  res.send(fs.readdirSync("data/audio").filter(fileName => fileName != ".DS_Store"));
+  const exclude = new Set([".DS_Store"]);  // I just used a Set because Set.has() is faster than Array.includes()
+  const files = {};
+  files.audio = fs.readdirSync("data/audio").filter(fileName => !exclude.has(fileName));
+  files.video = fs.readdirSync("data/video").filter(fileName => !exclude.has(fileName));
+  res.send(files);
 });
 
 app.get("/user", (req, res) => { res.send(req.session.user); });
 app.get("/users", (req, res) => { res.send(db.prepare("SELECT user FROM users").all().map(user => user.user)); });
 
-app.get(/\/(audio|segments|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
+app.get(/\/(audio|segments|video|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
 //#region saving, loading, and resetting
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");

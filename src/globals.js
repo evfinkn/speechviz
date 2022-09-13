@@ -4,7 +4,7 @@ import createSegmentMarker from "./CustomSegmentMarker";
 const globals = { dirty: false };
 
 const urlParams = new URLSearchParams(window.location.search);
-const filename = urlParams.get("audiofile");
+const filename = urlParams.get("file");
 globals.filename = filename;
 const basename = filename.replace(/\.[^/.]+$/, "");  // name of the file without the extension;
 globals.basename = basename;
@@ -35,7 +35,7 @@ const options = {
         container: document.getElementById('overview-container'),
         waveformColor: 'rgba(0,0,0,0.2)'
     },
-    mediaElement: audio,
+    mediaElement: document.getElementById("media"),
     dataUri: {
         json: `waveforms/${basename}-waveform.json`
     },

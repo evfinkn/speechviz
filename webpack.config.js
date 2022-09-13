@@ -4,6 +4,7 @@ module.exports = {
   mode: 'development',
   entry: {
       init: './src/init.js',
+      index: '/src/index.js',
   },
   stats: 'errors-only',
   output: {

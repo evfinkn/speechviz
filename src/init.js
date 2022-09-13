@@ -284,10 +284,11 @@ speedButton.addEventListener("click", function () {
     speedDropdown.classList.toggle("show");
 });
 
+const media = document.getElementById("media");
 const spdbtns = document.getElementsByClassName("spdbtn");
 for (let i = 0; i < spdbtns.length; i++) {
     spdbtns[i].addEventListener("click", function () {
-        audio.playbackRate = parseFloat(this.innerHTML.replace("x", ""));
+        media.playbackRate = parseFloat(this.innerHTML.replace("x", ""));
     });
 }
 
