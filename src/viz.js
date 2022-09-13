@@ -3,7 +3,7 @@ import { getRandomColor, htmlToElement, compareProperty, propertiesEqual, copySe
 import { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 import createSegmentMarker from "./CustomSegmentMarker";
 
-const audio = document.getElementById('audio');
+const media = document.getElementById('media');
 
 var snrs = {};
 var durations = {};
@@ -11,7 +11,7 @@ var durations = {};
 let newChanges = false;
 
 const urlParams = new URLSearchParams(window.location.search);
-const fileName = urlParams.get("audiofile");
+const fileName = urlParams.get("file");
 
 
 /**
@@ -723,7 +723,7 @@ const runPeaks = async function (fileName) {
       container: document.getElementById('overview-container'),
       waveformColor: 'rgba(0,0,0,0.2)'
     },
-    mediaElement: audio,
+    mediaElement: media,
     dataUri: {
       json: `waveforms/${name}-waveform.json`
     },
@@ -1177,7 +1177,7 @@ const runPeaks = async function (fileName) {
     const spdbtns = document.getElementsByClassName("spdbtn");
     for (let i = 0; i < spdbtns.length; i++) {
       spdbtns[i].addEventListener("click", function () {
-        audio.playbackRate = parseFloat(this.innerHTML.replace("x", ""));
+        media.playbackRate = parseFloat(this.innerHTML.replace("x", ""));
       });
     }
 
