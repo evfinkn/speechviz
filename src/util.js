@@ -26,7 +26,7 @@ const htmlToElement = function (html) {
  * @param {Object} obj1 - Object to compare
  * @param {Object} obj2 - Object to compare
  * @param {string} property - Name of property to compare by
- * @returns {number} A negative number if obj1 is less than obj2, a positive number if obj1 is greater than obj2, and 0 if obj1 equals obj2
+ * @returns {number} A negative number if obj1 is before obj2, a positive number if obj1 is after obj2, and 0 if obj1 equals obj2
  */
 const compareProperty = function (obj1, obj2, property) {
     if (obj1[property] < obj2[property]) { return -1; }
