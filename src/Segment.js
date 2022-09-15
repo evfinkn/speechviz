@@ -14,7 +14,10 @@ const peaks = globals.peaks;
  */
 const Segment = class Segment extends TreeItem {
 
-    /** An object containing all `Segment`s by their id. Key is id, value is corresponding `Segment`:  {id: `Segment`} */
+    /**
+     * An object containing all `Segment`s by their id.
+     * Key is id, value is corresponding `Segment`:  {id: `Segment`}
+     */
     static byId = {};
     /** HTML strings for the play, pause, loop, and remove icons for `Segment`s in the tree */
     static icons = segmentIcons;
@@ -59,14 +62,13 @@ const Segment = class Segment extends TreeItem {
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
     constructor(segment, { parent = null, text = null, removable = false, renamable = false, moveTo = null, copyTo = null } = {}) {
+        // catch options contained within segment
         text = text || segment.treeText;
         removable = segment.removable != null ? segment.removable : removable;
+        renamable = segment.renamable != null ? segment.renamable : renamable;
 
-        if (segment.labelText != text) {
-            segment.update({ labelText: `${segment.labelText}\n${text}` });
-        }
-
-        // don't render yet because some methods rely on this.segment but can't use 'this' until after super() call
+        // don't render yet because some methods rely on this.segment but not defined yet
+        // (can't use 'this' until after super() call, so can't define this.segment until after)
         super(segment.id, { text, removable, renamable, render: false });
         this.segment = segment;
         Segment.byId[segment.id] = this;
@@ -78,6 +80,7 @@ const Segment = class Segment extends TreeItem {
         this.moveTo = moveTo;
         this.copyTo = copyTo;
 
+        // segment only needs a popup if it's renamable, movable, or copyable
         if (this.renamable || this.moveTo || this.copyTo) {
             this.popup = new Popup(this);
             this.li.append(this.popup.popup);
@@ -148,10 +151,10 @@ const Segment = class Segment extends TreeItem {
         const simple = {};
         Segment.#props.forEach(prop => {
             if (!exclude.includes(prop)) {
+                // honestly I can't remember why it's like this but I think
+                // otherwise it sets simple[prop] to the getters and not the values??
                 if (this.segment[prop]) { simple[prop] = this.segment[prop]; }
-                else {
-                    simple[prop] = this[prop];
-                }
+                else { simple[prop] = this[prop]; }
             }
         });
         return simple;
@@ -163,6 +166,7 @@ const Segment = class Segment extends TreeItem {
      * @returns {(Segment|null)} Null if `copyParent` already has a copy of this `Segment`, otherwise the copied `Segment`
      */
     copy(copyParent) {
+        // only copy if the new parent doesn't already have a copy of the segment
         if (!copyParent.children.some(child => propertiesEqual(this.segment, child.segment, ["startTime", "endTime"]))) {
             const newSegment = peaks.segments.add(this.toSimple(["id", "path"]));
             return new Segment(newSegment, { parent: copyParent })
@@ -207,7 +211,7 @@ const Segment = class Segment extends TreeItem {
         else { delete parent.visible[id]; }
 
         if (peaks.segments.getSegment(id) === this.segment) { peaks.segments.removeById(id); }
-        delete Segment.byId[id];
+        
         super.remove();
     }
 
@@ -216,18 +220,18 @@ const Segment = class Segment extends TreeItem {
      * @param {boolean=} force - If given, forces the item to toggle on/off. If true, force checks the checkbox, turns on the buttons, and unhides the segment in Peaks. If false, force unchecks the checkbox, turns off the buttons, and hides the segment in Peaks. If force equals this.checked, no toggling is done.
      */
     toggle(force = null) {
-        if (!this.toggleTree(force)) { return; }
+        if (!this.toggleTree(force)) { return; }  // force == this.checked so no toggling necessary
 
         const id = this.id;
         const parent = this.parent;
         const checked = force === null ? this.checked : force;
 
-        if (checked) {
+        if (checked) {  // add segment to peaks
             peaks.segments.add(this.segment);
             delete parent.hidden[id];
             parent.visible[id] = this;
         }
-        else {
+        else {  // remove segment from peaks
             peaks.segments.removeById(id);
             delete parent.visible[id];
             parent.hidden[id] = this;
@@ -244,21 +248,23 @@ const Segment = class Segment extends TreeItem {
         // back to play buttons, but pausing without
         // the event listener instantly changes the new pause
         // button (from this function call) to change back to
-        // a play button.
+        // a play button. Very janky but I couldn't find a
+        // different way
         peaks.once("player.pause", () => {
             peaks.player.playSegment(this.segment, loop);
             const button = loop ? this.loopButton : this.playButton;
             button.innerHTML = segmentIcons.pause;
 
-            const pause = function () { peaks.player.pause(); }
+            const pause = function () { peaks.player.pause(); }  // make function here so event listener can be removed
             button.addEventListener("click", pause, { once: true });
+            // triggered by clicking pause button in tree, pause button on media controls, or play on other tree item
             peaks.once("player.pause", () => {
                 button.innerHTML = loop ? segmentIcons.loop : segmentIcons.play;
-                button.removeEventListener("click", pause);
+                button.removeEventListener("click", pause);  // event listener might still be on button so remove
                 button.addEventListener("click", () => { this.play(loop); }, { once: true });
             });
         });
-        // peaks.player.pause() only pauses if playing, so have to play audio if not already
+        // peaks.player.pause() only emits pause event if playing when paused, so have to play audio if not already
         if (!peaks.player.isPlaying()) { peaks.player.play(); }
         peaks.player.pause();
     }

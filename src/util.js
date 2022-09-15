@@ -3,10 +3,11 @@
  * @returns {string} A hex string of the form "#RRGGBB"
  */
 const getRandomColor = function () {
-    const r = Math.floor(Math.random() * 256);
-    const g = Math.floor(Math.random() * 256);
-    const b = Math.floor(Math.random() * 256);
-    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    // Get a random number between 0 and 256, convert it to a hex string, and pad with 0
+    const r = Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+    const g = Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+    const b = Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+    return `#${r}${g}${b}`;
 }
 
 /**
@@ -67,9 +68,11 @@ const propertiesEqual = function (obj1, obj2, properties) {
  */
 const toggleButton = function (button, force = null) {
     const on = force != null ? force : !button.style.pointerEvents == "auto";
-    button.style.pointerEvents = on ? "auto" : "none";
+    button.style.pointerEvents = on ? "auto" : "none";  // make button unclickable
     const svg = button.firstElementChild;
     svg.style.stroke = on ? "black" : "gray";
+    // had to do getAttribute() because of some weird thing where svg.style.fill was none even 
+    // though I know it wasn't actually. Something to do with how feathers does stuff I think
     if (svg.getAttribute("fill") != "none") { svg.style.fill = on ? "black" : "gray"; }
 }
 

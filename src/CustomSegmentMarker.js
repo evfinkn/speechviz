@@ -2,6 +2,11 @@ import { Line } from 'konva/lib/shapes/Line';
 import { Rect } from 'konva/lib/shapes/Rect';
 import { Text } from 'konva/lib/shapes/Text';
 
+/**
+ * Custom marker that appears when hovering over segments. Same as default marker except the drag handle is higher.
+ * Code is practically exactly the code for the default segment marker in Peaks, with 1 or 2 lines changed to make
+ * the handle higher.
+ */
 const CustomSegmentMarker = class CustomSegmentMarker {
   constructor(options) {
     this._options = options;
@@ -105,6 +110,7 @@ const CustomSegmentMarker = class CustomSegmentMarker {
   }
 }
 
+/** Method used by Peaks to create a CustomSegmentMarker */
 const createSegmentMarker = function (options) {
   return new CustomSegmentMarker(options)
 }

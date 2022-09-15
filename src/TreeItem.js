@@ -4,20 +4,26 @@ import { htmlToElement, sortByProp, toggleButton } from "./util";
 
 /** Class representing an item in a tree */
 const TreeItem = class TreeItem {
+    // While I think actually using this class in the tree in addition to its subclasses would work,
+    // TreeItem isn't intended to be used in the tree and is more of an abstract class
 
-    /** An object containing all `TreeItem`s by their id. Key is id, value is corresponding `TreeItem`:  {id: `TreeItem`} */
+    /** 
+     * An object containing all `TreeItem`s by their id. 
+     * Key is id, value is corresponding `TreeItem`:  {id: `TreeItem`}
+     */
     static byId = {};
-    /** */
-    static idsToTreeItems(ids) {
-        const treeItems = [];
-        ids.forEach(id => treeItems.push(TreeItem.byId[id]));
-        return treeItems;
-    }
-    static treeItemsToIds(treeItems) {
-        const ids = [];
-        treeItems.forEach(treeItem => ids.push(treeItem.id));
-        return ids;
-    }
+    /**
+     * Returns an array of `TreeItem`s with the given ids
+     * @param {string[]} ids - Array of ids
+     * @returns {TreeItem[]} The `TreeItem`s corresponding to the ids
+     */
+    static idsToTreeItems(ids) { return ids.map(id => TreeItem.byId[id]); }
+    /**
+     * Returns an array of the ids of the given `TreeItem`s
+     * @param {TreeItem[]} treeItems - Array of `TreeItem`s
+     * @returns {string[]} The ids corresponding to the given `TreeItem`s
+     */
+    static treeItemsToIds(treeItems) { return treeItems.map(treeItem => treeItem.id); }
     /** 
      * Checks if a TreeItem by the given id exists
      * @param {string} id - id to check existence of
@@ -134,7 +140,7 @@ const TreeItem = class TreeItem {
             }
         }
 
-        if (children) { children.forEach(function (child) { this.addChild(child); }); }
+        if (children) { children.forEach(function (child) { child.parent = this; }); }
     }
 
     /** The `TreeItem` this belongs to */
@@ -151,7 +157,7 @@ const TreeItem = class TreeItem {
 
     /** The text displayed in the tree */
     get text() { return this.#text; }
-    set text(newText) {
+    set text(newText) {  // setter for text so that `this.text = newText` actually updates text in tree
         this.#text = newText;
         this.span.innerHTML = newText;
     }
@@ -184,10 +190,14 @@ const TreeItem = class TreeItem {
 
         if (this.li) { this.li.remove(); }
 
+        // since subclasses use this method, use this.constructor.icons to use the icons of whatever class is
+        // being initialized (i.e. Group, TreeItem, Segment, etc.)
         const li = htmlToElement(`<li><input type="checkbox" autocomplete="off" checked><span>${this.#text}</span> <a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.play}   </a><a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.loop}   </a><ul class="nested active"></ul></li>`);
         this.li = li;
 
         this.checkbox = li.firstElementChild;
+        // event listeners need to use `() => {}` syntax instead of `function () {}` because
+        // `() => {}` doesn't rebind `this` (`this` will still refer to the TreeItem)
         this.checkbox.addEventListener("click", () => { this.toggle(); });
 
         this.span = li.children[1];
@@ -199,8 +209,9 @@ const TreeItem = class TreeItem {
         // segment play/loop buttons
         this.playButton = li.children[2];
         this.loopButton = li.children[3];
-        this.playButton.addEventListener("click", () => { this.play() }, { once: true });
-        this.loopButton.addEventListener("click", () => { this.play(true) }, { once: true });
+        // use { once: true } because this.play() re-adds the event listener
+        this.playButton.addEventListener("click", () => { this.play(); }, { once: true });
+        this.loopButton.addEventListener("click", () => { this.play(true); }, { once: true });
 
         this.playSvg = this.playButton.firstElementChild;
         this.loopSvg = this.loopButton.firstElementChild;
@@ -219,11 +230,6 @@ const TreeItem = class TreeItem {
         this.style?.();
     }
 
-    // /** Initialize the CSS styling of the `TreeItem` */
-    // style() {
-    //     ;
-    // }
-
     /**
      * Renames the `TreeItem`, replacing its id and text in the tree
      * @param {string} newId - The new id
@@ -239,9 +245,9 @@ const TreeItem = class TreeItem {
             throw new Error(`A TreeItem with the id ${newId} already exists`);
         }
         delete TreeItem.byId[this.id];
-        delete this.constructor.byId[this.id];
+        delete this.constructor.byId[this.id];  // removes this from subclasses byId, i.e. Group.byId
         TreeItem.byId[newId] = this;
-        this.constructor.byId[newId] = this;
+        this.constructor.byId[newId] = this;  // adds this to subclasses byId, i.e. Group.byId
         this.id = newId;
         this.text = newId;
         return true;
@@ -257,26 +263,11 @@ const TreeItem = class TreeItem {
         children.forEach(function (segment) { nested.append(segment.li); });
     }
 
-    /**
-     * Adds a `TreeItem` to this `TreeItem`'s nested content
-     * @param {TreeItem} child - `TreeItem` to be nested
-     */
-    addChild(child) {
-        child.parent = this;
-    }
-
-    /**
-     * Adds `TreeItem`s to this `TreeItem`'s nested content
-     * @param {TreeItem[]} children - Array of `TreeItem`s to be nested
-     */
-    addChildren(children) {
-        children.forEach(function (child) { child.parent = this; });
-    }
-
     /** Removes this `TreeItem` from the tree */
     remove() {
         this.li.remove();
         delete TreeItem.byId[this.id];
+        delete this.constructor.byId[this.id];  // removes this from subclasses byId, i.e. Group.byId
         this.children.forEach(function (child) { child.remove(); });
         if (this.#parent) { delete this.#parent.children[this.id]; }
     }

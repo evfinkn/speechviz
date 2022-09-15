@@ -2,29 +2,29 @@ import Group from "./Group";
 import Groups from "./Groups";
 import globals from "./globals";
 import Segment from "./Segment";
-
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
+import { toggleButton } from "./util";
 
 const peaks = globals.peaks;
 const user = globals.user;
 const filename = globals.filename;
 
 const createTree = function (id, parent, children, snr) {
-    if (!Array.isArray(children[0])) {
-        if (id.includes("Speaker ")) {
+    if (!Array.isArray(children[0])) {  // group of segments
+        if (id.includes("Speaker ")) {  // group is speakers, which need popups
             const group = new Group(id, { parent, snr, copyTo: ["Labeled"] });
             peaks.segments.add(children).forEach(function (segment) {
                 new Segment(segment, { parent: group, moveTo: ["Speakers"], copyTo: ["Labeled"] });
             });
         }
-        else {
+        else {  // group is VAD or Non-VAD, which don't need popups
             const group = new Group(id, { parent, snr });
             peaks.segments.add(children).forEach(function (segment) {
                 new Segment(segment, { parent: group });
             });
         }
     }
-    else {
+    else {  // group of groups
         const group = new Groups(id, { parent });
         for (let [child, childChildren, childSNR] of children) {
             createTree(child, group, childChildren, childSNR);
@@ -45,14 +45,14 @@ for (let [group, children, snr] of importedSegments) {
 }
 
 Group.rankSnrs();
-const highestId = Segment.highestId;
+const highestId = Segment.highestId;  // used when saving to re-number custom segments
 
 // segmentsTree.children.forEach(child => child.toggle(false));
 
 
 
 
-
+// code below initializes the interface
 
 const zoomIn = document.querySelector("[data-action='zoom-in']");
 const zoomOut = document.querySelector("[data-action='zoom-out']");
@@ -61,31 +61,32 @@ zoomOut.innerHTML = zoomOutIcon;
 zoomIn.addEventListener('click', function () {
     peaks.zoom.zoomIn();
     const zoomLevel = peaks.zoom.getZoom();
-    if (zoomLevel == 0) {
+    if (zoomLevel == 0) {  // can't zoom in any further, disable zoom in button
         toggleButton(zoomIn, false);
     }
-    else if (zoomLevel == 3) {
+    else if (zoomLevel == 3) {  // not at max zoom out level, enable zoom out button
         toggleButton(zoomOut, true)
     }
 });
 zoomOut.addEventListener('click', function () {
     peaks.zoom.zoomOut();
     const zoomLevel = peaks.zoom.getZoom();
-    if (zoomLevel == 4) {
+    if (zoomLevel == 4) {  // can't zoom out any further, disable zoom out button
         toggleButton(zoomOut, false);
     }
-    else if (zoomLevel == 1) {
+    else if (zoomLevel == 1) {  // not at max zoom in level, enable zoom in button
         toggleButton(zoomIn, true)
     }
 });
 
-
+// utility to jump to an input time
 const seekTime = document.getElementById('seek-time');
 document.querySelector('button[data-action="seek"]').addEventListener('click', function () {
     const seconds = parseFloat(seekTime.value);
     if (!Number.isNaN(seconds)) { peaks.player.seek(seconds); }
 });
 
+// setting to enable seeking (clicking peaks to jump to a time)
 const overview = peaks.views.getView('overview');
 const zoomview = peaks.views.getView('zoomview');
 document.getElementById('enable-seek').addEventListener('change', function () {
@@ -93,10 +94,10 @@ document.getElementById('enable-seek').addEventListener('change', function () {
     overview.enableSeek(this.checked);
 });
 
-
+// setting to enable auto-scroll (peaks viewer moves forward with audio)
 document.getElementById('auto-scroll').addEventListener('change', function () { zoomview.enableAutoScroll(this.checked); });
 
-
+// setting to change size of waveform amplitudes (how tall the peaks of the waveform are)
 const amplitudeScales = {
     "0": 0.0,
     "1": 0.1,
@@ -116,19 +117,22 @@ document.getElementById('amplitude-scale').addEventListener('input', function ()
     overview.setAmplitudeScale(scale);
 });
 
-
+// input to add a label group
 const labelInput = document.getElementById("label");
 document.querySelector("button[data-action='add-label']").addEventListener('click', function () {
     new Group(labelInput.value, { parent: labeled, removable: true, renamable: true, copyTo: ["Labeled"] });
     labelInput.value = "";  // clear text box after submitting
+    labeled.open();  // open labeled in tree to show newly added label
 });
 
 
-let segmentCounter = 1;
+let segmentCounter = 1;  // counts number of custom segments added, used for custom segment's labelText
 const audioDuration = peaks.player.getDuration();
 document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
     const label = 'Custom Segment ' + segmentCounter++;
     const curTime = peaks.player.getCurrentTime();
+    // endTime is either 2.5 seconds after current time or the end of the audio (whichever's shortest)
+    // if endTime > audioDuration, drag handle for changing segment's endTime is off screen and unusable
     const endTime = curTime + 2.5 > audioDuration ? audioDuration : curTime + 2.5;
     let segment = {
         startTime: curTime,
@@ -136,19 +140,16 @@ document.querySelector('button[data-action="add-segment"]').addEventListener('cl
         labelText: label,
         editable: true,
         treeText: label,
-        removable: true,
     };
     segment = peaks.segments.add(segment);
-    new Segment(segment, { parent: custom, renamable: true, moveTo: ["Labeled"] });
+    new Segment(segment, { parent: custom, removable: true, renamable: true, moveTo: ["Labeled"] });
     custom.sort("startTime");
-    custom.open();
-
-    // newChanges = true;
+    custom.open();  // open custom in tree to show newly added segment
 });
 
 
 const notes = document.getElementById("notes");
-
+// load the segments from the database
 (function () {
     const record = { 'user': user, 'filename': filename }
     const json = JSON.stringify(record);
@@ -157,7 +158,7 @@ const notes = document.getElementById("notes");
     loadRequest.open('POST', 'load', true);
     loadRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
 
-    loadRequest.send(json)
+    loadRequest.send(json);
     loadRequest.onload = function () {
         const jsonData = JSON.parse(loadRequest.response);
 
@@ -166,24 +167,23 @@ const notes = document.getElementById("notes");
         const regex = /Custom Segment /;
         peaks.segments.add(jsonData.segments, { "overwrite": true }).forEach(function (segment) {
             let parent = segment.path.at(-1);
-            if (!(parent in Group.byId)) {
-                parent = new Group(parent, { parent: Groups.byId[segment.path.at(-2)] })
+            if (!(parent in Group.byId)) {  // parent group doesn't exist yet so add it
+                parent = new Group(parent, { parent: Groups.byId[segment.path.at(-2)] });
             }
             else { parent = Group.byId[parent]; }
 
-            if (segment.id in Segment.byId) {
+            if (segment.id in Segment.byId) {  // segment is a moved segment
                 const treeSegment = Segment.byId[segment.id];
                 treeSegment.segment = segment;
                 treeSegment.parent = parent;
             }
-            else {
-                new Segment(segment, { parent });
-            }
+            else { new Segment(segment, { parent }); }
             parent.sort("startTime");
 
             if (segment.labelText.match(regex)) { segmentCounter++; }
         });
 
+        // after loading, toggle everything off (usually end up disabling most groups right away, just do it automatically)
         segmentsTree.children.forEach(child => child.toggle(false));
     };
 })();
@@ -192,24 +192,32 @@ const notes = document.getElementById("notes");
 peaks.on("segments.dragend", function (event) {
     const id = event.segment.id;
     Segment.byId[id].updateDuration();
-    // newChanges = true;
 });
 
-
+// saves the segments
 document.querySelector('button[data-action="save"]').addEventListener("click", function () {
     const groupRegex = /Speaker |VAD|Non-VAD/;
+    // only save groups that aren't from the pipeline
     const groups = Object.values(Group.byId).filter(group => !group.id.match(groupRegex));
     let segments = [];
+    // array.push(...) is faster than array.concat
     groups.forEach(group => segments.push(...group.getSegments({ hidden: true, visible: true })));
 
+    // need to copy the segment properties because otherwise, sending the actual segment causes error 
+    // because peaks segments store the peaks instance, and the peaks instance stores the segments, infinite recursive error
     segments = segments.map(segment => segment.toSimple(["color"]));
 
+    // re-number the segments so there aren't gaps in ids from removed segments
     let idCounter = highestId + 1;
     segments.map((segment, index) => { return { "index": index, "id": parseInt(segment.id.split(".").at(-1)) }; })
         .sort((seg1, seg2) => seg1.id - seg2.id)
         .map(seg => segments[seg.index])
         .forEach(function (segment) { segment.id = `peaks.segment.${idCounter++}`; });
 
+    // can this next section just be done above???
+    // if not, wouldn't it be easier to just update all of the custom segments and use their
+    // id instead of needing numCustom and customChanged???
+    // re-label custom segments with new numbers
     const customRegex = /Custom Segment /;
     let numCustom = 1;
     const customChanged = {};
@@ -243,10 +251,9 @@ document.querySelector('button[data-action="save"]').addEventListener("click", f
         // done
         console.log('Annotations saved');
     };
-    // newChanges = false;
 });
 
-
+// resets all of the pipeline segments that have been moved from one group to another
 document.querySelector(`button[data-action="reset-moved"]`).addEventListener("click", function () {
     if (confirm("This will reset all moved speaker segments.\nAre you sure you want to continue?")) {
         const record = { "user": user, "filename": filename, "highestId": highestId };
@@ -257,11 +264,12 @@ document.querySelector(`button[data-action="reset-moved"]`).addEventListener("cl
 
         request.send(json);
         request.onload = function () {
-            location.reload();
+            location.reload();  // reload the page to reset the moved segments on the page
         }
     }
 });
 
+// deletes all saved segments
 document.querySelector(`button[data-action="reset"]`).addEventListener("click", function () {
     if (confirm("This will delete ALL saved segments.\nAre you sure you want to continue?")) {
         const record = { "user": user, "filename": filename };
@@ -272,12 +280,12 @@ document.querySelector(`button[data-action="reset"]`).addEventListener("click", 
 
         request.send(json);
         request.onload = function () {
-            location.reload();
+            location.reload();  // reload the page to remove all of the saved segments from the page
         }
     }
 });
 
-
+// setting to change the speed at which the media plays
 const speedButton = document.getElementById("speed-button");
 const speedDropdown = document.getElementById("speed-dropdown");
 speedButton.addEventListener("click", function () {
@@ -292,7 +300,8 @@ for (let i = 0; i < spdbtns.length; i++) {
     });
 }
 
-
+// button containing the settings that aren't usually changed
+// putting these settings in a dropdown makes interface less crowded
 const settingsButton = document.getElementById("settings-button");
 settingsButton.innerHTML = settingsIcon;
 const settingsDropdown = document.getElementById("settings-dropdown");
@@ -317,6 +326,7 @@ window.onclick = function (event) {
 
 
 // // https://stackoverflow.com/a/7317311
+// // warns user when they try to close page that they have unsaved changes
 // window.onload = function () {
 //     window.addEventListener("beforeunload", function (event) {
 //         if (!newChanges) { return undefined; }
