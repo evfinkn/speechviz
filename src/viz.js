@@ -56,8 +56,10 @@ const runPeaks = async function (fileName) {
   const hiddenSegments = {};
   // segments that are visible on peaksjs       {group: {childGroup: {...: {id, segment}}}}
   const visibleSegments = {};
-  // undoStorage
+  // undoStorage, stores actions that can be undone once they are done
   const undoStorage = [];
+  // redoStorage, stores actions that were undone so they can be redone
+  let redoStorage = [];
 
   // dictionary of checkboxes for every group     {group: HTMLInputElement}
   const groupsCheckboxes = { "Segments": document.querySelector("input[data-id='Segments']") };
@@ -252,6 +254,7 @@ const runPeaks = async function (fileName) {
   const removeGroup = function (peaks, group, parent) {
     for (let segment of segmentsFromGroup(group, { visible: true, hidden: true })) {
       undoStorage.push(["deleted segment", segment]);
+      redoStorage = [];
       removeSegment(peaks, segment, group);
     }
 
@@ -355,6 +358,7 @@ const runPeaks = async function (fileName) {
         if (event.key === "Enter") {
           let newLabel = document.getElementById(`${segment.id}-rename`).value;
           undoStorage.push(["renamed segment", segment.id, document.getElementById(`${segment.id}-span`).innerHTML]);
+          redoStorage = [];
           document.getElementById(`${segment.id}-span`).innerHTML = newLabel;
           segment.update({ "labelText": newLabel, "treeText": newLabel });
         }
@@ -370,6 +374,7 @@ const runPeaks = async function (fileName) {
           let newLabel = document.getElementById(`${group}-rename`).value;
           renameLabel(group, newLabel);
           undoStorage.push(["renamed label", group, document.getElementById(`${newLabel}-span`).innerHTML])
+          redoStorage = [];
         }
       });
     }
@@ -382,6 +387,7 @@ const runPeaks = async function (fileName) {
           popupContent.append(document.createElement("br"));
           radio.addEventListener("change", function () {
             undoStorage.push(["changed speakers", segment])
+            redoStorage = [];
             changeSpeaker(peaks, ["Segments", "Speakers", speaker, segment.id], segment.path, segment);
             openNested(["Segments", "Speakers", speaker]);
             popupContent.innerHTML = "";
@@ -411,12 +417,14 @@ const runPeaks = async function (fileName) {
                     let addedCopy = peaks.segments.add(copied);
                     renderSegment(peaks, addedCopy, label, ["Segments", "Labeled-Speakers"]);
                     undoStorage.push(["copied segment", addedCopy]);
+                    redoStorage = [];
                     sortTree(label);
                     openNested(["Segments", "Labeled-Speakers", label]);
                   }
                   else if (movingToLabel){
                     if (!labelSegments.some(labelSegment => propertiesEqual(segment, labelSegment, ["startTime", "endTime"]))) {
                       undoStorage.push(["changed speakers", segment])
+                      redoStorage = [];
                       changeSpeaker(peaks, ["Segments", "Labeled-Speakers", label, segment.id], segment.path, segment);
                     }
                   }
@@ -424,6 +432,7 @@ const runPeaks = async function (fileName) {
               }
               if (removingGroup) { 
                 undoStorage.push(["deleted label", group])
+                redoStorage = [];
                 removeGroup(peaks, group, "Labeled-Speakers"); 
               }
               popupContent.innerHTML = "";
@@ -448,11 +457,13 @@ const runPeaks = async function (fileName) {
                   let addedCopy = peaks.segments.add(copied);
                   renderSegment(peaks, addedCopy, label, ["Segments", "Labeled-Speakers"]);
                   undoStorage.push(["copied segment", addedCopy]);
+                  redoStorage = [];
                   sortTree(label);
                   openNested(["Segments", "Labeled-Speakers", label]);
                 }
                 else if (movingToLabel){
                   undoStorage.push(["changed speakers", segment])
+                  redoStorage = [];
                   changeSpeaker(peaks, ["Speakers", "Labeled-Speakers", label, segment.id], segment.path, segment);
                   openNested(["Segments", "Labeled-Speakers", label]);
                   popupContent.innerHTML = "";
@@ -607,6 +618,7 @@ const runPeaks = async function (fileName) {
       loop.after(remove);
       remove.addEventListener("click", function () { 
         undoStorage.push(["deleted segment", segment]);
+        redoStorage = [];
         removeSegment(peaks, segment, group);
       });
       segment.durationSpan = li.children[1];
@@ -693,6 +705,7 @@ const runPeaks = async function (fileName) {
       remove.addEventListener("click", function () { 
         removeGroup(peaks, this.dataset.id, parent);
         undoStorage.push(["deleted label", this.dataset.id]);
+        redoStorage = [];
         console.log(undoStorage);
       });
     }
@@ -867,6 +880,7 @@ const runPeaks = async function (fileName) {
       sortTree("Custom-Segments");
       openNested(["Segments", "Custom-Segments"]);
       undoStorage.push(["added segment", segment]);
+      redoStorage = [];
       newChanges = true;
     });
     document.getElementById("Custom-Segments-span").addEventListener("click", function () { initPopup(peaksInstance, "Custom-Segments") });
@@ -926,6 +940,7 @@ const runPeaks = async function (fileName) {
       const end = segment.endTime;
       const start = segment.startTime;
       undoStorage.push(["dragged", segment, end, start])
+      redoStorage = [];
       console.log(undoStorage); 
     });
 
@@ -1072,7 +1087,81 @@ const runPeaks = async function (fileName) {
           newChanges = true;
 
         }
+        redoStorage.push(undoThing);
       } 
+    });
+
+    document.querySelector('button[data-action="redo"]').addEventListener('click', function () {
+      if (redoStorage.length != 0){
+        let redoThing = redoStorage.pop();
+        if (redoThing[0] == "deleted segment") {
+          peaksInstance.segments.add(redoThing[1]);
+          renderSegment(peaksInstance, redoThing[1], redoThing[1].path.at(-2), redoThing[1].path.slice(0, -2));
+          sortTree(redoThing[1].path.at(-2));
+        }
+        else if (redoThing[0] == "deleted label") {
+          let label = redoThing[1];
+          renderGroup(peaksInstance, label, ["Segments", "Labeled-Speakers"], { "renderEmpty": true, removable: true })
+          openNested(["Segments", "Labeled-Speakers", label]);
+          while (redoStorage.length != 0 && (redoStorage.at(-1)[0] == "deleted segment" && redoStorage.at(-1)[1].path.at(-2) == label) || (redoStorage.at(-1)[0] == "changed speakers" && redoStorage.at(-1)[1].oldPath.at(-2) == label)){
+            redoThing = redoStorage.pop();
+            if (redoStorage.at(-1)[0] == "deleted segment"){
+              peaksInstance.segments.add(redoThing[1]);
+              renderSegment(peaksInstance, redoThing[1], redoThing[1].path.at(-2), redoThing[1].path.slice(0, -2));
+              sortTree(redoThing[1].path.at(-2));
+            }
+            else{
+              let segment = redoThing[1];
+              changeSpeaker(peaksInstance, ["Segments", segment.oldPath.at(-3), segment.oldPath.at(-2), segment.id], segment.path, segment);
+              openNested(["Segments", segment.oldPath.at(-3), segment.oldPath.at(-2)]);
+            }
+          }
+        }
+        else if (redoThing[0] == "changed speakers") {
+          let segment = redoThing[1];
+          changeSpeaker(peaksInstance, ["Segments", segment.oldPath.at(-3), segment.oldPath.at(-2), segment.id], segment.path, segment);
+          openNested(["Segments", segment.oldPath.at(-3), segment.oldPath.at(-2)]);
+        }
+        else if (redoThing[0] == "copied segment") {
+          let copiedSegment = redoThing[1];
+          removeSegment(peaksInstance, copiedSegment, copiedSegment.path.at(-2));
+          while (redoStorage.length != 0 && redoStorage.at(-1)[0] == "copied segment" && redoStorage.at(-1)[1].path.at(-2) == copiedSegment.path.at(-2)){
+            redoThing = redoStorage.pop();
+            removeSegment(peaksInstance, redoThing[1], redoThing[1].path.at(-2));
+          }
+        }
+        else if (redoThing[0] == "added segment") {
+          removeSegment(peaksInstance, redoThing[1], redoThing[1].path.at(-2));
+        }
+        else if (redoThing[0] == "renamed segment"){
+          let newLabel = redoThing[1];
+          document.getElementById(`${redoThing[2]}-span`).innerHTML = newLabel;
+          segment.update({ "labelText": newLabel, "treeText": newLabel });
+        }
+        else if (redoThing[0] == "renamed label"){
+          let span = document.getElementById(`${redoThing[2]}-span`);
+          popupContent.appendChild(htmlToElement("<input type='text' id='" + redoThing[2] + "-rename' value='" + span.innerHTML + "'>"));
+          // rename label
+          renameLabel(redoThing[2], redoThing[1]);
+        }
+        else if (redoThing[0] == "dragged"){
+          const segment = segmentsByID[redoThing[1].id];
+          console.log(segment.endTime);
+          const segmentSpan = segment.durationSpan;
+          segment.update({startTime: redoThing[3], endTime: redoThing[2]});
+
+          const oldDuration = parseFloat(segmentSpan.title.split(" ").at(-1));
+          const newDuration = redoThing[2] - redoThing[3];
+
+          segmentSpan.title = `Start time: ${redoThing[3].toFixed(2)}\nEnd time: ${redoThing[2].toFixed(2)}\nDuration: ${(newDuration).toFixed(2)}`;
+          updateDuration(redoThing[1].path.slice(1, -1), newDuration - oldDuration);
+
+          sortTree(redoThing[1].path.at(-2));
+          newChanges = true;
+
+        }
+        undoStorage.push(redoThing);
+      }
     });
 
     document.querySelector('button[data-action="save"]').addEventListener('click', function () {
