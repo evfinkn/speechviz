@@ -15,11 +15,20 @@ const Group = class Group extends TreeItem {
     /**
      * An object containing all `Group`s by their id.
      * Key is id, value is corresponding `Group`:  {id: `Group`}
+     * @type {Object.<string, Group>}
+     * @static
      */
     static byId = {};
-    /** HTML strings for the play, pause, loop, and remove icons for `Group`s in the tree */
+    /**
+     * HTML strings for the play, pause, loop, and remove icons for `Group`s in the tree
+     * @type {Object.<string, string>}
+     * @static
+     */
     static icons = groupIcons;
-    /** Adds numbers next to `Group`s' text in the tree corresponding to their snr rank, with highest snr being highest rank */
+    /**
+     * Adds numbers next to `Group`s' text in the tree corresponding to their snr rank, with highest snr being highest rank
+     * @static
+     */
     static rankSnrs() {
         const groups = Object.values(Group.byId).filter(group => group.snr !== null);
 
@@ -85,11 +94,20 @@ const Group = class Group extends TreeItem {
      * @type {Object}
      */
     visible = {};
-    /** Array of ids of `Group`s and `Groups`s that this segment can be moved to */
+    /**
+     * Array of ids of `Group`s and `Groups`s that this segment can be moved to
+     * @type {string[]}
+     */
     moveTo;
-    /** Array of ids of `Group`s and `Groups`s that this segment can be copied to */
+    /**
+     * Array of ids of `Group`s and `Groups`s that this segment can be copied to
+     * @type {string[]}
+     */
     copyTo;
-    /** */
+    /**
+     * A hex string of the form "#RRGGBB" representing the color of this `Group`'s `Segment`s in the Peaks viewer
+     * @type {string}
+     */
     color;
 
     /**

@@ -18,15 +18,22 @@ const Groups = class Groups extends TreeItem {
     /**
      * An object containing all `Groups`' by their id.
      * Key is id, value is corresponding `Groups`:  {id: `Groups`}
+     * @type {Object.<string, Groups>}
+     * @static
      */
     static byId = {};
-    /** HTML strings for the play, pause, loop, and remove icons for `Groups` in the tree */
+    /**
+     * HTML strings for the play, pause, loop, and remove icons for `Groups` in the tree
+     * @type {Object.<string, string>}
+     * @static
+     */
     static icons = groupIcons;
     /**
      * Expands an array consisting of `Group`s and `Groups` by replacing `Groups` with their `Group` children
      * @param {(Group|Groups)[]} groups - Array of `Group`s and `Groups`s
      * @param {Group[]=} exclude - Array of `Group`s to exclude from expanded array
      * @returns {Group[]} The expanded array
+     * @static
      */
     static expand(groups, exclude = []) {
         const expanded = [];

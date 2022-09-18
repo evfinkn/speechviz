@@ -10,30 +10,42 @@ const TreeItem = class TreeItem {
     /** 
      * An object containing all `TreeItem`s by their id. 
      * Key is id, value is corresponding `TreeItem`:  {id: `TreeItem`}
+     * @type {Object.<string, TreeItem>}
+     * @static
      */
     static byId = {};
     /**
      * Returns an array of `TreeItem`s with the given ids
      * @param {string[]} ids - Array of ids
      * @returns {TreeItem[]} The `TreeItem`s corresponding to the ids
+     * @static
      */
     static idsToTreeItems(ids) { return ids.map(id => TreeItem.byId[id]); }
     /**
      * Returns an array of the ids of the given `TreeItem`s
      * @param {TreeItem[]} treeItems - Array of `TreeItem`s
      * @returns {string[]} The ids corresponding to the given `TreeItem`s
+     * @static
      */
     static treeItemsToIds(treeItems) { return treeItems.map(treeItem => treeItem.id); }
     /** 
      * Checks if a TreeItem by the given id exists
      * @param {string} id - id to check existence of
      * @returns {boolean} True if a TreeItem with `id` exists, false otherwise
+     * @static
      */
     static exists(id) { return id in TreeItem.byId; }
-    /** HTML strings for the play, pause, loop, and remove icons for `TreeItem`s in the tree */
+    /**
+     * HTML strings for the play, pause, loop, and remove icons for `TreeItem`s in the tree
+     * @type {Object.<string, string>}
+     * @static
+     */
     static icons = groupIcons;
 
-    /** The unique identifier of this `TreeItem` */
+    /**
+     * The unique identifier of this `TreeItem`
+     * @type {string}
+     */
     id;
     /**
      * `TreeItem` this belongs to
@@ -47,11 +59,20 @@ const TreeItem = class TreeItem {
     children = [];
 
     #text;
-    /** How long this `TreeItem`'s audio lasts, in seconds */
+    /**
+     * How long this `TreeItem`'s audio lasts, in seconds
+     * @type {number}
+     */
     duration = 0;
-    /** Boolean indicating if this can be removed from the tree */
+    /**
+     * A `boolean` indicating if this can be removed from the tree
+     * @type {boolean}
+     */
     removable;
-    /** Boolean indicating if this can be renamed */
+    /**
+     * A boolean indicating if this can be renamed
+     * @type {boolean}
+     */
     renamable;
 
     /**
@@ -60,17 +81,17 @@ const TreeItem = class TreeItem {
      */
     li;
     /**
-     * 
+     * The input element of the checkbox used to toggle this `TreeItem`
      * @type {Element}
      */
     checkbox;
     /**
-     * 
+     * The span element containing the text shown in `li`
      * @type {Element}
      */
     span;
     /**
-     * 
+     * The a element of the play button
      * @type {Element}
      */
     playButton;
@@ -206,7 +227,6 @@ const TreeItem = class TreeItem {
         });
         this.updateSpanTitle();
 
-        // segment play/loop buttons
         this.playButton = li.children[2];
         this.loopButton = li.children[3];
         // use { once: true } because this.play() re-adds the event listener

@@ -17,14 +17,21 @@ const Segment = class Segment extends TreeItem {
     /**
      * An object containing all `Segment`s by their id.
      * Key is id, value is corresponding `Segment`:  {id: `Segment`}
+     * @type {Object.<string, Segment>}
+     * @static
      */
     static byId = {};
-    /** HTML strings for the play, pause, loop, and remove icons for `Segment`s in the tree */
+    /**
+     * HTML strings for the play, pause, loop, and remove icons for `Segment`s in the tree
+     * @type {Object.<string, string>}
+     * @static
+     */
     static icons = segmentIcons;
     static #highestId;
     /** 
      * The highest number id of all Segments 
      * @type {number}
+     * @static
     */
     static get highestId() {
         if (Segment.#highestId) { return Segment.#highestId; }  // only need to calculate highestId once
@@ -37,6 +44,7 @@ const Segment = class Segment extends TreeItem {
     /**
      * A list of segment properties. Used by toSimple() in order to copy the properties to an object
      * @type {string[]}
+     * @static
      */
     static #props = ["startTime", "endTime", "editable", "color", "labelText", "id", "path", "treeText", "removable"];
 
@@ -45,9 +53,15 @@ const Segment = class Segment extends TreeItem {
      * @type {Peaks.Segment}
      */
     segment;
-    /** Array of ids of `Group`s and `Groups`s that this segment can be moved to */
+    /**
+     * Array of ids of `Group`s and `Groups`s that this segment can be moved to
+     * @type {string[]}
+     */
     moveTo;
-    /** Array of ids of `Group`s and `Groups`s that this segment can be copied to */
+    /**
+     * Array of ids of `Group`s and `Groups`s that this segment can be copied to
+     * @type {string[]}
+     */
     copyTo;
 
     /**
