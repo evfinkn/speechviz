@@ -769,31 +769,12 @@ var Group = class Group extends TreeItem {
         if (this.renamable || this.moveTo || this.copyTo) { this.popup = new Popup(this); }
     }
 
-    /**
-     * Copies all of the `Segment`s of this `Group` to another
-     * @param {Group} copyParent - `Group` to add the copied `Segment`s to
-     * @returns {Segment[]} The copied `Segment`s
-     */
-    copy(copyParent) {
-        const copiedSegments = [];
-        for (const child of this.children) {
-            const copiedChild = child.copy(copyParent);
-            if (copiedChild) { copiedSegments.push(copiedChild); }
+    /** Updates the title of the span */
+    updateSpanTitle() {
+        if (this.snr) {
+            this.span.title = `SNR: ${this.snr.toFixed(2)}\nDuration: ${this.duration.toFixed(2)}`;
         }
-        return copiedSegments;
-    }
-
-    /** */
-    expandMoveTo() {
-        const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
-        const expanded = Group.#expand(moveToAsTreeItems, [this.id]);
-        return TreeItem.treeItemsToIds(expanded);
-    }
-    /** */
-    expandCopyTo() {
-        const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
-        const expanded = Group.#expand(copyToAsTreeItems, [this.id]);
-        return TreeItem.treeItemsToIds(expanded);
+        else { super.updateSpanTitle(); }  // if group doesn't have snr, it just uses default duration span title
     }
 
     /** Initialize the CSS styling of the `Group` */
@@ -863,12 +844,31 @@ var Group = class Group extends TreeItem {
         peaks.player.pause();
     }
 
-    /** Updates the title of the span */
-    updateSpanTitle() {
-        if (this.snr) {
-            this.span.title = `SNR: ${this.snr.toFixed(2)}\nDuration: ${this.duration.toFixed(2)}`;
+    /**
+     * Copies all of the `Segment`s of this `Group` to another
+     * @param {Group} copyParent - `Group` to add the copied `Segment`s to
+     * @returns {Segment[]} The copied `Segment`s
+     */
+    copy(copyParent) {
+        const copiedSegments = [];
+        for (const child of this.children) {
+            const copiedChild = child.copy(copyParent);
+            if (copiedChild) { copiedSegments.push(copiedChild); }
         }
-        else { super.updateSpanTitle(); }  // if group doesn't have snr, it just uses default duration span title
+        return copiedSegments;
+    }
+
+    /** */
+    expandMoveTo() {
+        const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
+        const expanded = Group.#expand(moveToAsTreeItems, [this.id]);
+        return TreeItem.treeItemsToIds(expanded);
+    }
+    /** */
+    expandCopyTo() {
+        const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
+        const expanded = Group.#expand(copyToAsTreeItems, [this.id]);
+        return TreeItem.treeItemsToIds(expanded);
     }
 
     /**
