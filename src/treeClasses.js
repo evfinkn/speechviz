@@ -5,6 +5,12 @@
 // Note that before moving to this solution, I made sure there weren't any circular dependencies, but
 // it didn't solve the issue.
 
+// Another note: even though Segment and Group both use Popups, I didn't want to put Popup in TreeItem
+// because I didn't want to hard-code `Groups`s being expanded into `Group`s. In other words, it's
+// possible someone may want to be able to move something to a `Groups` (and therefore not expand the
+// `Groups`s into `Group`s within Popup), so didn't want to hard-code it into TreeItem. Probably better
+// way to do this while still including Popup functionality in TreeItem?
+
 import globals from "./globals";
 import { htmlToElement, sortByProp, toggleButton, arrayMean, objectMap, propertiesEqual } from "./util";
 import { groupIcons, segmentIcons } from "./icon";
