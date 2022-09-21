@@ -106,30 +106,15 @@ var TreeItem = class TreeItem {
      */
     playButton;
     /**
-     * The svg of the play button icon
-     * @type {Element}
-     */
-    playSvg;
-    /**
      * The a element of the loop button
      * @type {Element}
      */
     loopButton;
     /**
-     * The svg of the loop button icon
-     * @type {Element}
-     */
-    loopSvg;
-    /**
      * If this `TreeItem` is removable, the a element of the remove button. Otherwise, null
      * @type {(Element|null)}
      */
     removeButton;
-    /**
-     * If this `TreeItem` is removable, the svg of the remove button icon. Otherwise, null
-     * @type {(Element|null)}
-     */
-    removeSvg;
     /**
      * The ul element containing the nested content (the children) of this `TreeItem`
      * @type {Element}
@@ -237,9 +222,6 @@ var TreeItem = class TreeItem {
         this.playButton.addEventListener("click", () => { this.play(); }, { once: true });
         this.loopButton.addEventListener("click", () => { this.play(true); }, { once: true });
 
-        this.playSvg = this.playButton.firstElementChild;
-        this.loopSvg = this.loopButton.firstElementChild;
-
         this.nested = li.children[4];
 
         if (this.removable) {
@@ -247,7 +229,6 @@ var TreeItem = class TreeItem {
             this.loopButton.after(remove);
             remove.addEventListener("click", () => { this.remove(); });
             this.removeButton = remove;
-            this.removeSvg = remove.firstElementChild;
         }
 
         // this is here for subclasses to define a style method if they want to apply specific CSS styles
