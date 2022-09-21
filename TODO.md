@@ -10,15 +10,32 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] Separate into multiple files
+
+ - [ ] Reorder class methods and properties by functionality (I think they're already mostly ordered logically but make sure)
+ - [ ] Rearrange import statements at top of files to be ordered somewhat by importance (i.e. import globals first, then classes, then utils, then icons)
+ - [ ] Undo functionality
+   - [ ] Dirty functionality (warning user when they have unsaved changes and they try to close page) - should be maybe somewhat easy with undo implemented, if has undos and hasn't saved, then there are changes
+ - [ ] Rewrite code to relabel custom segments when saving them if necessary (look at comment in that section)
+ - [ ] Change XMLHttpRequests in init.js to use fetch function for consistency
+ - [ ] Maybe make Moveable and Copyable interface? Segment and Group's expandMoveTo() and expandCopyTo() methods are the same (I think)
+ - [ ] Change settings button to use a popup (not a dropdown)
+ - [ ] Fix custom segment re-numbering when saving
+ - [ ] Make use of change password pug and route somewhere
+   - [ ] Very rough idea but once we add more settings for the UI, could make clicking on username take you to a user page where you can edit global settings (which are saved in a database) and also in that page theres a link to the change password page?
+ - [ ] Make size of top header (thing with "back to file selection" and username) smaller
+ - [ ] Add more things to settings to configure sizes of different things
+   - [ ] Make user settings save to interface (user's global settings, per-file settings), with global settings used for files without saved settings
+ - [ ] Right now, Segment.copy() hard sets the copied Segment's properties. Somehow make specifiable?
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
+ - [ ] If possible, button to hide the segment drag things - actually this could be done by making all segments un-editable (but remembering which ones were editable) and then re-making segments editable (using segment.update({ editable: }) to change editable)
  
-  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
- - [ ] If possible, button to hide the segment drag things
+ - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
+
 
  
+ - [x] Separate into multiple files
  - [x] Document functions
  - [x] Admin account flip between all annotations that you can view
  - [x] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')
