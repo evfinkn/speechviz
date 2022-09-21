@@ -97,16 +97,18 @@ p code {
 }
 
 .column {
+  white-space: nowrap;
 	float: left;
-	width: 23%;
+	width: 17%;
 	padding: 10px;
-	overflow-y:auto;
+  overflow-x: scroll;
+	overflow-y: auto;
 	height: 470px;
 }
 
 .column2 {
 	float: right;
-	width: 73%;
+	width: 79%;
 	padding: 10px;
 	height: 470px;
 }
@@ -115,16 +117,16 @@ p code {
 	float: left;
 	width: 40%;
 	padding: 10px;
-	overflow-y:auto;
-	height: 470px;
+	overflow-y: auto;
+	height: auto;
 }
 
 .column4 {
 	float: right;
 	width: 55%;
 	padding: 10px;
-	overflow-y:auto;
-	height: 470px;
+	overflow-y: auto;
+	height: auto;
 }
 
 .row:after {
@@ -192,4 +194,20 @@ ul, #Segments {
   color: black;
   text-decoration: none;
   cursor: pointer;
+}
+
+.split {
+  display: flex;
+  flex-direction: row;
+}
+
+.gutter {
+  background-color: #eee;
+  background-repeat: no-repeat;
+  background-position: 50%;
+}
+
+.gutter.gutter-horizontal {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+  cursor: col-resize;
 }

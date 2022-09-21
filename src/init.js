@@ -1,9 +1,10 @@
-import Group from "./Group";
-import Groups from "./Groups";
 import globals from "./globals";
-import Segment from "./Segment";
+import { Groups, Group, Segment } from "./treeClasses";
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
-import { toggleButton } from "./util";
+import { getRandomColor, toggleButton } from "./util";
+import Split from 'split.js';
+
+Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
 
 const peaks = globals.peaks;
 const user = globals.user;
@@ -37,7 +38,7 @@ const importedSegments = await fetch(`/segments/${globals.basename}-segments.jso
 const segmentsTree = new Groups("Segments");
 document.getElementById("tree").append(segmentsTree.li);
 
-const custom = new Group("Custom", { parent: segmentsTree });
+const custom = new Group("Custom", { parent: segmentsTree, color: getRandomColor() });
 const labeled = new Groups("Labeled", { parent: segmentsTree });
 
 for (let [group, children, snr] of importedSegments) {
@@ -120,9 +121,11 @@ document.getElementById('amplitude-scale').addEventListener('input', function ()
 // input to add a label group
 const labelInput = document.getElementById("label");
 document.querySelector("button[data-action='add-label']").addEventListener('click', function () {
-    new Group(labelInput.value, { parent: labeled, removable: true, renamable: true, copyTo: ["Labeled"] });
-    labelInput.value = "";  // clear text box after submitting
-    labeled.open();  // open labeled in tree to show newly added label
+    if (labelInput.value != "") {
+        new Group(labelInput.value, { parent: labeled, removable: true, renamable: true, color: getRandomColor(), copyTo: ["Labeled"] });
+        labelInput.value = "";  // clear text box after submitting
+        labeled.open();  // open labeled in tree to show newly added label
+    }
 });
 
 
@@ -168,7 +171,7 @@ const notes = document.getElementById("notes");
         peaks.segments.add(jsonData.segments, { "overwrite": true }).forEach(function (segment) {
             let parent = segment.path.at(-1);
             if (!(parent in Group.byId)) {  // parent group doesn't exist yet so add it
-                parent = new Group(parent, { parent: Groups.byId[segment.path.at(-2)] });
+                parent = new Group(parent, { parent: Groups.byId[segment.path.at(-2)], removable: true, renamable: true, color: getRandomColor(), copyTo: ["Labeled"] });
             }
             else { parent = Group.byId[parent]; }
 
