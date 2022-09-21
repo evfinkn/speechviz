@@ -1019,6 +1019,7 @@ var Segment = class Segment extends TreeItem {
      * @type {string}
      */
     get labelText() { return this.segment.labelText; }
+    get treeText() { return this.text; }
     /**
      * Updates properties of the Peaks segment.
      * @param {Object} options - An object containing options
