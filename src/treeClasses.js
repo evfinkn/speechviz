@@ -567,21 +567,6 @@ var Groups = class Groups extends TreeItem {
     }
 
     /**
-     * Gets this `Groups`' `Segment`s
-     * @param {Object} options - An object containing options
-     * @param {boolean} [options.hidden=false] - Whether to include the `Segment`s currently hidden
-     * @param {boolean} [options.visible=false] - Whether to include the `segment`s currently visible
-     * @returns {Peaks.Segment[]} An array containing the `Segments` specified by options
-     */
-    getSegments({ hidden = false, visible = false } = {}) {
-        const segments = [];
-        this.children.forEach(function (child) {
-            segments.push(...child.getSegments({ hidden, visible }));  // array.push(...) is faster than array.concat()
-        })
-        return segments;
-    }
-
-    /**
      * Toggles the item in the tree and hides/unhides all of this `Groups`' segments from the Peaks waveform
      * @param {boolean=} force - If given, forces the item to toggle on/off. If true, force checks the checkbox, turns on the buttons, and unhides the segments in Peaks. If false, force unchecks the checkbox, turns off the buttons, and hides the segments in Peaks. If force equals this.checked, no toggling is done.
      */
@@ -618,6 +603,21 @@ var Groups = class Groups extends TreeItem {
         if (!peaks.player.isPlaying()) { peaks.player.play(); }
         peaks.player.pause();
     }
+
+    /**
+     * Gets this `Groups`' `Segment`s
+     * @param {Object} options - An object containing options
+     * @param {boolean} [options.hidden=false] - Whether to include the `Segment`s currently hidden
+     * @param {boolean} [options.visible=false] - Whether to include the `segment`s currently visible
+     * @returns {Peaks.Segment[]} An array containing the `Segments` specified by options
+     */
+    getSegments({ hidden = false, visible = false } = {}) {
+        const segments = [];
+        this.children.forEach(function (child) {
+            segments.push(...child.getSegments({ hidden, visible }));  // array.push(...) is faster than array.concat()
+        })
+        return segments;
+    }
 }
 
 /**
@@ -639,6 +639,7 @@ var Group = class Group extends TreeItem {
      * @static
      */
     static icons = groupIcons;
+
     /**
      * Adds numbers next to `Group`s' text in the tree corresponding to their snr rank, with highest snr being highest rank
      * @static
@@ -924,6 +925,7 @@ var Segment = class Segment extends TreeItem {
      * @static
      */
     static #props = ["startTime", "endTime", "editable", "color", "labelText", "id", "path", "treeText", "removable"];
+    
     /**
      * Expands an array consisting of `Group`s and `Groups` by replacing `Groups` with their `Group` children
      * @param {(Group|Groups)[]} groups - Array of `Group`s and `Groups`s
@@ -1048,64 +1050,24 @@ var Segment = class Segment extends TreeItem {
         super.parent = newParent;  // call TreeItem's setter for parent
     }
 
-    /**
-     * @param {string[]} [exclude=[]] - A list of properties to exclude from the returned object
-     * @returns An object containing this `Segment`'s properties
-     */
-    toSimple(exclude = []) {
-        const simple = {};
-        Segment.#props.forEach(prop => {
-            if (!exclude.includes(prop)) {
-                // honestly I can't remember why it's like this but I think
-                // otherwise it sets simple[prop] to the getters and not the values??
-                if (this.segment[prop]) { simple[prop] = this.segment[prop]; }
-                else { simple[prop] = this[prop]; }
-            }
-        });
-        return simple;
+    /** Updates the duration using the segment's start and end times */
+    updateDuration() {
+        const newDuration = this.endTime - this.startTime;
+        const durationChange = newDuration - this.duration;
+        this.duration = newDuration;
+        this.updateSpanTitle();
+        if (this.parent) { this.parent.updateDuration(durationChange); }
     }
 
-    /**
-     * Copies this `Segment` to a `Group`
-     * @param {Group} copyParent - `Group` to add the copy to
-     * @returns {(Segment|null)} Null if `copyParent` already has a copy of this `Segment`, otherwise the copied `Segment`
-     */
-    copy(copyParent) {
-        // only copy if the new parent doesn't already have a copy of the segment
-        if (!copyParent.children.some(child => propertiesEqual(this.segment, child.segment, ["startTime", "endTime"]))) {
-            const newSegment = peaks.segments.add(this.toSimple(["id", "path"]));
-            return new Segment(newSegment, { parent: copyParent, text: this.text, removable: true, renamable: true, moveTo: ["Labeled"] });
-        }
-        return null;
-    }
-
-
-    // Moveable and Copyable interface???? Because Group is gonna use this exact same functionality, no need to write it twice
-
-
-    /** */
-    expandMoveTo() {
-        const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
-        const expanded = Segment.#expand(moveToAsTreeItems, [this.parent.id]);
-        return TreeItem.treeItemsToIds(expanded);
-    }
-    /** */
-    expandCopyTo() {
-        const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
-        const expanded = Segment.#expand(copyToAsTreeItems, [this.parent.id]);
-        return TreeItem.treeItemsToIds(expanded);
+    /** Updates the title of the span */
+    updateSpanTitle() {
+        this.span.title = `Start time: ${this.startTime.toFixed(2)}\nEnd time: ${this.endTime.toFixed(2)}\nDuration: ${this.duration.toFixed(2)}`;
     }
 
     /** Initialize the CSS styling of the `Segment` */
     style() {
         this.li.style.fontSize = "12px";
         this.checkbox.style.transform = "scale(0.85)";
-    }
-
-    rename(newText) {
-        super.text = newText;
-        if (this.parent) { this.segment.update({ labelText: `${this.parent.id}\n${newText}` }); }
-        else { this.segment.update({ "labelText": newText }); }
     }
 
     /** Removes this `Segment` from the tree and from Peaks */
@@ -1119,6 +1081,12 @@ var Segment = class Segment extends TreeItem {
         if (peaks.segments.getSegment(id) === this.segment) { peaks.segments.removeById(id); }
 
         super.remove();
+    }
+
+    rename(newText) {
+        super.text = newText;
+        if (this.parent) { this.segment.update({ labelText: `${this.parent.id}\n${newText}` }); }
+        else { this.segment.update({ "labelText": newText }); }
     }
 
     /**
@@ -1175,18 +1143,48 @@ var Segment = class Segment extends TreeItem {
         peaks.player.pause();
     }
 
-    /** Updates the duration using the segment's start and end times */
-    updateDuration() {
-        const newDuration = this.endTime - this.startTime;
-        const durationChange = newDuration - this.duration;
-        this.duration = newDuration;
-        this.updateSpanTitle();
-        if (this.parent) { this.parent.updateDuration(durationChange); }
+    /**
+     * Copies this `Segment` to a `Group`
+     * @param {Group} copyParent - `Group` to add the copy to
+     * @returns {(Segment|null)} Null if `copyParent` already has a copy of this `Segment`, otherwise the copied `Segment`
+     */
+    copy(copyParent) {
+        // only copy if the new parent doesn't already have a copy of the segment
+        if (!copyParent.children.some(child => propertiesEqual(this.segment, child.segment, ["startTime", "endTime"]))) {
+            const newSegment = peaks.segments.add(this.toSimple(["id", "path"]));
+            return new Segment(newSegment, { parent: copyParent, text: this.text, removable: true, renamable: true, moveTo: ["Labeled"] });
+        }
+        return null;
     }
 
-    /** Updates the title of the span */
-    updateSpanTitle() {
-        this.span.title = `Start time: ${this.startTime.toFixed(2)}\nEnd time: ${this.endTime.toFixed(2)}\nDuration: ${this.duration.toFixed(2)}`;
+    /** */
+    expandMoveTo() {
+        const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
+        const expanded = Segment.#expand(moveToAsTreeItems, [this.parent.id]);
+        return TreeItem.treeItemsToIds(expanded);
+    }
+    /** */
+    expandCopyTo() {
+        const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
+        const expanded = Segment.#expand(copyToAsTreeItems, [this.parent.id]);
+        return TreeItem.treeItemsToIds(expanded);
+    }
+
+    /**
+     * @param {string[]} [exclude=[]] - A list of properties to exclude from the returned object
+     * @returns An object containing this `Segment`'s properties
+     */
+    toSimple(exclude = []) {
+        const simple = {};
+        Segment.#props.forEach(prop => {
+            if (!exclude.includes(prop)) {
+                // honestly I can't remember why it's like this but I think
+                // otherwise it sets simple[prop] to the getters and not the values??
+                if (this.segment[prop]) { simple[prop] = this.segment[prop]; }
+                else { simple[prop] = this[prop]; }
+            }
+        });
+        return simple;
     }
 }
 

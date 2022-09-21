@@ -14,9 +14,9 @@
  - [x] Add support for multiple files
 
 ### Interface
+ - [ ] ? Make Segment.#highestId update as adding segments, then have method to make it stop and call it after pipeline segments loaded?
  - [ ] When Popup finalized, undo implemented, and dirty functionality re-added, merge into main
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
- - [ ] Reorder class methods and properties by functionality (I think they're already mostly ordered logically but make sure)
  - [ ] Undo functionality
    - [ ] Dirty functionality (warning user when they have unsaved changes and they try to close page) - should be maybe somewhat easy with undo implemented, if has undos and hasn't saved, then there are changes
  - [ ] Rewrite code to relabel custom segments when saving them if necessary (look at comment in that section)
@@ -38,7 +38,7 @@
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
 
 
- 
+ - [x] Reorder class methods and properties by functionality (I think they're already mostly ordered logically but make sure)
  - [x] Rearrange import statements at top of files to be ordered somewhat by importance (i.e. import globals first, then classes, then utils, then icons)
  - [x] Separate into multiple files
  - [x] Document functions
