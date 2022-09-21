@@ -14,6 +14,7 @@
  - [x] Add support for multiple files
 
 ### Interface
+ - [ ] Make left column (tree column) fill webpage height
  - [ ] ? Make Segment.#highestId update as adding segments, then have method to make it stop and call it after pipeline segments loaded?
  - [ ] When Popup finalized, undo implemented, and dirty functionality re-added, merge into main
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
