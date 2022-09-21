@@ -1,5 +1,9 @@
 # TODO
 
+### Other
+ - [ ] Make script (probably Python) to extract saved annotations from database to json
+ - [ ] Make script (probably Python) to import saved annotations from json into database
+
 ### Node
  - [ ] Add HTTPS
  - [x] Fix error raised when submitting login: `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`
@@ -10,7 +14,8 @@
  - [x] Add support for multiple files
 
 ### Interface
-
+ - [ ] When Popup finalized, undo implemented, and dirty functionality re-added, merge into main
+ - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
  - [ ] Reorder class methods and properties by functionality (I think they're already mostly ordered logically but make sure)
  - [ ] Rearrange import statements at top of files to be ordered somewhat by importance (i.e. import globals first, then classes, then utils, then icons)
  - [ ] Undo functionality
