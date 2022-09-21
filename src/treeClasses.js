@@ -477,7 +477,7 @@ var Popup = class Popup {
         const dest = TreeItem.byId[destId];
 
         const radioDiv = htmlToElement(`<div><label><input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}</label><br></div>`);
-        const radioButton = radioDiv.firstElementChild;
+        const radioButton = radioDiv.firstElementChild.firstElementChild;
 
         this.moveDiv.append(radioDiv);
 
@@ -496,7 +496,7 @@ var Popup = class Popup {
         const dest = TreeItem.byId[destId];
 
         const radioDiv = htmlToElement(`<div><label><input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}</label><br></div>`);
-        const radioButton = radioDiv.firstElementChild;
+        const radioButton = radioDiv.firstElementChild.firstElementChild;
 
         this.copyDiv.append(radioDiv);
 
