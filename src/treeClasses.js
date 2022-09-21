@@ -31,6 +31,20 @@ var TreeItem = class TreeItem {
      */
     static byId = {};
     /**
+     * HTML strings for the play, pause, loop, and remove icons for `TreeItem`s in the tree
+     * @type {Object.<string, string>}
+     * @static
+     */
+    static icons = groupIcons;
+
+    /** 
+     * Checks if a TreeItem by the given id exists
+     * @param {string} id - id to check existence of
+     * @returns {boolean} True if a TreeItem with `id` exists, false otherwise
+     * @static
+     */
+    static exists(id) { return id in TreeItem.byId; }
+    /**
      * Returns an array of `TreeItem`s with the given ids
      * @param {string[]} ids - Array of ids
      * @returns {TreeItem[]} The `TreeItem`s corresponding to the ids
@@ -44,19 +58,6 @@ var TreeItem = class TreeItem {
      * @static
      */
     static treeItemsToIds(treeItems) { return treeItems.map(treeItem => treeItem.id); }
-    /** 
-     * Checks if a TreeItem by the given id exists
-     * @param {string} id - id to check existence of
-     * @returns {boolean} True if a TreeItem with `id` exists, false otherwise
-     * @static
-     */
-    static exists(id) { return id in TreeItem.byId; }
-    /**
-     * HTML strings for the play, pause, loop, and remove icons for `TreeItem`s in the tree
-     * @type {Object.<string, string>}
-     * @static
-     */
-    static icons = groupIcons;
 
     /**
      * The unique identifier of this `TreeItem`
@@ -121,13 +122,13 @@ var TreeItem = class TreeItem {
      * @type {(Element|null)}
      */
     removeButton;
+    /** */
+    popup;
     /**
      * The ul element containing the nested content (the children) of this `TreeItem`
      * @type {Element}
      */
     nested;
-    /** */
-    popup;
 
     /**
      * @param {string} id - The unique identifier to give the `TreeItem`
@@ -153,8 +154,10 @@ var TreeItem = class TreeItem {
         this.removable = removable;
         this.renamable = renamable;
 
-        if (render) { this.render(); }
-        if (parent) { this.parent = parent; }
+        if (render) {
+            this.render();
+            if (parent) { this.parent = parent; }
+        }
 
         if (children) { children.forEach(function (child) { child.parent = this; }); }
     }
@@ -242,6 +245,33 @@ var TreeItem = class TreeItem {
     }
 
     /**
+     * Updates the duration
+     * @param {number} durationChange - The amount to change the duration by. If negative, decreases the duration. Increases duration otherwise.
+     */
+    updateDuration(durationChange) {
+        this.duration = this.duration + durationChange;
+        this.updateSpanTitle();
+
+        if (this.#parent) { this.#parent.updateDuration(durationChange); }
+    }
+
+    /** Updates the title of the span */
+    updateSpanTitle() {
+        this.span.title = `Duration: ${this.duration.toFixed(2)}`;
+    }
+    /** Removes this `TreeItem` from the tree */
+    remove() {
+        if (!this.removable) {
+            throw new Error(`TreeItem ${this.id} is not removable.`);
+        }
+        this.li.remove();
+        delete TreeItem.byId[this.id];
+        delete this.constructor.byId[this.id];  // removes this from subclasses byId, i.e. Group.byId
+        this.children.forEach(function (child) { child.remove(); });
+        if (this.#parent) { this.#parent.children = this.#parent.children.filter(child => child.id != this.id); }
+    }
+
+    /**
      * Renames the `TreeItem`, replacing its id and text in the tree
      * @param {string} newId - The new id
      * @returns {boolean} Boolean indicating if renaming was successful
@@ -274,18 +304,6 @@ var TreeItem = class TreeItem {
         children.forEach(function (segment) { nested.append(segment.li); });
     }
 
-    /** Removes this `TreeItem` from the tree */
-    remove() {
-        if (!this.removable) {
-            throw new Error(`TreeItem ${this.id} is not removable.`);
-        }
-        this.li.remove();
-        delete TreeItem.byId[this.id];
-        delete this.constructor.byId[this.id];  // removes this from subclasses byId, i.e. Group.byId
-        this.children.forEach(function (child) { child.remove(); });
-        if (this.#parent) { this.#parent.children = this.#parent.children.filter(child => child.id != this.id); }
-    }
-
     /**
      * Toggles the checkbox in the tree, toggles the buttons, and hides/unhides the item's nested content.
      * @param {boolean=} force - If given, forces the item to toggle on/off. If true, force checks the checkbox, turns on the buttons, and unhides the nested content. If false, force unchecks the checkbox, turns off the buttons, and hides the nested content. If force equals this.checked, no toggling is done.
@@ -316,22 +334,6 @@ var TreeItem = class TreeItem {
         this.nested.classList.add("active");
         this.checked = true;
         if (this.#parent) { this.#parent.open(); }
-    }
-
-    /**
-     * Updates the duration
-     * @param {number} durationChange - The amount to change the duration by. If negative, decreases the duration. Increases duration otherwise.
-     */
-    updateDuration(durationChange) {
-        this.duration = this.duration + durationChange;
-        this.updateSpanTitle();
-
-        if (this.#parent) { this.#parent.updateDuration(durationChange); }
-    }
-
-    /** Updates the title of the span */
-    updateSpanTitle() {
-        this.span.title = `Duration: ${this.duration.toFixed(2)}`;
     }
 }
 
@@ -711,8 +713,6 @@ var Group = class Group extends TreeItem {
      * @type {string}
      */
     color;
-    /** */
-    popup;
     /**
      * The signal-to-noise ratio of the `Group`
      * @type {(number|null)}
