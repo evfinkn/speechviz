@@ -6,8 +6,8 @@
 // it didn't solve the issue.
 
 import globals from "./globals";
-import { groupIcons, segmentIcons } from "./icon";
 import { htmlToElement, sortByProp, toggleButton, arrayMean, objectMap, propertiesEqual } from "./util";
+import { groupIcons, segmentIcons } from "./icon";
 
 const peaks = globals.peaks;
 

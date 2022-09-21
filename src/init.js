@@ -1,8 +1,8 @@
+import Split from 'split.js';
 import globals from "./globals";
 import { Groups, Group, Segment } from "./treeClasses";
-import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 import { getRandomColor, toggleButton } from "./util";
-import Split from 'split.js';
+import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
 Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
 
