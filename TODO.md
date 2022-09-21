@@ -19,11 +19,9 @@
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
  - [ ] Undo functionality
    - [ ] Dirty functionality (warning user when they have unsaved changes and they try to close page) - should be maybe somewhat easy with undo implemented, if has undos and hasn't saved, then there are changes
- - [ ] Rewrite code to relabel custom segments when saving them if necessary (look at comment in that section)
  - [ ] Change XMLHttpRequests in init.js to use fetch function for consistency
  - [ ] Maybe make Moveable and Copyable interface? Segment and Group's expandMoveTo() and expandCopyTo() methods are the same (I think)
  - [ ] Change settings button to use a popup (not a dropdown)
- - [ ] Fix custom segment re-numbering when saving
  - [ ] Make use of change password pug and route somewhere
    - [ ] Very rough idea but once we add more settings for the UI, could make clicking on username take you to a user page where you can edit global settings (which are saved in a database) and also in that page theres a link to the change password page?
  - [ ] Make size of top header (thing with "back to file selection" and username) smaller
@@ -38,6 +36,8 @@
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
 
 
+ - [x] Rewrite code to relabel custom segments when saving them if necessary (look at comment in that section)
+ - [x] Fix custom segment re-numbering when saving
  - [x] Reorder class methods and properties by functionality (I think they're already mostly ordered logically but make sure)
  - [x] Rearrange import statements at top of files to be ordered somewhat by importance (i.e. import globals first, then classes, then utils, then icons)
  - [x] Separate into multiple files

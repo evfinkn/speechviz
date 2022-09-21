@@ -211,37 +211,46 @@ document.querySelector('button[data-action="save"]').addEventListener("click", f
     segments = segments.map(segment => segment.toSimple(["color"]));
 
     // re-number the segments so there aren't gaps in ids from removed segments
-    let idCounter = highestId + 1;
+    const customRegex = /Custom Segment /;
+    let idCounter = 1;
     segments.map((segment, index) => { return { "index": index, "id": parseInt(segment.id.split(".").at(-1)) }; })
         .sort((seg1, seg2) => seg1.id - seg2.id)
         .map(seg => segments[seg.index])
-        .forEach(function (segment) { segment.id = `peaks.segment.${idCounter++}`; });
+        .forEach(function (segment) {
+            segment.id = `peaks.segment.${highestId + idCounter}`;
+            if (segment.labelText.match(customRegex)) {
+                segment.labelText = `Custom Segment ${idCounter}`;
+            } 
+            if (segment.treeText.match(customRegex)) {
+                segment.treeText = `Custom Segment ${idCounter}`;
+            }
+            idCounter++;
+        });
 
-    // can this next section just be done above???
-    // if not, wouldn't it be easier to just update all of the custom segments and use their
-    // id instead of needing numCustom and customChanged???
-    // re-label custom segments with new numbers
-    const customRegex = /Custom Segment /;
-    let numCustom = 1;
-    const customChanged = {};
-    segments.forEach(function (segment) {
-        if (segment.labelText in customChanged) {
-            segment.labelText = customChanged[segment.labelText];
-        }
-        else if (segment.labelText.match(customRegex)) {
-            const nextCustom = `Custom Segment ${numCustom++}`;
-            customChanged[segment.labelText] = nextCustom;
-            segment.labelText = nextCustom;
-        }
-        if (segment.treeText in customChanged) {
-            segment.treeText = customChanged[segment.treeText];
-        }
-        else if (segment.treeText.match(customRegex)) {
-            const nextCustom = `Custom Segment ${numCustom++}`;
-            customChanged[segment.treeText] = nextCustom;
-            segment.treeText = nextCustom;
-        }
-    })
+    // // can this next section just be done above???
+    // // if not, wouldn't it be easier to just update all of the custom segments and use their
+    // // id instead of needing numCustom and customChanged???
+    // // re-label custom segments with new numbers
+    // let numCustom = 1;
+    // const customChanged = {};
+    // segments.forEach(function (segment) {
+    //     if (segment.labelText in customChanged) {
+    //         segment.labelText = customChanged[segment.labelText];
+    //     }
+    //     else if (segment.labelText.match(customRegex)) {
+    //         const nextCustom = `Custom Segment ${numCustom++}`;
+    //         customChanged[segment.labelText] = nextCustom;
+    //         segment.labelText = nextCustom;
+    //     }
+    //     if (segment.treeText in customChanged) {
+    //         segment.treeText = customChanged[segment.treeText];
+    //     }
+    //     else if (segment.treeText.match(customRegex)) {
+    //         const nextCustom = `Custom Segment ${numCustom++}`;
+    //         customChanged[segment.treeText] = nextCustom;
+    //         segment.treeText = nextCustom;
+    //     }
+    // })
 
     const record = { 'user': user, 'filename': filename, 'segments': segments, "notes": notes.value }
     const json = JSON.stringify(record);
