@@ -434,6 +434,7 @@ var Popup = class Popup {
         }
     }
 
+    /** */
     get text() { return this.#text; }
     set text(newText) {
         this.#text = newText;
@@ -448,14 +449,17 @@ var Popup = class Popup {
         }
     }
 
+    /** */
     show() {
         if (this.moveTo) { this.updateMoveTo(); }
         if (this.copyTo) { this.updateCopyTo(); }
         this.popup.style.display = "block";
     }
 
+    /** */
     hide() { this.popup.style.display = "none"; }
 
+    /** */
     updateMoveTo() {
         const moveTo = this.moveTo;
         const newMoveTo = this.treeItem.expandMoveTo();
@@ -464,6 +468,8 @@ var Popup = class Popup {
         if (this.moveTo.length == 0) { this.moveDiv.hidden = true; }
         else { this.moveDiv.hidden = false; }
     }
+
+    /** */
     updateCopyTo() {
         const copyTo = this.copyTo;
         const newCopyTo = this.treeItem.expandCopyTo();
@@ -473,6 +479,10 @@ var Popup = class Popup {
         else { this.copyDiv.hidden = false; }
     }
 
+    /**
+     * 
+     * @param {string} destId - 
+     */
     addMoveRadio(destId) {
         const dest = TreeItem.byId[destId];
 
@@ -492,6 +502,11 @@ var Popup = class Popup {
         this.moveTo.push(destId);
         this.moveRadios[destId] = radioDiv;
     }
+
+    /**
+     * 
+     * @param {string} destId - 
+     */
     addCopyRadio(destId) {
         const dest = TreeItem.byId[destId];
 
@@ -511,11 +526,21 @@ var Popup = class Popup {
         this.copyTo.push(destId);
         this.copyRadios[destId] = radioDiv;
     }
+
+    /**
+     * 
+     * @param {string} destId - 
+     */
     removeMoveRadio(destId) {
         this.moveRadios[destId].remove();
         delete this.moveRadios[destId];
         this.moveTo = this.moveTo.filter(moveId => moveId != destId);
     }
+
+    /**
+     * 
+     * @param {string} destId - 
+     */
     removeCopyRadio(destId) {
         this.copyRadios[destId].remove();
         delete this.copyRadios[destId];
