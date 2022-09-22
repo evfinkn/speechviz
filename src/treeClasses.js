@@ -424,7 +424,7 @@ var Popup = class Popup {
 
         if (treeItem.copyTo) {
             popupContent.append(document.createElement("br"));
-            const copyDiv = htmlToElement(`<div><h3>Copy ${text} to another group</h4></div>`);
+            const copyDiv = htmlToElement(`<div><h3>Copy ${text} to another group</h3></div>`);
             this.copyDiv = copyDiv;
             this.copyTo = [];
             this.copyRadios = {};
