@@ -452,7 +452,9 @@ var Popup = class Popup {
     show() {
         if (this.moveTo) { this.updateMoveTo(); }
         if (this.copyTo) { this.updateCopyTo(); }
-        this.popup.style.display = "block";
+        if (this.renameDiv || !this?.moveDiv?.hidden || !this?.copyDiv?.hidden) {
+            this.popup.style.display = "block";
+        }
     }
 
     /** */
