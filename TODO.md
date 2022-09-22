@@ -25,7 +25,7 @@
  - [ ] Make use of change password pug and route somewhere
    - [ ] Very rough idea but once we add more settings for the UI, could make clicking on username take you to a user page where you can edit global settings (which are saved in a database) and also in that page theres a link to the change password page?
  - [ ] Add more things to settings to configure sizes of different things
-   - [ ] Make user settings save to interface (user's global settings, per-file settings), with global settings used for files without saved settings
+   - [ ] Make user settings save to database (user's global settings, per-file settings), with global settings used for files without saved settings
  - [ ] Right now, Segment.copy() hard sets the copied Segment's properties. Somehow make specifiable?
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
