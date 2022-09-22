@@ -103,7 +103,7 @@ p code {
 	padding: 10px;
   overflow-x: scroll;
 	overflow-y: auto;
-	height: 470px;
+	height: calc(100vh - 65px);
 }
 
 .column2 {
@@ -211,4 +211,15 @@ ul, #Segments {
 .gutter.gutter-horizontal {
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
   cursor: col-resize;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 25px;
+}
+
+audio {
+  width: inherit;
 }

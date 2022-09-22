@@ -5,15 +5,15 @@ html(lang="en")
         title Speechviz
         link(rel="stylesheet", type="text/css", href="css/style.css")
     body 
-        div(style="display:flex;align-items:center;justify-content:space-between;")
-            a(href="/") Back to file selection 
+        .navbar
+            a(href="/") Back to file selection
+            p #{file}
             p#user #{user}
         .row.split 
             .column#column
                 ul#tree(style="padding-left:0px;")
             .column2#column2
                 #waveform-container
-                    p #{file}
                     if isVideo
                         video#media(controls="controls")
                             source(src=`video/${file}`, type=mimetype)
