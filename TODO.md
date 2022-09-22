@@ -14,7 +14,6 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] Make left column (tree column) fill webpage height
  - [ ] ? Make Segment.#highestId update as adding segments, then have method to make it stop and call it after pipeline segments loaded?
  - [ ] When Popup finalized, undo implemented, and dirty functionality re-added, merge into main
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
@@ -25,7 +24,6 @@
  - [ ] Change settings button to use a popup (not a dropdown)
  - [ ] Make use of change password pug and route somewhere
    - [ ] Very rough idea but once we add more settings for the UI, could make clicking on username take you to a user page where you can edit global settings (which are saved in a database) and also in that page theres a link to the change password page?
- - [ ] Make size of top header (thing with "back to file selection" and username) smaller
  - [ ] Add more things to settings to configure sizes of different things
    - [ ] Make user settings save to interface (user's global settings, per-file settings), with global settings used for files without saved settings
  - [ ] Right now, Segment.copy() hard sets the copied Segment's properties. Somehow make specifiable?
@@ -37,6 +35,8 @@
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
 
 
+ - [x] Make left column (tree column) fill webpage height
+ - [x] Make size of top header (thing with "back to file selection" and username) smaller
  - [x] Rewrite code to relabel custom segments when saving them if necessary (look at comment in that section)
  - [x] Fix custom segment re-numbering when saving
  - [x] Reorder class methods and properties by functionality (I think they're already mostly ordered logically but make sure)
