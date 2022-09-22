@@ -1,7 +1,7 @@
 import Split from 'split.js';
 import globals from "./globals";
 import { Groups, Group, Segment } from "./treeClasses";
-import { getRandomColor, toggleButton } from "./util";
+import { getRandomColor, sortByProp, toggleButton } from "./util";
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
 Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
@@ -212,46 +212,21 @@ document.querySelector('button[data-action="save"]').addEventListener("click", f
     segments = segments.map(segment => segment.toSimple(["color"]));
 
     // re-number the segments so there aren't gaps in ids from removed segments
-    const customRegex = /Custom Segment /;
-    let idCounter = 1;
+    let idCounter = highestId + 1;
     segments.map((segment, index) => { return { "index": index, "id": parseInt(segment.id.split(".").at(-1)) }; })
         .sort((seg1, seg2) => seg1.id - seg2.id)
         .map(seg => segments[seg.index])
-        .forEach(function (segment) {
-            segment.id = `peaks.segment.${highestId + idCounter}`;
-            if (segment.labelText.match(customRegex)) {
-                segment.labelText = `Custom Segment ${idCounter}`;
-            } 
-            if (segment.treeText.match(customRegex)) {
-                segment.treeText = `Custom Segment ${idCounter}`;
-            }
-            idCounter++;
-        });
+        .forEach(segment => { segment.id = `peaks.segment.${idCounter++}`; });
 
-    // // can this next section just be done above???
-    // // if not, wouldn't it be easier to just update all of the custom segments and use their
-    // // id instead of needing numCustom and customChanged???
-    // // re-label custom segments with new numbers
-    // let numCustom = 1;
-    // const customChanged = {};
-    // segments.forEach(function (segment) {
-    //     if (segment.labelText in customChanged) {
-    //         segment.labelText = customChanged[segment.labelText];
-    //     }
-    //     else if (segment.labelText.match(customRegex)) {
-    //         const nextCustom = `Custom Segment ${numCustom++}`;
-    //         customChanged[segment.labelText] = nextCustom;
-    //         segment.labelText = nextCustom;
-    //     }
-    //     if (segment.treeText in customChanged) {
-    //         segment.treeText = customChanged[segment.treeText];
-    //     }
-    //     else if (segment.treeText.match(customRegex)) {
-    //         const nextCustom = `Custom Segment ${numCustom++}`;
-    //         customChanged[segment.treeText] = nextCustom;
-    //         segment.treeText = nextCustom;
-    //     }
-    // })
+    const customRegex = /Custom Segment /;
+    let customCounter = 1;
+    sortByProp(segments, "startTime").forEach(segment => {
+        if (segment.labelText.match(customRegex)) {
+            segment.labelText = `Custom Segment ${customCounter}`;
+            segment.treeText = `Custom Segment ${customCounter}`;
+            customCounter++;
+        }
+    });
 
     const record = { 'user': user, 'filename': filename, 'segments': segments, "notes": notes.value }
     const json = JSON.stringify(record);
