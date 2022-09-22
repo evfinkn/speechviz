@@ -905,20 +905,6 @@ var Segment = class Segment extends TreeItem {
      * @static
      */
     static icons = segmentIcons;
-    static #highestId;
-    /** 
-     * The highest number id of all Segments 
-     * @type {number}
-     * @static
-    */
-    static get highestId() {
-        if (Segment.#highestId) { return Segment.#highestId; }  // only need to calculate highestId once
-        const ids = Object.keys(Segment.byId);
-        // since ids are of the form 'peaks.segment.#', parse the # from all of the ids
-        const idNums = ids.map(id => parseInt(id.split(".").at(-1)));
-        Segment.#highestId = Math.max(...idNums);  // Math.max takes numbers (not an array) so unpack array using ...
-        return Segment.#highestId;
-    }
     /**
      * A list of segment properties. Used by toSimple() in order to copy the properties to an object
      * @type {string[]}

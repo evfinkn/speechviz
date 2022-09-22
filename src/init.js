@@ -46,10 +46,11 @@ for (let [group, children, snr] of importedSegments) {
 }
 
 Group.rankSnrs();
-const highestId = Segment.highestId;  // used when saving to re-number custom segments
 
-// segmentsTree.children.forEach(child => child.toggle(false));
-
+const ids = Object.keys(Segment.byId);
+// since ids are of the form 'peaks.segment.#', parse the # from all of the ids
+const idNums = ids.map(id => parseInt(id.split(".").at(-1)));
+const highestId = Math.max(...idNums);  // used when saving to re-number segment ids to fill in gaps
 
 
 
