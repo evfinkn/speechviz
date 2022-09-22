@@ -181,7 +181,7 @@ const notes = document.getElementById("notes");
                 treeSegment.segment = segment;
                 treeSegment.parent = parent;
             }
-            else { new Segment(segment, { parent }); }
+            else { new Segment(segment, { parent, removable: true, renamable: true, moveTo: ["Labeled"] }); }
             parent.sort("startTime");
 
             if (segment.labelText.match(regex)) { segmentCounter++; }
