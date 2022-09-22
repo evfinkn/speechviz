@@ -1138,7 +1138,12 @@ var Segment = class Segment extends TreeItem {
     copy(copyParent) {
         // only copy if the new parent doesn't already have a copy of the segment
         if (!copyParent.children.some(child => propertiesEqual(this.segment, child.segment, ["startTime", "endTime"]))) {
-            const newSegment = peaks.segments.add(this.toSimple(["id", "path"]));
+            const segment = this.segment;
+            const newSegment = peaks.segments.add({
+                startTime: segment.startTime,
+                endTime: segment.endTime,
+                editable: true
+            });
             return new Segment(newSegment, { parent: copyParent, text: this.text, removable: true, renamable: true, moveTo: ["Labeled"] });
         }
         return null;
