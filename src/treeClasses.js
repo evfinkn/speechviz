@@ -463,8 +463,13 @@ var Popup = class Popup {
     updateMoveTo() {
         const moveTo = this.moveTo;
         const newMoveTo = this.treeItem.expandMoveTo();
-        newMoveTo.filter(dest => !moveTo.includes(dest)).forEach(dest => this.addMoveRadio(dest));
-        moveTo.filter(dest => !newMoveTo.includes(dest)).forEach(dest => this.removeMoveRadio(dest));
+        // remove radios of groups that TreeItem can't be moved to anymore
+        moveTo.filter(dest => !newMoveTo.includes(dest))  // remove radios first so that newMoveTo indices are correct
+            .forEach(dest => this.removeMoveRadio(dest));
+        // add radios for groups that TreeItem can now be moved to
+        newMoveTo.map((destId, i) => [destId, i])  // need to save index so radios are in order
+            .filter(dest => !moveTo.includes(dest[0]))  // dest[0] to get destId
+            .forEach(dest => this.addMoveRadio(...dest));  // unpack because dest is [destId, index]
         if (this.moveTo.length == 0) { this.moveDiv.hidden = true; }
         else { this.moveDiv.hidden = false; }
     }
@@ -473,8 +478,13 @@ var Popup = class Popup {
     updateCopyTo() {
         const copyTo = this.copyTo;
         const newCopyTo = this.treeItem.expandCopyTo();
-        newCopyTo.filter(dest => !copyTo.includes(dest)).forEach(dest => this.addCopyRadio(dest));
-        copyTo.filter(dest => !newCopyTo.includes(dest)).forEach(dest => this.removeCopyRadio(dest));
+        // remove rados of groups that TreeItem can't be copied to anymore
+        copyTo.filter(dest => !newCopyTo.includes(dest))  // remove radios first so that newCopyTo indices are correct
+            .forEach(dest => this.removeCopyRadio(dest));
+        // add radios for groups that TreeItem can now be copied to
+        newCopyTo.map((destId, i) => [destId, i])  // need to save index so radios are in order
+            .filter(dest => !copyTo.includes(dest[0]))  // dest[0] to get destId
+            .forEach(dest => this.addCopyRadio(...dest));  // unpack because dest is [destId, index]
         if (this.copyTo.length == 0) { this.copyDiv.hidden = true; }
         else { this.copyDiv.hidden = false; }
     }
@@ -482,14 +492,21 @@ var Popup = class Popup {
     /**
      * 
      * @param {string} destId - 
+     * @param {number} index - 
      */
-    addMoveRadio(destId) {
+    addMoveRadio(destId, index) {
+        const moveTo = this.moveTo;
         const dest = TreeItem.byId[destId];
 
         const radioDiv = htmlToElement(`<div><label><input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}</label><br></div>`);
         const radioButton = radioDiv.firstElementChild.firstElementChild;
 
-        this.moveDiv.append(radioDiv);
+        if (moveTo.length == 0 || index == 0) {
+            this.moveDiv.firstElementChild.after(radioDiv);  // add after the header
+        }
+        else {
+            this.moveRadios[moveTo[index - 1]].after(radioDiv);
+        }
 
         radioButton.addEventListener("change", () => {
             this.treeItem.parent = dest;
@@ -499,7 +516,7 @@ var Popup = class Popup {
             this.hide();
         });
 
-        this.moveTo.push(destId);
+        moveTo.splice(index, 0, destId);  // insert destId at index
         this.moveRadios[destId] = radioDiv;
     }
 
@@ -507,13 +524,19 @@ var Popup = class Popup {
      * 
      * @param {string} destId - 
      */
-    addCopyRadio(destId) {
+    addCopyRadio(destId, index) {
+        const copyTo = this.copyTo;
         const dest = TreeItem.byId[destId];
 
         const radioDiv = htmlToElement(`<div><label><input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}</label><br></div>`);
         const radioButton = radioDiv.firstElementChild.firstElementChild;
 
-        this.copyDiv.append(radioDiv);
+        if (copyTo.length == 0 || index == 0) {
+            this.copyDiv.firstElementChild.after(radioDiv);  // add after the header
+        }
+        else {
+            this.copyRadios[copyTo[index - 1]].after(radioDiv);
+        }
 
         radioButton.addEventListener("change", () => {
             this.treeItem.copy(dest);
@@ -523,7 +546,7 @@ var Popup = class Popup {
             this.hide();
         });
 
-        this.copyTo.push(destId);
+        copyTo.splice(index, 0, destId);  // insert destId at index
         this.copyRadios[destId] = radioDiv;
     }
 
