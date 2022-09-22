@@ -14,7 +14,6 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] ? Make Segment.#highestId update as adding segments, then have method to make it stop and call it after pipeline segments loaded?
  - [ ] When Popup finalized, undo implemented, and dirty functionality re-added, merge into main
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
  - [ ] Undo functionality
@@ -27,6 +26,7 @@
  - [ ] Add more things to settings to configure sizes of different things
    - [ ] Make user settings save to database (user's global settings, per-file settings), with global settings used for files without saved settings
  - [ ] Right now, Segment.copy() hard sets the copied Segment's properties. Somehow make specifiable?
+ - [ ] Make save annotations save renamable property in database
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
