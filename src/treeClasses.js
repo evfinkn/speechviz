@@ -384,7 +384,6 @@ var Popup = class Popup {
 
         const popupContent = htmlToElement("<div class='popup-content'></div>");
         this.popupContent = popupContent;
-
         this.popup.appendChild(popupContent);
 
         this.treeItem = treeItem;

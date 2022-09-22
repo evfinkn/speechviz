@@ -1,10 +1,10 @@
-import Split from 'split.js';
+import Split from 'split.js';  // library for resizing columns by dragging
 import globals from "./globals";
 import { Groups, Group, Segment } from "./treeClasses";
 import { getRandomColor, sortByProp, toggleButton } from "./util";
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
-Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
+Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });  // make tree and viewer columns resizable
 
 const peaks = globals.peaks;
 const user = globals.user;
