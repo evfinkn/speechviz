@@ -393,7 +393,6 @@ var Popup = class Popup {
         const text = treeItem.text;
         this.#text = text;  // set this.#text and not this.text so it doesn't call setter
 
-        popupContent.appendChild(htmlToElement("<h1>Placeholder instructions</h1>"));
         const closeButton = htmlToElement("<a class='close'>&times</a>");
         popupContent.appendChild(closeButton);
         closeButton.addEventListener("click", () => this.hide());
@@ -425,7 +424,7 @@ var Popup = class Popup {
 
         if (treeItem.copyTo) {
             popupContent.append(document.createElement("br"));
-            const copyDiv = htmlToElement(`<div><h4>Copy ${text} to another group</h4></div>`);
+            const copyDiv = htmlToElement(`<div><h3>Copy ${text} to another group</h4></div>`);
             this.copyDiv = copyDiv;
             this.copyTo = [];
             this.copyRadios = {};
