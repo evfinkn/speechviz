@@ -116,23 +116,21 @@ document.querySelector('button[data-action="add-segment"]').addEventListener('cl
 
 
 const notes = document.getElementById("notes");
-// load the segments from the database
-(function () {
-    const record = { 'user': user, 'filename': filename }
-    const json = JSON.stringify(record);
-    var loadRequest = new XMLHttpRequest();
 
-    loadRequest.open('POST', 'load', true);
-    loadRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-
-    loadRequest.send(json);
-    loadRequest.onload = function () {
-        const jsonData = JSON.parse(loadRequest.response);
-
-        notes.value = jsonData.notes || notes.value;
+fetch("load", {
+    method: "POST",
+    headers: {"Content-Type": "application/json; charset=UTF-8"},
+    body: JSON.stringify({ user, filename })
+})
+    .then(res => {
+        if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+        return res.json();
+    })
+    .then(data => {
+        notes.value = data.notes || notes.value;
 
         const regex = /Custom Segment /;
-        peaks.segments.add(jsonData.segments, { "overwrite": true }).forEach(function (segment) {
+        peaks.segments.add(data.segments, { overwrite: true }).forEach(function (segment) {
             let parent = segment.path.at(-1);
             if (!(parent in Group.byId)) {  // parent group doesn't exist yet so add it
                 parent = new Group(parent, { parent: Groups.byId[segment.path.at(-2)], removable: true, renamable: true, color: getRandomColor(), copyTo: ["Labeled"] });
@@ -152,9 +150,8 @@ const notes = document.getElementById("notes");
 
         // after loading, toggle everything off (usually end up disabling most groups right away, just do it automatically)
         segmentsTree.children.forEach(child => child.toggle(false));
-    };
-})();
-
+    })
+    .catch(error => console.error(error));  // catch err thrown by res if any
 
 peaks.on("segments.dragend", function (event) {
     const id = event.segment.id;
@@ -191,17 +188,16 @@ document.querySelector('button[data-action="save"]').addEventListener("click", f
         }
     });
 
-    const record = { 'user': user, 'filename': filename, 'segments': segments, "notes": notes.value }
-    const json = JSON.stringify(record);
-    var request = new XMLHttpRequest();
-    request.open('POST', 'save', true);
-    request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-
-    request.send(json);
-    request.onload = function () {
-        // done
-        console.log('Annotations saved');
-    };
+    fetch("save", {
+        method: "POST",
+        headers: {"Content-Type": "application/json; charset=UTF-8"},
+        body: JSON.stringify({ user, filename, segments, notes: notes.value })
+    })
+        .then(res => {
+            if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+            console.log("Annotations saved");
+        })
+        .catch(error => console.error(error));
 });
 
 // setting to change the speed at which the media plays
