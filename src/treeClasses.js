@@ -405,6 +405,7 @@ var Popup = class Popup {
             renameInput.addEventListener("keypress", (event) => {
                 if (event.key === "Enter") {
                     treeItem.rename(renameInput.value);
+                    this.text = renameInput.value;
                     this.hide();
                 }
             });
