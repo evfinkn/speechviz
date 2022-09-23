@@ -695,6 +695,7 @@ var Group = class Group extends TreeItem {
      */
     static rankSnrs() {
         const groups = Object.values(Group.byId).filter(group => group.snr !== null);
+        if (groups.length == 0) { return; }  // no groups have SNRs
 
         const snrs = {};
         const durations = {};
