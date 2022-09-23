@@ -53,20 +53,7 @@ html(lang="en")
                                         a(href="javascript:;", style="text-decoration:none;pointer-events:none;", data-action="zoom-in")
                                         a(href="javascript:;", style="text-decoration:none;", data-action="zoom-out")
                                         .dropdown
-                                            a#settings-button(href="javascript:;", style="text-decoration:none;", data-action="show-settings")
-                                            .dropdown-content#settings-dropdown
-                                                div
-                                                    label(for="amplitude-scale") Amplitude scale
-                                                    input#amplitude-scale(type="range", min="0", max="10", step="1")
-                                                input#auto-scroll(type="checkbox", checked)
-                                                label(for="auto-scroll") Auto-scroll
-                                                input#enable-seek(type="checkbox", checked)
-                                                label(for="enable-seek") Enable click to seek
-                                                input#seek-time(type="text", value="0.0")
-                                                button(data-action="seek") Seek
-                                                br
-                                                button(data-action="reset-moved") Reset moved
-                                                button(data-action="reset") Reset all
+                                            a#settings-button(href="javascript:;", style="text-decoration:none;")
                                     div
                                         button(data-action="add-segment") Add Segment
                                     div
@@ -76,7 +63,5 @@ html(lang="en")
                                         button(data-action="save") Save
                             .column4
                                 textarea#notes(rows="8", cols="60") This is for any notes you wish to jot down
-                        .popup#popup
-                            .popup-content#popup-content
 
         script(type="application/javascript", src="js/init.js")

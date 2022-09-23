@@ -21,7 +21,6 @@
    - [ ] Dirty functionality (warning user when they have unsaved changes and they try to close page) - should be maybe somewhat easy with undo implemented, if has undos and hasn't saved, then there are changes
  - [ ] Change XMLHttpRequests in init.js to use fetch function for consistency
  - [ ] Maybe make Moveable and Copyable interface? Segment and Group's expandMoveTo() and expandCopyTo() methods are the same (I think)
- - [ ] Change settings button to use a popup (not a dropdown)
  - [ ] Make use of change password pug and route somewhere
    - [ ] Very rough idea but once we add more settings for the UI, could make clicking on username take you to a user page where you can edit global settings (which are saved in a database) and also in that page theres a link to the change password page?
  - [ ] Add more things to settings to configure sizes of different things
@@ -36,6 +35,7 @@
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
 
 
+ - [x] Change settings button to use a popup (not a dropdown)
  - [x] Make left column (tree column) fill webpage height
  - [x] Make size of top header (thing with "back to file selection" and username) smaller
  - [x] Rewrite code to relabel custom segments when saving them if necessary (look at comment in that section)

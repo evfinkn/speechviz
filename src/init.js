@@ -1,6 +1,7 @@
 import Split from 'split.js';  // library for resizing columns by dragging
 import globals from "./globals";
 import { Groups, Group, Segment } from "./treeClasses";
+import SettingsPopup from './SettingsPopup';
 import { getRandomColor, sortByProp, toggleButton } from "./util";
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
@@ -51,7 +52,7 @@ const ids = Object.keys(Segment.byId);
 // since ids are of the form 'peaks.segment.#', parse the # from all of the ids
 const idNums = ids.map(id => parseInt(id.split(".").at(-1)));
 const highestId = Math.max(...idNums);  // used when saving to re-number segment ids to fill in gaps
-
+globals.highestId = highestId;
 
 
 // code below initializes the interface
@@ -79,44 +80,6 @@ zoomOut.addEventListener('click', function () {
     else if (zoomLevel == 1) {  // not at max zoom in level, enable zoom in button
         toggleButton(zoomIn, true)
     }
-});
-
-// utility to jump to an input time
-const seekTime = document.getElementById('seek-time');
-document.querySelector('button[data-action="seek"]').addEventListener('click', function () {
-    const seconds = parseFloat(seekTime.value);
-    if (!Number.isNaN(seconds)) { peaks.player.seek(seconds); }
-});
-
-// setting to enable seeking (clicking peaks to jump to a time)
-const overview = peaks.views.getView('overview');
-const zoomview = peaks.views.getView('zoomview');
-document.getElementById('enable-seek').addEventListener('change', function () {
-    zoomview.enableSeek(this.checked);
-    overview.enableSeek(this.checked);
-});
-
-// setting to enable auto-scroll (peaks viewer moves forward with audio)
-document.getElementById('auto-scroll').addEventListener('change', function () { zoomview.enableAutoScroll(this.checked); });
-
-// setting to change size of waveform amplitudes (how tall the peaks of the waveform are)
-const amplitudeScales = {
-    "0": 0.0,
-    "1": 0.1,
-    "2": 0.25,
-    "3": 0.5,
-    "4": 0.75,
-    "5": 1.0,
-    "6": 1.5,
-    "7": 2.0,
-    "8": 3.0,
-    "9": 4.0,
-    "10": 5.0
-};
-document.getElementById('amplitude-scale').addEventListener('input', function () {
-    const scale = amplitudeScales[this.value];
-    zoomview.setAmplitudeScale(scale);
-    overview.setAmplitudeScale(scale);
 });
 
 // input to add a label group
@@ -241,38 +204,6 @@ document.querySelector('button[data-action="save"]').addEventListener("click", f
     };
 });
 
-// resets all of the pipeline segments that have been moved from one group to another
-document.querySelector(`button[data-action="reset-moved"]`).addEventListener("click", function () {
-    if (confirm("This will reset all moved speaker segments.\nAre you sure you want to continue?")) {
-        const record = { "user": user, "filename": filename, "highestId": highestId };
-        const json = JSON.stringify(record);
-        var request = new XMLHttpRequest();
-        request.open("DELETE", "reset-moved", true);
-        request.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
-
-        request.send(json);
-        request.onload = function () {
-            location.reload();  // reload the page to reset the moved segments on the page
-        }
-    }
-});
-
-// deletes all saved segments
-document.querySelector(`button[data-action="reset"]`).addEventListener("click", function () {
-    if (confirm("This will delete ALL saved segments.\nAre you sure you want to continue?")) {
-        const record = { "user": user, "filename": filename };
-        const json = JSON.stringify(record);
-        var request = new XMLHttpRequest();
-        request.open("DELETE", "reset", true);
-        request.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
-
-        request.send(json);
-        request.onload = function () {
-            location.reload();  // reload the page to remove all of the saved segments from the page
-        }
-    }
-});
-
 // setting to change the speed at which the media plays
 const speedButton = document.getElementById("speed-button");
 const speedDropdown = document.getElementById("speed-dropdown");
@@ -288,13 +219,12 @@ for (let i = 0; i < spdbtns.length; i++) {
     });
 }
 
-// button containing the settings that aren't usually changed
-// putting these settings in a dropdown makes interface less crowded
+// button for popup containing the settings that aren't usually changed
 const settingsButton = document.getElementById("settings-button");
 settingsButton.innerHTML = settingsIcon;
-const settingsDropdown = document.getElementById("settings-dropdown");
-settingsButton.addEventListener("click", function () {
-    settingsDropdown.classList.toggle("show");
+const settingsPopup = new SettingsPopup();
+settingsButton.addEventListener("click", function() {
+    settingsPopup.show();
 });
 
 
@@ -302,7 +232,7 @@ settingsButton.addEventListener("click", function () {
 // Close the dropdown if the user clicks outside of it
 const dropdowns = document.getElementsByClassName("dropdown-content");
 window.onclick = function (event) {
-    if (!speedButton.contains(event.target) && !settingsButton.contains(event.target) && !settingsDropdown.contains(event.target)) {
+    if (!speedButton.contains(event.target)) {
         for (let i = 0; i < dropdowns.length; i++) {
             const openDropdown = dropdowns[i];
             if (openDropdown.classList.contains('show')) {
