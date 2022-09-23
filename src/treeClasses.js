@@ -839,7 +839,7 @@ var Group = class Group extends TreeItem {
     rename(newId) {
         try { super.rename(newId); }
         catch (error) { return false; }  // renaming unsuccessful because TreeItem with newId already exists
-        this.getSegments({ hidden: true, visible: true }).forEach(segment => segment.update({ "labelText": newId }));
+        this.getSegments({ hidden: true, visible: true }).forEach(segment => segment.update({ "labelText": `${newId}\n${segment.text}` }));
         return true;
     }
 
