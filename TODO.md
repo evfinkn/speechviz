@@ -15,7 +15,7 @@
 
 ### Interface
  - [ ] Make TreeItem.toggle() and its subclasses' toggle() return boolean like toggleTree() does
- - [ ] When undo implemented, and dirty functionality re-added, merge into main
+ - [ ] When undo implemented and dirty functionality re-added, merge into main
  - [ ] Re-add saving moved segments (segments moved between speakers)
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
  - [ ] Undo functionality
