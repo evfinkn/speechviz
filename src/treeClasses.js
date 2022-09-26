@@ -856,6 +856,7 @@ var Group = class Group extends TreeItem {
             peaks.segments.add(Object.values(this.hidden).map(hidden => hidden.segment));
             this.visible = Object.assign({}, this.visible, this.hidden);
             this.hidden = {};
+            Object.values(this.visible).forEach(segment => segment.updateEditable());
         }
         else {  // remove the visible segments from peaks
             Object.values(this.visible).forEach(function (segment) {
@@ -985,6 +986,9 @@ var Segment = class Segment extends TreeItem {
      * @type {Peaks.Segment}
      */
     segment;
+    #editable;
+    /** */
+    currentlyEditable;
     /**
      * Array of ids of `Group`s and `Groups`s that this segment can be moved to
      * @type {string[]}
@@ -1023,6 +1027,8 @@ var Segment = class Segment extends TreeItem {
         this.updateDuration();
         this.parent = parent;
 
+        this.#editable = this.segment.editable;
+        this.currentlyEditable = this.segment.editable;
         this.moveTo = moveTo;
         this.copyTo = copyTo;
 
@@ -1044,7 +1050,10 @@ var Segment = class Segment extends TreeItem {
      * Whether the segment is user-editable
      * @type {boolean}
      */
-    get editable() { return this.segment.editable; }
+    get editable() {
+        // return this.segment.editable;
+        return this.#editable;
+    }
     /**
      * The segment's color. Hex string of the form '#RRGGBB'
      * @type {string}
@@ -1141,11 +1150,33 @@ var Segment = class Segment extends TreeItem {
             peaks.segments.add(this.segment);
             delete parent.hidden[id];
             parent.visible[id] = this;
+            this.updateEditable();
         }
         else {  // remove segment from peaks
             peaks.segments.removeById(id);
             delete parent.visible[id];
             parent.hidden[id] = this;
+        }
+    }
+
+    /** */
+    toggleDragHandles(force = null) {
+        if (!this.#editable) { return null; }  // this segment isn't editable
+        if (force === this.segment.editable) {
+            return false;  // false indicates nothing changed (no toggling necessary)
+        }
+
+        const enabled = force === null ? !this.segment.editable : force;
+        this.currentlyEditable = enabled;
+        // only update if segment is visible. If not visible, it's updated when toggled on
+        if (this.checked) { this.segment.update({ editable: enabled }); }
+        
+        return true;
+    }
+
+    updateEditable() {
+        if (this.currentlyEditable != this.segment.editable) {
+            this.segment.update({ editable: this.currentlyEditable });
         }
     }
 

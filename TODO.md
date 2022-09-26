@@ -14,6 +14,7 @@
  - [x] Add support for multiple files
 
 ### Interface
+ - [ ] Make TreeItem.toggle() and its subclasses' toggle() return boolean like toggleTree() does
  - [ ] When undo implemented, and dirty functionality re-added, merge into main
  - [ ] Re-add saving moved segments (segments moved between speakers)
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
@@ -29,11 +30,11 @@
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
- - [ ] If possible, button to hide the segment drag things - actually this could be done by making all segments un-editable (but remembering which ones were editable) and then re-making segments editable (using segment.update({ editable: }) to change editable)
  
  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
 
 
+ - [x] If possible, button to hide the segment drag things - actually this could be done by making all segments un-editable (but remembering which ones were editable) and then re-making segments editable (using segment.update({ editable: }) to change editable)
  - [x] Change XMLHttpRequests in init.js to use fetch function for consistency
  - [x] Change settings button to use a popup (not a dropdown)
  - [x] Make left column (tree column) fill webpage height

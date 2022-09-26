@@ -1,4 +1,5 @@
 import globals from "./globals";
+import { Segment } from "./treeClasses";
 import { htmlToElement } from "./util";
 
 const peaks = globals.peaks;
@@ -11,7 +12,8 @@ const SettingsPopup = class SettingsPopup {
     static defaults = [
         {name: "amplitudeInput", event: "input", props: { value: "5" }},
         {name: "autoScrollInput", event: "change", props: { checked: true }},
-        {name: "enableSeekInput", event: "change", props: { checked: true }}
+        {name: "enableSeekInput", event: "change", props: { checked: true }},
+        {name: "showDragHandlesInput", event: "change", props: { checked: true }}
     ];
 
     /** */
@@ -22,8 +24,9 @@ const SettingsPopup = class SettingsPopup {
     amplitudeInput;
     autoScrollInput;
     enableSeekInput;
+    showDragHandlesInput;
     resetMovedButton;
-    resetAllButton
+    resetAllButton;
 
     constructor() {
         this.popup = htmlToElement("<div class='popup'></div>");
@@ -44,7 +47,7 @@ const SettingsPopup = class SettingsPopup {
         popupContent.append(amplitudeDiv);
 
         this.amplitudeInput = amplitudeDiv.firstElementChild.firstElementChild;
-        this.amplitudeInput.addEventListener('input', function () {
+        this.amplitudeInput.addEventListener("input", function () {
             const scale = amplitudes[this.value];
             zoomview.setAmplitudeScale(scale);
             overview.setAmplitudeScale(scale);
@@ -55,16 +58,25 @@ const SettingsPopup = class SettingsPopup {
         popupContent.append(autoScrollDiv);
 
         this.autoScrollInput = autoScrollDiv.firstElementChild.firstElementChild;
-        this.autoScrollInput.addEventListener('change', function () { zoomview.enableAutoScroll(this.checked); });
+        this.autoScrollInput.addEventListener("change", function () { zoomview.enableAutoScroll(this.checked); });
 
         // setting to enable seeking (clicking peaks to jump to a time)
         const enableSeekDiv = htmlToElement("<div><label><input type='checkbox' checked> Enable click to seek</label></div>");
         popupContent.append(enableSeekDiv);
 
         this.enableSeekInput = enableSeekDiv.firstElementChild.firstElementChild;
-        this.enableSeekInput.addEventListener('change', function () {
+        this.enableSeekInput.addEventListener("change", function () {
             zoomview.enableSeek(this.checked);
             overview.enableSeek(this.checked);
+        });
+
+        // setting to show segments' drag handles
+        const showDragHandlesDiv = htmlToElement("<div><label><input type='checkbox' checked> Show segments' time drag handles</label></div>");
+        popupContent.append(showDragHandlesDiv);
+
+        this.showDragHandlesInput = showDragHandlesDiv.firstElementChild.firstElementChild;
+        this.showDragHandlesInput.addEventListener("change", function () {
+            Object.values(Segment.byId).forEach(segment => segment.toggleDragHandles(this.checked));
         });
 
         const fetchOptions = {
