@@ -158,8 +158,7 @@ peaks.on("segments.dragend", function (event) {
     Segment.byId[id].updateDuration();
 });
 
-// saves the segments
-document.querySelector('button[data-action="save"]').addEventListener("click", function () {
+const save = function () {
     const groupRegex = /Speaker |VAD|Non-VAD/;
     // only save groups that aren't from the pipeline
     const groups = Object.values(Group.byId).filter(group => !group.id.match(groupRegex));
@@ -198,7 +197,10 @@ document.querySelector('button[data-action="save"]').addEventListener("click", f
             console.log("Annotations saved");
         })
         .catch(error => console.error(error));
-});
+};
+
+// saves the segments
+document.querySelector('button[data-action="save"]').addEventListener("click", save);
 
 // setting to change the speed at which the media plays
 const speedButton = document.getElementById("speed-button");
@@ -238,6 +240,30 @@ window.onclick = function (event) {
     }
 }
 
+window.addEventListener("keydown", function (event) {
+    // ctrl key for windows, meta key is command for mac
+    if (event.ctrlKey || event.metaKey) {
+        // following comments use "ctrl + __", same as "cmd + __" for mac
+        if (event.key == "s") {  // ctrl + s is save shortcut
+            save();
+            event.preventDefault();  // prevent default action when this shortcut is pressed
+        }
+        else if (event.key == "z") {
+            if (event.shiftKey) {  // ctrl + shift + z is redo shortcut
+                console.log("ctrl + shift + z");
+                event.preventDefault();
+            }
+            else {  // ctrl + z is undo shortcut
+                console.log("ctrl + z");
+                event.preventDefault();
+            }
+        }
+        else if (event.key == "y") {  // ctrl + y is redo shortcut
+            console.log("ctrl + y");
+            event.preventDefault();
+        }
+    }
+});
 
 // // https://stackoverflow.com/a/7317311
 // // warns user when they try to close page that they have unsaved changes
