@@ -11,10 +11,10 @@
 // `Groups`s into `Group`s within Popup), so didn't want to hard-code it into TreeItem. Probably better
 // way to do this while still including Popup functionality in TreeItem?
 
-import globals from "./globals";
-import { htmlToElement, sortByProp, toggleButton, arrayMean, objectMap, propertiesEqual } from "./util";
-import { groupIcons, segmentIcons } from "./icon";
 import Picker from "vanilla-picker";
+import globals from "./globals";
+import { htmlToElement, sortByProp, toggleButton, arrayMean, objectMap, propertiesEqual, getRandomColor } from "./util";
+import { groupIcons, segmentIcons } from "./icon";
 
 const peaks = globals.peaks;
 
@@ -377,6 +377,10 @@ var Popup = class Popup {
     copyRadios;
     /** */
     colorDiv;
+    /** */
+    colorPicker;
+    /** */
+    randomColorButton;
 
     /**
      * 
@@ -404,7 +408,7 @@ var Popup = class Popup {
             this.renameDiv = renameDiv;
             const renameInput = htmlToElement(`<input type="text" value="${text}">`);
             this.renameInput = renameInput;
-            renameDiv.appendChild(renameInput);
+            renameDiv.append(renameInput);
             renameInput.addEventListener("keypress", (event) => {
                 if (event.key === "Enter") {
                     treeItem.rename(renameInput.value);
@@ -448,6 +452,16 @@ var Popup = class Popup {
                 treeItem.color = color.hex.substring(0, 7);
                 this.hide();
             };
+
+            const randomColorButton = htmlToElement("<button>Set to random color</button>");
+            this.randomColorButton = randomColorButton;
+            colorDiv.append(randomColorButton);
+            randomColorButton.addEventListener("click", () => {
+                const randomColor = getRandomColor();
+                treeItem.color = randomColor;
+                this.colorPicker.setColor(randomColor, true);
+            });
+
             popupContent.append(colorDiv);
         }
     }
@@ -475,7 +489,7 @@ var Popup = class Popup {
         if (this.moveTo) { this.updateMoveTo(); }
         if (this.copyTo) { this.updateCopyTo(); }
         if (this.colorPicker) {
-            this.colorPicker.setColor((this.treeItem.color || "#000000") + "FF", true);
+            this.colorPicker.setColor(this.treeItem.color || "#000000", true);
         }
         if (this.renameDiv || !this?.moveDiv?.hidden || !this?.copyDiv?.hidden || this.colorDiv) {
             this.popup.style.display = "block";
