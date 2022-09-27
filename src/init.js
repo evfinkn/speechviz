@@ -11,12 +11,15 @@ const peaks = globals.peaks;
 const user = globals.user;
 const filename = globals.filename;
 
+const originalGroups = {};
+
 const createTree = function (id, parent, children, snr) {
     if (!Array.isArray(children[0])) {  // group of segments
         if (id.includes("Speaker ")) {  // group is speakers, which need popups
             const group = new Group(id, { parent, snr, copyTo: ["Labeled"] });
             peaks.segments.add(children).forEach(function (segment) {
                 new Segment(segment, { parent: group, moveTo: ["Speakers"], copyTo: ["Labeled"] });
+                originalGroups[segment.id] = id;
             });
         }
         else {  // group is VAD or Non-VAD, which don't need popups
@@ -186,6 +189,12 @@ const save = function () {
             customCounter++;
         }
     });
+
+    const movedSegments = Groups.byId["Speakers"]
+                            .getSegments({ hidden: true, visible: true })
+                            .filter(segment => segment.parent.id != originalGroups[segment.id])
+                            .map(segment => segment.toSimple(["color"]));
+    segments.push(...movedSegments);
 
     fetch("save", {
         method: "POST",
