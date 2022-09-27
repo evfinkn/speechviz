@@ -18,8 +18,6 @@
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
  - [ ] Undo functionality
    - [ ] Dirty functionality (warning user when they have unsaved changes and they try to close page) - just set dirty to true whenever an undo or redo is added and false whenever user saves
- - [ ] Make use of change password pug and route somewhere
-   - [ ] Very rough idea but once we add more settings for the UI, could make clicking on username take you to a user page where you can edit global settings (which are saved in a database) and also in that page theres a link to the change password page?
  - [ ] Add more things to settings to configure sizes of different things
    - [ ] Make user settings save to database (user's global settings, per-file settings), with global settings used for files without saved settings
  - [ ] Right now, Segment.copy() hard sets the copied Segment's properties. Somehow make specifiable?
@@ -29,6 +27,7 @@
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
 
 
+ - [x] Make use of change password pug and route somewhere
  - [x] Re-add saving moved segments (segments moved between speakers)
  - [x] Make TreeItem.toggle() and its subclasses' toggle() return boolean like toggleTree() does
  - [x] If possible, button to hide the segment drag things - actually this could be done by making all segments un-editable (but remembering which ones were editable) and then re-making segments editable (using segment.update({ editable: }) to change editable)
