@@ -18,7 +18,6 @@
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
  - [ ] Undo functionality
    - [ ] Dirty functionality (warning user when they have unsaved changes and they try to close page) - just set dirty to true whenever an undo or redo is added and false whenever user saves
- - [ ] Maybe make Moveable and Copyable interface? Segment and Group's expandMoveTo() and expandCopyTo() methods are the same (I think)
  - [ ] Make use of change password pug and route somewhere
    - [ ] Very rough idea but once we add more settings for the UI, could make clicking on username take you to a user page where you can edit global settings (which are saved in a database) and also in that page theres a link to the change password page?
  - [ ] Add more things to settings to configure sizes of different things
