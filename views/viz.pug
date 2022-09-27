@@ -8,7 +8,7 @@ html(lang="en")
         .navbar
             a(href="/") Back to file selection
             p #{file}
-            p#user #{user}
+            a#user(href="/settings") #{user}
         .row.split 
             .column#column
                 ul#tree(style="padding-left:0px;")

@@ -9,6 +9,7 @@ var index = require('./routes/index-route');
 var viz = require('./routes/viz-route');
 var login = require('./routes/login-route');
 var changePassword = require('./routes/change-password-route');
+var settings = require('./routes/settings-route');
 var app = express();
 
 var Database = require('better-sqlite3');
@@ -53,7 +54,8 @@ app.use(checkAuthentification)
 app.use('/', index);
 app.use('/viz', viz);
 app.use('/login', login);
-app.use("/change-password/", changePassword);
+app.use("/change-password", changePassword);
+app.use("/settings", settings);
 
 app.get('/logout', (req, res) => {
   req.session.authenticated = false;
