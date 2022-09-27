@@ -618,11 +618,13 @@ var Groups = class Groups extends TreeItem {
     /**
      * Toggles the item in the tree and hides/unhides all of this `Groups`' segments from the Peaks waveform
      * @param {boolean=} force - If given, forces the item to toggle on/off. If true, force checks the checkbox, turns on the buttons, and unhides the segments in Peaks. If false, force unchecks the checkbox, turns off the buttons, and hides the segments in Peaks. If force equals this.checked, no toggling is done.
+     * @return {boolean}
      */
     toggle(force = null) {
-        if (!this.toggleTree(force)) { return; }  // force == this.checked so no toggling necessary
+        if (!this.toggleTree(force)) { return false; }  // force == this.checked so no toggling necessary
         const checked = force === null ? this.checked : force;
         this.children.forEach(function (child) { child.toggle(checked); });
+        return true;
     }
 
     /**
@@ -847,9 +849,10 @@ var Group = class Group extends TreeItem {
     /**
      * Toggles the item in the tree and hides/unhides all of this `Group`'s segments from the Peaks waveform
      * @param {boolean=} force - If given, forces the item to toggle on/off. If true, force checks the checkbox, turns on the buttons, and unhides the segments in Peaks. If false, force unchecks the checkbox, turns off the buttons, and hides the segments in Peaks. If force equals this.checked, no toggling is done.
+     * @return {boolean}
      */
     toggle(force = null) {
-        if (!this.toggleTree(force)) { return; }  // force == this.checked so no toggling necessary
+        if (!this.toggleTree(force)) { return false; }  // force == this.checked so no toggling necessary
         const checked = force === null ? this.checked : force;
         this.children.forEach(function (child) { child.toggleTree(checked); });
         if (checked) {  // add the hidden segments to peaks
@@ -865,6 +868,8 @@ var Group = class Group extends TreeItem {
             this.hidden = Object.assign({}, this.hidden, this.visible);
             this.visible = {};
         }
+
+        return true;
     }
 
     /**
@@ -1138,9 +1143,10 @@ var Segment = class Segment extends TreeItem {
     /**
      * Toggles the item in the tree and hides/unhides this `Segment` from the Peaks waveform
      * @param {boolean=} force - If given, forces the item to toggle on/off. If true, force checks the checkbox, turns on the buttons, and unhides the segment in Peaks. If false, force unchecks the checkbox, turns off the buttons, and hides the segment in Peaks. If force equals this.checked, no toggling is done.
+     * @return {boolean}
      */
     toggle(force = null) {
-        if (!this.toggleTree(force)) { return; }  // force == this.checked so no toggling necessary
+        if (!this.toggleTree(force)) { return false; }  // force == this.checked so no toggling necessary
 
         const id = this.id;
         const parent = this.parent;
@@ -1157,6 +1163,8 @@ var Segment = class Segment extends TreeItem {
             delete parent.visible[id];
             parent.hidden[id] = this;
         }
+
+        return true;
     }
 
     /** */
@@ -1170,7 +1178,7 @@ var Segment = class Segment extends TreeItem {
         this.currentlyEditable = enabled;
         // only update if segment is visible. If not visible, it's updated when toggled on
         if (this.checked) { this.segment.update({ editable: enabled }); }
-        
+
         return true;
     }
 
