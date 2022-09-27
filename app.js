@@ -71,7 +71,14 @@ app.get("/filelist", (req, res) => {
 });
 
 app.get("/user", (req, res) => { res.send(req.session.user); });
-app.get("/users", (req, res) => { res.send(db.prepare("SELECT user FROM users").all().map(user => user.user)); });
+app.get("/users", (req, res) => {
+  if (req.session.user == "admin") {
+    res.send(db.prepare("SELECT user FROM users").all().map(user => user.user));
+  }
+  else {
+    res.send([ req.session.user ]);
+  }
+});
 
 app.get(/\/(audio|segments|video|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
