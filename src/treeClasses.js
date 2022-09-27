@@ -14,6 +14,7 @@
 import globals from "./globals";
 import { htmlToElement, sortByProp, toggleButton, arrayMean, objectMap, propertiesEqual } from "./util";
 import { groupIcons, segmentIcons } from "./icon";
+import Picker from "vanilla-picker";
 
 const peaks = globals.peaks;
 
@@ -374,6 +375,8 @@ var Popup = class Popup {
     copyDiv;
     /** */
     copyRadios;
+    /** */
+    colorDiv;
 
     /**
      * 
@@ -431,6 +434,22 @@ var Popup = class Popup {
             this.updateCopyTo();
             popupContent.append(copyDiv);
         }
+
+        if (treeItem.colorable) {
+            const colorDiv = htmlToElement(`<div><h3>Pick a new color for ${text}</h3></div>`);
+            this.colorDiv = colorDiv;
+            const colorPicker = new Picker({
+                parent: colorDiv,
+                popup: false,
+                alpha: false
+            });
+            this.colorPicker = colorPicker;
+            colorPicker.onDone = (color) => {
+                treeItem.color = color.hex.substring(0, 7);
+                this.hide();
+            };
+            popupContent.append(colorDiv);
+        }
     }
 
     /** */
@@ -446,13 +465,19 @@ var Popup = class Popup {
         if (this.copyDiv) {
             this.copyDiv.firstElementChild.innerHTML = `Copy ${newText} to another group`;
         }
+        if (this.colorDiv) {
+            this.colorDiv.firstElementChild.innerHTML = `Pick a new color for ${newText}`;
+        }
     }
 
     /** */
     show() {
         if (this.moveTo) { this.updateMoveTo(); }
         if (this.copyTo) { this.updateCopyTo(); }
-        if (this.renameDiv || !this?.moveDiv?.hidden || !this?.copyDiv?.hidden) {
+        if (this.colorPicker) {
+            this.colorPicker.setColor((this.treeItem.color || "#000000") + "FF", true);
+        }
+        if (this.renameDiv || !this?.moveDiv?.hidden || !this?.copyDiv?.hidden || this.colorDiv) {
             this.popup.style.display = "block";
         }
     }
@@ -762,15 +787,17 @@ var Group = class Group extends TreeItem {
     }
 
     /**
-     * A hex string of the form "#RRGGBB" representing the color of this `Group`'s `Segment`s in the Peaks viewer
-     * @type {string}
-     */
-    color;
-    /**
      * The signal-to-noise ratio of the `Group`
      * @type {(number|null)}
      */
     snr;
+    /**
+     * A hex string of the form "#RRGGBB" representing the color of this `Group`'s `Segment`s in the Peaks viewer
+     * @type {string}
+     */
+    #color;
+    /** */
+    colorable;
     /**
      * An object containing the `Segment`s that are currently hidden in Peaks. Key is id, value is corresponding `Segment`:  {id: `Segment`}
      * @type {Object}
@@ -802,23 +829,34 @@ var Group = class Group extends TreeItem {
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be removed from the tree
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be renamed
      * @param {string=} options.color - 
+     * @param {boolean} [options.colorable=false] - 
      * @param {string[]=} options.moveTo - 
      * @param {string[]=} options.copyTo - 
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, snr = null, text = null, removable = false, renamable = false, color = null, moveTo = [], copyTo = [] } = {}) {
+    constructor(id, { parent = null, children = null, snr = null, text = null, removable = false, renamable = false, color = null, colorable = false, moveTo = null, copyTo = null } = {}) {
         super(id, { parent, children, text, removable, renamable });  // always have to call constructor for super class (TreeItem)
 
         Group.byId[id] = this;
         this.snr = snr;
         if (children) { this.sort("startTime"); }
 
-        if (color) { this.color = color; }
+        if (color) { this.#color = color; }
+        this.colorable = colorable;
 
         this.moveTo = moveTo;
         this.copyTo = copyTo;
 
-        if (this.renamable || this.moveTo || this.copyTo) { this.popup = new Popup(this); }
+        if (renamable || moveTo || copyTo || colorable) { this.popup = new Popup(this); }
+    }
+
+    get color() { return this.#color; }
+    set color(newColor) {
+        if (this.#color && !this.colorable) {
+            throw new Error(`TreeItem ${this.id} is not colorable.`);
+        }
+        this.#color = newColor;
+        this.children.forEach(segment => segment.update({ color: newColor }));
     }
 
     /** Updates the title of the span */
