@@ -30,6 +30,8 @@ else {
  * @type {Object}
  */
 const globals = {};
+// would've defined these properties in the object (in the line above this) but then
+// VSCode IntelliSense showed them but not properties added later (like globals.peaks)
 globals.dirty = false;
 globals.filename = filename;
 globals.basename = basename;
