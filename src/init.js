@@ -161,7 +161,9 @@ peaks.on("segments.dragend", function (event) {
     Segment.byId[id].updateDuration();
 });
 
+const fileParagraph = document.getElementById("file");
 const save = function () {
+    // fileParagraph.innerHTML = `${filename} - Saving`;
     const groupRegex = /Speaker |VAD|Non-VAD/;
     // only save groups that aren't from the pipeline
     const groups = Object.values(Group.byId).filter(group => !group.id.match(groupRegex));
@@ -203,9 +205,12 @@ const save = function () {
     })
         .then(res => {
             if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-            console.log("Annotations saved");
+            fileParagraph.innerHTML = `${filename} - Saved`;
         })
-        .catch(error => console.error(error));
+        .catch(error => {
+            fileParagraph.innerHTML = `${filename} - Error while saving`;
+            console.error(error);
+        });
 };
 
 // saves the segments

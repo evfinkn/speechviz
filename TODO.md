@@ -18,6 +18,8 @@
  - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
  - [ ] Undo functionality
    - [ ] Dirty functionality (warning user when they have unsaved changes and they try to close page) - just set dirty to true whenever an undo or redo is added and false whenever user saves
+   - [ ] When something undone, remove " - Saved" from header
+   - [ ] When undo array is empty, add " - Saved" to header
  - [ ] Add more things to settings to configure sizes of different things
    - [ ] Make user settings save to database (user's global settings, per-file settings), with global settings used for files without saved settings
  - [ ] Right now, Segment.copy() hard sets the copied Segment's properties. Somehow make specifiable?
