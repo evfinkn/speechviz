@@ -167,7 +167,7 @@ var TreeItem = class TreeItem {
     get parent() { return this.#parent; }
     set parent(newParent) {
         if (this.#parent) {
-            delete this.#parent.children[this.id];
+            this.#parent.children = this.#parent.children.filter(child => child.id != this.id);
         }
         this.#parent = newParent;
         newParent.children.push(this);
