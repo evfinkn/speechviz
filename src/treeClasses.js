@@ -17,6 +17,8 @@ import { htmlToElement, sortByProp, toggleButton, arrayMean, objectMap, properti
 import { groupIcons, segmentIcons } from "./icon";
 
 const peaks = globals.peaks;
+const undoStorage = globals.undoStorage;
+const redoStorage = globals.redoStorage;
 
 // instead of const use var so the classes hoist and can reference each other before definition
 /** Class representing an item in a tree */
@@ -265,6 +267,7 @@ var TreeItem = class TreeItem {
         if (!this.removable) {
             throw new Error(`TreeItem ${this.id} is not removable.`);
         }
+        
         this.li.remove();
         delete TreeItem.byId[this.id];
         delete this.constructor.byId[this.id];  // removes this from subclasses byId, i.e. Group.byId
@@ -411,8 +414,11 @@ var Popup = class Popup {
             renameDiv.append(renameInput);
             renameInput.addEventListener("keypress", (event) => {
                 if (event.key === "Enter") {
+                    const oldText = treeItem.text;
+                    redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
                     treeItem.rename(renameInput.value);
                     this.text = renameInput.value;
+                    undoStorage.push(["renamed", treeItem.id, oldText, treeItem]);
                     this.hide();
                 }
             });
@@ -549,6 +555,8 @@ var Popup = class Popup {
         }
 
         radioButton.addEventListener("change", () => {
+            undoStorage.push(["moved", this.treeItem, this.treeItem.parent]);
+            redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage            
             this.treeItem.parent = dest;
             dest.sort("startTime");
             dest.open();
@@ -579,7 +587,8 @@ var Popup = class Popup {
         }
 
         radioButton.addEventListener("change", () => {
-            this.treeItem.copy(dest);
+            undoStorage.push(["copied", this.treeItem.copy(dest)]);
+            redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
             dest.sort("startTime");
             dest.open();
             radioButton.checked = false;
@@ -898,6 +907,12 @@ var Group = class Group extends TreeItem {
         return true;
     }
 
+    remove() {
+        redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+        super.remove();
+        undoStorage.push(["deleted label", this.id, this.parent, this.removable, this.renamable, this.color, this.copyTo]) //this way it only happens when a group has removed not all removes
+    }
+
     /**
      * Toggles the item in the tree and hides/unhides all of this `Group`'s segments from the Peaks waveform
      * @param {boolean=} force - If given, forces the item to toggle on/off. If true, force checks the checkbox, turns on the buttons, and unhides the segments in Peaks. If false, force unchecks the checkbox, turns off the buttons, and hides the segments in Peaks. If force equals this.checked, no toggling is done.
@@ -1103,6 +1118,8 @@ var Segment = class Segment extends TreeItem {
      * @type {number}
      */
     get endTime() { return this.segment.endTime; }
+    set startTime(newStart) { this.segment.update({ startTime:newStart }); }
+    set endTime(newEnd) { this.segment.update({ endTime:newEnd }); }
     /**
      * Whether the segment is user-editable
      * @type {boolean}
@@ -1177,6 +1194,10 @@ var Segment = class Segment extends TreeItem {
     remove() {
         const id = this.id;
         const parent = this.parent;
+
+        undoStorage.push(["deleted segment", this.segment, this.parent, this.removable, this.renamable, this.moveTo, this.parent.id, this.text])
+        redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+
 
         if (parent.hidden[id]) { delete parent.hidden[id]; }
         else { delete parent.visible[id]; }

@@ -35,6 +35,8 @@ const globals = {};
 globals.dirty = false;
 globals.filename = filename;
 globals.basename = basename;
+globals.undoStorage = [];
+globals.redoStorage = [];
 globals.user = user;
 
 const options = {  // options passed to Peaks

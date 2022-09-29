@@ -10,6 +10,8 @@ Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });  // make tre
 const peaks = globals.peaks;
 const user = globals.user;
 const filename = globals.filename;
+const undoStorage = globals.undoStorage;
+const redoStorage = globals.redoStorage;
 
 const originalGroups = {};
 
@@ -112,7 +114,8 @@ document.querySelector('button[data-action="add-segment"]').addEventListener('cl
         treeText: label,
     };
     segment = peaks.segments.add(segment);
-    new Segment(segment, { parent: custom, removable: true, renamable: true, moveTo: ["Labeled"] });
+    undoStorage.push(["added segment", new Segment(segment, { parent: custom, removable: true, renamable: true, moveTo: ["Labeled"] })]);
+    redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
     custom.sort("startTime");
     custom.open();  // open custom in tree to show newly added segment
 });
@@ -156,9 +159,83 @@ fetch("load", {
     })
     .catch(error => console.error(error));  // catch err thrown by res if any
 
+peaks.on("segments.dragstart", function (event) {
+    undoStorage.push(["dragged", event.segment.id, event.segment.endTime, event.segment.startTime]);
+    redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+});
+
 peaks.on("segments.dragend", function (event) {
     const id = event.segment.id;
     Segment.byId[id].updateDuration();
+});
+
+document.querySelector('button[data-action="undo"]').addEventListener('click', function () {
+    console.log(undoStorage);
+    if (undoStorage.length != 0){
+        let undoThing = undoStorage.pop();
+        if (undoThing[0] == "deleted segment") {
+            let temp = peaks.segments.add(undoThing[1]);
+            let seg = new Segment(temp, { parent: undoThing[2], removable: undoThing[3], renamable: undoThing[4], moveTo: undoThing[5] });
+            seg.text = undoThing[7]; //for if it is copied and has different text than its peaks id
+            undoThing[2].sort("startTime");
+        }
+        else if (undoThing[0] == "deleted label") {
+            console.log(undoStorage);
+            let label = undoThing[1];
+            let group = new Group(undoThing[1], { parent: labeled, removable: undoThing[3], renamable: undoThing[4], color: undoThing[5], copyTo: undoThing[6] });
+            while (undoStorage.length != 0 && (undoStorage.at(-1)[0] == "deleted segment" && undoStorage.at(-1)[6] == label)){ //this needs fixing
+                undoThing = undoStorage.pop();
+                let temp = peaks.segments.add(undoThing[1]);
+                let seg = new Segment(temp, { parent: group, removable: undoThing[3], renamable: undoThing[4], moveTo: undoThing[5] });
+                seg.text = undoThing[7]; //for if it is copied and has different text than its peaks id
+                group.sort("startTime");
+            }
+        }
+        else if (undoThing[0] == "moved") { 
+            undoThing[1].parent = undoThing[2];
+            Group.byId[undoThing[2].id].sort("startTime");
+        }
+        else if (undoThing[0] == "copied") {
+            if (undoThing[1] != null){
+                if (Array.isArray(undoThing[1])){
+                    while (undoThing[1].length != 0){
+                        console.log(undoThing[1].at(-1).parent)
+                        Segment.byId[undoThing[1].pop().id].remove();
+                        undoStorage.pop(); //because when you remove a segment it pushes it to undoStorage
+                        console.log(undoThing[1].at(-1).parent)
+                    }
+                }
+                else {
+                    Segment.byId[undoThing[1].id].remove();
+                    undoStorage.pop(); //because when you remove a segment it pushes it to undoStorage
+                }
+            }
+        }
+        else if (undoThing[0] == "renamed") {
+            if (undoThing[3] instanceof Segment){ //if its id contains segment it is a segment being renamed
+                Segment.byId[undoThing[1]].rename(undoThing[2]);
+            }
+            else{
+                Group.byId[undoThing[1]].rename(undoThing[2]);
+            }
+        }
+        else if (undoThing[0] == "dragged") {
+            Segment.byId[undoThing[1]].endTime = undoThing[2];
+            Segment.byId[undoThing[1]].startTime = undoThing[3];
+            Segment.byId[undoThing[1]].updateDuration();
+        }
+        else if (undoThing[0] == "added segment") {
+            Segment.byId[undoThing[1].id].remove();
+            undoStorage.pop(); //because when you remove a segment it pushes it to undoStorage
+        }
+        else{
+            console.log("SOME OTHER CASE FOR UNDOTHING HAS COME OUT");
+            console.log(undoThing[0]);
+        }
+    }
+});
+
+document.querySelector('button[data-action="redo"]').addEventListener('click', function () {
 });
 
 const fileParagraph = document.getElementById("file");
