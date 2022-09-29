@@ -170,7 +170,6 @@ peaks.on("segments.dragend", function (event) {
 });
 
 document.querySelector('button[data-action="undo"]').addEventListener('click', function () {
-    console.log(undoStorage);
     if (undoStorage.length != 0){
         let undoThing = undoStorage.pop();
         if (undoThing[0] == "deleted segment") {
@@ -180,9 +179,8 @@ document.querySelector('button[data-action="undo"]').addEventListener('click', f
             undoThing[2].sort("startTime");
         }
         else if (undoThing[0] == "deleted label") {
-            console.log(undoStorage);
             let label = undoThing[1];
-            let group = new Group(undoThing[1], { parent: labeled, removable: undoThing[3], renamable: undoThing[4], color: undoThing[5], copyTo: undoThing[6] });
+            let group = new Group(undoThing[1], { parent: undoThing[2], removable: undoThing[3], renamable: undoThing[4], color: undoThing[5], copyTo: undoThing[6] });
             while (undoStorage.length != 0 && (undoStorage.at(-1)[0] == "deleted segment" && undoStorage.at(-1)[6] == label)){ //this needs fixing
                 undoThing = undoStorage.pop();
                 let temp = peaks.segments.add(undoThing[1]);

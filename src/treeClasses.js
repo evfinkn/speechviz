@@ -262,6 +262,7 @@ var TreeItem = class TreeItem {
     updateSpanTitle() {
         this.span.title = `Duration: ${this.duration.toFixed(2)}`;
     }
+
     /** Removes this `TreeItem` from the tree */
     remove() {
         if (!this.removable) {
@@ -367,17 +368,9 @@ var Popup = class Popup {
      */
     renameInput;
     /** */
-    moveTo;
-    /** */
     moveDiv;
     /** */
-    moveRadios;
-    /** */
-    copyTo;
-    /** */
     copyDiv;
-    /** */
-    copyRadios;
     /** */
     colorDiv;
     /** */
@@ -427,22 +420,16 @@ var Popup = class Popup {
 
         if (treeItem.moveTo) {
             popupContent.append(document.createElement("br"));
-            const moveDiv = htmlToElement(`<div><h3>Move ${text} to another group</h3></div>`);
-            this.moveDiv = moveDiv;
-            this.moveTo = [];
-            this.moveRadios = {};
+            this.moveDiv = htmlToElement(`<div><h3>Move ${text} to another group</h3></div>`);;
             this.updateMoveTo();
-            popupContent.append(moveDiv);
+            popupContent.append(this.moveDiv);
         }
 
         if (treeItem.copyTo) {
             popupContent.append(document.createElement("br"));
-            const copyDiv = htmlToElement(`<div><h3>Copy ${text} to another group</h3></div>`);
-            this.copyDiv = copyDiv;
-            this.copyTo = [];
-            this.copyRadios = {};
+            this.copyDiv = htmlToElement(`<div><h3>Copy ${text} to another group</h3></div>`);
             this.updateCopyTo();
-            popupContent.append(copyDiv);
+            popupContent.append(this.copyDiv);
         }
 
         if (treeItem.colorable) {
@@ -492,8 +479,8 @@ var Popup = class Popup {
 
     /** */
     show() {
-        if (this.moveTo) { this.updateMoveTo(); }
-        if (this.copyTo) { this.updateCopyTo(); }
+        if (this.moveDiv) { this.updateMoveTo(); }
+        if (this.copyDiv) { this.updateCopyTo(); }
         if (this.colorPicker) {
             this.colorPicker.setColor(this.treeItem.color || "#000000", true);
         }
@@ -507,32 +494,30 @@ var Popup = class Popup {
 
     /** */
     updateMoveTo() {
-        const moveTo = this.moveTo;
-        const newMoveTo = this.treeItem.expandMoveTo();
-        // remove radios of groups that TreeItem can't be moved to anymore
-        moveTo.filter(dest => !newMoveTo.includes(dest))  // remove radios first so that newMoveTo indices are correct
-            .forEach(dest => this.removeMoveRadio(dest));
-        // add radios for groups that TreeItem can now be moved to
-        newMoveTo.map((destId, i) => [destId, i])  // need to save index so radios are in order
-            .filter(dest => !moveTo.includes(dest[0]))  // dest[0] to get destId
-            .forEach(dest => this.addMoveRadio(...dest));  // unpack because dest is [destId, index]
-        if (this.moveTo.length == 0) { this.moveDiv.hidden = true; }
-        else { this.moveDiv.hidden = false; }
+        const moveDiv = this.moveDiv;
+        while (moveDiv.children[1]) {
+            moveDiv.removeChild(moveDiv.lastChild);
+        }
+        const moveTo = this.treeItem.expandMoveTo();
+        if (moveTo.length == 0) { moveDiv.hidden = true; }
+        else {
+            moveDiv.hidden = false;
+            moveTo.forEach(dest => this.addMoveRadio(dest));
+        }
     }
 
     /** */
     updateCopyTo() {
-        const copyTo = this.copyTo;
-        const newCopyTo = this.treeItem.expandCopyTo();
-        // remove rados of groups that TreeItem can't be copied to anymore
-        copyTo.filter(dest => !newCopyTo.includes(dest))  // remove radios first so that newCopyTo indices are correct
-            .forEach(dest => this.removeCopyRadio(dest));
-        // add radios for groups that TreeItem can now be copied to
-        newCopyTo.map((destId, i) => [destId, i])  // need to save index so radios are in order
-            .filter(dest => !copyTo.includes(dest[0]))  // dest[0] to get destId
-            .forEach(dest => this.addCopyRadio(...dest));  // unpack because dest is [destId, index]
-        if (this.copyTo.length == 0) { this.copyDiv.hidden = true; }
-        else { this.copyDiv.hidden = false; }
+        const copyDiv = this.copyDiv;
+        while (copyDiv.children[1]) {
+            copyDiv.removeChild(copyDiv.lastChild);
+        }
+        const copyTo = this.treeItem.expandCopyTo();
+        if (copyTo.length == 0) { copyDiv.hidden = true; }
+        else {
+            copyDiv.hidden = false;
+            copyTo.forEach(dest => this.addCopyRadio(dest));
+        }
     }
 
     /**
@@ -540,19 +525,13 @@ var Popup = class Popup {
      * @param {string} destId - 
      * @param {number} index - 
      */
-    addMoveRadio(destId, index) {
-        const moveTo = this.moveTo;
+    addMoveRadio(destId) {
         const dest = TreeItem.byId[destId];
 
         const radioDiv = htmlToElement(`<div><label><input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}</label><br></div>`);
         const radioButton = radioDiv.firstElementChild.firstElementChild;
 
-        if (moveTo.length == 0 || index == 0) {
-            this.moveDiv.firstElementChild.after(radioDiv);  // add after the header
-        }
-        else {
-            this.moveRadios[moveTo[index - 1]].after(radioDiv);
-        }
+        this.moveDiv.append(radioDiv);
 
         radioButton.addEventListener("change", () => {
             undoStorage.push(["moved", this.treeItem, this.treeItem.parent]);
@@ -563,28 +542,19 @@ var Popup = class Popup {
             radioButton.checked = false;
             this.hide();
         });
-
-        moveTo.splice(index, 0, destId);  // insert destId at index
-        this.moveRadios[destId] = radioDiv;
     }
 
     /**
      * 
      * @param {string} destId - 
      */
-    addCopyRadio(destId, index) {
-        const copyTo = this.copyTo;
+    addCopyRadio(destId) {
         const dest = TreeItem.byId[destId];
 
         const radioDiv = htmlToElement(`<div><label><input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}</label><br></div>`);
         const radioButton = radioDiv.firstElementChild.firstElementChild;
 
-        if (copyTo.length == 0 || index == 0) {
-            this.copyDiv.firstElementChild.after(radioDiv);  // add after the header
-        }
-        else {
-            this.copyRadios[copyTo[index - 1]].after(radioDiv);
-        }
+        this.copyDiv.append(radioDiv);
 
         radioButton.addEventListener("change", () => {
             undoStorage.push(["copied", this.treeItem.copy(dest)]);
@@ -594,9 +564,6 @@ var Popup = class Popup {
             radioButton.checked = false;
             this.hide();
         });
-
-        copyTo.splice(index, 0, destId);  // insert destId at index
-        this.copyRadios[destId] = radioDiv;
     }
 
     /**
@@ -1308,6 +1275,7 @@ var Segment = class Segment extends TreeItem {
             });
             return new Segment(newSegment, { parent: copyParent, text: this.text, removable: true, renamable: true, moveTo: ["Labeled"] });
         }
+        console.log("copy already exists");
         return null;
     }
 
