@@ -580,26 +580,6 @@ var Popup = class Popup {
             this.hide();
         });
     }
-
-    /**
-     * 
-     * @param {string} destId - 
-     */
-    removeMoveRadio(destId) {
-        this.moveRadios[destId].remove();
-        delete this.moveRadios[destId];
-        this.moveTo = this.moveTo.filter(moveId => moveId != destId);
-    }
-
-    /**
-     * 
-     * @param {string} destId - 
-     */
-    removeCopyRadio(destId) {
-        this.copyRadios[destId].remove();
-        delete this.copyRadios[destId];
-        this.copyTo = this.copyTo.filter(copyId => copyId != destId);
-    }
 }
 
 /**
