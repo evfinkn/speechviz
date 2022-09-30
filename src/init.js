@@ -114,8 +114,8 @@ document.querySelector('button[data-action="add-segment"]').addEventListener('cl
         treeText: label,
     };
     segment = peaks.segments.add(segment);
-    new Segment(segment, { parent: custom, removable: true, renamable: true, moveTo: ["Labeled"] });
-    undoStorage.push(["added segment", segment.id]);
+    let seg = new Segment(segment, { parent: custom, removable: true, renamable: true, moveTo: ["Labeled"] });
+    undoStorage.push(["added segment", segment, seg.getProperties(["id", "duration", "color", "labelText"])]);
     redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
     custom.sort("startTime");
     custom.open();  // open custom in tree to show newly added segment
@@ -207,13 +207,13 @@ const undo = function () {
             Segment.byId[undoThing[1]].updateDuration();
         }
         else if (undoThing[0] == "added segment") {
-            TreeItem.byId[undoThing[1]].remove();
+            redoStorage.push(undoThing)
+            Segment.byId[undoThing[1].id].remove();
         }
         else {
             console.log("SOME OTHER CASE FOR UNDOTHING HAS COME OUT");
             console.log(undoThing[0]);
         }
-        
     }
 };
 
@@ -222,7 +222,14 @@ document.querySelector('button[data-action="undo"]').addEventListener('click', u
 document.querySelector('button[data-action="redo"]').addEventListener('click', function () {
     if (redoStorage.length != 0){
         console.log(redoStorage);
-        //let redoThing = redoStorage.pop();
+        let redoThing = redoStorage.pop();
+        if (redoThing[0] == "added segment") {
+            undoStorage.push(redoThing);
+            const [, peaksSegment, options] = redoThing; // unpack undoThing (ignoring first element)
+            Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
+            const segment = new Segment(peaks.segments.add(peaksSegment), options);
+            segment.parent.sort("startTime");
+        }
     }
 });
 
