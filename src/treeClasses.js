@@ -446,7 +446,7 @@ var Popup = class Popup {
                     redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
                     treeItem.rename(renameInput.value);
                     this.text = renameInput.value;
-                    undoStorage.push(["renamed", treeItem.id, oldText, treeItem]);
+                    undoStorage.push(["renamed", treeItem.id, oldText]);
                     this.hide();
                 }
             });
@@ -569,7 +569,7 @@ var Popup = class Popup {
         this.moveDiv.append(radioDiv);
 
         radioButton.addEventListener("change", () => {
-            undoStorage.push(["moved", this.treeItem.id, this.treeItem.parent]);
+            undoStorage.push(["moved", this.treeItem.id, this.treeItem.parent.id]);
             redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage            
             this.treeItem.parent = dest;
             dest.sort("startTime");
@@ -592,9 +592,14 @@ var Popup = class Popup {
         this.copyDiv.append(radioDiv);
 
         radioButton.addEventListener("change", () => {
-            undoStorage.push(["copied", this.treeItem.copy(dest)]);
-            redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
-            dest.sort("startTime");
+            let copied = this.treeItem.copy(dest);
+            if (copied) {
+                if (!Array.isArray(copied)) { copied = [copied]; }
+                copied = copied.map(copy => copy.id);
+                undoStorage.push(["copied", copied]);
+                redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+                dest.sort("startTime");
+            }
             dest.open();
             radioButton.checked = false;
             this.hide();
@@ -881,7 +886,7 @@ var Group = class Group extends TreeItem {
     remove() {
         redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
         super.remove();
-        undoStorage.push(["deleted label", this.id, this.parent, this.removable, this.renamable, this.color, this.copyTo]) //this way it only happens when a group has removed not all removes
+        undoStorage.push(["deleted group", this.id, this.getProperties(["id", "duration"])]); //this way it only happens when a group has removed not all removes
     }
 
     /**
@@ -1154,7 +1159,7 @@ var Segment = class Segment extends TreeItem {
         const id = this.id;
         const parent = this.parent;
 
-        undoStorage.push(["deleted segment", this.segment, this.parent, this.removable, this.renamable, this.moveTo, this.parent.id, this.text])
+        undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"])]);
         redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
 
 
