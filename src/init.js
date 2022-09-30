@@ -126,7 +126,7 @@ const notes = document.getElementById("notes");
 
 fetch("load", {
     method: "POST",
-    headers: {"Content-Type": "application/json; charset=UTF-8"},
+    headers: { "Content-Type": "application/json; charset=UTF-8" },
     body: JSON.stringify({ user, filename })
 })
     .then(res => {
@@ -170,8 +170,8 @@ peaks.on("segments.dragend", function (event) {
     Segment.byId[id].updateDuration();
 });
 
-const undo = function() {
-    if (undoStorage.length != 0){
+const undo = function () {
+    if (undoStorage.length != 0) {
         let undoThing = undoStorage.pop();
         if (undoThing[0] == "deleted segment") {
             const [, peaksSegment, options] = undoThing;  // unpack undoThing (ignoring first element)
@@ -183,8 +183,8 @@ const undo = function() {
             const [, id, options] = undoThing;  // unpack undoThing (ignoring first element)
             Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
             new Group(id, options);
-            while (undoStorage.length != 0 
-                    && (undoStorage.at(-1)[0] == "deleted segment" && undoStorage.at(-1)[2].path.at(-1) == id)) {
+            while (undoStorage.length != 0
+                && (undoStorage.at(-1)[0] == "deleted segment" && undoStorage.at(-1)[2].path.at(-1) == id)) {
                 undo();
             }
         }
@@ -194,7 +194,7 @@ const undo = function() {
             parent.sort("startTime");
         }
         else if (undoThing[0] == "copied") {
-            while (undoThing[1].length != 0){
+            while (undoThing[1].length != 0) {
                 TreeItem.byId[undoThing[1].pop()].remove();
                 undoStorage.pop(); //because when you remove a segment it pushes it to undoStorage
             }
@@ -211,7 +211,7 @@ const undo = function() {
             TreeItem.byId[undoThing[1]].remove();
             undoStorage.pop(); //because when you remove a segment it pushes it to undoStorage
         }
-        else{
+        else {
             console.log("SOME OTHER CASE FOR UNDOTHING HAS COME OUT");
             console.log(undoThing[0]);
         }
@@ -255,14 +255,14 @@ const save = function () {
     });
 
     const movedSegments = Groups.byId["Speakers"]
-                            .getSegments({ hidden: true, visible: true })
-                            .filter(segment => segment.parent.id != originalGroups[segment.id])
-                            .map(segment => segment.getProperties(["text", "duration", "color"]));
+        .getSegments({ hidden: true, visible: true })
+        .filter(segment => segment.parent.id != originalGroups[segment.id])
+        .map(segment => segment.getProperties(["text", "duration", "color"]));
     segments.push(...movedSegments);
 
     fetch("save", {
         method: "POST",
-        headers: {"Content-Type": "application/json; charset=UTF-8"},
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
         body: JSON.stringify({ user, filename, segments, notes: notes.value })
     })
         .then(res => {
@@ -297,7 +297,7 @@ for (let i = 0; i < spdbtns.length; i++) {
 const settingsButton = document.getElementById("settings-button");
 settingsButton.innerHTML = settingsIcon;
 const settingsPopup = new SettingsPopup();
-settingsButton.addEventListener("click", function() {
+settingsButton.addEventListener("click", function () {
     settingsPopup.show();
 });
 

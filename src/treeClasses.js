@@ -220,7 +220,7 @@ var TreeItem = class TreeItem {
         }
         return null;  // no parent, so no path
     }
-    
+
     /**
      * 
      * @param {string[]} [exclude=[]] - A list of properties to exclude from the returned object
@@ -303,7 +303,7 @@ var TreeItem = class TreeItem {
         if (!this.removable) {
             throw new Error(`TreeItem ${this.id} is not removable.`);
         }
-        
+
         this.li.remove();
         delete TreeItem.byId[this.id];
         delete this.constructor.byId[this.id];  // removes this from subclasses byId, i.e. Group.byId
@@ -1010,7 +1010,7 @@ var Segment = class Segment extends TreeItem {
      * @static
      */
     static properties = ["startTime", "endTime", "editable", "color", "labelText", "treeText"];
-    
+
     /**
      * Expands an array consisting of `Group`s and `Groups` by replacing `Groups` with their `Group` children
      * @param {(Group|Groups)[]} groups - Array of `Group`s and `Groups`s
@@ -1082,8 +1082,8 @@ var Segment = class Segment extends TreeItem {
      * @type {number}
      */
     get endTime() { return this.segment.endTime; }
-    set startTime(newStart) { this.segment.update({ startTime:newStart }); }
-    set endTime(newEnd) { this.segment.update({ endTime:newEnd }); }
+    set startTime(newStart) { this.segment.update({ startTime: newStart }); }
+    set endTime(newEnd) { this.segment.update({ endTime: newEnd }); }
     /**
      * Whether the segment is user-editable
      * @type {boolean}
