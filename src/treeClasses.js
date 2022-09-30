@@ -885,7 +885,7 @@ var Group = class Group extends TreeItem {
 
     remove() {
         redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
-        for (var kid in this.children){
+        for (var kid of this.children){
             undoStorage.push(["deleted segment", kid.segment, kid.getProperties(["id", "duration", "color", "labelText"])]);
         }
         super.remove();
