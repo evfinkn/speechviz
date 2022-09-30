@@ -196,7 +196,6 @@ const undo = function () {
         else if (undoThing[0] == "copied") {
             while (undoThing[1].length != 0) {
                 TreeItem.byId[undoThing[1].pop()].remove();
-                undoStorage.pop(); //because when you remove a segment it pushes it to undoStorage
             }
         }
         else if (undoThing[0] == "renamed") {
@@ -209,18 +208,22 @@ const undo = function () {
         }
         else if (undoThing[0] == "added segment") {
             TreeItem.byId[undoThing[1]].remove();
-            undoStorage.pop(); //because when you remove a segment it pushes it to undoStorage
         }
         else {
             console.log("SOME OTHER CASE FOR UNDOTHING HAS COME OUT");
             console.log(undoThing[0]);
         }
+        
     }
 };
 
 document.querySelector('button[data-action="undo"]').addEventListener('click', undo);
 
 document.querySelector('button[data-action="redo"]').addEventListener('click', function () {
+    if (redoStorage.length != 0){
+        console.log(redoStorage);
+        //let redoThing = redoStorage.pop();
+    }
 });
 
 const fileParagraph = document.getElementById("file");

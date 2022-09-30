@@ -885,6 +885,9 @@ var Group = class Group extends TreeItem {
 
     remove() {
         redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+        for (var kid in this.children){
+            undoStorage.push(["deleted segment", kid.segment, kid.getProperties(["id", "duration", "color", "labelText"])]);
+        }
         super.remove();
         undoStorage.push(["deleted group", this.id, this.getProperties(["id", "duration"])]); //this way it only happens when a group has removed not all removes
     }
@@ -1072,6 +1075,22 @@ var Segment = class Segment extends TreeItem {
         if (this.renamable || this.moveTo || this.copyTo) { this.popup = new Popup(this); }
     }
 
+    render(){
+        super.render();
+        if (this.removable) {
+            const remove = htmlToElement(`<a href="javascript:;" ">${this.constructor.icons.remove}</a>`);
+            this.loopButton.after(remove);
+            remove.addEventListener("click", () => { 
+                undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"])]);
+                this.remove(); 
+                redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+            });
+            this.removeButton = remove;
+
+            super.render();
+        }
+    }
+
     /**
      * The segment's start time in seconds
      * @type {number}
@@ -1158,9 +1177,6 @@ var Segment = class Segment extends TreeItem {
     remove() {
         const id = this.id;
         const parent = this.parent;
-
-        undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"])]);
-        redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
 
 
         if (parent.hidden[id]) { delete parent.hidden[id]; }
