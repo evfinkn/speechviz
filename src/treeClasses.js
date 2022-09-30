@@ -39,6 +39,8 @@ var TreeItem = class TreeItem {
      * @static
      */
     static icons = groupIcons;
+    /** */
+    static properties = ["id", "text", "duration", "removable", "renamable", "path"];
 
     /** 
      * Checks if a TreeItem by the given id exists
@@ -217,6 +219,24 @@ var TreeItem = class TreeItem {
             return [this.#parent.id];  // parent has no path, so path is just parent
         }
         return null;  // no parent, so no path
+    }
+    
+    /**
+     * 
+     * @param {string[]} [exclude=[]] - A list of properties to exclude from the returned object
+     * @returns An object containing this `TreeItem`'s properties
+     */
+    getProperties(exclude = []) {
+        const obj = {};
+        TreeItem.properties.forEach(property => {
+            if (!exclude.includes(property)) { obj[property] = this[property]; }
+        });
+        if (!(this.constructor == TreeItem)) {
+            this.constructor.properties.forEach(property => {
+                if (!exclude.includes(property)) { obj[property] = this[property]; }
+            });
+        }
+        return obj;
     }
 
     /**
@@ -700,6 +720,8 @@ var Group = class Group extends TreeItem {
      * @static
      */
     static icons = groupIcons;
+    /** */
+    static properties = ["snr", "color", "colorable"];
 
     /**
      * Adds numbers next to `Group`s' text in the tree corresponding to their snr rank, with highest snr being highest rank
@@ -978,7 +1000,7 @@ var Segment = class Segment extends TreeItem {
      */
     static icons = segmentIcons;
     /**
-     * A list of segment properties. Used by toSimple() in order to copy the properties to an object
+     * A list of segment properties. Used by TreeItem.getProperties() in order to copy the properties to an object
      * @type {string[]}
      * @static
      */
@@ -1260,23 +1282,6 @@ var Segment = class Segment extends TreeItem {
         const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
         const expanded = Segment.#expand(copyToAsTreeItems, [this.parent.id]);
         return TreeItem.treeItemsToIds(expanded);
-    }
-
-    /**
-     * @param {string[]} [exclude=[]] - A list of properties to exclude from the returned object
-     * @returns An object containing this `Segment`'s properties
-     */
-    toSimple(exclude = []) {
-        const simple = {};
-        Segment.#props.forEach(prop => {
-            if (!exclude.includes(prop)) {
-                // honestly I can't remember why it's like this but I think
-                // otherwise it sets simple[prop] to the getters and not the values??
-                if (this.segment[prop]) { simple[prop] = this.segment[prop]; }
-                else { simple[prop] = this[prop]; }
-            }
-        });
-        return simple;
     }
 }
 

@@ -246,7 +246,7 @@ const save = function () {
 
     // need to copy the segment properties because otherwise, sending the actual segment causes error 
     // because peaks segments store the peaks instance, and the peaks instance stores the segments, infinite recursive error
-    segments = segments.map(segment => segment.toSimple(["color"]));
+    segments = segments.map(segment => segment.getProperties(["text", "duration", "color"]));
 
     // re-number the segments so there aren't gaps in ids from removed segments
     let idCounter = highestId + 1;
@@ -268,7 +268,7 @@ const save = function () {
     const movedSegments = Groups.byId["Speakers"]
                             .getSegments({ hidden: true, visible: true })
                             .filter(segment => segment.parent.id != originalGroups[segment.id])
-                            .map(segment => segment.toSimple(["color"]));
+                            .map(segment => segment.getProperties(["text", "duration", "color"]));
     segments.push(...movedSegments);
 
     fetch("save", {
