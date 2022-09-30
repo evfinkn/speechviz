@@ -184,7 +184,7 @@ const undo = function () {
             Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
             new Group(id, options);
             while (undoStorage.length != 0
-                && (undoStorage.at(-1)[0] == "deleted segment" && undoStorage.at(-1)[2].path.at(-1) == id)) {
+                && (undoStorage.at(-1)[0] == "deleted segment" && undoStorage.at(-1)[3])) {
                 undo();
             }
         }

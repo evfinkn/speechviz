@@ -885,8 +885,9 @@ var Group = class Group extends TreeItem {
 
     remove() {
         redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
-        for (var kid of this.children){
-            undoStorage.push(["deleted segment", kid.segment, kid.getProperties(["id", "duration", "color", "labelText"])]);
+        for (var kid of this.children) {
+            // true at end of undo signals that the "deleted segment" was deleted as part of a "deleted group"
+            undoStorage.push(["deleted segment", kid.segment, kid.getProperties(["id", "duration", "color", "labelText"]), true]);
         }
         super.remove();
         undoStorage.push(["deleted group", this.id, this.getProperties(["id", "duration"])]); //this way it only happens when a group has removed not all removes
@@ -1141,7 +1142,8 @@ var Segment = class Segment extends TreeItem {
         super.render();
         if (this.removeButton) {
             this.removeButton.addEventListener("click", () => { 
-                undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"])]);
+                // false at end of undo signals that the "deleted segment" was NOT deleted as part of a "deleted group"
+                undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"]), false]);
                 redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
             });
         }
