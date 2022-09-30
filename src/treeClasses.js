@@ -173,6 +173,7 @@ var TreeItem = class TreeItem {
 
         if (render) {
             this.render();
+            // in if (render) because can only assign parent if been rendered, since this.li is appended to parent.nested
             if (parent) { this.parent = parent; }
         }
 
@@ -1094,7 +1095,7 @@ var Segment = class Segment extends TreeItem {
      * @type {string}
      */
     get labelText() { return this.segment.labelText; }
-    get treeText() { return this.text; }
+    get treeText() { return this.text; }  // backwards compatibility (database expects 'treeText')
     /**
      * Updates properties of the Peaks segment.
      * @param {Object} options - An object containing options
