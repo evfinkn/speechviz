@@ -1075,22 +1075,6 @@ var Segment = class Segment extends TreeItem {
         if (this.renamable || this.moveTo || this.copyTo) { this.popup = new Popup(this); }
     }
 
-    render(){
-        super.render();
-        if (this.removable) {
-            const remove = htmlToElement(`<a href="javascript:;" ">${this.constructor.icons.remove}</a>`);
-            this.loopButton.after(remove);
-            remove.addEventListener("click", () => { 
-                undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"])]);
-                this.remove(); 
-                redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
-            });
-            this.removeButton = remove;
-
-            super.render();
-        }
-    }
-
     /**
      * The segment's start time in seconds
      * @type {number}
@@ -1151,6 +1135,17 @@ var Segment = class Segment extends TreeItem {
         if (this.checked) { newParent.visible[this.id] = this; }
         else { newParent.hidden[this.id] = this; }
         super.parent = newParent;  // call TreeItem's setter for parent
+    }
+
+    render() {
+        super.render();
+        if (this.removeButton) {
+            this.removeButton.addEventListener("click", () => { 
+                undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"])]);
+                this.remove(); 
+                redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+            });
+        }
     }
 
     /** Updates the duration using the segment's start and end times */
