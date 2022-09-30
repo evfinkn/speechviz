@@ -340,7 +340,7 @@ window.addEventListener("keydown", function (event) {
                 event.preventDefault();
             }
             else {  // ctrl + z is undo shortcut
-                console.log("ctrl + z");
+                undo();
                 event.preventDefault();
             }
         }
