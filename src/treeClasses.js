@@ -94,6 +94,16 @@ var TreeItem = class TreeItem {
      * @type {boolean}
      */
     renamable;
+    /**
+     * Array of ids of `TreeItem`s that this TreeItem can be moved to
+     * @type {string[]}
+     */
+    moveTo;
+    /**
+     * Array of ids of `TreeItem`s that this TreeItem can be copied to
+     * @type {string[]}
+     */
+    copyTo;
 
     /**
      * The li of this `TreeItem`
@@ -141,10 +151,12 @@ var TreeItem = class TreeItem {
      * @param {string=} options.text - The text to display in the tree. If null, uses `id` instead
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be removed from the tree
      * @param {boolean} [options.renamable=false] - Boolean indicating if this can renamed
+     * @param {String[]=} [options.moveTo] - 
+     * @param {String[]=} [options.copyTo] - 
      * @param {boolean} [options.render=true] - If true, calls render() in constructor. Otherwise, render() is not called
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, text = null, removable = false, renamable = false, render = true } = {}) {
+    constructor(id, { parent = null, children = null, text = null, removable = false, renamable = false, moveTo = null, copyTo = null, render = true } = {}) {
         if (TreeItem.exists(id)) {
             throw new Error(`A TreeItem with the id ${id} already exists`);
         }
@@ -156,6 +168,8 @@ var TreeItem = class TreeItem {
         this.#text = text || id;
         this.removable = removable;
         this.renamable = renamable;
+        this.moveTo = moveTo;
+        this.copyTo = copyTo;
 
         if (render) {
             this.render();
@@ -798,16 +812,6 @@ var Group = class Group extends TreeItem {
      * @type {Object}
      */
     visible = {};
-    /**
-     * Array of ids of `Group`s and `Groups`s that this segment can be moved to
-     * @type {string[]}
-     */
-    moveTo;
-    /**
-     * Array of ids of `Group`s and `Groups`s that this segment can be copied to
-     * @type {string[]}
-     */
-    copyTo;
 
     /**
      * @param {string} id - The unique identifier to give this `Group`
@@ -825,7 +829,7 @@ var Group = class Group extends TreeItem {
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
     constructor(id, { parent = null, children = null, snr = null, text = null, removable = false, renamable = false, color = null, colorable = false, moveTo = null, copyTo = null } = {}) {
-        super(id, { parent, children, text, removable, renamable });  // always have to call constructor for super class (TreeItem)
+        super(id, { parent, children, text, removable, renamable, moveTo, copyTo });  // always have to call constructor for super class (TreeItem)
 
         Group.byId[id] = this;
         this.snr = snr;
@@ -833,9 +837,6 @@ var Group = class Group extends TreeItem {
 
         if (color) { this.#color = color; }
         this.colorable = colorable;
-
-        this.moveTo = moveTo;
-        this.copyTo = copyTo;
 
         if (renamable || moveTo || copyTo || colorable) { this.popup = new Popup(this); }
     }
@@ -1000,7 +1001,7 @@ var Segment = class Segment extends TreeItem {
      * @type {string[]}
      * @static
      */
-    static #props = ["startTime", "endTime", "editable", "color", "labelText", "id", "path", "treeText", "removable"];
+    static properties = ["startTime", "endTime", "editable", "color", "labelText", "treeText"];
     
     /**
      * Expands an array consisting of `Group`s and `Groups` by replacing `Groups` with their `Group` children
@@ -1028,16 +1029,6 @@ var Segment = class Segment extends TreeItem {
     #editable;
     /** */
     currentlyEditable;
-    /**
-     * Array of ids of `Group`s and `Groups`s that this segment can be moved to
-     * @type {string[]}
-     */
-    moveTo;
-    /**
-     * Array of ids of `Group`s and `Groups`s that this segment can be copied to
-     * @type {string[]}
-     */
-    copyTo;
 
     /**
      * @param {Peaks.Segment} segment - An instance of a `Peaks.Segment`
@@ -1058,7 +1049,7 @@ var Segment = class Segment extends TreeItem {
 
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
-        super(segment.id, { text, removable, renamable, render: false });
+        super(segment.id, { text, removable, renamable, moveTo, copyTo, render: false });
         this.segment = segment;
         Segment.byId[segment.id] = this;
 
@@ -1068,8 +1059,6 @@ var Segment = class Segment extends TreeItem {
 
         this.#editable = this.segment.editable;
         this.currentlyEditable = this.segment.editable;
-        this.moveTo = moveTo;
-        this.copyTo = copyTo;
 
         // segment only needs a popup if it's renamable, movable, or copyable
         if (this.renamable || this.moveTo || this.copyTo) { this.popup = new Popup(this); }
