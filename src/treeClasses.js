@@ -534,7 +534,7 @@ var Popup = class Popup {
         this.moveDiv.append(radioDiv);
 
         radioButton.addEventListener("change", () => {
-            undoStorage.push(["moved", this.treeItem, this.treeItem.parent]);
+            undoStorage.push(["moved", this.treeItem.id, this.treeItem.parent]);
             redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage            
             this.treeItem.parent = dest;
             dest.sort("startTime");

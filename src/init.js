@@ -190,17 +190,15 @@ document.querySelector('button[data-action="undo"]').addEventListener('click', f
             }
         }
         else if (undoThing[0] == "moved") { 
-            undoThing[1].parent = undoThing[2];
+            Segment.byId[undoThing[1]].parent = undoThing[2];
             Group.byId[undoThing[2].id].sort("startTime");
         }
         else if (undoThing[0] == "copied") {
             if (undoThing[1] != null){
                 if (Array.isArray(undoThing[1])){
                     while (undoThing[1].length != 0){
-                        console.log(undoThing[1].at(-1).parent)
                         Segment.byId[undoThing[1].pop().id].remove();
                         undoStorage.pop(); //because when you remove a segment it pushes it to undoStorage
-                        console.log(undoThing[1].at(-1).parent)
                     }
                 }
                 else {
