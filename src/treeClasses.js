@@ -1142,7 +1142,6 @@ var Segment = class Segment extends TreeItem {
         if (this.removeButton) {
             this.removeButton.addEventListener("click", () => { 
                 undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"])]);
-                this.remove(); 
                 redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
             });
         }
