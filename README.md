@@ -60,6 +60,61 @@ To actually display any audio, you need to:
 
 For example, for the file `example.mp3`, there should be `data/audio/example.mp3`, `data/waveforms/example-waveform.json`, and `data/segments/example-segments.json`.
 
+## VRS Data Extraction
+```
+git clone https://github.com/facebookresearch/Aria_data_tools.git
+$ docker build . --network=host -t aria_data_tools
+$ docker run -it --volume <your_local_data>:/data aria_data_tools:latest
+```
+
+Reccomended you use bigcore for this as we have encountered VRS build issues on Windows 11/Mac os.
+
+To get video from a VRS file, while in the container cd to the folder the vrs file is in. Then run:
+
+```
+vrs extract-images file.vrs --to image-folder + 1201-1
+```
+
+where + 1201-1 can be substituded for which sensor you want to get video from. 1201-1 is the first SLAM left camera complete list of sensors used with ARIA can be seen [here] (https://facebookresearch.github.io/Aria_data_tools/docs/sensors-measurements/#naming-conventions-for-all-tools)
+
+Next cd to where ./create-video.sh is, in the main Speechviz folder then run
+
+```
+./create-video.sh path/to/image-folder
+```
+
+This will give you an mp4 of all the images extracted without any of the audio.
+
+So the next step is audio extraction. For audio run:
+
+```
+vrs extract-audio file.vrs --to image-folder
+```
+
+Next write exit to leave the container. The next step is to use ffmpeg to rotate the video 90 degrees clockwise because by default the images are recorded rotated 90 degrees counterclockwise.
+
+```
+ffmpeg -i vid.mp4 -vf transpose=1 output.mp4
+```
+
+After that you will have to change the audio file you got from wav to mp3 so it can be combined with the mp4.
+
+```
+ffmpeg -i input-file.wav -vn -ar 44100 -ac 2 -b:a 192k output-file.mp3
+```
+
+Lastly combine the mp4 and mp3 to get a video with audio.
+
+```
+ffmpeg -i input.mp4 -i input.mp3 -c copy -map 0:v:0 -map 1:a:0 output.mp4
+```
+
+At this point if you want to then analyze the video with speechviz move the video to data/video and run
+
+```
+process_audio.py data/video
+```
+
 ## Troubleshooting
 
 If installing on Bigcore, you are likely to run into the following error:
