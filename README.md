@@ -67,7 +67,7 @@ podman build . --network=host -t aria_data_tools
 podman run -it --volume <your_local_data>:/data aria_data_tools:latest
 ```
 
-Reccomended you use bigcore for this as we have encountered VRS build issues on Windows 11/Mac os.
+It is reccomended you use bigcore for this as we have encountered VRS build issues on Windows 11/Mac os.
 
 To get video from a VRS file, while in the container cd to the folder the vrs file is in. Then run:
 
@@ -75,7 +75,7 @@ To get video from a VRS file, while in the container cd to the folder the vrs fi
 vrs extract-images file.vrs --to image-folder + 1201-1
 ```
 
-where + 1201-1 can be substituded for which sensor you want to get video from. 1201-1 is the first SLAM left camera complete list of sensors used with ARIA can be seen [here](https://facebookresearch.github.io/Aria_data_tools/docs/sensors-measurements/#naming-conventions-for-all-tools)
+where + 1201-1 can be substituded for whichever sensor you want to get video from. 1201-1 is the first SLAM left camera. A complete list of sensors used with ARIA can be seen [here](https://facebookresearch.github.io/Aria_data_tools/docs/sensors-measurements/#naming-conventions-for-all-tools)
 
 Next cd to where ./create-video.sh is, in the main Speechviz folder then run
 
