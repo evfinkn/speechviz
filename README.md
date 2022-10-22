@@ -20,8 +20,21 @@ Otherwise, you can create the environment manually:
 ```
 conda create -n speechviz
 conda activate speechviz
+```
+Then install the packages with one of the following:
+If you're installing on Linux or Windows and you'd like to use CUDA with torch, run:
+```
 conda install pytorch numpy torchvision torchaudio cudatoolkit=11.3 -c pytorch
 ```
+Otherwise, if you're installing on Linux or Windows but don't want to use CUDA, run:
+```
+conda install pytorch numpy torchvision torchaudio cpuonly -c pytorch
+```
+Otherwise, if you're on Mac, run:
+```
+conda install pytorch torchvision torchaudio -c pytorch
+```
+<br><br>
 Then, install [pyannotate.audio](https://github.com/pyannote/pyannote-audio) and speechbrain with pip:
 ```
 pip install pyannote.audio
