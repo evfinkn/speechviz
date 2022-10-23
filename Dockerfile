@@ -4,13 +4,6 @@ FROM ubuntu:focal
 # avoids annoying warnings
 ARG DEBIAN_FRONTEND=noninteractive
 
-# fixes errors like:
-# "Release file for __ is not valid yet (invalid for another __).
-#  Updates for this repository will not be applied."
-# ARG TZ="America/New_York"
-# RUN apt update --fix-missing && apt install -y tzdata
-# RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";" | cat > /etc/apt/apt.conf.d/10no--check-valid-until
-
 # copy git repo to the image
 COPY . /app/
 
