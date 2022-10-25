@@ -1,7 +1,6 @@
-export DEBIAN_FRONTEND="noninteractive"
-
 sudo apt install --no-install-recommends -y \
-	cmake ninja-build ccache doxygen git wget ffmpeg \
+	build-essential cmake ninja-build ccache doxygen \
+	git wget ffmpeg \
 	libgtest-dev libfmt-dev libcereal-dev libturbojpeg-dev \
 	libpng-dev liblz4-dev libzstd-dev libxxhash-dev \
 	libboost-system-dev libboost-filesystem-dev \
@@ -15,6 +14,7 @@ sudo apt install --no-install-recommends -y nodejs
 
 sudo apt clean
 
+sudo pip3 install --no-cache-dir -U pip
 sudo pip3 install --no-cache-dir \
 	pybind11[global] numpy \
 	typing dataclasses pytest parameterized Pillow
@@ -43,7 +43,13 @@ rm -rf /tmp/audiowaveform
 
 # install speechviz
 cd /app
-sudo pip3 install --no-cache-dir -r /app/requirements.txt
+# ,, to make cuda all lowercase
+if [[ ${cuda,,} == "true" || ${cuda} -eq 1 ]]; then
+	sudo pip3 install --no-cache-dir -r requirements.txt --extra-index-url "https://download.pytorch.org/whl/cu116"
+else
+	sudo pip3 install --no-cache-dir -r requirements.txt --extra-index-url "https://download.pytorch.org/whl/cpu"
+fi
 npm install
 npm run mkdir
-python3 /src/scripts/db_init.py
+python3 src/scripts/db_init.py
+python3 src/scripts/download_models.py
