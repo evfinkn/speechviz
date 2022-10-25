@@ -5,8 +5,6 @@ channels:
   - defaults
 dependencies:
   - cudatoolkit=11.3
-  - jupyter
-  - jupyterlab
   - numpy
   - pip
   - pytorch
@@ -14,4 +12,3 @@ dependencies:
   - torchvision
   - pip:
     - pyannote.audio
-    - speechbrain
