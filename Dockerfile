@@ -1,6 +1,6 @@
 FROM ubuntu:focal
 
-ARG cuda=true
+ARG cuda=false
 
 # copy git repo to the image
 COPY . /app/
