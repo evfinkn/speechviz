@@ -46,4 +46,4 @@ cd /app
 sudo pip3 install --no-cache-dir -r /app/requirements.txt
 npm install
 npm run mkdir
-python3 db_init.py
+python3 /src/scripts/db_init.py
