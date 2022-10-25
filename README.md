@@ -9,7 +9,7 @@ git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
 cd speechviz
 npm install
 npm run mkdir
-python db_init.py
+python src/scripts/db_init.py
 ```
 To use process_audio and the pipeline, you'll need to first make a conda environment. If installing on Linux or Windows, you can create the environment using the environment.yml file (you will still need to install audiowaveform and ffmpeg manually (check `conda list` for ffmpeg, might've been installed automatically)):
 ```
@@ -46,11 +46,11 @@ You also need to install [audiowaveform](https://github.com/bbc/audiowaveform#in
 ## Usage
 Before running the server, you'll need to process some audio. To do so, run:
 ```
-python process_audio.py FILE
+python3 src/scripts/process_audio.py FILE
 ```
 For more information, run:
 ```
-python process_audio.py -h
+python3 src/scripts/process_audio.py -h
 ```
 <br><br>
 To start the server, run:
@@ -93,7 +93,7 @@ where + 1201-1 can be substituded for whichever sensor you want to get video fro
 Next cd to where ./create-video.sh is, in the main Speechviz folder then run
 
 ```
-./create-video.sh path/to/image-folder
+src/scripts/create-video.sh path/to/image-folder
 ```
 
 This will give you an mp4 of all the images extracted without any of the audio.
@@ -125,7 +125,7 @@ ffmpeg -i input.mp4 -i input.mp3 -c copy -map 0:v:0 -map 1:a:0 output.mp4
 At this point if you want to then analyze the video with speechviz move the video to data/video and run
 
 ```
-process_audio.py data/video
+python3 src/scripts/process_audio.py data/video
 ```
 
 ## Troubleshooting
