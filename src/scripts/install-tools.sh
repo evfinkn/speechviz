@@ -1,4 +1,5 @@
-sudo apt install --no-install-recommends -y \
+# -E on sudo to preserve environment variables like http_proxy
+sudo -E apt install --no-install-recommends -y \
 	build-essential cmake ninja-build ccache doxygen \
 	git wget ffmpeg \
 	libgtest-dev libfmt-dev libcereal-dev libturbojpeg-dev \
@@ -10,12 +11,12 @@ sudo apt install --no-install-recommends -y \
 	gcc g++ libmad0-dev libid3tag0-dev libsndfile1-dev libgd-dev
 
 wget -qO- https://deb.nodesource.com/setup_16.x | sudo -E bash -
-sudo apt install --no-install-recommends -y nodejs
+sudo -E apt install --no-install-recommends -y nodejs
 
 sudo apt clean
 
-sudo pip3 install --no-cache-dir -U pip
-sudo pip3 install --no-cache-dir \
+sudo -E pip3 install --no-cache-dir -U pip
+sudo -E pip3 install --no-cache-dir \
 	pybind11[global] numpy \
 	typing dataclasses pytest parameterized Pillow
 
@@ -25,7 +26,7 @@ git clone https://github.com/facebookresearch/vrs.git
 mkdir vrs_Build
 cd vrs_Build
 cmake -DCMAKE_BUILD_TYPE=Release ../vrs/ .
-sudo make -j$(nproc) install
+sudo  make -j$(nproc) install
 rm -rf /tmp/vrs /tmp/vrs_Build
 
 # install audiowaveform
@@ -45,9 +46,9 @@ rm -rf /tmp/audiowaveform
 cd /app
 # ,, to make cuda all lowercase
 if [[ ${cuda,,} == "true" || ${cuda} -eq 1 ]]; then
-	sudo pip3 install --no-cache-dir -r requirements.txt --extra-index-url "https://download.pytorch.org/whl/cu116"
+	sudo -E pip3 install --no-cache-dir -r requirements.txt --extra-index-url "https://download.pytorch.org/whl/cu116"
 else
-	sudo pip3 install --no-cache-dir -r requirements.txt --extra-index-url "https://download.pytorch.org/whl/cpu"
+	sudo -E pip3 install --no-cache-dir -r requirements.txt --extra-index-url "https://download.pytorch.org/whl/cpu"
 fi
 npm install
 npm run mkdir
