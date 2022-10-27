@@ -11,7 +11,7 @@ const peaks = globals.peaks;
 const user = globals.user;
 const filename = globals.filename;
 const undoStorage = globals.undoStorage;
-const redoStorage = globals.redoStorage;
+// const redoStorage = globals.redoStorage;
 
 const originalGroups = {};
 
@@ -128,7 +128,7 @@ document.querySelector('button[data-action="add-segment"]').addEventListener('cl
     segment = peaks.segments.add(segment);
     let seg = new Segment(segment, { parent: custom, removable: true, renamable: true, moveTo: ["Labeled"] });
     undoStorage.push(["added segment", segment, seg.getProperties(["id", "duration", "color", "labelText"])]);
-    redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+    // redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
     custom.sort("startTime");
     custom.open();  // open custom in tree to show newly added segment
 });
@@ -174,7 +174,7 @@ fetch("load", {
 
 peaks.on("segments.dragstart", function (event) {
     undoStorage.push(["dragged", event.segment.id, event.segment.endTime, event.segment.startTime]);
-    redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+    // redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
 });
 
 peaks.on("segments.dragend", function (event) {
@@ -219,7 +219,7 @@ const undo = function () {
             Segment.byId[undoThing[1]].updateDuration();
         }
         else if (undoThing[0] == "added segment") {
-            redoStorage.push(undoThing)
+            // redoStorage.push(undoThing)
             Segment.byId[undoThing[1].id].remove();
         }
         else {
@@ -231,19 +231,19 @@ const undo = function () {
 
 document.querySelector('button[data-action="undo"]').addEventListener('click', undo);
 
-document.querySelector('button[data-action="redo"]').addEventListener('click', function () {
-    if (redoStorage.length != 0){
-        console.log(redoStorage);
-        let redoThing = redoStorage.pop();
-        if (redoThing[0] == "added segment") {
-            undoStorage.push(redoThing);
-            const [, peaksSegment, options] = redoThing; // unpack undoThing (ignoring first element)
-            Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
-            const segment = new Segment(peaks.segments.add(peaksSegment), options);
-            segment.parent.sort("startTime");
-        }
-    }
-});
+// document.querySelector('button[data-action="redo"]').addEventListener('click', function () {
+//     if (redoStorage.length != 0){
+//         console.log(redoStorage);
+//         let redoThing = redoStorage.pop();
+//         if (redoThing[0] == "added segment") {
+//             undoStorage.push(redoThing);
+//             const [, peaksSegment, options] = redoThing; // unpack undoThing (ignoring first element)
+//             Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
+//             const segment = new Segment(peaks.segments.add(peaksSegment), options);
+//             segment.parent.sort("startTime");
+//         }
+//     }
+// });
 
 const fileParagraph = document.getElementById("file");
 const save = function () {
