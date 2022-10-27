@@ -57,6 +57,18 @@ const idNums = ids.map(id => parseInt(id.split(".").at(-1)));
 const highestId = Math.max(...idNums);  // used when saving to re-number segment ids to fill in gaps
 globals.highestId = highestId;
 
+fetch(`/transcriptions/${globals.basename}-transcription.json`)
+    .then(res => {
+        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
+        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+        return res.json();
+    })
+    .then(wordsTimes => {
+        let transcription = "";
+        wordsTimes.forEach(wordTime => {peaks.points.add(wordTime); transcription += `${wordTime.labelText} `;});
+        console.log(transcription);
+    })
+    .catch(error => console.log("No transcription for audio"));
 
 // code below initializes the interface
 
