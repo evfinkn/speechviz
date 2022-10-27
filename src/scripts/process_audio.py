@@ -267,7 +267,7 @@ def process_audio(*args, scan_dir=True, reprocess=False, quiet=False, verbose=Fa
         subprocess.run(["rm", "-f", audio_path], capture_output=True)
     
     # if file_path is a sound file, process it
-    elif file_ext.casefold() in (".mp3", ".wav", ".flac", ".ogg", ".opus"):
+    elif file_ext.casefold() in (".mp3", ".wav", ".flac", ".ogg", ".opus", ".mp4", ".mov"):
         # check if output is being split between audio, waveforms, and segments directories
         # and if so, get the base directory for the three subdirectories
         if not quiet or verbose:
@@ -353,3 +353,4 @@ if __name__ == "__main__":
     process_audio(*args.path, reprocess=args.reprocess, quiet=args.quiet, verbose=args.verbose, split_channels=args.split_channels)
     if not args.quiet or args.verbose:
         print(f"\nProcessing took a total of {time.perf_counter() - start_time:.4f} seconds")
+

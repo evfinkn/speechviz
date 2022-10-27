@@ -1,5 +1,9 @@
 # TODO
 
+### Other
+ - [ ] Make script (probably Python) to extract saved annotations from database to json
+ - [ ] Make script (probably Python) to import saved annotations from json into database
+
 ### Node
  - [ ] Add HTTPS
  - [x] Fix error raised when submitting login: `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`
@@ -10,15 +14,34 @@
  - [x] Add support for multiple files
 
 ### Interface
- - [ ] Separate into multiple files
+ - [ ] When undo implemented and dirty functionality re-added, merge into main
+ - [ ] Probably need to update database to save properties from non-pipeline groups instead of only group name
+ - [ ] Undo functionality
+   - [ ] Dirty functionality (warning user when they have unsaved changes and they try to close page) - just set dirty to true whenever an undo or redo is added and false whenever user saves
+   - [ ] When something undone, remove " - Saved" from header
+   - [ ] When undo array is empty, add " - Saved" to header
+ - [ ] Add more things to settings to configure sizes of different things
+   - [ ] Make user settings save to database (user's global settings, per-file settings), with global settings used for files without saved settings
+ - [ ] Right now, Segment.copy() hard sets the copied Segment's properties. Somehow make specifiable?
+ - [ ] Make save annotations save renamable property in database
  - [ ] When playing group, show segment currently playing
  - [ ] Combinable segments? (take the startTime of first one, endTime of second one, and make into one combined segment)
  - [ ] Undo and redo button (actions: add segment, remove segment, move segment, rename segment, drag start, drag end, remove group, add to label)
- 
-  - [ ] If possible, fix drag things overlapping and dragging together (currently have to disable one segment to be able to drag separately)
- - [ ] If possible, button to hide the segment drag things
 
- 
+
+ - [x] Make use of change password pug and route somewhere
+ - [x] Re-add saving moved segments (segments moved between speakers)
+ - [x] Make TreeItem.toggle() and its subclasses' toggle() return boolean like toggleTree() does
+ - [x] If possible, button to hide the segment drag things - actually this could be done by making all segments un-editable (but remembering which ones were editable) and then re-making segments editable (using segment.update({ editable: }) to change editable)
+ - [x] Change XMLHttpRequests in init.js to use fetch function for consistency
+ - [x] Change settings button to use a popup (not a dropdown)
+ - [x] Make left column (tree column) fill webpage height
+ - [x] Make size of top header (thing with "back to file selection" and username) smaller
+ - [x] Rewrite code to relabel custom segments when saving them if necessary (look at comment in that section)
+ - [x] Fix custom segment re-numbering when saving
+ - [x] Reorder class methods and properties by functionality (I think they're already mostly ordered logically but make sure)
+ - [x] Rearrange import statements at top of files to be ordered somewhat by importance (i.e. import globals first, then classes, then utils, then icons)
+ - [x] Separate into multiple files
  - [x] Document functions
  - [x] Admin account flip between all annotations that you can view
  - [x] Fix custom segment saving / loading? (will save 'Custom Segment 1' and then after loading, adding a custom segment will be 'Custom Segment 1')

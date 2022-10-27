@@ -9,6 +9,7 @@ var index = require('./routes/index-route');
 var viz = require('./routes/viz-route');
 var login = require('./routes/login-route');
 var changePassword = require('./routes/change-password-route');
+var settings = require('./routes/settings-route');
 var app = express();
 
 var Database = require('better-sqlite3');
@@ -53,7 +54,8 @@ app.use(checkAuthentification)
 app.use('/', index);
 app.use('/viz', viz);
 app.use('/login', login);
-app.use("/change-password/", changePassword);
+app.use("/change-password", changePassword);
+app.use("/settings", settings);
 
 app.get('/logout', (req, res) => {
   req.session.authenticated = false;
@@ -64,16 +66,23 @@ app.get('/logout', (req, res) => {
 
 app.get("/filelist", (req, res) => {
   const exclude = new Set([".DS_Store"]);  // I just used a Set because Set.has() is faster than Array.includes()
-  const files = {}
+  const files = {};
   files.audio = fs.readdirSync("data/audio").filter(fileName => !exclude.has(fileName));
   files.video = fs.readdirSync("data/video").filter(fileName => !exclude.has(fileName));
   res.send(files);
 });
 
 app.get("/user", (req, res) => { res.send(req.session.user); });
-app.get("/users", (req, res) => { res.send(db.prepare("SELECT user FROM users").all().map(user => user.user)); });
+app.get("/users", (req, res) => {
+  if (req.session.user == "admin") {
+    res.send(db.prepare("SELECT user FROM users").all().map(user => user.user));
+  }
+  else {
+    res.send([ req.session.user ]);
+  }
+});
 
-app.get(/\/(audio|segments|video|waveforms)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
+app.get(/\/(audio|segments|video|waveforms|transcriptions)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
 //#region saving, loading, and resetting
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
