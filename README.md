@@ -32,7 +32,7 @@ and add `--build-arg cuda=true` to the `docker build` command above:
 
     npm install
     npm run mkdir
-    python src/scripts/db_init.py
+    python3 src/scripts/db_init.py
 
 ### Install script dependencies
 
@@ -44,12 +44,12 @@ and [ffmpeg](https://ffmpeg.org/). The remaining dependencies for `process_audio
 
 To install with PyTorch CPU support only:
 
-    pip install --extra-index-url "https://download.pytorch.org/whl/cpu" -r requirements.txt
+    pip3 install --extra-index-url "https://download.pytorch.org/whl/cpu" -r requirements.txt
 
 
 To install with PyTorch CUDA support (Linux and Windows only):
 
-    pip install --extra-index-url "https://download.pytorch.org/whl/cu116" -r requirements.txt
+    pip3 install --extra-index-url "https://download.pytorch.org/whl/cu116" -r requirements.txt
 
 #### conda
 
