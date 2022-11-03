@@ -5,6 +5,7 @@ module.exports = {
   entry: {
       init: './src/init.js',
       index: '/src/index.js',
+      imu: '/src/imu.js',
   },
   stats: 'errors-only',
   output: {
