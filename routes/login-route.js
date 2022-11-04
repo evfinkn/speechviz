@@ -2,12 +2,20 @@ var express = require('express');
 var router = express.Router();
 var db = require('better-sqlite3')("speechviz.sqlite3");
 
-/* GET login page. */
-router.get('/', (req, res, next) => res.render('login', {retry: 'retry' in req.query}));
+const redirectToReferer = function (referer, res) {
+  referer = referer ? decodeURI(referer) : "/";
+  res.redirect(referer);
+}
 
-router.get('/credentials', (req, res, next) => {
-  const user = req.query.user;
-  const password = req.query.password;
+/* GET login page. */
+router.get('/', (req, res, next) => {
+  if (req.session.authenticated) { redirectToReferer(req.query.referer, res); }
+  else { res.render('login', { referer: req.query.referer, retry: 'retry' in req.query }); }
+});
+
+router.post('/credentials', (req, res, next) => {
+  const user = req.body.user;
+  const password = req.body.password;
   const row = db.prepare('SELECT password FROM users WHERE user=?').get(user);
   if (row) {
     const expectedPassword = row.password;
@@ -15,12 +23,9 @@ router.get('/credentials', (req, res, next) => {
     if (password === expectedPassword) {  // success
       req.session.authenticated = true;
       req.session.user = user;
-      res.redirect('/');
-      return;
+      redirectToReferer(req.body.referer, res);
     }
   }
-
-	res.redirect('/login?retry');  // incorrect login
-
+  else { res.redirect('/login?retry'); }  // incorrect login
 });
 module.exports = router;

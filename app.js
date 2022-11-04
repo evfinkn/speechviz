@@ -33,13 +33,12 @@ app.set('view engine', 'pug');
  Essentially, you will have to obtain an authorization per session.
  */
 function checkAuthentification(req, res, next) {
-  let req_url = req.url.toString();
-  if (req_url.startsWith('/login')) { next(); }
+  let reqUrl = req.originalUrl;
+  if (reqUrl.startsWith('/login')) { next(); }
   else {
-    if (!req.session || !req.session.authenticated) { 
-      res.redirect('/login'); 
-      return;
-  }
+    if (!req.session || !req.session.authenticated) {
+      res.redirect(`/login?referer=${reqUrl}`);  // will redirect to requested url after successful login
+    }
     else { next(); }  // authenticated
   }
 }
@@ -78,7 +77,7 @@ app.get("/users", (req, res) => {
     res.send(db.prepare("SELECT user FROM users").all().map(user => user.user));
   }
   else {
-    res.send([ req.session.user ]);
+    res.send([req.session.user]);
   }
 });
 
@@ -213,14 +212,14 @@ app.use("/reset/", (req, res) => {
 //#endregion
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = err;

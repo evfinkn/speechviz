@@ -5,7 +5,7 @@ body
   if retry
     p="Invalid user/password combination. Please try again"
 
-  form(action="/login/credentials")
+  form(action="/login/credentials", method="post")
     table
       tr
         td="User:"
@@ -15,6 +15,10 @@ body
         td="Password:"
         td
           input(type="password", name="password")
+      if referer
+        tr
+          td
+            input(type="hidden", name="referer", value=referer)
       tr
         td
-          input(type="submit", value="Login", name="Login")
+          input(type="submit", name="login", value="login")
