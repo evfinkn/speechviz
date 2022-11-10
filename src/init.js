@@ -10,6 +10,7 @@ Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });  // make tre
 const peaks = globals.peaks;
 const user = globals.user;
 const filename = globals.filename;
+const basename = globals.basename;
 const undoStorage = globals.undoStorage;
 // const redoStorage = globals.redoStorage;
 
@@ -39,38 +40,49 @@ const createTree = function (id, parent, children, snr) {
     }
 }
 
-const importedSegments = await fetch(`/segments/${globals.basename}-segments.json`).then(response => response.json());
-
 const segmentsTree = new Groups("Segments");
 document.getElementById("tree").append(segmentsTree.li);
 
 const custom = new Group("Custom", { parent: segmentsTree, color: getRandomColor(), colorable: true });
 const labeled = new Groups("Labeled", { parent: segmentsTree });
 
-for (let [group, children, snr] of importedSegments) {
-    createTree(group, segmentsTree, children, snr);
-}
+let highestId;
+let words = [];
 
-Group.rankSnrs();
+fetch(`/segments/${basename}-segments.json`)
+    .then(res => {
+        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
+        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+        return res.json();
+    })
+    .then(segments => {
+        for (const [group, children, snr] of segments) {
+            createTree(group, segmentsTree, children, snr);
+        }
+        Group.rankSnrs();
+        const ids = Object.keys(Segment.byId);
+        // since ids are of the form 'peaks.segment.#', parse the # from all of the ids
+        const idNums = ids.map(id => parseInt(id.split(".").at(-1)));
+        highestId = Math.max(...idNums);  // used when saving to re-number segment ids to fill in gaps
+        globals.highestId = highestId;
+    })
+    .catch(error => {
+        console.log("No segments for media.")
+        highestId = 0;
+        globals.highestId = highestId;
+    });
 
-const ids = Object.keys(Segment.byId);
-// since ids are of the form 'peaks.segment.#', parse the # from all of the ids
-const idNums = ids.map(id => parseInt(id.split(".").at(-1)));
-const highestId = Math.max(...idNums);  // used when saving to re-number segment ids to fill in gaps
-globals.highestId = highestId;
 
-fetch(`/transcriptions/${globals.basename}-transcription.json`)
+fetch(`/transcriptions/${basename}-transcription.json`)
     .then(res => {
         if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
         else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
         return res.json();
     })
     .then(wordsTimes => {
-        let transcription = "";
-        wordsTimes.forEach(wordTime => {peaks.points.add(wordTime); transcription += `${wordTime.labelText} `;});
-        console.log(transcription);
+        words = wordsTimes.map(wordTime => peaks.points.add(wordTime));
     })
-    .catch(error => console.log("No transcription for audio"));
+    .catch(error => console.log("No transcription for media."));
 
 // code below initializes the interface
 
