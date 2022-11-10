@@ -9,7 +9,7 @@ Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });  // make tre
 
 const peaks = globals.peaks;
 const user = globals.user;
-const basename = globals.basename;
+const filename = globals.filename;
 const undoStorage = globals.undoStorage;
 // const redoStorage = globals.redoStorage;
 
@@ -48,7 +48,7 @@ const labeled = new Groups("Labeled", { parent: segmentsTree });
 let highestId;
 let words = [];
 
-fetch(`/segments/${basename}-segments.json`)
+fetch(`/segments/${globals.basename}-segments.json`)
     .then(res => {
         if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
         else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
@@ -72,7 +72,7 @@ fetch(`/segments/${basename}-segments.json`)
     });
 
 
-fetch(`/transcriptions/${basename}-transcription.json`)
+fetch(`/transcriptions/${globals.basename}-transcription.json`)
     .then(res => {
         if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
         else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
