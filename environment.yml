@@ -3,6 +3,8 @@ channels:
   - pytorch
   - conda-forge
   - defaults
+  - nvidia
+  - anaconda
 dependencies:
   - cudatoolkit=11.3
   - numpy
@@ -10,5 +12,12 @@ dependencies:
   - pytorch
   - torchaudio
   - torchvision
+  - cuda
+  - cudnn
   - pip:
     - pyannote.audio
+    - opencv-contrib-python
+    - cmake
+    - face_recognition
+    - imutils
+    - scikit-learn
