@@ -8,6 +8,7 @@ This will take an audio file and visualize various characteristics. Currently, y
 - [Manual installation](#manual-installation)
 - [Usage](#usage)
 - [VRS data extraction](#vrs-data-extraction)
+- [Face Detection and Clustering](#face-detection-and-clustering)
 - [Troubleshooting](#troubleshooting)
 
 ## Docker / Podman image
@@ -127,6 +128,42 @@ Lastly combine the mp4 and mp3 to get a video with audio.
 At this point if you want to then analyze the video with speechviz move the video to data/video and run
 
     python3 src/scripts/process_audio.py data/video
+
+## Face Detection and Clustering
+First we need to build dlib, this assumes you have a gpu. If you just want to use cpu use DDLIB_USE_CUDA = 0 instead.
+
+    git clone https://github.com/davisking/dlib.git
+    cd dlib
+    mkdir build
+    cd build
+    cmake .. -DDLIB_USE_CUDA=1
+    cd ..
+    python3 setup.py install
+
+A rather annoying bug can occur where your gcc compiler can be higher than is compatible with cuda, if you get a message saying DLIB WILL NOT USE CUDA try hanging cmake and python 3 lines to the following respectively.
+
+    cmake .. -DDLIB_USE_CUDA=1 -DUSE_AVX_INSTRUCTIONS=1 -DCUDA_HOST_COMPILER=/path/to/gcc/compiler/version10/or/lower
+    python3 setup.py install --set CUDA_HOST_COMPILER=/path/to/gcc/compiler/version10/or/lower
+
+Now gpu use should be supported for dlib.
+
+There are two steps. Encoding information about detecting faces in 128 dimensions, and then clustering those detected faces based on the encodings. Encoding faces is able to be done without human intervention and takes a while, so you don't want to repeat doing it. Clustering requires some human input, doesn't take as long, and could be repeated so it is split up from encoding.
+
+To run encoding,
+
+    python encode_faces.py --dataset folderWithImages --encodings whereEncodingsWillBeStored.pickle -d cnn --outputs folderForFacesDetected
+
+Where -d takes in the detection method. cnn is more accurate, but needs a gpu to not be super slow. hog is the alternative which is fast and can be done with just a cpu, but is less accurate.
+
+--outputs creates a folder named what it was given. This will not be populated unless you uncomment the code in encode_faces.py below line 59: #uncomment below to see what faces are detected. This will fill the folder outputs was given with all the faces detected which can be useful to see if the faces you're finding are accurate.
+
+Next we need to cluster the faces to see how many unique people have been identified.
+
+    python cluster_faces.py --encodings encodingYouMadeEarlier.pickle --outputs outputFolderOfFaces --epsilon epsilonFloatNumber
+
+Where epsilon is a parameter for the clustering method DBSCAN. DBSCAN clusters groups based on density of points [comarison of DBSCAN to other clustering](https://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_comparison.html). Epsilon controls how far points can be from one another and still considered a neighborhood. As a result too small a value, and no clusters will be found, they will all be considered noise. Too large an epsilon and all will be considered the same cluster. Finding the correct epsilon can take some trial and error, and for the few tests I've done with this data it has fallen around .35 and .4. As a rule of thumb when you find too many faces, increase epsilon and if you find too few, lower epsilon.
+
+This will make a few folders in a folder given to outputs. testLabel-1 is faces that it found to be noise, and testLabel0, testLabel1, etc each are folders containing the faces it thinks are the same person.
 
 ## Troubleshooting
 
