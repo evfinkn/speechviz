@@ -75,7 +75,7 @@ app.get("/filelist", (req, res) => {
   const files = {};
   files.audio = fs.readdirSync("data/audio").filter(fileName => !exclude.has(fileName));
   files.video = fs.readdirSync("data/video").filter(fileName => !exclude.has(fileName));
-  files.cluster = fs.readdirSync("data/faceClusters").filter(fileName => !exclude.has(fileName));d
+  files.cluster = fs.readdirSync("data/faceClusters").filter(fileName => !exclude.has(fileName));
   res.send(files);
 });
 
