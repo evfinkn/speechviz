@@ -8,6 +8,7 @@ channels:
 dependencies:
   - cudatoolkit=11.3
   - numpy
+  - scipy
   - pip
   - pytorch
   - torchaudio
@@ -16,6 +17,7 @@ dependencies:
   - cudnn
   - pip:
     - pyannote.audio
+    - imufusion
     - opencv-contrib-python
     - cmake
     - face_recognition
