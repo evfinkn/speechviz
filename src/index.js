@@ -56,6 +56,7 @@ fetch("/filelist")
     .then(fileList => {  // fileList is object with arrays for audio filenames and video filenames
         const audiofiles = fileList.audio;
         const videofiles = fileList.video;
+        const clusterfolders = fileList.cluster
         const fieldset = document.getElementById("file-selection");
 
         if (audiofiles?.length !== 0) {
@@ -81,18 +82,17 @@ fetch("/filelist")
                 div.firstElementChild.addEventListener("change", function () {
                     // when radio button clicked, open that video file in viz
                     window.location.replace(`/viz?${user ? "user=" + user + "&" : ""}file=${this.value}&type=video`);
-                    //check if it has face clusters
-                    var clusterFolder = new File ("../data/faceClusters/" + this.value);
-                    if (clusterFolder.exists()){
-                        //test if it found it
-                        write('The folder exists');
-                        //pass them to speechviz so we can display them
-
-                    }
-                    else {
-                        write ("Folder does not exist");
-                        write ("../data/faceClusters/" + this.value);
-                    }
+                });
+                fieldset.append(div);
+            });
+        }
+        if (clusterFolder?.length !== 0){
+            fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));  // header for video files
+            clusterFolder.forEach(function (folderName){
+                const div = htmlToElement(`<div><input type="radio" id="${fileName}" name="file-selection" value="${fileName}"></input><label for="${fileName}">${fileName}</label></div>`);
+                div.firstElementChild.addEventListener("change", function () {
+                    // when radio button clicked, open that video file in viz
+                    window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}file=${this.value}`);
                 });
                 fieldset.append(div);
             });
