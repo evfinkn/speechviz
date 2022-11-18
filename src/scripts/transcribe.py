@@ -90,7 +90,7 @@ def transcribe(file, reprocess=False, quiet=False, verbose=0):
     else:
         output_dir = file.dir
     
-    output_path = f"{output_dir}/{file.name}-words.json"
+    output_path = f"{output_dir}/{file.name}-transcription.json"
     # check if file has already been processed and only process if reprocess True
     if os.path.exists(output_path) and not reprocess:
         if not quiet or verbose:
