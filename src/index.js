@@ -86,7 +86,7 @@ fetch("/filelist")
                 fieldset.append(div);
             });
         }
-        if (clusterFolder?.length !== 0){
+        if (clusterfolders?.length !== 0){
             fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));  // header for video files
             clusterFolder.forEach(function (folderName){
                 const div = htmlToElement(`<div><input type="radio" id="${fileName}" name="file-selection" value="${fileName}"></input><label for="${fileName}">${fileName}</label></div>`);
