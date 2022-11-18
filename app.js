@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var index = require('./routes/index-route');
+var clusteredFaces = require('./routes/clustered-faces')
 var viz = require('./routes/viz-route');
 var login = require('./routes/login-route');
 var changePassword = require('./routes/change-password-route');
@@ -51,6 +52,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(checkAuthentification)
 
 app.use('/', index);
+app.use('/clustered-faces', clusteredFaces);
 app.use('/viz', viz);
 app.use('/login', login);
 app.use("/change-password", changePassword);
