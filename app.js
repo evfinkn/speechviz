@@ -66,7 +66,7 @@ app.get('/logout', (req, res) => {
 app.get("/clustered-faces", (req, res) => {
   const exclude = new Set([".DS_Store"]);  // I just used a Set because Set.has() is faster than Array.includes()
   const files = {};
-  files.cluster = fs.readdirSync("/data/faceClusters").filter(fileName => !exclude.has(fileName));d
+  files.cluster = fs.readdirSync("data/faceClusters").filter(fileName => !exclude.has(fileName));d
   res.send(files);
 });
 
@@ -75,7 +75,7 @@ app.get("/filelist", (req, res) => {
   const files = {};
   files.audio = fs.readdirSync("data/audio").filter(fileName => !exclude.has(fileName));
   files.video = fs.readdirSync("data/video").filter(fileName => !exclude.has(fileName));
-  files.cluster = fs.readdirSync("/data/faceClusters").filter(fileName => !exclude.has(fileName));d
+  files.cluster = fs.readdirSync("data/faceClusters").filter(fileName => !exclude.has(fileName));d
   res.send(files);
 });
 
