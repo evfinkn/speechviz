@@ -81,6 +81,14 @@ fetch("/filelist")
                 div.firstElementChild.addEventListener("change", function () {
                     // when radio button clicked, open that video file in viz
                     window.location.replace(`/viz?${user ? "user=" + user + "&" : ""}file=${this.value}&type=video`);
+                    //check if it has face clusters
+                    var clusterFolder = new File ("../data/faceClusters/" + this.value)
+                    if (clusterFolder.exists()){
+                        //test if it found it
+                        write('The folder exists');
+                        //pass them to speechviz so we can display them
+
+                    }
                 });
                 fieldset.append(div);
             });
