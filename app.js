@@ -6,7 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var index = require('./routes/index-route');
-var clusteredFaces = require('./routes/clustered-faces-route')
+var clusteredFaces = require('./routes/face-cluster-route')
 var viz = require('./routes/viz-route');
 var login = require('./routes/login-route');
 var changePassword = require('./routes/change-password-route');
