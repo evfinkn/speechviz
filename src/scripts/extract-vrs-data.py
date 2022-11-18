@@ -194,7 +194,7 @@ def route_file(*args, verbose=0, scan_dir=True, **kwargs):
         args = [os.getcwd()]  # if no file or directory given, use directory script was called from
     elif len(args) > 1:  # if multiple files (or directories) given, run function on each one
         for arg in args:
-            route_file(arg, scan_dir=scan_dir, **kwargs)
+            route_file(arg, verbose=verbose, scan_dir=scan_dir, **kwargs)
         return  # stop function because all processing done in the function calls in the for loop
     
     path = args[0]  # args[0] is--at this point--the only argument in args
@@ -206,7 +206,7 @@ def route_file(*args, verbose=0, scan_dir=True, **kwargs):
             print(f"{file.path} is a text file. Running extract_data on the file on each line...")
         with open(file.path) as txtfile:
             for line in txtfile.read().split("\n"):
-                route_file(line, scan_dir=scan_dir, **kwargs)
+                route_file(line, verbose=verbose, scan_dir=scan_dir, **kwargs)
         return
     
     # route every file in file.path if it is a dir and scan_dir is True
@@ -248,13 +248,13 @@ def extract_data(file,
         
     data_dir = get_data_dir(file.dir)
     if not data_dir:
-        raise Error("Couldn't find the \"data\" directory.")
+        raise Exception("Couldn't find the \"data\" directory.")
     output_dir = f"{data_dir}/graphical/{file.name}"
     if verbose:
         print(f"Data directory path is '{data_dir}'")
         print(f"Output directory path is '{output_dir}'")
             
-    # check if vrs has already been processed and only process if reprocess is passed in as True
+    # check if vrs has already been processed and only process if reprocess is True
     if os.path.exists(output_dir) and not reprocess:
         if not quiet or verbose:
             print(f"{file.path} has already been processed. To reprocess it, use the '-r' argument")
