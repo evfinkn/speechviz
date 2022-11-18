@@ -3,4 +3,6 @@ torchvision
 torchaudio
 pyannote.audio
 numpy
+scipy
 librosa
+imufusion
