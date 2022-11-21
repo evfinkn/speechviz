@@ -1,4 +1,4 @@
-import { htmlToElement } from "./util";
+import { htmlToElement, checkResponseStatus } from "./util";
 
 let user;
 // for some reason, setting variable in promise doesn't set it outside of promise,
@@ -11,11 +11,8 @@ const setUser = function (newUser) {
 // Need to fetch user instead of using url param because otherwise anyone could
 // just set themselves to admin by changing url param
 fetch("/user")  // fetch currently logged-in user
-    .then(res => {
-        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
-        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-        return res.text();  // return text from response
-    })
+    .then(checkResponseStatus)
+    .then(response => response.text())
     .then(user => {
         // admin is able to view all users' annotations, so make radio buttons for selecting which user
         if (user == "admin") {
@@ -47,11 +44,8 @@ fetch("/user")  // fetch currently logged-in user
     .catch(error => { console.error("Error during fetch: ", error); });  // catch err thrown by res if any
 
 fetch("/filelist")
-    .then(res => {
-        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
-        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-        return res.json();  // return json from response
-    })
+    .then(checkResponseStatus)
+    .then(response => response.json())
     // add radio buttons for each file
     .then(fileList => {  // fileList is object with arrays for audio filenames and video filenames
         const audiofiles = fileList.audio;

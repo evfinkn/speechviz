@@ -35,6 +35,7 @@ const globals = {};
 globals.dirty = false;
 globals.filename = filename;
 globals.basename = basename;
+globals.media = document.getElementById("media");
 globals.undoStorage = [];
 globals.redoStorage = [];
 globals.user = user;
@@ -50,7 +51,7 @@ const options = {  // options passed to Peaks
         container: document.getElementById('overview-container'),
         waveformColor: 'rgba(0,0,0,0.2)'
     },
-    mediaElement: document.getElementById("media"),
+    mediaElement: globals.media,
     dataUri: {
         json: `waveforms/${basename}-waveform.json`
     },

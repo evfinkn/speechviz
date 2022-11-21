@@ -1,8 +1,9 @@
 import Split from 'split.js';  // library for resizing columns by dragging
 import globals from "./globals";
 import { Groups, Group, Segment, TreeItem } from "./treeClasses";
+import { GraphIMU } from './graphicalClasses';
 import SettingsPopup from './SettingsPopup';
-import { getRandomColor, sortByProp, toggleButton } from "./util";
+import { getRandomColor, sortByProp, toggleButton, checkResponseStatus } from "./util";
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
 Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });  // make tree and viewer columns resizable
@@ -11,6 +12,7 @@ const peaks = globals.peaks;
 const user = globals.user;
 const filename = globals.filename;
 const basename = globals.basename;
+const media = globals.media;
 const undoStorage = globals.undoStorage;
 // const redoStorage = globals.redoStorage;
 
@@ -50,11 +52,8 @@ let highestId;
 let words = [];
 
 fetch(`/segments/${basename}-segments.json`)
-    .then(res => {
-        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
-        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-        return res.json();
-    })
+    .then(checkResponseStatus)
+    .then(response => response.json())
     .then(segments => {
         for (const [group, children, snr] of segments) {
             createTree(group, segmentsTree, children, snr);
@@ -74,15 +73,35 @@ fetch(`/segments/${basename}-segments.json`)
 
 
 fetch(`/transcriptions/${basename}-transcription.json`)
-    .then(res => {
-        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
-        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-        return res.json();
-    })
+    .then(checkResponseStatus)
+    .then(response => response.json())
     .then(wordsTimes => {
         words = wordsTimes.map(wordTime => peaks.points.add(wordTime));
     })
     .catch(error => console.log("No transcription for media."));
+
+const visualContainer = document.getElementById("visual");
+if (visualContainer) {
+    fetch(`/graphical/${basename}/pose.csv`)
+        .then(checkResponseStatus)
+        .then(response => response.text())
+        .then(text => {
+            return text.split("\n")
+                .slice(1)  // exclude header row
+                .map(row => row.split(",").map(parseFloat));
+        })
+        .then(data => {
+            const width = visualContainer.offsetWidth - media.offsetWidth;
+            const height = media.offsetHeight;
+            // const canvas = document.createElement("canvas");
+            // canvas.style.width = width;
+            // canvas.style.height = height;
+            // canvas.style.float = "right";
+            // visualContainer.appendChild(canvas);
+            new GraphIMU(visualContainer, data, { width: width, height: height });
+        })
+        .catch(error => console.log("No pose data for media."));
+}
 
 // code below initializes the interface
 
@@ -319,7 +338,6 @@ speedButton.addEventListener("click", function () {
     speedDropdown.classList.toggle("show");
 });
 
-const media = document.getElementById("media");
 const spdbtns = document.getElementsByClassName("spdbtn");
 for (let i = 0; i < spdbtns.length; i++) {
     spdbtns[i].addEventListener("click", function () {
