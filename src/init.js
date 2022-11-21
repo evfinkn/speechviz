@@ -11,6 +11,7 @@ const peaks = globals.peaks;
 const user = globals.user;
 const filename = globals.filename;
 const basename = globals.basename;
+const media = globals.media;
 const undoStorage = globals.undoStorage;
 // const redoStorage = globals.redoStorage;
 
@@ -313,7 +314,6 @@ speedButton.addEventListener("click", function () {
     speedDropdown.classList.toggle("show");
 });
 
-const media = document.getElementById("media");
 const spdbtns = document.getElementsByClassName("spdbtn");
 for (let i = 0; i < spdbtns.length; i++) {
     spdbtns[i].addEventListener("click", function () {
