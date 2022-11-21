@@ -48,7 +48,6 @@ document.getElementById("tree").append(segmentsTree.li);
 const custom = new Group("Custom", { parent: segmentsTree, color: getRandomColor(), colorable: true });
 const labeled = new Groups("Labeled", { parent: segmentsTree });
 
-let highestId;
 let words = [];
 
 fetch(`/segments/${basename}-segments.json`)
@@ -62,13 +61,11 @@ fetch(`/segments/${basename}-segments.json`)
         const ids = Object.keys(Segment.byId);
         // since ids are of the form 'peaks.segment.#', parse the # from all of the ids
         const idNums = ids.map(id => parseInt(id.split(".").at(-1)));
-        highestId = Math.max(...idNums);  // used when saving to re-number segment ids to fill in gaps
-        globals.highestId = highestId;
+        globals.highestId = Math.max(...idNums);  // used when saving to re-number segments
     })
     .catch(error => {
         console.log("No segments for media.")
-        highestId = 0;
-        globals.highestId = highestId;
+        globals.highestId = 0;
     });
 
 
@@ -291,7 +288,7 @@ const save = function () {
     segments = segments.map(segment => segment.getProperties(["text", "duration", "color"]));
 
     // re-number the segments so there aren't gaps in ids from removed segments
-    let idCounter = highestId + 1;
+    let idCounter = globals.highestId + 1;
     segments.map((segment, index) => { return { "index": index, "id": parseInt(segment.id.split(".").at(-1)) }; })
         .sort((seg1, seg2) => seg1.id - seg2.id)
         .map(seg => segments[seg.index])
