@@ -63,8 +63,6 @@ app.get('/logout', (req, res) => {
   return;
 });
 
-app.get('/imu', (req, res) => res.render("imu"))
-
 app.get("/filelist", (req, res) => {
   const exclude = new Set([".DS_Store"]);  // I just used a Set because Set.has() is faster than Array.includes()
   const files = {};
@@ -83,7 +81,7 @@ app.get("/users", (req, res) => {
   }
 });
 
-app.get(/\/(audio|segments|video|waveforms|transcriptions|aria)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
+app.get(/\/(audio|segments|video|waveforms|transcriptions|graphical)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
 //#region saving, loading, and resetting
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");

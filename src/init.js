@@ -1,6 +1,7 @@
 import Split from 'split.js';  // library for resizing columns by dragging
 import globals from "./globals";
 import { Groups, Group, Segment, TreeItem } from "./treeClasses";
+import { GraphIMU } from './graphicalClasses';
 import SettingsPopup from './SettingsPopup';
 import { getRandomColor, sortByProp, toggleButton, checkResponseStatus } from "./util";
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
@@ -78,6 +79,29 @@ fetch(`/transcriptions/${basename}-transcription.json`)
         words = wordsTimes.map(wordTime => peaks.points.add(wordTime));
     })
     .catch(error => console.log("No transcription for media."));
+
+const visualContainer = document.getElementById("visual");
+if (visualContainer) {
+    fetch(`/graphical/${basename}/pose.csv`)
+        .then(checkResponseStatus)
+        .then(response => response.text())
+        .then(text => {
+            return text.split("\n")
+                .slice(1)  // exclude header row
+                .map(row => row.split(",").map(parseFloat));
+        })
+        .then(data => {
+            const width = visualContainer.offsetWidth - media.offsetWidth;
+            const height = media.offsetHeight;
+            // const canvas = document.createElement("canvas");
+            // canvas.style.width = width;
+            // canvas.style.height = height;
+            // canvas.style.float = "right";
+            // visualContainer.appendChild(canvas);
+            new GraphIMU(visualContainer, data, { width: width, height: height });
+        })
+        .catch(error => console.log("No pose data for media."));
+}
 
 // code below initializes the interface
 
