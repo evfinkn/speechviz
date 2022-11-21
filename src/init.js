@@ -2,7 +2,7 @@ import Split from 'split.js';  // library for resizing columns by dragging
 import globals from "./globals";
 import { Groups, Group, Segment, TreeItem } from "./treeClasses";
 import SettingsPopup from './SettingsPopup';
-import { getRandomColor, sortByProp, toggleButton } from "./util";
+import { getRandomColor, sortByProp, toggleButton, checkResponseStatus } from "./util";
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
 Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });  // make tree and viewer columns resizable
@@ -50,11 +50,8 @@ let highestId;
 let words = [];
 
 fetch(`/segments/${basename}-segments.json`)
-    .then(res => {
-        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
-        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-        return res.json();
-    })
+    .then(checkResponseStatus)
+    .then(response => response.json())
     .then(segments => {
         for (const [group, children, snr] of segments) {
             createTree(group, segmentsTree, children, snr);
@@ -74,11 +71,8 @@ fetch(`/segments/${basename}-segments.json`)
 
 
 fetch(`/transcriptions/${basename}-transcription.json`)
-    .then(res => {
-        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
-        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-        return res.json();
-    })
+    .then(checkResponseStatus)
+    .then(response => response.json())
     .then(wordsTimes => {
         words = wordsTimes.map(wordTime => peaks.points.add(wordTime));
     })

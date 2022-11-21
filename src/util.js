@@ -114,4 +114,41 @@ const objectMap = function (obj, func, ...args) {
     return mapped;
 }
 
-export { getRandomColor, htmlToElement, compareProperty, sortByProp, propertiesEqual, toggleButton, arraySum, arrayMean, objectMap };
+/**
+ * Searches a sorted array for the index of a value
+ * @param {any[]} arr - The array to search
+ * @param {any} val - The value to search for
+ * @param {function(any, any):number} compareFn - The function to compare elements by
+ * @returns {number} If `val` is in `arr`, returns the index of `val`. Otherwise, returns `-1 * index`
+ *                   where `index` is the index that `val` would be at if it was in `arr`.
+ */
+const binarySearch = function (arr, val, compareFn) {  // https://stackoverflow.com/a/29018745
+    let start = 0;
+    let end = arr.length - 1;
+    while (start <= end) {
+        let mid = (start + end) >> 1;
+        let cmp = compareFn(val, arr[mid]);
+
+        if (cmp > 0) { start = mid + 1; }
+        else if (cmp < 0) { end = mid - 1; }
+        else { return mid; }
+    }
+    return -start - 1;
+}
+
+/**
+ * 
+ * @param {Object} res - The response from a fetch request.
+ * @returns {Object} The reference to the input response.
+ * @throws {Error} If `res.ok` isn't `true` or if `res.status` isn't 200.
+ */
+const checkResponseStatus = function (res) {
+    if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
+    else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+    return res;
+}
+
+export {
+    getRandomColor, htmlToElement, compareProperty, sortByProp, propertiesEqual, toggleButton,
+    arraySum, arrayMean, objectMap, binarySearch, checkResponseStatus
+};
