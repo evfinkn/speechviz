@@ -62,6 +62,9 @@ fetch(`/segments/${basename}-segments.json`)
         // since ids are of the form 'peaks.segment.#', parse the # from all of the ids
         const idNums = ids.map(id => parseInt(id.split(".").at(-1)));
         globals.highestId = Math.max(...idNums);  // used when saving to re-number segments
+
+        // after loading, toggle everything off (usually end up disabling most groups right away, just do it automatically)
+        segmentsTree.children.forEach(child => child.toggle(false));
     })
     .catch(error => {
         console.log("No segments for media.")
