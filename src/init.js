@@ -172,10 +172,8 @@ fetch("load", {
     headers: { "Content-Type": "application/json; charset=UTF-8" },
     body: JSON.stringify({ user, filename })
 })
-    .then(res => {
-        if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-        return res.json();
-    })
+    .then(checkResponseStatus)
+    .then(res => res.json())
     .then(data => {
         notes.value = data.notes || notes.value;
 
