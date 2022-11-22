@@ -5,7 +5,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Speechviz Documentation TreeItem</title>
+  <title>Speechviz Documentation GroupOfGroups</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -91,7 +91,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Class</p>
-                    <h1>TreeItem</h1>
+                    <h1>GroupOfGroups</h1>
                 </header>
                 
 
@@ -102,9 +102,9 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>TreeItem<span class="signature">(id, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>GroupOfGroups<span class="signature">(id, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span></h2>
         
-            <div class="class-description"><p>An item in a tree.</p></div>
+            <div class="class-description"><p>A group of <code>Group</code>s.</p></div>
         
     
 </header>
@@ -123,12 +123,12 @@
 
 
     
-    <h4 class="name" id="TreeItem">
-        <a class="href-link" href="#TreeItem">#</a>
+    <h4 class="name" id="GroupOfGroups">
+        <a class="href-link" href="#GroupOfGroups">#</a>
         
         <span class="code-name">
             
-                new TreeItem<span class="signature">(id, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span>
+                new GroupOfGroups<span class="signature">(id, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span>
             
         </span>
     </h4>
@@ -203,7 +203,7 @@
       </td>
   
 
-  <td class="description last"><p>The unique identifier to give the <code>TreeItem</code>.</p></td>
+  <td class="description last"><p>The unique identifier to give the <code>GroupOfGroups</code>.</p></td>
 </tr>
 
 
@@ -244,7 +244,7 @@
       </td>
   
 
-  <td class="description last"><p>Options to customize the <code>TreeItem</code>.</p></td>
+  <td class="description last"><p>Options to customize the group.</p></td>
 </tr>
 
   
@@ -258,7 +258,7 @@
   <td class="type">
   
       
-<code class="param-type"><a href="TreeItem.html">TreeItem</a></code>
+<code class="param-type"><a href="GroupOfGroups.html">GroupOfGroups</a></code>
 
 
   
@@ -284,8 +284,8 @@
       </td>
   
 
-  <td class="description last"><p>The <code>TreeItem</code> that contains the item in its nested
-content.</p></td>
+  <td class="description last"><p>The <code>GroupOfGroups</code> that contains the group in its
+nested content.</p></td>
 </tr>
 
   
@@ -298,7 +298,7 @@ content.</p></td>
   <td class="type">
   
       
-<code class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></code>
+<code class="param-type">Array.&lt;(<a href="Group.html">Group</a>|<a href="GroupOfGroups.html">GroupOfGroups</a>)></code>
 
 
   
@@ -324,8 +324,8 @@ content.</p></td>
       </td>
   
 
-  <td class="description last"><p>An array of <code>TreeItem</code>s to put in the item's nested
-content.</p></td>
+  <td class="description last"><p>An array of <code>Group</code>s and
+<code>GroupOfGroups</code>s to put in the group's nested content.</p></td>
 </tr>
 
   
@@ -362,7 +362,7 @@ content.</p></td>
       </td>
   
 
-  <td class="description last"><p>The text to show in the item's span (and therefore in the
+  <td class="description last"><p>The text to show in the group's span (and therefore in the
 tree). If <code>null</code>, <code>id</code> is used.</p></td>
 </tr>
 
@@ -402,167 +402,8 @@ tree). If <code>null</code>, <code>id</code> is used.</p></td>
       </td>
   
 
-  <td class="description last"><p>Indicates if the item can be removed from the
-tree.</p></td>
-</tr>
-
-  
-    
-<tr class="deep-level-1">
-  
-      <td class="name"><code>renamable</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">boolean</code>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-          &lt;optional><br>
-      
-
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-          false
-      
-      </td>
-  
-
-  <td class="description last"><p>Indicates if the item can be renamed.</p></td>
-</tr>
-
-  
-    
-<tr class="deep-level-1">
-  
-      <td class="name"><code>moveTo</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">Array.&lt;string></code>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-          &lt;optional><br>
-      
-
-      
-          &lt;nullable><br>
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-      </td>
-  
-
-  <td class="description last"><p>An array of the ids of <code>TreeItem</code>s that the item can
-be moved to. <code>null</code> if the item isn't moveable.</p></td>
-</tr>
-
-  
-    
-<tr class="deep-level-1">
-  
-      <td class="name"><code>copyTo</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">Array.&lt;string></code>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-          &lt;optional><br>
-      
-
-      
-          &lt;nullable><br>
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-      </td>
-  
-
-  <td class="description last"><p>An array of the ids of <code>TreeItem</code>s that the item can
-be copied to. <code>null</code> if the item isn't copyable.</p></td>
-</tr>
-
-  
-    
-<tr class="deep-level-1">
-  
-      <td class="name"><code>render</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">boolean</code>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-          &lt;optional><br>
-      
-
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-          true
-      
-      </td>
-  
-
-  <td class="description last"><p>If <code>true</code>, <code>render()</code> is called in the constructor.
-Otherwise, <code>render()</code> is not called and is left to the user to call.</p></td>
+  <td class="description last"><p>Indicates if the group can be removed from
+the tree.</p></td>
 </tr>
 
   
@@ -612,7 +453,7 @@ Otherwise, <code>render()</code> is not called and is left to the user to call.<
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line52">line 52</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line781">line 781</a>
             </span>
         </p>
     
@@ -668,6 +509,17 @@ Otherwise, <code>render()</code> is not called and is left to the user to call.<
     </div>
     
     
+        <h3 class="subsection-title">Extends</h3>
+
+        
+
+
+    <ul>
+        <li><a href="TreeItem.html">TreeItem</a></li>
+    </ul>
+
+
+    
 
     
 
@@ -689,7 +541,7 @@ Otherwise, <code>render()</code> is not called and is left to the user to call.<
     <span class="method-parameter is-pulled-right">
         <label>Type:</label>
         
-<code class="param-type">Object.&lt;string, <a href="TreeItem.html">TreeItem</a>></code>
+<code class="param-type">Object.&lt;string, <a href="GroupOfGroups.html">GroupOfGroups</a>></code>
 
 
     </span>
@@ -711,9 +563,9 @@ Otherwise, <code>render()</code> is not called and is left to the user to call.<
 
 
 <div class="description">
-    <p>An object containing all <code>TreeItem</code>s by their id.
-Key is id, value is corresponding <code>TreeItem</code>:
-{id: <code>TreeItem</code>}</p>
+    <p>An object containing all <code>GroupOfGroups</code> by their id.
+Key is id, value is corresponding <code>GroupOfGroups</code>:
+{id: <code>GroupOfGroups</code>}</p>
 </div>
 
 
@@ -728,6 +580,11 @@ Key is id, value is corresponding <code>TreeItem</code>:
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#byId">TreeItem#byId</a>
+    </li></ul></dd>
     
 
     
@@ -755,7 +612,7 @@ Key is id, value is corresponding <code>TreeItem</code>:
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line63">line 63</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line793">line 793</a>
             </span>
         </p>
     
@@ -809,6 +666,11 @@ Key is id, value is corresponding <code>TreeItem</code>:
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#checkbox">TreeItem#checkbox</a>
+    </li></ul></dd>
     
 
     
@@ -887,6 +749,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#checked">TreeItem#checked</a>
+    </li></ul></dd>
     
 
     
@@ -968,6 +835,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#children">TreeItem#children</a>
+    </li></ul></dd>
     
 
     
@@ -1051,6 +923,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#copyTo">TreeItem#copyTo</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1128,6 +1005,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#duration">TreeItem#duration</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1193,7 +1075,7 @@ Equivalent to <code>checkbox.checked</code>.</p>
 
 
 <div class="description">
-    <p>HTML strings for the play, pause, loop, and remove icons for items in the tree.</p>
+    <p>HTML strings for the play, pause, loop, and remove icons for <code>GroupOfGroups</code> in the tree.</p>
 </div>
 
 
@@ -1208,6 +1090,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#icons">TreeItem#icons</a>
+    </li></ul></dd>
     
 
     
@@ -1235,7 +1122,7 @@ Equivalent to <code>checkbox.checked</code>.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line70">line 70</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line800">line 800</a>
             </span>
         </p>
     
@@ -1285,6 +1172,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#id">TreeItem#id</a>
+    </li></ul></dd>
     
 
     
@@ -1367,6 +1259,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#li">TreeItem#li</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1447,6 +1344,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#loopButton">TreeItem#loopButton</a>
+    </li></ul></dd>
     
 
     
@@ -1530,6 +1432,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#moveTo">TreeItem#moveTo</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1611,6 +1518,11 @@ Equivalent to <code>checkbox.checked</code>.</p>
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#nested">TreeItem#nested</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1638,88 +1550,6 @@ Equivalent to <code>checkbox.checked</code>.</p>
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
                 <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line216">line 216</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-    <span class="method-parameter is-pulled-right">
-        <label>Type:</label>
-        
-<code class="param-type"><a href="TreeItem.html">TreeItem</a></code>
-
-
-    </span>
-
-<h4 class="name" id="parent">
-    <a class="href-link" href="#parent">#</a>
-    
-        
-            <span class='tag'>nullable</span>
-        
-    
-    <span class="code-name">
-        parent
-    </span>
-    
-</h4>
-
-
-
-
-<div class="description">
-    <p>The <code>TreeItem</code> that contains this item in its nested content.
-<code>null</code> if this item is the root of the tree.</p>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="treeClasses.js.html" class="button">View Source</a>
-            <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line277">line 277</a>
             </span>
         </p>
     
@@ -1775,6 +1605,11 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#path">TreeItem#path</a>
+    </li></ul></dd>
     
 
     
@@ -1856,6 +1691,11 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#playButton">TreeItem#playButton</a>
+    </li></ul></dd>
     
 
     
@@ -1939,6 +1779,11 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#popup">TreeItem#popup</a>
+    </li></ul></dd>
+    
 
     
 
@@ -2019,6 +1864,11 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#properties">TreeItem#properties</a>
+    </li></ul></dd>
     
 
     
@@ -2104,6 +1954,11 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#removable">TreeItem#removable</a>
+    </li></ul></dd>
+    
 
     
 
@@ -2186,6 +2041,11 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#removeButton">TreeItem#removeButton</a>
+    </li></ul></dd>
+    
 
     
 
@@ -2262,6 +2122,11 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#renamable">TreeItem#renamable</a>
+    </li></ul></dd>
     
 
     
@@ -2344,6 +2209,11 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#span">TreeItem#span</a>
+    </li></ul></dd>
+    
 
     
 
@@ -2371,83 +2241,6 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
                 <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line184">line 184</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-    <span class="method-parameter is-pulled-right">
-        <label>Type:</label>
-        
-<code class="param-type">string</code>
-
-
-    </span>
-
-<h4 class="name" id="text">
-    <a class="href-link" href="#text">#</a>
-    
-    <span class="code-name">
-        text
-    </span>
-    
-</h4>
-
-
-
-
-<div class="description">
-    <p>The text shown in <code>span</code> (and therefore in the tree).</p>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="treeClasses.js.html" class="button">View Source</a>
-            <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line292">line 292</a>
             </span>
         </p>
     
@@ -2584,6 +2377,11 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#getProperties">TreeItem#getProperties</a>
+    </li></ul></dd>
+    
 
     
 
@@ -2674,12 +2472,12 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
 
 
     
-    <h4 class="name" id="open">
-        <a class="href-link" href="#open">#</a>
+    <h4 class="name" id="getSegments">
+        <a class="href-link" href="#getSegments">#</a>
         
         <span class="code-name">
             
-                open<span class="signature">()</span><span class="type-signature"></span>
+                getSegments<span class="signature">(options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"> &rarr; (non-null) {Array.&lt;<a href="Segment.html">Segment</a>>}</span>
             
         </span>
     </h4>
@@ -2688,8 +2486,8 @@ parent being last. For example, <code>[root, great-grandparent, grandparent, par
     
     
     <div class="description">
-        <p>Opens (unhides) this item's nested content and the nested content of each item in <code>path</code>.
-This doesn't toggle any of the items; it only opens the tree along <code>path</code>.</p>
+        <p>Gets this group's <code>Segment</code>s.
+This group's segments are the segments of all of its children.</p>
     </div>
     
 
@@ -2700,6 +2498,160 @@ This doesn't toggle any of the items; it only opens the tree along <code>path</c
 
 
 
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>options</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Object.&lt;string, boolean></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+          &lt;nullable><br>
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last"><p>Options specifying which <code>Segment</code>s to get.</p></td>
+</tr>
+
+  
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>hidden</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          false
+      
+      </td>
+  
+
+  <td class="description last"><p>Indicates to return <code>Segment</code>s that are
+currently hidden on the Peaks waveform.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>visible</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          false
+      
+      </td>
+  
+
+  <td class="description last"><p>Indicates to return <code>Segment</code>s that are
+currently visible on the Peaks waveform.</p></td>
+</tr>
+
+  
+
+
+        
+        </tbody>
+    </table>
+</div>
 
 
 
@@ -2740,7 +2692,304 @@ This doesn't toggle any of the items; it only opens the tree along <code>path</c
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line882">line 882</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>An array containing the <code>Segment</code>s specified by <code>options</code>.</p></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">Array.&lt;<a href="Segment.html">Segment</a>></code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="open">
+        <a class="href-link" href="#open">#</a>
+        
+        <span class="code-name">
+            
+                open<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Opens (unhides) this item's nested content and the nested content of each item in <code>path</code>.
+This doesn't toggle any of the items; it only opens the tree along <code>path</code>.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#open">TreeItem#open</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
                 <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line486">line 486</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="play">
+        <a class="href-link" href="#play">#</a>
+        
+        <span class="code-name">
+            
+                play<span class="signature">(loop<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Plays each visible <code>Segment</code> belonging to this group in chronological order.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>loop</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          false
+      
+      </td>
+  
+
+  <td class="description last"><p>If <code>true</code>, loops the segments (reaching the end of the
+segments will restart playing at the beginning).</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line848">line 848</a>
             </span>
         </p>
     
@@ -2810,6 +3059,11 @@ This doesn't toggle any of the items; it only opens the tree along <code>path</c
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#remove">TreeItem#remove</a>
+    </li></ul></dd>
     
 
     
@@ -2959,6 +3213,11 @@ This doesn't toggle any of the items; it only opens the tree along <code>path</c
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#rename">TreeItem#rename</a>
+    </li></ul></dd>
+    
 
     
 
@@ -3090,6 +3349,11 @@ This doesn't toggle any of the items; it only opens the tree along <code>path</c
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#render">TreeItem#render</a>
+    </li></ul></dd>
     
 
     
@@ -3239,6 +3503,11 @@ This doesn't toggle any of the items; it only opens the tree along <code>path</c
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#sort">TreeItem#sort</a>
+    </li></ul></dd>
+    
 
     
 
@@ -3297,12 +3566,12 @@ This doesn't toggle any of the items; it only opens the tree along <code>path</c
 
 
     
-    <h4 class="name" id="toggle">
-        <a class="href-link" href="#toggle">#</a>
+    <h4 class="name" id="style">
+        <a class="href-link" href="#style">#</a>
         
         <span class="code-name">
             
-                toggle<span class="signature">()</span><span class="type-signature"></span>
+                style<span class="signature">()</span><span class="type-signature"></span>
             
         </span>
     </h4>
@@ -3311,8 +3580,7 @@ This doesn't toggle any of the items; it only opens the tree along <code>path</c
     
     
     <div class="description">
-        <p>Toggles this item on / off.
-This is an alias for <code>toggleTree</code>.</p>
+        <p>Sets the CSS styling of the group's elements.</p>
     </div>
     
 
@@ -3356,13 +3624,6 @@ This is an alias for <code>toggleTree</code>.</p>
     
 
     
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li>toggleTree</li>
-        </ul>
-    </dd>
-    
 
     
 
@@ -3370,7 +3631,7 @@ This is an alias for <code>toggleTree</code>.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line480">line 480</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line822">line 822</a>
             </span>
         </p>
     
@@ -3392,6 +3653,215 @@ This is an alias for <code>toggleTree</code>.</p>
 
 
 
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="toggle">
+        <a class="href-link" href="#toggle">#</a>
+        
+        <span class="code-name">
+            
+                toggle<span class="signature">(force<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {boolean}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Toggles this group on / off.
+Specifically, toggles this group's elements on / off and shows / hides all of its
+<code>Segment</code>s on the Peaks waveform.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>force</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          null
+      
+      </td>
+  
+
+  <td class="description last"><p>If unspecified, this group is always toggled. Otherwise, this
+group is only toggled if its current state isn't equal to <code>force</code>.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#toggle">TreeItem#toggle</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>toggleTree</li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line836">line 836</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>A <code>boolean</code> indiciating if any toggling was done. In other words, when
+<code>force == null</code>, returns <code>true</code>. Otherwise, returns <code>force !== checked</code>.</p></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">boolean</code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
 
 
 
@@ -3519,6 +3989,11 @@ is only toggled if its current state isn't equal to <code>force</code>.</p></td>
 
     
 
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#toggleTree">TreeItem#toggleTree</a>
+    </li></ul></dd>
     
 
     
@@ -3695,6 +4170,11 @@ decreases <code>duration</code>. Otherwise, increases <code>duration</code>.</p>
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#updateDuration">TreeItem#updateDuration</a>
+    </li></ul></dd>
+    
 
     
 
@@ -3792,6 +4272,11 @@ decreases <code>duration</code>. Otherwise, increases <code>duration</code>.</p>
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#updateSpanTitle">TreeItem#updateSpanTitle</a>
+    </li></ul></dd>
+    
 
     
 
@@ -3840,537 +4325,6 @@ decreases <code>duration</code>. Otherwise, increases <code>duration</code>.</p>
 
 
 
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id=".exists">
-        <a class="href-link" href="#.exists">#</a>
-        
-            
-                <span class='tag'>static</span>
-            
-        
-        <span class="code-name">
-            
-                exists<span class="signature">(id)</span><span class="type-signature"> &rarr; {boolean}</span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Checks if a <code>TreeItem</code> by the given id exists.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>id</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">string</code>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>The id to check the existence of.</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="treeClasses.js.html" class="button">View Source</a>
-            <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line86">line 86</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'><p><code>true</code> if a TreeItem with <code>id</code> exists. Otherwise, <code>false</code>.</p></div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<code class="param-type">boolean</code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id=".idsToTreeItems">
-        <a class="href-link" href="#.idsToTreeItems">#</a>
-        
-            
-                <span class='tag'>static</span>
-            
-        
-        <span class="code-name">
-            
-                idsToTreeItems<span class="signature">(ids<span class="signature-attributes">non-null</span>)</span><span class="type-signature"> &rarr; (non-null) {Array.&lt;<a href="TreeItem.html">TreeItem</a>>}</span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Returns an array of <code>TreeItem</code>s with the given ids.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>ids</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">Array.&lt;string></code>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>Array of the ids of the <code>TreeItem</code>s to get.</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="treeClasses.js.html" class="button">View Source</a>
-            <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line94">line 94</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'><p>The <code>TreeItem</code>s corresponding to the ids.</p></div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<code class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id=".treeItemsToIds">
-        <a class="href-link" href="#.treeItemsToIds">#</a>
-        
-            
-                <span class='tag'>static</span>
-            
-        
-        <span class="code-name">
-            
-                treeItemsToIds<span class="signature">(treeItems<span class="signature-attributes">non-null</span>)</span><span class="type-signature"> &rarr; (non-null) {Array.&lt;string>}</span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Returns an array of the ids of the given <code>TreeItem</code>s.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>treeItems</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></code>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>Array of the <code>TreeItem</code>s whose ids to get.</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="treeClasses.js.html" class="button">View Source</a>
-            <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line102">line 102</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'><p>The ids corresponding to the given <code>TreeItem</code>s.</p></div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<code class="param-type">Array.&lt;string></code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
 
 
 

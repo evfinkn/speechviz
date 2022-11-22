@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Speechviz Documentation CustomSegmentMarker.js</title>
+  <title>Speechviz Documentation icon.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -93,7 +93,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>CustomSegmentMarker.js</h1>
+                    <h1>icon.js</h1>
                 </header>
                 
 
@@ -102,126 +102,78 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { Line } from 'konva/lib/shapes/Line';
-import { Rect } from 'konva/lib/shapes/Rect';
-import { Text } from 'konva/lib/shapes/Text';
+            <pre class="prettyprint source linenums"><code>const feather = require('feather-icons');
 
 /**
- * A custom marker that appears when the mouse pointer hovers over segments on the Peaks waveform.
- * The only difference from the default marker is that the drag handle is higher.
+ * An `Object` containing the icons for play, pause, loop, and remove buttons of a `TreeItem`.
+ * @typedef {Object.&lt;string, string>} TreeItemButtonIcons
+ * @prop {string} play - SVG string for the play button icon.
+ * @prop {string} pause - SVG string for the pause button icon.
+ * @prop {string} loop - SVG string for the loop button icon.
+ * @prop {string} remove - SVG string for the remove button icon.
  */
-const CustomSegmentMarker = class CustomSegmentMarker {
-  // Code is practically exactly the code for the default segment marker in Peaks, with 1 or 2
-  // lines changed to make the handle higher.
 
-  constructor(options) {
-    this._options = options;
-  }
-
-  init(group) {
-    var handleWidth = 10;
-    var handleHeight = 20;
-    var handleX = -(handleWidth / 2) + 0.5; // Place in the middle of the marker
-
-    var xPosition = this._options.startMarker ? -24 : 24;
-
-    var time = this._options.startMarker ? this._options.segment.startTime :
-      this._options.segment.endTime;
-
-    // Label - create with default y, the real value is set in fitToView().
-    this._label = new Text({
-      x: xPosition,
-      y: 0,
-      text: this._options.layer.formatTime(time),
-      fontFamily: this._options.fontFamily,
-      fontSize: this._options.fontSize,
-      fontStyle: this._options.fontStyle,
-      fill: '#000',
-      textAlign: 'center'
-    });
-
-    this._label.hide();
-
-    // Handle - create with default y, the real value is set in fitToView().
-    this._handle = new Rect({
-      x: handleX,
-      y: 0,
-      width: handleWidth,
-      height: handleHeight,
-      fill: this._options.color,
-      stroke: this._options.color,
-      strokeWidth: 1
-    });
-
-    // Vertical Line - create with default y and points, the real values
-    // are set in fitToView().
-    this._line = new Line({
-      x: 0,
-      y: 0,
-      stroke: this._options.color,
-      strokeWidth: 1
-    });
-
-    group.add(this._label);
-    group.add(this._line);
-    group.add(this._handle);
-
-    this.fitToView();
-
-    this.bindEventHandlers(group);
-  }
-
-  bindEventHandlers(group) {
-    var self = this;
-
-    var xPosition = self._options.startMarker ? -24 : 24;
-
-    if (self._options.draggable) {
-      group.on('dragstart', function () {
-        if (self._options.startMarker) {
-          self._label.setX(xPosition - self._label.getWidth());
-        }
-
-        self._label.show();
-      });
-
-      group.on('dragend', function () {
-        self._label.hide();
-      });
-    }
-
-    self._handle.on('mouseover touchstart', function () {
-      if (self._options.startMarker) {
-        self._label.setX(xPosition - self._label.getWidth());
-      }
-
-      self._label.show();
-    });
-
-    self._handle.on('mouseout touchend', function () {
-      self._label.hide();
-    });
-  }
-
-  fitToView() {
-    var height = this._options.layer.getHeight();
-
-    this._label.y(height / 6 - 5);
-    this._handle.y(height / 6 - 10.5);
-    this._line.points([0.5, 0, 0.5, height]);
-  }
-
-  timeUpdated(time) {
-    this._label.setText(this._options.layer.formatTime(time));
-  }
+const segmentPlayIcon = feather.icons.play.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
+const segmentPauseIcon = feather.icons.pause.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
+const segmentLoopIcon = feather.icons.repeat.toSvg({ "width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5 });
+const segmentRemoveIcon = feather.icons.x.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
+/**
+ * The button icons for `Segment`s.
+ * @type {TreeItemButtonIcons}
+ */
+const segmentIcons = {
+    "play": segmentPlayIcon,
+    "pause": segmentPauseIcon,
+    "loop": segmentLoopIcon,
+    "remove": segmentRemoveIcon
 }
 
-/** Method used by Peaks to create a CustomSegmentMarker. */
-const createSegmentMarker = function (options) {
-  return new CustomSegmentMarker(options)
-}
+const groupPlayIcon = feather.icons.play.toSvg({"width": 15, "height": 15, "stroke": "black", "fill": "black" });
+const groupPauseIcon = feather.icons.pause.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
+const groupLoopIcon = feather.icons.repeat.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
+const groupRemoveIcon = feather.icons.x.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
+/**
+ * The button icons for `Group`s.
+ * @type {TreeItemButtonIcons}
+ */
+const groupIcons = {
+    "play": groupPlayIcon,
+    "pause": groupPauseIcon,
+    "loop": groupLoopIcon,
+    "remove": groupRemoveIcon
+};
 
-export default createSegmentMarker;
+/**
+ * SVG string for the zoom-in button icon.
+ * @type {string}
+ */
+const zoomInIcon = feather.icons["zoom-in"].toSvg({ "stroke": "gray" });
+
+/**
+ * SVG string for the zoom-out button icon.
+ * @type {string}
+ */
+const zoomOutIcon = feather.icons["zoom-out"].toSvg({ "stroke": "black" });
+
+/**
+ * SVG string for the undo button icon.
+ * @type {string}
+ */
+const undoIcon = feather.icons["corner-up-left"].toSvg({ "stroke": "gray" });
+
+/**
+ * SVG string for the redo button icon.
+ * @type {string}
+ */
+const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "gray" });
+
+/**
+ * SVG string for the settings button icon.
+ * @type {string}
+ */
+const settingsIcon = feather.icons.settings.toSvg({ "stroke": "black" });
+
+export { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, undoIcon, redoIcon, settingsIcon };
 </code></pre>
         </article>
     </section>
