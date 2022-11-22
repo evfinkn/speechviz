@@ -1,6 +1,6 @@
 import Split from 'split.js';  // library for resizing columns by dragging
 import globals from "./globals";
-import { Groups, Group, Segment, TreeItem } from "./treeClasses";
+import { GroupOfGroups, Group, Segment, TreeItem } from "./treeClasses";
 import { GraphIMU } from './graphicalClasses';
 import SettingsPopup from './SettingsPopup';
 import { getRandomColor, sortByProp, toggleButton, checkResponseStatus } from "./util";
@@ -16,8 +16,14 @@ const media = globals.media;
 const undoStorage = globals.undoStorage;
 // const redoStorage = globals.redoStorage;
 
+// TODO: if this does what I assume it does, it can probably be moved to Segment as a property
 const originalGroups = {};
 
+// TODO: edit how process_audio.py outputs segments and then edit this
+//       edit as in make more extensibile, e.g. maybe in process_audio make each dict have a "type"
+//       property specifying if it's a Group or GroupOfGroups or Segment and also use property names
+//       e.g. "children" instead of an array
+//       After rewriting, add documentation if left as a function
 const createTree = function (id, parent, children, snr) {
     if (!Array.isArray(children[0])) {  // group of segments
         if (id.includes("Speaker ")) {  // group is speakers, which need popups
@@ -35,18 +41,18 @@ const createTree = function (id, parent, children, snr) {
         }
     }
     else {  // group of groups
-        const group = new Groups(id, { parent });
+        const group = new GroupOfGroups(id, { parent });
         for (let [child, childChildren, childSNR] of children) {
             createTree(child, group, childChildren, childSNR);
         }
     }
 }
 
-const segmentsTree = new Groups("Segments");
+const segmentsTree = new GroupOfGroups("Segments");
 document.getElementById("tree").append(segmentsTree.li);
 
 const custom = new Group("Custom", { parent: segmentsTree, color: getRandomColor(), colorable: true });
-const labeled = new Groups("Labeled", { parent: segmentsTree });
+const labeled = new GroupOfGroups("Labeled", { parent: segmentsTree });
 
 let words = [];
 
@@ -181,7 +187,7 @@ fetch("load", {
         peaks.segments.add(data.segments, { overwrite: true }).forEach(function (segment) {
             let parent = segment.path.at(-1);
             if (!(parent in Group.byId)) {  // parent group doesn't exist yet so add it
-                parent = new Group(parent, { parent: Groups.byId[segment.path.at(-2)], removable: true, renamable: true, color: getRandomColor(), colorable: true, copyTo: ["Labeled"] });
+                parent = new Group(parent, { parent: GroupOfGroups.byId[segment.path.at(-2)], removable: true, renamable: true, color: getRandomColor(), colorable: true, copyTo: ["Labeled"] });
             }
             else { parent = Group.byId[parent]; }
 
@@ -211,6 +217,9 @@ peaks.on("segments.dragend", function (event) {
     Segment.byId[id].updateDuration();
 });
 
+// TODO: make undo use enum instead of strings
+// TODO: make undo a singleton array subclass ?
+// TODO: resort a group after re-adding segments to it
 const undo = function () {
     if (undoStorage.length != 0) {
         let undoThing = undoStorage.pop();
@@ -275,6 +284,7 @@ document.querySelector('button[data-action="undo"]').addEventListener('click', u
 // });
 
 const fileParagraph = document.getElementById("file");
+/** Saves the custom segments and labeled speakers to the database. */
 const save = function () {
     // fileParagraph.innerHTML = `${filename} - Saving`;
     const groupRegex = /Speaker |VAD|Non-VAD/;
@@ -305,7 +315,7 @@ const save = function () {
         }
     });
 
-    const movedSegments = Groups.byId["Speakers"]
+    const movedSegments = GroupOfGroups.byId["Speakers"]
         .getSegments({ hidden: true, visible: true })
         .filter(segment => segment.parent.id != originalGroups[segment.id])
         .map(segment => segment.getProperties(["text", "duration", "color"]));

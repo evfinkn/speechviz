@@ -6,7 +6,31 @@ import { binarySearch } from "./util";
 
 const media = globals.media;
 
+/**
+ * A `THREE` type that needs to be disposed of when no longer in use.
+ * Many types from `THREE` don't free their resources automatically when no longer in use, and
+ * instead need to be disposed of manually by calling a `dispose()` method and / or removing the
+ * object from its parent. This type is a generic for such `THREE` types.
+ * @typedef {any} Disposable
+ */
+
+/**
+ * A `Set` that keeps track of disposable THREE elements.
+ * @extends Set.<Disposable>
+ */
 var Disposer = class Disposer extends Set {
+
+    /**
+     * Adds `Disposable`s to this disposer.
+     * This includes adding disposable properties of `disposable` and its children (if any).
+     * Items are only added if they have a `dispose()` method and / or can be removed from
+     * a parent.
+     * @param {!Disposable|Array.<Disposable>} disposable - The `Disposable` item to add to this
+     *      disposer. If `disposable` is an array of `Disposables`, each one is added.
+     * @param  {...Disposable} disposables - Extra `Disposables` to add to this disposer. This
+     *      allows passing in multiple items instead of having to call `add()` on each one
+     *      individually.
+     */
     add(disposable, ...disposables) {
         if (disposables.length > 0) { disposables.forEach(d => this.add(d)); }
         if (disposable == undefined) { return; }
@@ -23,6 +47,11 @@ var Disposer = class Disposer extends Set {
         }
     }
 
+    /**
+     * Disposes of the items in this disposer.
+     * Calls `dispose()` on the items that define it and removes items from their parent if they
+     * have one.
+     */
     dispose() {
         for (const disposable of this) {
             if (disposable.dispose) { disposable.dispose(); }
@@ -34,32 +63,135 @@ var Disposer = class Disposer extends Set {
     }
 }
 
+/**
+ * A `THREE` visualization of IMU pose data.
+ * It renders a pair of glasses that move and rotate over time according to the pose data.
+ */
 var GraphIMU = class GraphIMU {
 
     // how close quat / pos is slerped / lerped towards the destination
     // can't use 1 for some reason because otherwise the object becomes invisible
+    /**
+     * How closely the glasses are rotated and moved to the quaternion and vector respectively.
+     * Used in `animate()` to `slerp` and `lerp` the glasses. When it's set to 1, the glasses
+     * become invisible after updating. Along with this, setting the glasses quaternion and vector
+     * directly makes them invisible, which is why they need to be `slerp`ed and `lerp`ed.
+     * @type {number}
+     */
     static interpolationFactor = 0.999999;
 
+    /**
+     * The `Disposer` responsible for freeing the graph's resources when `dispose()` is called.
+     * @type {!Disposer}
+     */
+     disposer;
+
+    /**
+     * The div element that the renderer's canvas element is appended to.
+     * @type {!Element}
+     */
     container;
 
+    /**
+     * The width of the renderer's canvas element.
+     * @type {number}
+     */
     width;
+
+    /**
+     * The height of the renderer's canvas element.
+     * @type {number}
+     */
     height;
+
+    /**
+     * The aspect ratio of the camera's video.
+     * @type {number}
+     */
     aspect;
 
+    /**
+     * The object responsible for rendering the scene.
+     * Its canvas element is appended to `container` and is the actual graph seen in the interface.
+     * @type {!THREE.WebGLRenderer}
+     */
     renderer;
+
+    /**
+     * The scene that contains all other `THREE` objects.
+     * @type {!THREE.Scene}
+     */
     scene;
+
+    /**
+     * The camera whose video of the scene is rendered.
+     * @type {!THREE.PerspectiveCamera}
+     */
     camera;
 
-    disposer;
-
+    /**
+     * The controls that allow rotating and moving the camera and zooming in and out.
+     * Clicking and dragging the left mouse button rotates the camera. Clicking and dragging the
+     * right mouse button moves the camera. Scrolling zooms in and out.
+     * @type {!OrbitControls}
+     */
     controls;
+
+    /**
+     * The 3 lines highlighting the directions.
+     * The red line is the x axis, the green line is the y axis, and the blue line is the z axis.
+     * @type {!THREE.AxesHelper}
+     */
+    axes;
+
+    /**
+     * The grid in the XZ plane.
+     * @type {!THREE.GridHelper}
+     */
+    grid;
+
+    /**
+     * The ambient light that lights the objects in the scene.
+     * @type {!THREE.AmbientLight}
+     */
+    light;
+
+    /**
+     * The glasses model displayed in the graph.
+     * @type {!THREE.Group}
+     */
     glasses;
 
-    poseFile;
+    /**
+     * The timestamps of the data.
+     * @type {!Array.<number>}
+     */
     timestamps;
+
+    /**
+     * The vectors representing the position of the glasses at a timestamp.
+     * `null` if not visualizing the movement of the glasses.
+     * @type {?Array.<THREE.Vector3>}
+     */
     positions;
+
+    /**
+     * The quaternions representing the orientation of the glasses at a timestamp.
+     * @type {!Array.<THREE.Quaternion>}
+     */
     quaternions;
 
+    /**
+     * @param {!Element} container - The div element to append the graph's canvas to.
+     * @param {!Array.<Array.<number>>} data - The pose data to visualize.
+     * @param {?Object=} options - Options to customize the graph.
+     * @param {number=} options.width - The width of the graph. If `null`, the width of
+     *      `container` is used.
+     * @param {number=} options.height - The height of the graph. If `null`, the height of
+     *      `container` is used.
+     * @param {number=} options.aspect - The aspect ratio of the graph. If `null`,
+     *      `options.width / options.height` is used.
+     */
     constructor(container, data, { width = undefined, height = undefined, aspect = undefined } = {}) {
         // this.canvas = canvas;
         this.container = container;
@@ -74,16 +206,20 @@ var GraphIMU = class GraphIMU {
         this.init();
     }
 
+    /**
+     * Parses the timestamps, quaternions, and positions (if any) from the pose data.
+     * @param {!Array.<Array.<number>>} data - The pose data to visualize. The first entry in each
+     *      array is the timestamp for the data in that row. Then, if the rows have length 5, the
+     *      rest of the numbers are qw, qx, qy, and qz for the quaternions. If the rows have
+     *      length 8, the next 3 items are x, y, and z for the positions, and the rest of
+     *      the numbers are qw, qx, qy, and qz for the quaternions.
+     * @throws {Error} If the row's of data have a length other than 5 or 8.
+     */
     parseData(data) {
         // load the pose data from the CSV file. Columns are one of the following:
         // t x y z qw qx qy qz
         // t qw qx qy qz
         // where (x, y, z) is the position and (qx, qy, qz, qw) is the quaternion of the orientation
-        // const rows = await fetch(this.poseFile)
-        //     .then(checkResponseStatus)
-        //     .then(response => response.text())
-        //     .then(text => text.split("\n").map(row => row.split(",").map(parseFloat)));
-        // if (rows.length == 0) { throw new Error(`${this.poseFile} doesn't contain any data.`); }
 
         this.timestamps = data.map(row => row[0]);
         if (data[0].length == 5) { this.quaternions = data.map(row => row.slice(1)); }
@@ -113,6 +249,10 @@ var GraphIMU = class GraphIMU {
         }
     }
 
+    /**
+     * Initializes this graph.
+     * This involves creating the THREE visualization and loading the glasses model.
+     */
     init() {
         const disposer = this.disposer;
         const renderer = new THREE.WebGLRenderer();  // ({ canvas: this.canvas });
@@ -169,6 +309,12 @@ var GraphIMU = class GraphIMU {
         );
     }
 
+    /**
+     * Updates this graph on every frame.
+     * Rotates the glasses and (if there are positions) moves the glasses and camera.
+     * The rotation and position are the quaternion and vector at the index of the
+     * closest timestamp to the media's current time.
+     */
     animate() {
         window.requestAnimationFrame(this.animate.bind(this));
 
@@ -206,6 +352,7 @@ var GraphIMU = class GraphIMU {
         this.renderer.render(this.scene, camera);
     }
 
+    /** Disposes of this graph, freeing its resources. */
     dispose() { this.disposer.dispose(); }
 }
 

@@ -6,9 +6,23 @@ const peaks = globals.peaks;
 const overview = peaks.views.getView('overview');
 const zoomview = peaks.views.getView('zoomview');
 
+/**
+ * An `Object` used to reset an input and setting back to its default values.
+ * @typedef {Object} DefaultSetting
+ * @prop {string} name - The name of the input of the setting.
+ * @prop {string} event - The name of the event listened to by the input.
+ * @prop {Object<string, any>} props - An `Object` containing the name and default value for the
+ *      properties of the input.
+ */
+
+/** The popup containing extra settings for configuring the interface. */
 const SettingsPopup = class SettingsPopup {
 
-    /** */
+    /**
+     * The default settings of every input and setting in the popup.
+     * @type {Array.<DefaultSetting>}
+     * @static
+     */
     static defaults = [
         {name: "amplitudeInput", event: "input", props: { value: "5" }},
         {name: "autoScrollInput", event: "change", props: { checked: true }},
@@ -16,16 +30,54 @@ const SettingsPopup = class SettingsPopup {
         {name: "showDragHandlesInput", event: "change", props: { checked: true }}
     ];
 
-    /** */
+    /**
+     * The div element that contains all other elements.
+     * Displayed when the settings button is clicked.
+     * @type {!Element}
+     */
     popup;
-    /** */
+    
+    /**
+     * The div element containing the actual content of the popup.
+     * @type {!Element}
+     */
     popupContent;
+
     // save inputs so can set them when resetting to defaults
+    /**
+     * The input element of the range that changes the amplitude of the waveform.
+     * @type {!Element}
+     */
     amplitudeInput;
+
+    /**
+     * The input element of the checkbox that enables / disables autoscrolling on the waveform.
+     * @type {!Element}
+     */
     autoScrollInput;
+
+    /**
+     * The input element of the checkbox that enables / disables seeking on the Peaks waveforms.
+     * @type {!Element}
+     */
     enableSeekInput;
+
+    /**
+     * The input element of the checkbox that shows / hides the segments' drag handles.
+     * @type {!Element}
+     */
     showDragHandlesInput;
+
+    /**
+     * The button element that resets all moved segments.
+     * @type {!Element}
+     */
     resetMovedButton;
+
+    /**
+     * The button element that resets all saved changes.
+     * @type {!Element}
+     */
     resetAllButton;
 
     constructor() {
@@ -117,12 +169,13 @@ const SettingsPopup = class SettingsPopup {
         popupContent.append(this.resetAllButton);
     }
 
-    /** */
+    /** Updates content and displays this popup. */
     show() { this.popup.style.display = "block"; }
 
-    /** */
+    /** Hides this popup. */
     hide() { this.popup.style.display = "none"; }
 
+    /** Sets the inputs and settings back to their defaults. */
     setToDefaults() {
         for (const { name, event, props } of SettingsPopup.defaults) {
             const input = this[name];

@@ -20,24 +20,26 @@ else {
     }
 }
 
+// TODO: make a typedef for undo (and redo) elements so that the types aren't {any[]} 
 /**
- * Object containing global variables shared across js files
- * @property {boolean} dirty - Whether any changes have been made. If true, shows a warning before closing page
- * @property {string} filename - Name of the file, including its extension
- * @property {string} basename - Name of the file, excluding its extension
- * @property {string} user - Name of the user whose segments are being viewed. Always equal to the logged-in user unless admin is logged in
- * @property {Peaks.PeaksInstance} peaks - Instance of peaks
- * @type {Object}
+ * `Object` containing global constants shared across the javascript files.
+ * @prop {string} filename - The name of the media file including its extension.
+ * @prop {string} basename - The name of the media file excluding its extension
+ * @prop {!Element} media - The audio / video element being visualized.
+ * @prop {any[]} undoStorage - The array holding the actions that have been undone.
+ * @prop {string} user - The name of the user whose segments are being viewed. Always equal to the
+ *      logged-in user, unless "admin" is logged-in (since the admin can view any user's segments).
+ * @prop {!Peaks.PeaksInstance} peaks - Instance of peaks
+ * @type {!Object.<string, any>}
  */
 const globals = {};
 // would've defined these properties in the object (in the line above this) but then
 // VSCode IntelliSense showed them but not properties added later (like globals.peaks)
-globals.dirty = false;
 globals.filename = filename;
 globals.basename = basename;
 globals.media = document.getElementById("media");
 globals.undoStorage = [];
-globals.redoStorage = [];
+// globals.redoStorage = [];
 globals.user = user;
 
 const options = {  // options passed to Peaks
