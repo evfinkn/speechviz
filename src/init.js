@@ -4,7 +4,7 @@ import { GroupOfGroups, Group, Segment, TreeItem } from "./treeClasses";
 import { GraphIMU } from './graphicalClasses';
 import SettingsPopup from './SettingsPopup';
 import { getRandomColor, sortByProp, toggleButton, checkResponseStatus } from "./util";
-import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
+import { zoomInIcon, zoomOutIcon, undoIcon, redoIcon, saveIcon, settingsIcon } from "./icon";
 
 // make tree and viewer columns resizable
 Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
@@ -109,10 +109,19 @@ if (visualContainer) {
 
 // code below initializes the interface
 
-const zoomIn = document.querySelector("[data-action='zoom-in']");
-const zoomOut = document.querySelector("[data-action='zoom-out']");
+const zoomIn = document.getElementById("zoomin");
+const zoomOut = document.getElementById("zoomout");
 zoomIn.innerHTML = zoomInIcon;
 zoomOut.innerHTML = zoomOutIcon;
+
+const undoButton = document.getElementById("undo");
+const redoButton = document.getElementById("redo");
+undoButton.innerHTML = undoIcon;
+redoButton.innerHTML = redoIcon;
+
+const saveButton = document.getElementById("save");
+saveButton.innerHTML = saveIcon;
+
 zoomIn.addEventListener('click', function () {
     peaks.zoom.zoomIn();
     const zoomLevel = peaks.zoom.getZoom();
@@ -294,7 +303,8 @@ const undo = function () {
     }
 };
 
-document.querySelector('button[data-action="undo"]').addEventListener('click', undo);
+undoButton.addEventListener("click", undo);
+// document.querySelector('button[data-action="undo"]').addEventListener('click', undo);
 
 // document.querySelector('button[data-action="redo"]').addEventListener('click', function () {
 //     if (redoStorage.length != 0){
@@ -367,7 +377,8 @@ const save = function () {
 };
 
 // saves the segments
-document.querySelector('button[data-action="save"]').addEventListener("click", save);
+saveButton.addEventListener("click", save);
+// document.querySelector('button[data-action="save"]').addEventListener("click", save);
 
 // setting to change the speed at which the media plays
 const speedButton = document.getElementById("speed-button");

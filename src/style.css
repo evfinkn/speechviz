@@ -42,11 +42,12 @@ body {
 
 .speed-content {
   text-align: center;
-  width: 100%;
+  width: 50px;
 }
 
 .spdbtn {
-  min-height: 40px;
+  min-height: 25px;
+  font-size: 10px;
   width: 100%;
 }
 
@@ -58,6 +59,10 @@ body {
 #waveform-container {
   margin: 24px auto;
   width: 1000px;
+}
+
+.icon {
+  padding-left: 2px;
 }
 
 #zoomview-container,

@@ -359,8 +359,6 @@ var TreeItem = class TreeItem {
 
     /** Generates the HTML for this item. */
     render() {
-        const id = this.id;
-
         if (this.li) { this.li.remove(); }
 
         // since subclasses use this method, use this.constructor.icons to use the icons of

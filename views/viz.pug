@@ -1,70 +1,72 @@
 doctype html 
 html(lang="en")
-    head
-        meta(charset="UTF-8")
-        title Speechviz
-        link(rel="stylesheet", type="text/css", href="css/style.css")
-    body 
-        .navbar
-            a(href="/") Back to file selection
-            p#file #{file}
-            a#user(href="/settings") #{user}
-        .row.split 
-            .column#column
-                ul#tree(style="padding-left:0px;")
-            .column2#column2
-                #waveform-container
-                    if isVideo
-                        #visual(style="overflow:auto;")
-                            video#media(controls="controls", style="float:left;")
-                                source(src=`video/${file}`, type=mimetype)
-                                | Your browser does not support the video element.
-                        div
-                            #zoomview-container
-                            #overview-container
-                    else
-                        #zoomview-container
-                        #overview-container
-                        audio#media(controls="controls")
-                            source(src=`audio/${file}`, type=mimetype)
-                            | Your browser does not support the audio element.
-                    #media-controls
-                        .row
-                            .column3#column3
-                                #controls
-                                    .dropdown
-                                        button#speed-button(data-action="show-speeds") Speed
-                                        .dropdown-content.speed-content#speed-dropdown
-                                            button.spdbtn 0.25x
-                                            br
-                                            button.spdbtn 0.5x
-                                            br
-                                            button.spdbtn 0.75x
-                                            br
-                                            button.spdbtn 1x
-                                            br
-                                            button.spdbtn 1.25x
-                                            br
-                                            button.spdbtn 1.5x
-                                            br
-                                            button.spdbtn 1.75x
-                                            br
-                                            button.spdbtn 2x
-                                            br
-                                        a(href="javascript:;", style="text-decoration:none;pointer-events:none;", data-action="zoom-in")
-                                        a(href="javascript:;", style="text-decoration:none;", data-action="zoom-out")
-                                        .dropdown
-                                            a#settings-button(href="javascript:;", style="text-decoration:none;")
-                                    div
-                                        button(data-action="add-segment") Add Segment
-                                    div
-                                        input(type="text",id ="label", placeholder = "label")
-                                        button(data-action="add-label") Add Label
-                                    div
-                                        button(data-action="save") Save
-                                        button(data-action="undo") Undo
-                                        button(data-action="redo") Redo
-                            .column4#column4
-                                textarea#notes(rows="8", cols="60", placeholder="This is for any notes you wish to jot down")
+  head
+    meta(charset="UTF-8")
+    title Speechviz
+    link(rel="stylesheet" type="text/css" href="css/style.css")
+  body 
+    .navbar
+      a(href="/") Back to file selection
+      p#file #{file}
+      a#user(href="/settings") #{user}
+    .row.split 
+      .column#column
+        ul#tree(style="padding-left:0px;")
+      .column2#column2
+        #waveform-container
+          if isVideo
+            #visual(style="overflow:auto;")
+              video#media(controls="controls" style="float:left;")
+                source(src=`video/${file}`, type=mimetype)
+                | Your browser does not support the video element.
+            div
+              #zoomview-container
+              #overview-container
+          else
+            #zoomview-container
+            #overview-container
+            audio#media(controls="controls")
+              source(src=`audio/${file}`, type=mimetype)
+              | Your browser does not support the audio element.
+          #media-controls
+            .row
+              .column3#column3
+                #controls
+                  .dropdown
+                    button#speed-button(data-action="show-speeds") Speed
+                    .dropdown-content.speed-content#speed-dropdown
+                      button.spdbtn 0.25x
+                      br
+                      button.spdbtn 0.5x
+                      br
+                      button.spdbtn 0.75x
+                      br
+                      button.spdbtn 1x
+                      br
+                      button.spdbtn 1.25x
+                      br
+                      button.spdbtn 1.5x
+                      br
+                      button.spdbtn 1.75x
+                      br
+                      button.spdbtn 2x
+                      br
+                    a#zoomin.icon(href="javascript:;" style="text-decoration:none;pointer-events:none;")
+                    a#zoomout.icon(href="javascript:;" style="text-decoration:none;")
+                    a#undo.icon(href="javascript:;" style="padding-left:20px")
+                    a#redo.icon(href="javascript:;")
+                    a#save.icon(href="javascript:;" style="padding-left:20px")
+                    a#settings-button.icon(href="javascript:;" style="text-decoration:none;padding-left:20px")
+                  div
+                    button(data-action="add-segment") Add Segment
+                  div
+                    input(type="text",id ="label", placeholder = "label")
+                    button(data-action="add-label") Add Label
+                  //- div
+                  //-   button(data-action="save") Save
+                  //-   button(data-action="undo") Undo
+                  //-   button(data-action="redo") Redo
+              .column4#column4
+                textarea#notes(rows="8" cols="60" placeholder="Notes")
 
-        script(type="application/javascript", src="js/init.js")
+    script(type="application/javascript" src="js/init.js")

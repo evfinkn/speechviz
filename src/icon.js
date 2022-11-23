@@ -9,6 +9,8 @@ const feather = require('feather-icons');
  * @prop {string} remove - SVG string for the remove button icon.
  */
 
+// the segment and group button icons have shared properties so just
+// combine these into what's needed
 const playAndPauseOptions = { "stroke": "black", "fill": "black" };
 const loopAndRemoveOptions = { "stroke": "black", "stroke-width": 2.5 }
 const widthHeight12 = { "width": 12, "height": 12 };
@@ -71,13 +73,19 @@ const zoomOutIcon = feather.icons["zoom-out"].toSvg({ "stroke": "black" });
  * SVG string for the undo button icon.
  * @type {string}
  */
-const undoIcon = feather.icons["corner-up-left"].toSvg({ "stroke": "gray" });
+const undoIcon = feather.icons["corner-up-left"].toSvg({ "stroke": "black" });
 
 /**
  * SVG string for the redo button icon.
  * @type {string}
  */
-const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "gray" });
+const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "black" });
+
+/**
+ * SVG string for the save button icon.
+ * @type {string}
+ */
+const saveIcon = feather.icons.save.toSvg({ "stroke": "black" });
 
 /**
  * SVG string for the settings button icon.
@@ -92,5 +100,6 @@ export {
     zoomOutIcon,
     undoIcon,
     redoIcon,
+    saveIcon,
     settingsIcon
 };
