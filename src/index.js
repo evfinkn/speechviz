@@ -1,7 +1,4 @@
 import { htmlToElement } from "./util";
-var express = require('express');
-var router = express.Router();
-const fs = require("fs");
 
 let user;
 // for some reason, setting variable in promise doesn't set it outside of promise,
