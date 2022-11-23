@@ -9,7 +9,7 @@ const fs = require("fs");
 router.get('/', (req, res, next) => {
     file = req.query.file;
     console.log(file);
-    var dir = "faceClusters/video1.mp4/testLabel0/"
+    var dir = "faceClusters/" + file + "/testLabel0/"
     test = req.query.test;
     
     fs.readdir(("data/"+ dir), function(err, files){
