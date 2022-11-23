@@ -7,6 +7,11 @@ html(lang="en")
             legend(style="font-size:20px;") Select a user:
         fieldset#file-selection 
             legend(style="font-size:20px;") Clustered Faces:
-            img(src='/data/faceClusters/video1.mp4/testLabel0/Num100.jpg') 
+            img(src='/faceClusters/video1.mp4/testLabel0/Num100.jpg') 
+        ul#image-gallery
+        each image in faceClusters/video1.mp4/testLabel0
+            li
+                img(src=("" + faceClusters/video1.mp4/testLabel0 + "/" + image))
+
 
         script(type="application/javascript", src="js/faceCluster.js")
