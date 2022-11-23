@@ -10,11 +10,16 @@ router.get('/', (req, res, next) => {
     folder = req.query.folder;
     faceFolder = req.query.faces;
     console.log(folder);
-    var dir = "faceClusters/" + folder 
+    var dir = "faceClusters/" + folder
+    var faces;
+
+    fs.readdir(("data/" + dir + "/"), function(err, files){
+        faces = files;
+    });
     
     fs.readdir(("data/"+ dir + "/testLabel0/"), function(err, files){
-        //console.log(files);
-        res.render("facecluster", { "images": files, "dir": dir });//send to views/facecluster.pug
+        console.log(faces);
+        res.render("facecluster", { "images": files, "dir": dir, "faces": faces });//send to views/facecluster.pug
     });
 });
 
