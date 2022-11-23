@@ -11,8 +11,8 @@ router.get('/', (req, res, next) => {
     console.log(file);
     var dir = "faceClusters/" + file 
 
-    fs.readdir("data/" + dir).forEach(function (folderName){
-        print(folderName);
+    fs.readdir("data/" + dir).forEach(function (err, files){
+        print(files);
     });
     
     fs.readdir(("data/"+ dir + "/testLabel0/"), function(err, files){
