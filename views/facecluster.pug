@@ -8,10 +8,11 @@ html(lang="en")
         fieldset#file-selection 
             legend(style="font-size:20px;") Clustered Faces:
             img(src='/faceClusters/video1.mp4/testLabel0/Num100.jpg') 
+        //https://github.com/pugjs/pug/issues/2648
         ul#image-gallery
-        each image in faceClusters/video1.mp4/testLabel0
+        each image in images
             li
-                img(src=("" + faceClusters/video1.mp4/testLabel0 + "/" + image))
+                img(src=("" + dir + "/" + image))
 
 
         script(type="application/javascript", src="js/faceCluster.js")
