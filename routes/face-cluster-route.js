@@ -12,7 +12,7 @@ router.get('/', (req, res, next) => {
     test = req.query.test;
     
     fs.readdir(dir, function(err, files){
-        res.render("facecluster", { "images": files, "dir": dir });
+        res.render("clusteredFaces", { "images": files, "dir": dir });
     });
 });
 
