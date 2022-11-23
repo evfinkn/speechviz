@@ -84,7 +84,7 @@ var GraphIMU = class GraphIMU {
      * The `Disposer` responsible for freeing the graph's resources when `dispose()` is called.
      * @type {!Disposer}
      */
-     disposer;
+    disposer;
 
     /**
      * The div element that the renderer's canvas element is appended to.
@@ -192,7 +192,12 @@ var GraphIMU = class GraphIMU {
      * @param {number=} options.aspect - The aspect ratio of the graph. If `null`,
      *      `options.width / options.height` is used.
      */
-    constructor(container, data, { width = undefined, height = undefined, aspect = undefined } = {}) {
+    constructor(container, data, {
+        width = undefined,
+        height = undefined,
+        aspect = undefined
+    } = {}) {
+
         // this.canvas = canvas;
         this.container = container;
 

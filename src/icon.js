@@ -9,10 +9,21 @@ const feather = require('feather-icons');
  * @prop {string} remove - SVG string for the remove button icon.
  */
 
-const segmentPlayIcon = feather.icons.play.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
-const segmentPauseIcon = feather.icons.pause.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
-const segmentLoopIcon = feather.icons.repeat.toSvg({ "width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5 });
-const segmentRemoveIcon = feather.icons.x.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
+const playAndPauseOptions = { "stroke": "black", "fill": "black" };
+const loopAndRemoveOptions = { "stroke": "black", "stroke-width": 2.5 }
+const widthHeight12 = { "width": 12, "height": 12 };
+const widthHeight15 = { "width": 15, "height": 15 };
+const widthHeight17 = { "width": 17, "height": 17 };
+
+const segmentPlayPauseOptions = Object.assign({}, playAndPauseOptions, widthHeight12);
+const segmentLoopOptions = Object.assign({}, loopAndRemoveOptions, widthHeight12);
+const segmentRemoveOptions = Object.assign({}, loopAndRemoveOptions, widthHeight15);
+
+const segmentPlayIcon = feather.icons.play.toSvg(segmentPlayPauseOptions);
+const segmentPauseIcon = feather.icons.pause.toSvg(segmentPlayPauseOptions);
+const segmentLoopIcon = feather.icons.repeat.toSvg(segmentLoopOptions);
+const segmentRemoveIcon = feather.icons.x.toSvg(segmentRemoveOptions);
+
 /**
  * The button icons for `Segment`s.
  * @type {TreeItemButtonIcons}
@@ -24,10 +35,15 @@ const segmentIcons = {
     "remove": segmentRemoveIcon
 }
 
-const groupPlayIcon = feather.icons.play.toSvg({"width": 15, "height": 15, "stroke": "black", "fill": "black" });
-const groupPauseIcon = feather.icons.pause.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
-const groupLoopIcon = feather.icons.repeat.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
-const groupRemoveIcon = feather.icons.x.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
+const groupPlayPauseOptions = Object.assign({}, playAndPauseOptions, widthHeight15);
+const groupLoopOptions = Object.assign({}, loopAndRemoveOptions, widthHeight15);
+const groupRemoveOptions = Object.assign({}, loopAndRemoveOptions, widthHeight17);
+
+const groupPlayIcon = feather.icons.play.toSvg(groupPlayPauseOptions);
+const groupPauseIcon = feather.icons.pause.toSvg(groupPlayPauseOptions);
+const groupLoopIcon = feather.icons.repeat.toSvg(groupLoopOptions);
+const groupRemoveIcon = feather.icons.x.toSvg(groupRemoveOptions);
+
 /**
  * The button icons for `Group`s.
  * @type {TreeItemButtonIcons}
@@ -69,4 +85,12 @@ const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "gray" });
  */
 const settingsIcon = feather.icons.settings.toSvg({ "stroke": "black" });
 
-export { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, undoIcon, redoIcon, settingsIcon };
+export {
+    segmentIcons,
+    groupIcons,
+    zoomInIcon,
+    zoomOutIcon,
+    undoIcon,
+    redoIcon,
+    settingsIcon
+};

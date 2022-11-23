@@ -1,16 +1,19 @@
 import Peaks from "peaks.js";
 import createSegmentMarker from "./CustomSegmentMarker";
 
-const urlParams = new URLSearchParams(window.location.search);  // query parameters that appear in url, such as ?file=audio.mp3
+// query parameters that appear in url, such as ?file=audio.mp3
+const urlParams = new URLSearchParams(window.location.search);
 const filename = urlParams.get("file");  // name of file with extension
 const basename = filename.replace(/\.[^/.]+$/, "");  // name of the file without the extension;
 
 // make sure user is viewing their own segments or is admin
 let user = urlParams.get("user");  // user in the url params
-const sessionUser = await fetch("/user").then(response => response.text());  // actual logged-in user
+// the actual logged-in user (should == user unless admin logged in)
+const sessionUser = await fetch("/user").then(response => response.text());
 if (!user) { user = sessionUser; }
 else {
-    // non-admin tried switching user url param to view other user's segments, use logged-in user's segments
+    // non-admin tried switching user url param to view other user's
+    // segments, use logged-in user's segments
     if (sessionUser != "admin" && user != sessionUser) {
         user = sessionUser;
     }
@@ -75,5 +78,6 @@ Peaks.init(options, function (err, peaksInstance) {
 // Peaks.init() uses a callback, so this will be executed directly after calling Peaks.init()
 // However, we need to make sure globals.peaks has been set to the instance, as the other
 // js files use it. This waits for globals.peaks to be set
-while (!globals.peaks) { await new Promise(r => setTimeout(r, 250)); }  // https://stackoverflow.com/a/39914235
+// https://stackoverflow.com/a/39914235
+while (!globals.peaks) { await new Promise(r => setTimeout(r, 250)); }
 export default globals;

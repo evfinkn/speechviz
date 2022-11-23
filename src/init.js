@@ -6,7 +6,8 @@ import SettingsPopup from './SettingsPopup';
 import { getRandomColor, sortByProp, toggleButton, checkResponseStatus } from "./util";
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
 
-Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });  // make tree and viewer columns resizable
+// make tree and viewer columns resizable
+Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
 
 const peaks = globals.peaks;
 const user = globals.user;
@@ -51,10 +52,12 @@ const createTree = function (id, parent, children, snr) {
 const segmentsTree = new GroupOfGroups("Segments");
 document.getElementById("tree").append(segmentsTree.li);
 
-const custom = new Group("Custom", { parent: segmentsTree, color: getRandomColor(), colorable: true });
+const custom = new Group("Custom", {
+    parent: segmentsTree,
+    color: getRandomColor(),
+    colorable: true
+});
 const labeled = new GroupOfGroups("Labeled", { parent: segmentsTree });
-
-let words = [];
 
 fetch(`/segments/${basename}-segments.json`)
     .then(checkResponseStatus)
@@ -69,10 +72,12 @@ fetch(`/segments/${basename}-segments.json`)
         const idNums = ids.map(id => parseInt(id.split(".").at(-1)));
         globals.highestId = Math.max(...idNums);  // used when saving to re-number segments
 
-        // after loading, toggle everything off (usually end up disabling most groups right away, just do it automatically)
+        // after loading, toggle everything off (usually end up
+        // disabling most groups right away so just do it automatically)
         segmentsTree.children.forEach(child => child.toggle(false));
     })
     .catch(error => {
+        console.error(error);
         console.log("No segments for media.")
         globals.highestId = 0;
     });
@@ -81,9 +86,7 @@ fetch(`/segments/${basename}-segments.json`)
 fetch(`/transcriptions/${basename}-transcription.json`)
     .then(checkResponseStatus)
     .then(response => response.json())
-    .then(wordsTimes => {
-        words = wordsTimes.map(wordTime => peaks.points.add(wordTime));
-    })
+    .then(words => words.map(word => peaks.points.add(word)))
     .catch(error => console.log("No transcription for media."));
 
 const visualContainer = document.getElementById("visual");
@@ -99,11 +102,6 @@ if (visualContainer) {
         .then(data => {
             const width = visualContainer.offsetWidth - media.offsetWidth;
             const height = media.offsetHeight;
-            // const canvas = document.createElement("canvas");
-            // canvas.style.width = width;
-            // canvas.style.height = height;
-            // canvas.style.float = "right";
-            // visualContainer.appendChild(canvas);
             new GraphIMU(visualContainer, data, { width: width, height: height });
         })
         .catch(error => console.log("No pose data for media."));
@@ -118,42 +116,47 @@ zoomOut.innerHTML = zoomOutIcon;
 zoomIn.addEventListener('click', function () {
     peaks.zoom.zoomIn();
     const zoomLevel = peaks.zoom.getZoom();
-    if (zoomLevel == 0) {  // can't zoom in any further, disable zoom in button
-        toggleButton(zoomIn, false);
-    }
-    else if (zoomLevel == 3) {  // not at max zoom out level, enable zoom out button
-        toggleButton(zoomOut, true)
-    }
+    // can't zoom in any further, disable zoom in button
+    if (zoomLevel == 0) { toggleButton(zoomIn, false); }
+    // not at max zoom out level, enable zoom out button
+    else if (zoomLevel == 3) { toggleButton(zoomOut, true); }
 });
 zoomOut.addEventListener('click', function () {
     peaks.zoom.zoomOut();
     const zoomLevel = peaks.zoom.getZoom();
-    if (zoomLevel == 4) {  // can't zoom out any further, disable zoom out button
-        toggleButton(zoomOut, false);
-    }
-    else if (zoomLevel == 1) {  // not at max zoom in level, enable zoom in button
-        toggleButton(zoomIn, true)
-    }
+    // can't zoom out any further, disable zoom out button
+    if (zoomLevel == 4) { toggleButton(zoomOut, false); }
+    // not at max zoom in level, enable zoom in button
+    else if (zoomLevel == 1) { toggleButton(zoomIn, true); }
 });
 
 // input to add a label group
 const labelInput = document.getElementById("label");
 document.querySelector("button[data-action='add-label']").addEventListener('click', function () {
     if (labelInput.value != "") {
-        new Group(labelInput.value, { parent: labeled, removable: true, renamable: true, color: getRandomColor(), colorable: true, copyTo: ["Labeled"] });
+        new Group(labelInput.value, {
+            parent: labeled,
+            removable: true,
+            renamable: true,
+            color: getRandomColor(),
+            colorable: true,
+            copyTo: ["Labeled"]
+        });
         labelInput.value = "";  // clear text box after submitting
         labeled.open();  // open labeled in tree to show newly added label
     }
 });
 
-
-let segmentCounter = 1;  // counts number of custom segments added, used for custom segment's labelText
+// counts number of custom segments added, used for custom segment's labelText
+let segmentCounter = 1;
 const audioDuration = peaks.player.getDuration();
 document.querySelector('button[data-action="add-segment"]').addEventListener('click', function () {
     const label = 'Custom Segment ' + segmentCounter++;
     const curTime = peaks.player.getCurrentTime();
-    // endTime is either 2.5 seconds after current time or the end of the audio (whichever's shortest)
-    // if endTime > audioDuration, drag handle for changing segment's endTime is off screen and unusable
+    // endTime is either 2.5 seconds after current time
+    // or the end of the audio (whichever's shortest)
+    // if endTime > audioDuration, drag handle for changing
+    // segment's endTime is off screen and unusable
     const endTime = curTime + 2.5 > audioDuration ? audioDuration : curTime + 2.5;
     let segment = {
         startTime: curTime,
@@ -163,9 +166,16 @@ document.querySelector('button[data-action="add-segment"]').addEventListener('cl
         treeText: label,
     };
     segment = peaks.segments.add(segment);
-    let seg = new Segment(segment, { parent: custom, removable: true, renamable: true, moveTo: ["Labeled"] });
-    undoStorage.push(["added segment", segment, seg.getProperties(["id", "duration", "color", "labelText"])]);
-    // redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+    let seg = new Segment(segment, {
+        parent: custom,
+        removable: true,
+        renamable: true,
+        moveTo: ["Labeled"]
+    });
+    undoStorage.push(["added segment", segment, seg.getProperties([
+        "id", "duration", "color", "labelText"
+    ])]);
+    // redoStorage.length = 0;  // clear redos
     custom.sort("startTime");
     custom.open();  // open custom in tree to show newly added segment
 });
@@ -187,7 +197,14 @@ fetch("load", {
         peaks.segments.add(data.segments, { overwrite: true }).forEach(function (segment) {
             let parent = segment.path.at(-1);
             if (!(parent in Group.byId)) {  // parent group doesn't exist yet so add it
-                parent = new Group(parent, { parent: GroupOfGroups.byId[segment.path.at(-2)], removable: true, renamable: true, color: getRandomColor(), colorable: true, copyTo: ["Labeled"] });
+                parent = new Group(parent, {
+                    parent: GroupOfGroups.byId[segment.path.at(-2)],
+                    removable: true,
+                    renamable: true,
+                    color: getRandomColor(),
+                    colorable: true,
+                    copyTo: ["Labeled"]
+                });
             }
             else { parent = Group.byId[parent]; }
 
@@ -196,20 +213,28 @@ fetch("load", {
                 treeSegment.segment = segment;
                 treeSegment.parent = parent;
             }
-            else { new Segment(segment, { parent, removable: true, renamable: true, moveTo: ["Labeled"] }); }
+            else {
+                new Segment(segment, {
+                    parent: parent,
+                    removable: true,
+                    renamable: true,
+                    moveTo: ["Labeled"]
+                });
+            }
             parent.sort("startTime");
 
             if (segment.labelText.match(regex)) { segmentCounter++; }
         });
 
-        // after loading, toggle everything off (usually end up disabling most groups right away, just do it automatically)
+        // after loading, toggle everything off (usually end up
+        // disabling most groups right away, just do it automatically)
         segmentsTree.children.forEach(child => child.toggle(false));
     })
     .catch(error => console.error(error));  // catch err thrown by res if any
 
 peaks.on("segments.dragstart", function (event) {
     undoStorage.push(["dragged", event.segment.id, event.segment.endTime, event.segment.startTime]);
-    // redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+    // redoStorage.length = 0;  // clear redos
 });
 
 peaks.on("segments.dragend", function (event) {
@@ -224,13 +249,15 @@ const undo = function () {
     if (undoStorage.length != 0) {
         let undoThing = undoStorage.pop();
         if (undoThing[0] == "deleted segment") {
-            const [, peaksSegment, options] = undoThing;  // unpack undoThing (ignoring first element)
+            // unpack undoThing (ignoring first element)
+            const [, peaksSegment, options] = undoThing;
             Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
             const segment = new Segment(peaks.segments.add(peaksSegment), options);
             segment.parent.sort("startTime");
         }
         else if (undoThing[0] == "deleted group") {
-            const [, id, options] = undoThing;  // unpack undoThing (ignoring first element)
+            // unpack undoThing (ignoring first element)
+            const [, id, options] = undoThing;
             Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
             new Group(id, options);
             while (undoStorage.length != 0
@@ -275,7 +302,8 @@ document.querySelector('button[data-action="undo"]').addEventListener('click', u
 //         let redoThing = redoStorage.pop();
 //         if (redoThing[0] == "added segment") {
 //             undoStorage.push(redoThing);
-//             const [, peaksSegment, options] = redoThing; // unpack undoThing (ignoring first element)
+//             // unpack undoThing (ignoring first element)
+//             const [, peaksSegment, options] = redoThing;
 //             Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
 //             const segment = new Segment(peaks.segments.add(peaksSegment), options);
 //             segment.parent.sort("startTime");
@@ -294,13 +322,17 @@ const save = function () {
     // array.push(...) is faster than array.concat
     groups.forEach(group => segments.push(...group.getSegments({ hidden: true, visible: true })));
 
-    // need to copy the segment properties because otherwise, sending the actual segment causes error 
-    // because peaks segments store the peaks instance, and the peaks instance stores the segments, infinite recursive error
+    // need to copy the segment properties because
+    // otherwise, sending the actual segment causes error
+    // because peaks segments store the peaks instance, and
+    // the peaks instance stores the segments, infinite recursive error
     segments = segments.map(segment => segment.getProperties(["text", "duration", "color"]));
 
     // re-number the segments so there aren't gaps in ids from removed segments
     let idCounter = globals.highestId + 1;
-    segments.map((segment, index) => { return { "index": index, "id": parseInt(segment.id.split(".").at(-1)) }; })
+    segments.map((segment, index) => {
+        return { "index": index, "id": parseInt(segment.id.split(".").at(-1)) };
+    })
         .sort((seg1, seg2) => seg1.id - seg2.id)
         .map(seg => segments[seg.index])
         .forEach(segment => { segment.id = `peaks.segment.${idCounter++}`; });
@@ -326,10 +358,8 @@ const save = function () {
         headers: { "Content-Type": "application/json; charset=UTF-8" },
         body: JSON.stringify({ user, filename, segments, notes: notes.value })
     })
-        .then(res => {
-            if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-            fileParagraph.innerHTML = `${filename} - Saved`;
-        })
+        .then(checkResponseStatus)
+        .then(res => fileParagraph.innerHTML = `${filename} - Saved`)
         .catch(error => {
             fileParagraph.innerHTML = `${filename} - Error while saving`;
             console.error(error);
@@ -407,7 +437,8 @@ window.addEventListener("keydown", function (event) {
 //     window.addEventListener("beforeunload", function (event) {
 //         if (!newChanges) { return undefined; }
 
-//         var confirmationMessage = "You have unsaved changes. If you leave before saving, these changes will be lost.";
+//         var confirmationMessage = "You have unsaved changes. "
+//              + "If you leave before saving, these changes will be lost.";
 //         // returnValue and return for cross compatibility 
 //         (event || window.event).returnValue = confirmationMessage;
 //         return confirmationMessage;

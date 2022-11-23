@@ -11,7 +11,8 @@ body {
   cursor: pointer;
 }
 
-#speed-button:hover, #speed-button:focus {
+#speed-button:hover,
+#speed-button:focus {
   background-color: rgb(42, 100, 214);
 }
 
@@ -26,7 +27,7 @@ body {
   position: absolute;
   background-color: #f1f1f1;
   overflow: auto;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
 }
 
@@ -35,7 +36,7 @@ body {
   position: absolute;
   background-color: #f1f1f1;
   overflow: auto;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
 }
 
@@ -49,14 +50,18 @@ body {
   width: 100%;
 }
 
-.show {display: block;}
+.show {
+  display: block;
+}
 
-#titles, #waveform-container {
+#titles,
+#waveform-container {
   margin: 24px auto;
   width: 1000px;
 }
 
-#zoomview-container, #overview-container {
+#zoomview-container,
+#overview-container {
   margin: 0 0 24px 0;
   line-height: 0;
   -moz-box-shadow: 3px 3px 20px #919191;
@@ -108,68 +113,69 @@ p code {
 
 .column {
   white-space: nowrap;
-	float: left;
-	width: 17%;
-	padding: 10px;
+  float: left;
+  width: 17%;
+  padding: 10px;
   overflow-x: scroll;
-	overflow-y: auto;
-	height: calc(100vh - 65px);
+  overflow-y: auto;
+  height: calc(100vh - 65px);
 }
 
 .column2 {
-	float: right;
-	width: 79%;
-	padding: 10px;
-	height: 470px;
+  float: right;
+  width: 79%;
+  padding: 10px;
+  height: 470px;
 }
 
 .column3 {
-	float: left;
-	width: 40%;
-	padding: 10px;
-	overflow-y: auto;
-	height: auto;
+  float: left;
+  width: 40%;
+  padding: 10px;
+  overflow-y: auto;
+  height: auto;
 }
 
 .column4 {
-	float: right;
-	width: 55%;
-	padding: 10px;
-	overflow-y: auto;
-	height: auto;
+  float: right;
+  width: 55%;
+  padding: 10px;
+  overflow-y: auto;
+  height: auto;
 }
 
 .row:after {
-	content: "";
-	display: inline;
-	clear: both;
+  content: "";
+  display: inline;
+  clear: both;
 }
 
 ul {
-	margin-left: 0px;
-	padding-left: 25px;
+  margin-left: 0px;
+  padding-left: 25px;
 }
 
-ul, #Segments {
+ul,
+#Segments {
   list-style-type: none;
 }
-	
+
 #Segments {
   margin: 0;
   padding: 0;
 }
-	
+
 .nested {
   display: none;
 }
-	
+
 .active {
   display: block;
 }
 
 .nolink {
-  background: none; 
-  border: none; 
+  background: none;
+  border: none;
   text-decoration: none;
 }
 
@@ -186,6 +192,7 @@ ul, #Segments {
   background-color: rgba(0, 0, 0, 0.4);
   font-size: 14px;
 }
+
 .popup-content {
   margin: 100px auto;
   border: 1px solid #fff;
@@ -200,6 +207,7 @@ ul, #Segments {
   font-size: 28px;
   font-weight: bold;
 }
+
 .close:hover,
 .close:focus {
   color: black;

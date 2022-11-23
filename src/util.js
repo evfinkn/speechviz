@@ -164,12 +164,23 @@ const binarySearch = function (arr, val, compareFn) {  // https://stackoverflow.
  *      `res.ok != true` or if `res.status != 200`.
  */
 const checkResponseStatus = function (res) {
-    if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
-    else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+    if (!res.ok) { throw new Error('Network response was not OK'); }  // network error
+    else if (res.status != 200) {  // not 200 is error
+        throw new Error(`${res.status} ${res.statusText}`);
+    }
     return res;
 }
 
 export {
-    getRandomColor, htmlToElement, compareProperty, sortByProp, propertiesEqual, toggleButton,
-    arraySum, arrayMean, objectMap, binarySearch, checkResponseStatus
+    getRandomColor,
+    htmlToElement,
+    compareProperty,
+    sortByProp,
+    propertiesEqual,
+    toggleButton,
+    arraySum,
+    arrayMean,
+    objectMap,
+    binarySearch,
+    checkResponseStatus
 };
