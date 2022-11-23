@@ -12,7 +12,8 @@ router.get('/', (req, res, next) => {
     test = req.query.test;
     
     fs.readdir(dir, function(err, files){
-        res.render("clusteredFaces", { "images": files, "dir": dir });
+        console.log(files);
+        res.render("clustered-faces", { "images": files, "dir": dir });
     });
 });
 
