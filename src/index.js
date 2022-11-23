@@ -56,7 +56,7 @@ fetch("/filelist")
     .then(fileList => {  // fileList is object with arrays for audio filenames and video filenames
         const audiofiles = fileList.audio;
         const videofiles = fileList.video;
-        const clusterfolders = fileList.cluster
+        const clusterfolders = fileList.cluster;
         const fieldset = document.getElementById("file-selection");
 
         if (audiofiles?.length !== 0) {
@@ -92,7 +92,7 @@ fetch("/filelist")
                 const div = htmlToElement(`<div><input type="radio" id="${folderName}cluster"" name="file-selection" value="${folderName}cluster"></input><label for="${folderName}cluster">${folderName}</label></div>`);
                 div.firstElementChild.addEventListener("change", function () {
                     // when radio button clicked, open that video file in viz
-                    window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}file=${this.value.replace('cluster', '')}`);
+                    window.location.replace(`/clusteredFaces?${user ? "user=" + user + "&" : ""}file=${this.value.replace('cluster', '')}`);
                 });
                 fieldset.append(div);
             });
