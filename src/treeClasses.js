@@ -366,8 +366,8 @@ var TreeItem = class TreeItem {
         const li = htmlToElement(`<li>
             <input type="checkbox" autocomplete="off" checked>
             <span>${this.#text}</span>
-            <a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.play}</a>
-            <a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.loop}</a>
+            <a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>
+            <a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>
             <ul class="nested active"></ul>
         </li>`);
         this.li = li;
@@ -392,8 +392,8 @@ var TreeItem = class TreeItem {
         this.nested = li.children[4];
 
         if (this.removable) {
-            const remove =
-                htmlToElement(`<a href="javascript:;" ">${this.constructor.icons.remove}</a>`);
+            const remove = htmlToElement(
+                `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`);
             this.loopButton.after(remove);
             remove.addEventListener("click", () => { this.remove(); });
             this.removeButton = remove;

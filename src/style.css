@@ -55,14 +55,27 @@ body {
   display: block;
 }
 
+.icon {
+  /* padding-left: 2px; */
+  text-decoration: none;
+}
+
+.button-on {
+  fill: black;
+  stroke: black;
+  pointer-events: auto;
+}
+
+.button-off {
+  fill: gray;
+  stroke: gray;
+  pointer-events: none;
+}
+
 #titles,
 #waveform-container {
   margin: 24px auto;
   width: 1000px;
-}
-
-.icon {
-  padding-left: 2px;
 }
 
 #zoomview-container,

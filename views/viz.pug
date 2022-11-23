@@ -51,12 +51,12 @@ html(lang="en")
                       br
                       button.spdbtn 2x
                       br
-                    a#zoomin.icon(href="javascript:;" style="text-decoration:none;pointer-events:none;")
-                    a#zoomout.icon(href="javascript:;" style="text-decoration:none;")
-                    a#undo.icon(href="javascript:;" style="padding-left:20px")
-                    a#redo.icon(href="javascript:;")
-                    a#save.icon(href="javascript:;" style="padding-left:20px")
-                    a#settings-button.icon(href="javascript:;" style="text-decoration:none;padding-left:20px")
+                  a#zoomin.icon.button-off(href="javascript:;")
+                  a#zoomout.icon.button-on(href="javascript:;")
+                  a#undo.icon.button-on(href="javascript:;" style="padding-left:20px;")
+                  a#redo.icon.button-on(href="javascript:;")
+                  a#save.icon.button-on(href="javascript:;" style="padding-left:20px;")
+                  a#settings-button.icon.button-on(href="javascript:;" style="padding-left:20px;")
                   div
                     button(data-action="add-segment") Add Segment
                   div

@@ -11,8 +11,8 @@ const feather = require('feather-icons');
 
 // the segment and group button icons have shared properties so just
 // combine these into what's needed
-const playAndPauseOptions = { "stroke": "black", "fill": "black" };
-const loopAndRemoveOptions = { "stroke": "black", "stroke-width": 2.5 }
+const playAndPauseOptions = { "stroke": "inherit", "fill": "inherit" };
+const loopAndRemoveOptions = { "stroke": "inherit", "stroke-width": 2.5 }
 const widthHeight12 = { "width": 12, "height": 12 };
 const widthHeight15 = { "width": 15, "height": 15 };
 const widthHeight17 = { "width": 17, "height": 17 };
@@ -61,37 +61,37 @@ const groupIcons = {
  * SVG string for the zoom-in button icon.
  * @type {string}
  */
-const zoomInIcon = feather.icons["zoom-in"].toSvg({ "stroke": "gray" });
+const zoomInIcon = feather.icons["zoom-in"].toSvg({ "stroke": "inherit" });
 
 /**
  * SVG string for the zoom-out button icon.
  * @type {string}
  */
-const zoomOutIcon = feather.icons["zoom-out"].toSvg({ "stroke": "black" });
+const zoomOutIcon = feather.icons["zoom-out"].toSvg({ "stroke": "inherit" });
 
 /**
  * SVG string for the undo button icon.
  * @type {string}
  */
-const undoIcon = feather.icons["corner-up-left"].toSvg({ "stroke": "black" });
+const undoIcon = feather.icons["corner-up-left"].toSvg({ "stroke": "inherit" });
 
 /**
  * SVG string for the redo button icon.
  * @type {string}
  */
-const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "black" });
+const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "inherit" });
 
 /**
  * SVG string for the save button icon.
  * @type {string}
  */
-const saveIcon = feather.icons.save.toSvg({ "stroke": "black" });
+const saveIcon = feather.icons.save.toSvg({ "stroke": "inherit" });
 
 /**
  * SVG string for the settings button icon.
  * @type {string}
  */
-const settingsIcon = feather.icons.settings.toSvg({ "stroke": "black" });
+const settingsIcon = feather.icons.settings.toSvg({ "stroke": "inherit" });
 
 export {
     segmentIcons,

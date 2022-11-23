@@ -75,21 +75,13 @@ const propertiesEqual = function (obj1, obj2, properties) {
  *      `force == null`, returns `true`. Otherwise, returns `force !== clickable`.
  */
 const toggleButton = function (button, force = null) {
-    const currentlyClickable = button.style.pointerEvents == "auto";
-    if ((force == true && currentlyClickable)
-        || (force == false && !currentlyClickable)) {
-
+    const currentlyOn = button.classList.contains("button-on");
+    if ((force == true && currentlyOn) || (force == false && !currentlyOn)) {
         return false;
     }
-
-    const on = force == null ? !currentlyClickable : force;
-    button.style.pointerEvents = on ? "auto" : "none";  // make button unclickable
-    const svg = button.firstElementChild;
-    svg.style.stroke = on ? "black" : "gray";
-    // had to do getAttribute() because of some weird thing where svg.style.fill was none even 
-    // though I know it wasn't actually. Something to do with how feathers does stuff I think
-    if (svg.getAttribute("fill") != "none") { svg.style.fill = on ? "black" : "gray"; }
-
+    const on = force == null ? !currentlyOn : force;
+    button.classList.toggle("button-on", on);
+    button.classList.toggle("button-off", !on);
     return true;
 }
 
