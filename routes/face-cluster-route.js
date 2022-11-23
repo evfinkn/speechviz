@@ -8,7 +8,6 @@ var dir = "/faceClusters/video1.mp4/testLabel0/"
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-    res.render("facecluster");
     file = req.query.file;
     test = req.query.test;
     
