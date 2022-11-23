@@ -1,4 +1,5 @@
 import { htmlToElement } from "./util";
+const fs = require("fs");
 
 let user;
 // for some reason, setting variable in promise doesn't set it outside of promise,
