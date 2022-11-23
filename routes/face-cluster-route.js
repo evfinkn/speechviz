@@ -7,13 +7,10 @@ const fs = require("fs");
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-    file = req.query.file;
-    console.log(file);
-    var dir = "faceClusters/" + file 
-
-    fs.readdir("data/" + dir).forEach(function (err, files){
-        print(files);
-    });
+    folder = req.query.folder;
+    faceFolder = req.query.faces;
+    console.log(folder);
+    var dir = "faceClusters/" + folder 
     
     fs.readdir(("data/"+ dir + "/testLabel0/"), function(err, files){
         //console.log(files);
