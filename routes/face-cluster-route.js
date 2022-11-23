@@ -1,5 +1,7 @@
 var express = require('express');
 var router = express.Router();
+const fs = require("fs");
+
 
 var dir = "/faceClusters/video1.mp4/testLabel0/"
 
