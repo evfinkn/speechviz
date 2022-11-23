@@ -9,10 +9,13 @@ const fs = require("fs");
 router.get('/', (req, res, next) => {
     file = req.query.file;
     console.log(file);
-    var dir = "faceClusters/" + file + "/testLabel0/"
-    test = req.query.test;
+    var dir = "faceClusters/" + file 
+
+    fs.readdir("data/" + dir).forEach(function (folderName){
+        print(folderName);
+    });
     
-    fs.readdir(("data/"+ dir), function(err, files){
+    fs.readdir(("data/"+ dir + "/testLabel0/"), function(err, files){
         //console.log(files);
         res.render("facecluster", { "images": files, "dir": dir });//send to views/facecluster.pug
     });
