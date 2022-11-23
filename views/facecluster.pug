@@ -7,11 +7,12 @@ html(lang="en")
             legend(style="font-size:20px;") Select a user:
         fieldset#file-selection 
             legend(style="font-size:20px;") Clustered Faces:
+            //https://github.com/pugjs/pug/issues/2648
             img(src='/faceClusters/video1.mp4/testLabel0/Num100.jpg') 
-        //https://github.com/pugjs/pug/issues/2648
-        ul#image-gallery
-        each image in images
-            img(src=("" + dir + image))
+            each image in images
+                img(src=("" + dir + image))
+        
+        
 
 
         script(type="application/javascript", src="js/faceCluster.js")
