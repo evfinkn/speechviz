@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-var dir = /faceClusters/video1.mp4/testLabel0/
+var dir = "/faceClusters/video1.mp4/testLabel0/"
 
 
 /* GET home page. */
@@ -12,7 +12,7 @@ router.get('/', (req, res, next) => {
     
     fs.readdir(dir, function(err, files){
         res.render
-        res.render("clusteredFaces", { images: files, directory: dir });
+        res.render("clusteredFaces", { "images": files, "dir": dir });
     });
 });
 
