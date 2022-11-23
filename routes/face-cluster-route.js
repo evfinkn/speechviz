@@ -3,7 +3,7 @@ var router = express.Router();
 const fs = require("fs");
 
 
-var dir = "/faceClusters/video1.mp4/testLabel0/"
+var dir = "data/faceClusters/video1.mp4/testLabel0/"
 
 
 /* GET home page. */
