@@ -19,7 +19,7 @@ router.get('/', (req, res, next) => {
     
     fs.readdir(("data/"+ dir + "/testLabel0/"), function(err, files){
         console.log(faces);
-        res.render("facecluster", { "images": files, "dir": dir, "faces": faces, inFaceFolder: false });//send to views/facecluster.pug
+        res.render("facecluster", { "images": files, "originalDirectory": dir, "dir": dir, "faces": faces, inFaceFolder: false });//send to views/facecluster.pug
     });
 });
 
