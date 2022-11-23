@@ -11,8 +11,7 @@ html(lang="en")
         //https://github.com/pugjs/pug/issues/2648
         ul#image-gallery
         each image in images
-            li
-                img(src=("" + dir + image))
+            img(src=("" + dir + image))
 
 
         script(type="application/javascript", src="js/faceCluster.js")
