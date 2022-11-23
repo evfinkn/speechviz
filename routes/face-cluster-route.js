@@ -3,12 +3,13 @@ var router = express.Router();
 const fs = require("fs");
 
 
-var dir = "faceClusters/video1.mp4/testLabel0/"
 
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
     file = req.query.file;
+    console.log(file);
+    var dir = "faceClusters/video1.mp4/testLabel0/"
     test = req.query.test;
     
     fs.readdir(("data/"+ dir), function(err, files){
