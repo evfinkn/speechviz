@@ -145,7 +145,7 @@ const binarySearch = function (arr, val, compareFn) {  // https://stackoverflow.
         else if (cmp < 0) { end = mid - 1; }
         else { return mid; }
     }
-    return -start - 1;
+    return -start;
 }
 
 /**
