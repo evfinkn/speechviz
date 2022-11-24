@@ -4,10 +4,11 @@ fetch("/clustered-faces")
     .then(res => {
         if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
         else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
-        return res.json();  // return json from response
+        return res.text();  // return json from response
     })
     .then(fileList => { 
         const clusterfolders = fileList.cluster;
+        console.log(clusterfolders);
         const fieldset = document.getElementById("file-selection");
         fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
 
