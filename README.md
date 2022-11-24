@@ -4,12 +4,18 @@ This will take an audio file and visualize various characteristics. Currently, y
 
 ## Contents
 
-- [Docker / Podman image](#docker-podman-image)
-- [Manual installation](#manual-installation)
-- [Usage](#usage)
-- [VRS data extraction](#vrs-data-extraction)
-- [Face Detection and Clustering](#face-detection-and-clustering)
-- [Troubleshooting](#troubleshooting)
+- [Speech Visualization](#speech-visualization)
+  - [Contents](#contents)
+  - [Docker / Podman image](#docker--podman-image)
+  - [Manual installation](#manual-installation)
+    - [Setup the interface](#setup-the-interface)
+    - [Install script dependencies](#install-script-dependencies)
+      - [pip](#pip)
+      - [conda](#conda)
+  - [Usage](#usage)
+  - [VRS data extraction](#vrs-data-extraction)
+  - [Face Detection and Clustering](#face-detection-and-clustering)
+  - [Troubleshooting](#troubleshooting)
 
 ## Docker / Podman image
 
@@ -33,7 +39,7 @@ and add `--build-arg cuda=true` to the `docker build` command above:
 
     npm install
     npm run mkdir
-    python3 src/scripts/db_init.py
+    python3 scripts/db_init.py
 
 ### Install script dependencies
 
@@ -60,11 +66,11 @@ To install with PyTorch CUDA support (Linux and Windows only):
 
 Before running the server, you'll need to process some audio. To do so, run:
 
-    python3 src/scripts/process_audio.py FILE
+    python3 scripts/process_audio.py FILE
 
 For more information, run:
 
-    python3 src/scripts/process_audio.py -h
+    python3 scripts/process_audio.py -h
 
 <br><br>
 
@@ -105,7 +111,7 @@ where + 1201-1 can be substituded for whichever sensor you want to get video fro
 
 Next cd to where ./create-video.sh is, in the main Speechviz folder then run
 
-    src/scripts/create-video.sh path/to/image-folder
+    scripts/create-video.sh path/to/image-folder
 
 This will give you an mp4 of all the images extracted without any of the audio.
 
@@ -127,7 +133,7 @@ Lastly combine the mp4 and mp3 to get a video with audio.
 
 At this point if you want to then analyze the video with speechviz move the video to data/video and run
 
-    python3 src/scripts/process_audio.py data/video
+    python3 scripts/process_audio.py data/video
 
 ## Face Detection and Clustering
 First we need to build dlib, this assumes you have a gpu. If you just want to use cpu use DDLIB_USE_CUDA = 0 instead.
