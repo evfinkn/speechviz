@@ -70,7 +70,7 @@ app.get("/clustered-faces", (req, res) => {
   //faceFolder = req.query.faceFolder
   const files = {};
   files.cluster = fs.readdirSync("data/faceClusters").filter(fileName => !exclude.has(fileName));
-  files.faceFolder = faceFolder;
+  //files.faceFolder = faceFolder;
   res.send(files);
 });
 
