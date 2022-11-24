@@ -1,10 +1,10 @@
 import Split from 'split.js';  // library for resizing columns by dragging
-import globals from "./globals";
-import { GroupOfGroups, Group, Segment, TreeItem } from "./treeClasses";
-import { GraphIMU } from './graphicalClasses';
-import SettingsPopup from './SettingsPopup';
-import { getRandomColor, sortByProp, toggleButton, checkResponseStatus } from "./util";
-import { zoomInIcon, zoomOutIcon, undoIcon, redoIcon, saveIcon, settingsIcon } from "./icon";
+import globals from "./globals.js";
+import { GroupOfGroups, Group, Segment, TreeItem } from "./treeClasses.js";
+import { GraphIMU } from './graphicalClasses.js';
+import SettingsPopup from './SettingsPopup.js';
+import { getRandomColor, sortByProp, toggleButton, checkResponseStatus } from "./util.js";
+import { zoomInIcon, zoomOutIcon, undoIcon, redoIcon, saveIcon, settingsIcon } from "./icon.js";
 
 // make tree and viewer columns resizable
 Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });

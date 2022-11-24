@@ -14,7 +14,7 @@
 // Popup functionality in TreeItem?
 
 import Picker from "vanilla-picker";
-import globals from "./globals";
+import globals from "./globals.js";
 import {
     htmlToElement,
     sortByProp,
@@ -23,8 +23,8 @@ import {
     objectMap,
     propertiesEqual,
     getRandomColor
-} from "./util";
-import { groupIcons, segmentIcons } from "./icon";
+} from "./util.js";
+import { groupIcons, segmentIcons } from "./icon.js";
 
 const peaks = globals.peaks;
 const undoStorage = globals.undoStorage;

@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import globals from "./globals";
-import { binarySearch } from "./util";
+import globals from "./globals.js";
+import { binarySearch } from "./util.js";
 
 const media = globals.media;
 

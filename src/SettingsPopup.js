@@ -1,6 +1,6 @@
-import globals from "./globals";
-import { Segment } from "./treeClasses";
-import { checkResponseStatus, htmlToElement } from "./util";
+import globals from "./globals.js";
+import { Segment } from "./treeClasses.js";
+import { checkResponseStatus, htmlToElement } from "./util.js";
 
 const peaks = globals.peaks;
 const overview = peaks.views.getView('overview');

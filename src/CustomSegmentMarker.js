@@ -1,6 +1,6 @@
-import { Line } from 'konva/lib/shapes/Line';
-import { Rect } from 'konva/lib/shapes/Rect';
-import { Text } from 'konva/lib/shapes/Text';
+import { Line } from 'konva/lib/shapes/Line.js';
+import { Rect } from 'konva/lib/shapes/Rect.js';
+import { Text } from 'konva/lib/shapes/Text.js';
 
 /**
  * A custom marker that appears when the mouse pointer hovers over segments on the Peaks waveform.

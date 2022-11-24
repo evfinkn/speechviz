@@ -1,4 +1,4 @@
-import { htmlToElement, checkResponseStatus } from "./util";
+import { htmlToElement, checkResponseStatus } from "./util.js";
 
 let user;
 // for some reason, setting variable in promise doesn't set it outside of promise,

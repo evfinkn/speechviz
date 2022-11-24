@@ -1,5 +1,5 @@
 import Peaks from "peaks.js";
-import createSegmentMarker from "./CustomSegmentMarker";
+import createSegmentMarker from "./CustomSegmentMarker.js";
 
 // query parameters that appear in url, such as ?file=audio.mp3
 const urlParams = new URLSearchParams(window.location.search);
