@@ -77,7 +77,6 @@ fetch(`/segments/${basename}-segments.json`)
         segmentsTree.children.forEach(child => child.toggle(false));
     })
     .catch(error => {
-        console.error(error);
         console.log("No segments for media.")
         globals.highestId = 0;
     });
