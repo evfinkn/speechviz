@@ -24,9 +24,9 @@ const htmlToElement = function (html) {
 /**
  * Compares two `Objects` by one of their properties.
  * Uses less than and greater than to compare the properties.
- * @param {!Object.<string, any>} obj1 - An object to compare.
- * @param {!Object.<string, any>} obj2 - An object to compare.
- * @param {string} property - The name of the property to compare the objects by.
+ * @param {!Object.<any, any>} obj1 - An object to compare.
+ * @param {!Object.<any, any>} obj2 - An object to compare.
+ * @param {any} property - The name of the property to compare the objects by.
  * @returns {number} A negative number if `obj1` is less than / before `obj2`, a positive number if
  *      `obj1` is greater than / after `obj2`, or `0` if `obj1` equals `obj2`.
  */
@@ -38,11 +38,11 @@ const compareProperty = function (obj1, obj2, property) {
 
 /**
  * Sorts an array of `Object`s in place by a property of its elements.
- * @param {!Array.<Object.<string, any>>} array - The array of objects to sort.
- * @param {string} property - The name of the property to sort by.
+ * @param {!Array.<Object.<any, any>>} array - The array of objects to sort.
+ * @param {any} property - The name of the property to sort by.
  * @param {boolean} [reverse=false] - If `false`, the array is sorted in ascending order.
  *      Otherwise, the array is sorted in descending order.
- * @returns {!Array.<Object.<string, any>>} The reference to the original array, now sorted.
+ * @returns {!Array.<Object.<any, any>>} The reference to the original array, now sorted.
  */
 const sortByProp = function (array, property, reverse = false) {
     reverse = reverse ? -1 : 1;
@@ -52,9 +52,9 @@ const sortByProp = function (array, property, reverse = false) {
 
 /**
  * Tests if the given properties of two `Object`s are equal.
- * @param {!Object.<string, any>} obj1 - An object to compare.
- * @param {!Object.<string, any>} obj2 - An object to compare.
- * @param {!Array.<string>} properties - An array of the names of the properties to compare by.
+ * @param {!Object.<any, any>} obj1 - An object to compare.
+ * @param {!Object.<any, any>} obj2 - An object to compare.
+ * @param {!Array.<any>} properties - An array of the names of the properties to compare by.
  * @returns {boolean} `true` if all of the given properties of the objects are equal.
  *      Otherwise, `false`.
  */
