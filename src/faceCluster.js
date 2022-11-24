@@ -1,5 +1,9 @@
 import { htmlToElement } from "./util";
 
+console.log("made it to faceCluster.js");
+console.log(req.query.dir);
+
+
 fetch("/clustered-faces")
     .then(res => {
         if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
@@ -7,7 +11,6 @@ fetch("/clustered-faces")
         return res.json();  // return json from response
     })
     .then(fileList => { 
-        console.log("made it to faceCluster.js");
         const clusterfolders = fileList.cluster;
         const fieldset = document.getElementById("file-selection");
         fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
