@@ -71,7 +71,6 @@ app.get("/clustered-faces", (req, res) => {
   const files = {};
   files.cluster = fs.readdirSync("data/faceClusters").filter(fileName => !exclude.has(fileName));
   files.faceFolder = faceFolder;
-  console.log(files);
   res.send(files);
 });
 
