@@ -7,9 +7,9 @@ fetch("/clustered-faces")
         return res.json();  // return json from response
     })
     .then(fileList => { 
-        const clusterfolders = fileList.cluster;
-        const fieldset = document.getElementById("file-selection");
-        fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
+        //const clusterfolders = fileList.cluster;
+        //const fieldset = document.getElementById("file-selection");
+        //fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
 
         //if (clusterfolders?.length !== 0){
             //fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));  // header for video files
@@ -25,7 +25,7 @@ fetch("/clustered-faces")
         //}
 
         //when button clicked to go to folder 
-        window.location.replace(`/clustered-faces?faceFolder=${this.value.replace('cluster', '')}&inFaceFolder=true`);
+        //window.location.replace(`/clustered-faces?faceFolder=${this.value.replace('cluster', '')}&inFaceFolder=true`);
     })
     .catch(error => { console.error('Error during fetch: ', error); });  // catch err thrown by res if any
 
