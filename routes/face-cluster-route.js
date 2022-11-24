@@ -10,6 +10,7 @@ router.get('/', (req, res, next) => {
     folder = req.query.folder;
     faceFolder = req.query.faces;
     console.log(folder);
+    console.log(faceFolder);
     var dir = "faceClusters/" + folder
     var faces;
 
