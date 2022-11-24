@@ -7,6 +7,7 @@ fetch("/clustered-faces")
         return res.json();  // return json from response
     })
     .then(fileList => { 
+        console.log("made it to faceCluster.js");
         const clusterfolders = fileList.cluster;
         const fieldset = document.getElementById("file-selection");
         fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
