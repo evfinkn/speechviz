@@ -5,15 +5,17 @@ html(lang="en")
     body
         fieldset#user-selection(hidden=true)
             legend(style="font-size:20px;") Select a user:
-        fieldset#file-selection 
-            legend(style="font-size:20px;") Clustered Faces:
-            //https://github.com/pugjs/pug/issues/2648
-            img(src='/faceClusters/video1.mp4/testLabel0/Num100.jpg')
-            if inFaceFolder
+        if inFaceFolder
+            fieldset#face-display 
+                legend(style="font-size:20px;") Clustered Faces:
+                //https://github.com/pugjs/pug/issues/2648
+                img(src='/faceClusters/video1.mp4/testLabel0/Num100.jpg')
                 each image in images
                     img(src=("" + dir + image))
                 console.log("we in face folder")
-        
+        else
+            fieldset#file-selection 
+            legend(style="font-size:20px;") Select which cluster you'd like to view:
         
 
 
