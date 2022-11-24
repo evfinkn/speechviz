@@ -1,3 +1,8 @@
+// https://stackoverflow.com/a/50052194
+// import { dirname, resolve } from 'path';
+// import { fileURLToPath } from 'url';
+
+// const __dirname = dirname(fileURLToPath(import.meta.url));
 const path = require('path');
 
 module.exports = {
