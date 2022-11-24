@@ -67,8 +67,10 @@ app.get('/logout', (req, res) => {
 
 app.get("/clustered-faces", (req, res) => {
   const exclude = new Set([".DS_Store"]);  // I just used a Set because Set.has() is faster than Array.includes()
+  faceFolder = req.query.faceFolder
   const files = {};
   files.cluster = fs.readdirSync("data/faceClusters").filter(fileName => !exclude.has(fileName));
+  files.faceFolder = faceFolder;
   res.send(files);
 });
 
