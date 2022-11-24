@@ -5,6 +5,7 @@ module.exports = {
   entry: {
       init: './src/init.js',
       index: '/src/index.js',
+      faceCluster: '/srs/faceCluster.js'
   },
   stats: 'errors-only',
   output: {
