@@ -1,9 +1,5 @@
 import { htmlToElement } from "./util";
 
-console.log("made it to faceCluster.js");
-console.log(req.query.dir);
-
-
 fetch("/clustered-faces")
     .then(res => {
         if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
