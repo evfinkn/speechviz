@@ -93,7 +93,7 @@ fetch("/filelist")
                 div.firstElementChild.addEventListener("change", function () {
                     // when radio button clicked, open that video file in viz
 
-                    window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}folder=${this.value.replace('cluster', '')}`);
+                    window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}dir=${this.value.replace('cluster', '')}&inFaceFolder=false`);
                 });
                 fieldset.append(div);
             });
