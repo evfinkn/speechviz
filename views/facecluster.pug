@@ -5,6 +5,8 @@ html(lang="en")
     body
         fieldset#user-selection(hidden=true)
             legend(style="font-size:20px;") Select a user:
+        fieldset#file-selection
+        legend(style="font-size:20px;") Select which cluster you'd like to view:
         if inFaceFolder
             fieldset#face-display 
                 legend(style="font-size:20px;") Clustered Faces:
@@ -14,8 +16,8 @@ html(lang="en")
                     img(src=("" + dir + image))
                 console.log("we in face folder")
         else
-            fieldset#file-selection 
-            legend(style="font-size:20px;") Select which cluster you'd like to view:
+            //fieldset#file-selection 
+            //legend(style="font-size:20px;") Select which cluster you'd like to view:
         
 
 
