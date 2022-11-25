@@ -4,9 +4,7 @@ html(lang="en")
         title Speechviz
     body
         .navbar
-            a(href="/") Back to file selection
-            p#file #{file}
-            a#user(href="/settings") #{user}
+            a(href="/clustered-faces?inFaceFolder=false") Back to file selection
         fieldset#user-selection(hidden=true)
             legend(style="font-size:20px;") Select a user:
         if inFaceFolder
@@ -16,7 +14,6 @@ html(lang="en")
                 //? and over stops it from breaking when images hasn't been sent yet
                 each image in images ? images : []
                     img(src=("" + dir + "/" + faceFolder + "/" + image))
-                console.log("we in face folder")
         else
             legend(style="font-size:20px;") Select which cluster you'd like to view:
             fieldset#file-selection 
