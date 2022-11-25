@@ -13,7 +13,7 @@ router.get('/', (req, res, next) => {
     req.session.inFaceFolder = inFace;
     console.log(folder);
     console.log(faceFolder);
-    console.log(overallFolder);
+    console.log(inFace);
 
     var dir = "faceClusters/" + folder + "/"
     var faces;
