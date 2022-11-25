@@ -19,6 +19,13 @@ router.get('/', (req, res, next) => {
         console.log("in else");
         folder = req.query.dir;
         faceFolder = req.query.faceFolder;
+        if (req.query.inFaceFolder == "false"){
+            inFace = false;
+        }
+        else{
+            inFace = true;
+        }
+
         inFace = req.query.inFaceFolder;
 
         req.session.dir = folder;
@@ -28,7 +35,7 @@ router.get('/', (req, res, next) => {
     console.log("face cluster route");
     console.log(req.session);
     console.log(req.query);
-    req.session.save; //https://github.com/expressjs/session/issues/790
+    //req.session.save; //https://github.com/expressjs/session/issues/790
 
     var dir = "faceClusters/" + folder + "/"
     var faces;
@@ -40,9 +47,9 @@ router.get('/', (req, res, next) => {
 
     console.log(inFace);
 
-    if (inFace == "false"){ //user needs to pick which face folder to view
+    if (!inFace){ //user needs to pick which face folder to view
         console.log(faces);
-        res.render("facecluster", { "dir": dir, "faces": faces, inFaceFolder: true });//send to views/facecluster.pug
+        res.render("facecluster", { "dir": dir, "faces": faces, inFaceFolder: false });//send to views/facecluster.pug
     }
     else { //we are in a face folder so face folder is defined, and can therefore send names of the images to pug to render
         console.log("in face");
