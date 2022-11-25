@@ -7,13 +7,14 @@ const fs = require("fs");
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-    //if this is already defined then, we aren't coming here from index, don't have to grab from query
+    
     console.log(req.session);
     console.log(req.session.inFaceFolder);
     var folder;
     var faceFolder;
     var inFace;
     
+    //if this is already defined then, we aren't coming here from index, don't have to grab from query
     if (req.session.inFaceFolder == true || req.session.inFaceFolder == false){
         folder = req.session.dir; //the overall directory for each cluster
         faceFolder = req.session.faceFolder; //the current cluster folder
