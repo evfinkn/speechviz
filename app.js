@@ -65,7 +65,7 @@ app.get('/logout', (req, res) => {
   return;
 });
 
-app.get("/clustered-faces", (req, res) => {
+app.get("/clustered-files", (req, res) => {
   const exclude = new Set([".DS_Store"]);  // I just used a Set because Set.has() is faster than Array.includes()
   console.log(req.session);
   const files = {};
