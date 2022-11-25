@@ -15,7 +15,7 @@ router.get('/', (req, res, next) => {
     var inFace;
 
     if (req.query.inFaceFolder == "false"){
-            inFace = false;
+        inFace = false;
     }
     else{
         inFace = true;
