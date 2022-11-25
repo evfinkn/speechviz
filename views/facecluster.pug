@@ -4,7 +4,10 @@ html(lang="en")
         title Speechviz
     body
         .navbar
-            a(href="/clustered-faces?inFaceFolder=false") Back to file selection
+            if inFaceFolder
+                a(href="/clustered-faces?inFaceFolder=false") Back to face selection
+            else
+                a(href="/") Back to file selection
         fieldset#user-selection(hidden=true)
             legend(style="font-size:20px;") Select a user:
         if inFaceFolder
