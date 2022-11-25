@@ -29,7 +29,7 @@ encodings = [d["encoding"] for d in data]
 # cluster the embeddings
 print("[INFO] clustering...")
 #dbscan
-clt = DBSCAN(args["epsilon"], metric="euclidean", n_jobs=args["jobs"])
+clt = DBSCAN(float(args["epsilon"]), metric="euclidean", n_jobs=args["jobs"])
 #uncomment this and recomment clt above, OPTICS is like dbscan but sweeps through different epsilon values, and picks which one it thinks is right. I haven't had success with it but could be worth a shot later.
 #clt = OPTICS(min_samples=2)
 clt.fit(encodings)
