@@ -1,6 +1,6 @@
 import { htmlToElement } from "./util";
 
-fetch("/filelist")
+fetch("/clustered-faces")
     .then(res => {
         if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
         else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
