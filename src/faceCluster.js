@@ -19,7 +19,7 @@ fetch("/clustered-files")
                 div.firstElementChild.addEventListener("change", function () {
                     // when radio button clicked, open that video file in viz
                     console.log(this.value);
-                    window.location.replace(`/clustered-faces?dir=${this.value.replace('cluster', '')}&inFaceFolder=true`);
+                    window.location.replace(`/clustered-faces?faceFolder=${this.value.replace('cluster', '')}&inFaceFolder=true`);
                 });
                 fieldset.append(div);
             });
