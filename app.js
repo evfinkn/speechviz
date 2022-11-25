@@ -67,6 +67,7 @@ app.get('/logout', (req, res) => {
 
 app.get("/clustered-faces", (req, res) => {
   const exclude = new Set([".DS_Store"]);  // I just used a Set because Set.has() is faster than Array.includes()
+  console.log(req.session);
   const files = {};
   files.cluster = fs.readdirSync("data/faceClusters").filter(fileName => !exclude.has(fileName));
   if (req.session.inFaceFolder == true) {
