@@ -2,14 +2,12 @@
 
 ## Contents
 
-- [Usage](#usage)
-  - [Contents](#contents)
-  - [Processing](#processing)
-    - [Audio and video files](#audio-and-video-files)
-    - [VRS files](#vrs-files)
-    - [Speech recognition](#speech-recognition)
-    - [Face detection and clustering](#face-detection-and-clustering)
-  - [Interface](#interface)
+- [Processing](#processing)
+  - [Audio and video files](#audio-and-video-files)
+  - [VRS files](#vrs-files)
+  - [Speech recognition](#speech-recognition)
+  - [Face detection and clustering](#face-detection-and-clustering)
+- [Interface](#interface)
 
 ## Processing
 
@@ -40,15 +38,14 @@ move the file to `data/vrs` and run
 
     python3 scripts/extract-vrs-data.py data/vrs/FILE
 
-<sup>
-    NOTE: Unlike <code>process_audio.py</code>, the file must be in
-    <code>data/vrs</code> for <code>extract-vrs-data.py</code> to work.
-</sup>
+Unlike `process_audio.py`, the file must be in `data/vrs` for `extract-vrs-data.py` to work.
+The files are output to `data/graphical/FILE_NAME` where `FILE_NAME` is `FILE` without the
+extension.  
 
-This will extract the videos from the eye-tracking, SLAM-left, SLAM-right, and RGB cameras; the
-audio from the microphones; the magnetometer data; the IMU-left and IMU-right data; the GPS data
-(if any); and the barometer data (if any). This data is extracted to `data/graphical/FILE_NAME`
-where `FILE_NAME` is `FILE` without the extension.  
+The script extracts the videos from the eye-tracking, SLAM-left, SLAM-right, and RGB cameras;
+the audio from the microphones; the magnetometer data; the IMU-left and IMU-right data; the GPS
+data (if any); and the barometer data (if any).  
+
 Pose data (data specifying the position and rotation) of the glasses can be created by running
 
     python3 scripts/create_poses.py data/graphical/FILE_NAME
@@ -56,14 +53,14 @@ Pose data (data specifying the position and rotation) of the glasses can be crea
 To visualize the pose data in the interface, you'll need to process one of the videos from the
 cameras. After picking one of the videos, you can optionally run these commands:
 
-    # Rotate the video to expected orientation
+    # Rotate the video to the correct orientation
     ffmpeg -i input.mp4 -vf transpose=1 output.mp4
     # If you're going to combine the audio and video, convert the audio to mp3
     ffmpeg -i input.wav -vn -ar 44100 -ac 2 -b:a 192k output.mp3
     # Combine the audio and video
     ffmpeg -i input.mp4 -i input.mp3 -c copy -map 0:v:0 -map 1:a:0 output.mp4
 
-Finally, rename the of the video to `FILE_NAME.mp4`, move it to `data/video`, and run
+Finally, rename the video to `FILE_NAME.mp4`, move it to `data/video`, and run
 
     python3 scripts/process_audio.py data/video/FILE_NAME.mp4
 
@@ -191,12 +188,11 @@ annotations (if any) for the file. Some notable features:
   2.5-second-long segment at the current time under the `Custom` group.
 * Editable segments (such as custom ones) have handles at their start and end that can be dragged
   to change when it starts and end.
-* Notes can help remember who is who (e.g. "Speaker 1 is the man with the raspy voice") and can be
-  taken in the big text box.
+* Notes can help to remember who is who (e.g. "Speaker 1 is the man with the raspy voice") and can
+  be taken in the big text box. The notes are saved.
 * A change can be undone by clicking the undo button or using the keyboard shortcut `Ctrl+Z`
   (`Cmd+Z` on Mac). Redoing changes is currently unimplemented.
 * Other options can be found by clicking the settings button (its icon is a gear).
-* To save (notes and edits), click the save button (its icon is a floppy disk) or press
-  `Ctrl+S` (`Cmd+S` on Mac).
+* To save, click the save button (its icon is a floppy disk) or press `Ctrl+S` (`Cmd+S` on Mac).
 
 This is by no means an exhaustive list.
