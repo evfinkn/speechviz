@@ -3,6 +3,10 @@ html(lang="en")
     head
         title Speechviz
     body
+        .navbar
+            a(href="/") Back to file selection
+            p#file #{file}
+            a#user(href="/settings") #{user}
         fieldset#user-selection(hidden=true)
             legend(style="font-size:20px;") Select a user:
         if inFaceFolder
