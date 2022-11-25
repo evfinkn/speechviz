@@ -28,7 +28,7 @@ router.get('/', (req, res, next) => {
     console.log(req.session);
     console.log(req.query);
     console.log(inFace);
-    //req.session.save; //https://github.com/expressjs/session/issues/790
+    req.session.save; //https://github.com/expressjs/session/issues/790
 
     var dir = "faceClusters/" + folder + "/"
     var faces;
