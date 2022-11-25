@@ -7,16 +7,25 @@ const fs = require("fs");
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-    folder = req.query.dir;
-    faceFolder = req.query.faceFolder;
-    inFace = req.query.inFaceFolder
-    req.session.inFaceFolder = inFace;
+    //if this is already defined then, we aren't coming here from index, don't have to grab from query
+    if (req.session.inFaceFolder == true || req.session.inFaceFolder == false){
+        folder = req.session.dir; //the overall directory for each cluster
+        faceFolder = req.session.faceFolder; //the current cluster folder
+        inFace = req.session.inFaceFolder; //if we are in a cluster folder or not
+    }
+    else{//need to grab info from query
+        folder = req.query.dir;
+        faceFolder = req.query.faceFolder;
+        inFace = req.query.inFaceFolder;
+
+        req.session.dir = folder;
+        req.session.faceFolder = faceFolder;
+        req.session.inFaceFolder = inFace;
+    }
+
     console.log("face cluster route");
     console.log(req.session);
     console.log(req.query);
-    console.log(folder);
-    console.log(faceFolder);
-    console.log(inFace);
 
     var dir = "faceClusters/" + folder + "/"
     var faces;
@@ -37,8 +46,6 @@ router.get('/', (req, res, next) => {
             res.render("facecluster", { "images": files, "dir": dir, "faceFolder": faceFolder, "faces": faces, inFaceFolder: true });//send to views/facecluster.pug
         });
     }
-    
-    
 });
 
 module.exports = router;
