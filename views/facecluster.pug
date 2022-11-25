@@ -13,7 +13,6 @@ html(lang="en")
             fieldset#face-display 
                 legend(style="font-size:20px;") Clustered Faces:
                 //https://github.com/pugjs/pug/issues/2648
-                img(src='/faceClusters/video1.mp4/testLabel0/Num100.jpg')
                 //? and over stops it from breaking when images hasn't been sent yet
                 each image in images ? images : []
                     img(src=("" + dir + "/" + faceFolder + "/" + image))
