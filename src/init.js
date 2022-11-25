@@ -49,22 +49,22 @@ const createTree = function (id, parent, children, snr) {
     }
 }
 
-const segmentsTree = new GroupOfGroups("Segments");
-document.getElementById("tree").append(segmentsTree.li);
+const analysis = new GroupOfGroups("Analysis");
+document.getElementById("tree").append(analysis.li);
 
 const custom = new Group("Custom", {
-    parent: segmentsTree,
+    parent: analysis,
     color: getRandomColor(),
     colorable: true
 });
-const labeled = new GroupOfGroups("Labeled", { parent: segmentsTree });
+const labeled = new GroupOfGroups("Labeled", { parent: analysis });
 
 fetch(`/segments/${basename}-segments.json`)
     .then(checkResponseStatus)
     .then(response => response.json())
     .then(segments => {
         for (const [group, children, snr] of segments) {
-            createTree(group, segmentsTree, children, snr);
+            createTree(group, analysis, children, snr);
         }
         Group.rankSnrs();
         const ids = Object.keys(Segment.byId);
@@ -74,7 +74,7 @@ fetch(`/segments/${basename}-segments.json`)
 
         // after loading, toggle everything off (usually end up
         // disabling most groups right away so just do it automatically)
-        segmentsTree.children.forEach(child => child.toggle(false));
+        analysis.children.forEach(child => child.toggle(false));
     })
     .catch(error => {
         console.log("No segments for media.")
@@ -236,7 +236,7 @@ fetch("load", {
 
         // after loading, toggle everything off (usually end up
         // disabling most groups right away, just do it automatically)
-        segmentsTree.children.forEach(child => child.toggle(false));
+        analysis.children.forEach(child => child.toggle(false));
     })
     .catch(error => console.error(error));  // catch err thrown by res if any
 
@@ -394,7 +394,7 @@ for (let i = 0; i < spdbtns.length; i++) {
 }
 
 // button for popup containing the settings that aren't usually changed
-const settingsButton = document.getElementById("settings-button");
+const settingsButton = document.getElementById("settings");
 settingsButton.innerHTML = settingsIcon;
 const settingsPopup = new SettingsPopup();
 settingsButton.addEventListener("click", function () {
