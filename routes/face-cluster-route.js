@@ -11,6 +11,7 @@ router.get('/', (req, res, next) => {
     faceFolder = req.query.faceFolder;
     inFace = req.query.inFaceFolder
     req.session.inFaceFolder = inFace;
+    console.log("face cluster route");
     console.log(folder);
     console.log(faceFolder);
     console.log(inFace);
