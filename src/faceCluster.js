@@ -7,6 +7,7 @@ fetch("/filelist")
         return res.text();  // return json from response
     })
     .then(fileList => { 
+        console.log(fileList);
         const clusterfolders = fileList.cluster;
         console.log(clusterfolders);
         const fieldset = document.getElementById("file-selection");
