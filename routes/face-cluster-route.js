@@ -15,6 +15,7 @@ router.get('/', (req, res, next) => {
         inFace = req.session.inFaceFolder; //if we are in a cluster folder or not
     }
     else{//need to grab info from query
+        console.log("in else");
         folder = req.query.dir;
         faceFolder = req.query.faceFolder;
         inFace = req.query.inFaceFolder;
