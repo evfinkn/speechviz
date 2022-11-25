@@ -11,8 +11,7 @@ fetch("/clustered-files")
         const clusterfolders = fileList.cluster;
         console.log(clusterfolders);
         const fieldset = document.getElementById("file-selection");
-        fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
-
+        
         if (clusterfolders?.length !== 0){
             clusterfolders.forEach(function (folderName){
                 const div = htmlToElement(`<div><input type="radio" id="${folderName}cluster"" name="file-selection" value="${folderName}cluster"></input><label for="${folderName}cluster">${folderName}</label></div>`);
