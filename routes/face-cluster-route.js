@@ -13,24 +13,23 @@ router.get('/', (req, res, next) => {
     var folder;
     var faceFolder;
     var inFace;
+
+    if (req.query.inFaceFolder == "false"){
+            inFace = false;
+    }
+    else{
+        inFace = true;
+    }
     
-    //if this is already defined then, we aren't coming here from index, don't have to grab from query
-    if (req.query.inFaceFolder != "false" && (req.session.inFaceFolder == true || req.session.inFaceFolder == false)){
+    //isn't first time visiting
+    if (req.session.inFaceFolder == true || req.session.inFaceFolder == false){
         folder = req.session.dir; //the overall directory for each cluster
         faceFolder = req.session.faceFolder; //the current cluster folder
-        inFace = req.session.inFaceFolder; //if we are in a cluster folder or not
     }
     else{//need to grab info from query
         console.log("in else");
         folder = req.query.dir;
         faceFolder = req.query.faceFolder;
-        inFace = req.query.inFaceFolder;
-        if (req.query.inFaceFolder == "false"){
-            inFace = false;
-        }
-        else{
-            inFace = true;
-        }
 
         req.session.dir = folder;
         req.session.inFaceFolder = inFace;
