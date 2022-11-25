@@ -12,7 +12,7 @@ html(lang="en")
             legend(style="font-size:20px;") Select a user:
         if inFaceFolder
             fieldset#face-display 
-                legend(style="font-size:20px;") Clustered Faces ${faceFolder}:
+                legend(style="font-size:20px;") Clustered Faces #{faceFolder}:
                 //https://github.com/pugjs/pug/issues/2648
                 //? and over stops it from breaking when images hasn't been sent yet
                 each image in images ? images : []
