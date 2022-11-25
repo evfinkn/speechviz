@@ -14,7 +14,6 @@ fetch("/clustered-files")
         fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
 
         if (clusterfolders?.length !== 0){
-            fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));  // header for video files
             clusterfolders.forEach(function (folderName){
                 const div = htmlToElement(`<div><input type="radio" id="${folderName}cluster"" name="file-selection" value="${folderName}cluster"></input><label for="${folderName}cluster">${folderName}</label></div>`);
                 div.firstElementChild.addEventListener("change", function () {
