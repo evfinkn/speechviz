@@ -14,31 +14,33 @@ router.get('/', (req, res, next) => {
     var faceFolder;
     var inFace;
 
-    if (req.query.inFaceFolder == "false"){
+    if (req.query.inFaceFolder == "false"){ //always in url to update
         inFace = false;
     }
     else{
         inFace = true;
     }
+    req.session.inFaceFolder = inFace;
     
-    //isn't first time visiting
-    if (req.session.inFaceFolder == true || req.session.inFaceFolder == false){
-        folder = req.session.dir; //the overall directory for each cluster
-        faceFolder = req.session.faceFolder; //the current cluster folder
-    }
-    else{//need to grab info from query
-        console.log("in else");
-        folder = req.query.dir;
+    if (typeof req.query.faceFolder !== 'undefined'){//if faceFolder is in url they just selected a cluster to view
         faceFolder = req.query.faceFolder;
+        req.session.faceFolder = faceFolder;
+    }
+    else if (typeof req.session.faceFolder !== 'undefined'){//if faceFolder is already defined and wasn't in url keep it the same
+        faceFolder = req.session.faceFolder;
+    }
 
+    if (typeof req.query.dir !== 'undefined'){ //update dir if it is in url
+        folder = req.query.dir;
         req.session.dir = folder;
-        req.session.inFaceFolder = inFace;
+    }
+    else { //keep the same dir
+        folder = req.session.dir;
     }
 
     console.log("face cluster route");
     console.log(req.session);
     console.log(req.query);
-    //req.session.save; //https://github.com/expressjs/session/issues/790
 
     var dir = "faceClusters/" + folder + "/"
     var faces;
