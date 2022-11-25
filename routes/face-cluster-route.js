@@ -15,7 +15,7 @@ router.get('/', (req, res, next) => {
     var inFace;
     
     //if this is already defined then, we aren't coming here from index, don't have to grab from query
-    if (req.session.inFaceFolder == true || req.session.inFaceFolder == false){
+    if (req.query.inFaceFolder != "false" && (req.session.inFaceFolder == true || req.session.inFaceFolder == false)){
         folder = req.session.dir; //the overall directory for each cluster
         faceFolder = req.session.faceFolder; //the current cluster folder
         inFace = req.session.inFaceFolder; //if we are in a cluster folder or not
@@ -49,15 +49,11 @@ router.get('/', (req, res, next) => {
         faces = files;
     });
 
-    console.log(inFace);
-
     if (!inFace){ //user needs to pick which face folder to view
         console.log(faces);
         res.render("facecluster", { "dir": dir, "faces": faces, inFaceFolder: false });//send to views/facecluster.pug
     }
     else { //we are in a face folder so face folder is defined, and can therefore send names of the images to pug to render
-        console.log("in face");
-        console.log(inFace);
         //req.session = faceFolder; //send it for app.js to find all the files in the folder
         fs.readdir(("data/"+ dir + faceFolder + "/"), function(err, files){
             console.log(faces);
