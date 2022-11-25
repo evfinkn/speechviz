@@ -12,7 +12,7 @@ html(lang="en")
                 img(src='/faceClusters/video1.mp4/testLabel0/Num100.jpg')
                 //? and over stops it from breaking when images hasn't been sent yet
                 each image in images ? images : []
-                    img(src=("" + dir + image))
+                    img(src=("" + dir + "/" + faceFolder + "/" + image))
                 console.log("we in face folder")
         else
             fieldset#file-selection 
