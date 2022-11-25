@@ -23,14 +23,13 @@ router.get('/', (req, res, next) => {
         console.log("in else");
         folder = req.query.dir;
         faceFolder = req.query.faceFolder;
+        inFace = req.query.inFaceFolder;
         if (req.query.inFaceFolder == "false"){
             inFace = false;
         }
         else{
             inFace = true;
         }
-
-        inFace = req.query.inFaceFolder;
 
         req.session.dir = folder;
         req.session.inFaceFolder = inFace;
