@@ -45,6 +45,7 @@ router.get('/', (req, res, next) => {
     }
     else { //we are in a face folder so face folder is defined, and can therefore send names of the images to pug to render
         console.log("in face");
+        console.log(inFace);
         //req.session = faceFolder; //send it for app.js to find all the files in the folder
         fs.readdir(("data/"+ dir + faceFolder + "/"), function(err, files){
             console.log(faces);
