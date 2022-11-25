@@ -52,12 +52,21 @@ for labelID in labelIDs:
         image = cv2.imread(data[i]["imagePath"])
         (top, right, bottom, left) = data[i]["loc"]
         face = image[top:bottom, left:right]
-        faces.append(face)
+        #resize image so it displays better on speechviz, https://stackoverflow.com/questions/64609524/resize-an-image-with-a-max-width-and-height-using-opencv
+        maxwidth, maxheight = 200, 200
+        f1 = maxwidth / face.shape[1]
+        f2 = maxheight / face.shape[0]
+        f = min(f1, f2)  # resizing factor
+        dim = (int(face.shape[1] * f), int(face.shape[0] * f))
+        resized = cv2.resize(face, dim)
+        
+
+        faces.append(resized)
     counter = 0
     for face in faces:
         counter += 1
-        if not os.path.isdir(args["outputs"] + "/testLabel" + str(labelID)):
-        	os.makedirs(args["outputs"] + "/testLabel" + str(labelID))
-        cv2.imwrite(args["outputs"] + "/testLabel" + str(labelID) + "/Num" + str(counter) + ".jpg", face)
+        if not os.path.isdir(args["outputs"] + "/face" + str(labelID)):
+        	os.makedirs(args["outputs"] + "/face" + str(labelID))
+        cv2.imwrite(args["outputs"] + "/face" + str(labelID) + "/Num" + str(counter) + ".jpg", face)
 
 #built off of https://pyimagesearch.com/2018/07/09/face-clustering-with-python/
