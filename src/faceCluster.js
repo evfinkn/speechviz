@@ -24,9 +24,6 @@ fetch("/clustered-faces")
                 fieldset.append(div);
             });
         }
-
-        //when button clicked to go to folder 
-        window.location.replace(`/clustered-faces?faceFolder=${this.value.replace('cluster', '')}&inFaceFolder=true`);
     })
     .catch(error => { console.error('Error during fetch: ', error); });  // catch err thrown by res if any
 
