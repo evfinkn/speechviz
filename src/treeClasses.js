@@ -1016,11 +1016,7 @@ var Group = class Group extends TreeItem {
         const expanded = Group.#expand(copyToAsTreeItems, [this.id]);
         return TreeItem.treeItemsToIds(expanded);
     }
-    expandAssocWith() {
-        const assocWithAsTreeItems = TreeItem.idsToTreeItems(this.assocWith);
-        const expanded = Group.#expand(assocWithAsTreeItems, [this.id]);
-        return TreeItem.treeItemsToIds(expanded);
-    }
+    
 
     /**
      * Gets this `Group`'s `Segment`s
@@ -1348,6 +1344,7 @@ var Segment = class Segment extends TreeItem {
         const expanded = Segment.#expand(copyToAsTreeItems, [this.parent.id]);
         return TreeItem.treeItemsToIds(expanded);
     }
+    
 }
 
 var Face  = class Face extends TreeItem {
@@ -1373,6 +1370,17 @@ var Face  = class Face extends TreeItem {
      * @static
      */
     static properties = ["treeText"];
+
+    static #expand(groups, exclude = []) {
+        const expanded = [];
+        for (const group of groups) {
+            if (group instanceof Group) {
+                if (!exclude.includes(group.id)) { expanded.push(group); }
+            }
+            else { expanded.push(...Face.#expand(group.children, exclude)); }  // array.push(...) is faster than array.concat()
+        }
+        return expanded;
+    }
 
       /**
      * @param {string} id - The unique identifier to give the `TreeItem`
@@ -1415,6 +1423,12 @@ var Face  = class Face extends TreeItem {
         const parent = this.parent;
 
         super.remove();
+    }
+
+    expandAssocWith() {
+        const assocWithAsTreeItems = TreeItem.idsToTreeItems(this.assocWith);
+        const expanded = Face.#expand(assocWithAsTreeItems, [this.id]);
+        return TreeItem.treeItemsToIds(expanded);
     }
 
     //rename(newText) {
