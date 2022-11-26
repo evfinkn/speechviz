@@ -1356,22 +1356,6 @@ var Face  = class Face extends TreeItem {
     get parent() { return super.parent; }
     
 
-    render() {
-        super.render();
-        if (this.removeButton) {
-            this.removeButton.addEventListener("click", () => { 
-                // false at end of undo signals that the "deleted segment" was NOT deleted as part of a "deleted group"
-                undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"]), false]);
-                // redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
-            });
-        }
-    }
-
-    /** Updates the title of the span */
-    updateSpanTitle() {
-        this.span.title = `Start time: ${this.startTime.toFixed(2)}\nEnd time: ${this.endTime.toFixed(2)}\nDuration: ${this.duration.toFixed(2)}`;
-    }
-
     /** Initialize the CSS styling of the `Segment` */
     style() {
         this.li.style.fontSize = "12px";
