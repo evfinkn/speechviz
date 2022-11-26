@@ -106,6 +106,7 @@ var TreeItem = class TreeItem {
      * @type {string[]}
      */
     copyTo;
+    assocWith;
     
     /**
      * The li of this `TreeItem`
@@ -158,7 +159,7 @@ var TreeItem = class TreeItem {
      * @param {boolean} [options.render=true] - If true, calls render() in constructor. Otherwise, render() is not called
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, text = null, removable = false, renamable = false, moveTo = null, copyTo = null, render = true } = {}) {
+    constructor(id, { parent = null, children = null, text = null, removable = false, renamable = false, moveTo = null, copyTo = null, assocWith = null, render = true } = {}) {
         if (TreeItem.exists(id)) {
             throw new Error(`A TreeItem with the id ${id} already exists`);
         }
@@ -172,6 +173,7 @@ var TreeItem = class TreeItem {
         this.renamable = renamable;
         this.moveTo = moveTo;
         this.copyTo = copyTo;
+        this.assocWith = assocWith;
 
         if (render) {
             this.render();
@@ -1377,10 +1379,10 @@ var Face  = class Face extends TreeItem {
      * @param {string[]=} options.associateWith - A group that this face should be associated with
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, text = null, removable = true, renamable = false, associateWith = null } = {}) {
+    constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null } = {}) {
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
-        super(id, { text, removable, renamable, render: false });
+        super(id, { text, removable, renamable, render: false, assocWith: assocWith });
 
         this.render();
         this.parent = parent;
