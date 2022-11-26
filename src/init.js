@@ -84,6 +84,7 @@ fetch(`/clustered-files/`)
     })
     .then(fileList => {
         const clusterfolders = fileList.cluster;
+        console.log(clusterfolders);
         //for (const [group, children, snr] of segments) { //children is segments, group is parent, snr is snr :)
            //createTree(group, segmentsTree, children, snr);
         //}
