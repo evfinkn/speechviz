@@ -1,6 +1,6 @@
 import Split from 'split.js';  // library for resizing columns by dragging
 import globals from "./globals";
-import { Groups, Group, Segment, TreeItem } from "./treeClasses";
+import { Groups, Group, Segment, TreeItem, Face } from "./treeClasses";
 import SettingsPopup from './SettingsPopup';
 import { getRandomColor, sortByProp, toggleButton } from "./util";
 import { zoomInIcon, zoomOutIcon, settingsIcon } from "./icon";
