@@ -1359,15 +1359,14 @@ var Face  = class Face extends TreeItem {
      */
     constructor(id, { parent = null, text = null, removable = true, renamable = false, associateWith = null, playable = false, loopable = false } = {}) {
         // catch options contained within face
-        text = text;
-
-        this.associateWith = associateWith;
 
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
         super(id, { text, removable, renamable, loopable: loopable, playable: playable });
 
         this.parent = parent;
+
+        this.associateWith = associateWith;
 
         this.popup = new Popup(this);
     }
