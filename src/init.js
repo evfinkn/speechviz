@@ -46,6 +46,10 @@ document.getElementById("tree").append(segmentsTree.li);
 const custom = new Group("Custom", { parent: segmentsTree, color: getRandomColor(), colorable: true });
 const labeled = new Groups("Labeled", { parent: segmentsTree });
 
+const clustersTree = new Groups("Clusters");
+document.getElementById("tree").append(clustersTree.li);
+
+
 let highestId;
 let words = [];
 
