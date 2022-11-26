@@ -84,14 +84,11 @@ fetch(`/clustered-files/`)
     })
     .then(fileList => {
         const clusterfolders = fileList.cluster;
-        console.log(clusterfolders);
-        //for (const [group, children, snr] of segments) { //children is segments, group is parent, snr is snr :)
-           //createTree(group, segmentsTree, children, snr);
-        //}
-        for (folderName of clusterfolders) {
-            console.log(folderName);
-        }
         
+        clusterfolders.forEach(function (folderName){
+            console.log(folderName);
+        });
+    
     })
     .catch(error => {
         console.error(error);//console.log("No clustered faces for media." + error)
