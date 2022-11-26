@@ -40,7 +40,7 @@ var TreeItem = class TreeItem {
      */
     static icons = groupIcons;
     /** */
-    static properties = ["id", "text", "duration", "removable", "renamable", "path"];
+    static properties = ["id", "text", "duration", "removable", "playable", "loopable", "renamable", "path"];
 
     /** 
      * Checks if a TreeItem by the given id exists
@@ -91,6 +91,16 @@ var TreeItem = class TreeItem {
      * @type {boolean}
      */
     removable;
+    /**
+     * A `boolean` indicating if this can be played on the tree
+     * @type {boolean}
+     */
+    playable;
+    /**
+     * A `boolean` indicating if this can be looped on the tree
+     * @type {boolean}
+     */
+    loopable;
     /**
      * A boolean indicating if this can be renamed
      * @type {boolean}
@@ -158,7 +168,7 @@ var TreeItem = class TreeItem {
      * @param {boolean} [options.render=true] - If true, calls render() in constructor. Otherwise, render() is not called
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, text = null, removable = false, renamable = false, moveTo = null, copyTo = null, render = true } = {}) {
+    constructor(id, { parent = null, children = null, text = null, removable = false, playable = false, loopable = false, renamable = false, moveTo = null, copyTo = null, render = true } = {}) {
         if (TreeItem.exists(id)) {
             throw new Error(`A TreeItem with the id ${id} already exists`);
         }
@@ -169,6 +179,8 @@ var TreeItem = class TreeItem {
 
         this.#text = text || id;
         this.removable = removable;
+        this.playable = playable;
+        this.loopable = loopable;
         this.renamable = renamable;
         this.moveTo = moveTo;
         this.copyTo = copyTo;
@@ -263,12 +275,17 @@ var TreeItem = class TreeItem {
         });
         this.updateSpanTitle();
 
-        this.playButton = li.children[2];
-        this.loopButton = li.children[3];
-        // use { once: true } because this.play() re-adds the event listener
-        this.playButton.addEventListener("click", () => { this.play(); }, { once: true });
-        this.loopButton.addEventListener("click", () => { this.play(true); }, { once: true });
-
+        if (this.playable) {
+            this.playButton = li.children[2];
+            this.playButton.addEventListener("click", () => { this.play(); }, { once: true });
+        }
+        
+        if (this.loopable) {
+            this.loopButton = li.children[3];
+            // use { once: true } because this.play() re-adds the event listener
+            this.loopButton.addEventListener("click", () => { this.play(true); }, { once: true });
+        }
+        
         this.nested = li.children[4];
 
         if (this.removable) {
@@ -359,8 +376,8 @@ var TreeItem = class TreeItem {
 
         this.nested.classList.toggle("active", checked);
 
-        toggleButton(this.playButton, checked);
-        toggleButton(this.loopButton, checked);
+        if (this.playable) { toggleButton(this.playButton, checked); }
+        if (this.loopable) { toggleButton(this.loopButton, checked); }
         if (this.removeButton) { toggleButton(this.removeButton, checked); }
 
         return true;  // true indicates things changed
@@ -639,8 +656,8 @@ var Groups = class Groups extends TreeItem {
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be removed from the tree
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, text = null, removable = false } = {}) {
-        super(id, { parent, children, text, removable });
+    constructor(id, { parent = null, children = null, text = null, removable = false, playable = true, loopable = true } = {}) {
+        super(id, { parent, children, text, removable, playable, loopable });
 
         Groups.byId[id] = this;
     }
@@ -836,8 +853,8 @@ var Group = class Group extends TreeItem {
      * @param {string[]=} options.copyTo - 
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, snr = null, text = null, removable = false, renamable = false, color = null, colorable = false, moveTo = null, copyTo = null } = {}) {
-        super(id, { parent, children, text, removable, renamable, moveTo, copyTo });  // always have to call constructor for super class (TreeItem)
+    constructor(id, { parent = null, children = null, snr = null, text = null, removable = false, playable = true, loopable = true, renamable = false, color = null, colorable = false, moveTo = null, copyTo = null } = {}) {
+        super(id, { parent, children, text, removable, playable, loopable, renamable, moveTo, copyTo });  // always have to call constructor for super class (TreeItem)
 
         Group.byId[id] = this;
         this.snr = snr;
@@ -1053,7 +1070,7 @@ var Segment = class Segment extends TreeItem {
      * @param {string[]=} options.copyTo - 
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(segment, { parent = null, text = null, removable = false, renamable = false, moveTo = null, copyTo = null } = {}) {
+    constructor(segment, { parent = null, text = null, removable = false, playable = true, loopable = true, renamable = false, moveTo = null, copyTo = null } = {}) {
         // catch options contained within segment
         text = text || segment.treeText;
         removable = segment.removable != null ? segment.removable : removable;
@@ -1061,7 +1078,7 @@ var Segment = class Segment extends TreeItem {
 
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
-        super(segment.id, { text, removable, renamable, moveTo, copyTo, render: false });
+        super(segment.id, { text, removable, renamable, playable, loopable, moveTo, copyTo, render: false });
         this.segment = segment;
         Segment.byId[segment.id] = this;
 
@@ -1336,18 +1353,18 @@ var Face  = class Face extends TreeItem {
      * @param {string[]=} options.associateWith - A group that this face should be associated with
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, text = null, removable = true, renamable = false, associateWith = null } = {}) {
+    constructor(id, { parent = null, text = null, removable = true, playable = false, loopable = false, renamable = false, associateWith = null } = {}) {
         // catch options contained within face
         text = text;
 
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
-        super(id, { text, removable, renamable, render: false });
+        super(id, { text, removable, playable, loopable, renamable, render: false });
 
         this.render();
         this.parent = parent;
 
-        new Popup(this);
+        this.popup = new Popup(this);
     }
 
     get treeText() { return this.text; }  // backwards compatibility (database expects 'treeText')
