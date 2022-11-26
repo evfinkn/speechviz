@@ -1337,17 +1337,16 @@ var Face  = class Face extends TreeItem {
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
     constructor(id, { parent = null, text = null, removable = true, renamable = false, associateWith = null } = {}) {
-        // catch options contained within face
-        text = text;
-
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
         super(id, { text, removable, renamable, render: false });
 
         this.render();
         this.parent = parent;
+        this.loopButton = null;
+        this.playButton = null;
 
-        new Popup(this);
+        this.popup = new Popup(this);
     }
 
     get treeText() { return this.text; }  // backwards compatibility (database expects 'treeText')
