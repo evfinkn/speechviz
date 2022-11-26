@@ -687,6 +687,10 @@ var Groups = class Groups extends TreeItem {
         super(id, { parent, children, text, removable });
 
         Groups.byId[id] = this;
+        if (id == "Clusters") {
+            this.playButton.display = "none";
+            this.loopButton.display = "none";
+        }
     }
 
     /** Initialize the CSS styling of the `Groups` */
