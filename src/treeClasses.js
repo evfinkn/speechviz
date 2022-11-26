@@ -1363,7 +1363,7 @@ var Face  = class Face extends TreeItem {
      * @type {Object.<string, string>}
      * @static
      */
-     static icons = faceIcons;
+     static icons = segmentIcons;
 
      /**
      * A list of segment properties. Used by TreeItem.getProperties() in order to copy the properties to an object
@@ -1397,6 +1397,9 @@ var Face  = class Face extends TreeItem {
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
         super(id, { text, removable, renamable, render: false, assocWith: assocWith });
+
+        playButton.style.display = "none";
+        loopButton.style.display = "none";
 
         this.render();
         this.parent = parent;
