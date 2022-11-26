@@ -1369,10 +1369,6 @@ var Face  = class Face extends TreeItem {
         const id = this.id;
         const parent = this.parent;
 
-
-        if (parent.hidden[id]) { delete parent.hidden[id]; }
-        else { delete parent.visible[id]; }
-
         super.remove();
     }
 
