@@ -1354,7 +1354,9 @@ var Face  = class Face extends TreeItem {
 
     /** The `Group` this `Segment` belongs to */
     get parent() { return super.parent; }
-    
+    set parent(newParent) {
+        super.parent = newParent;  // call TreeItem's setter for parent
+    }
 
     /** Initialize the CSS styling of the `Segment` */
     style() {
