@@ -573,7 +573,7 @@ var Popup = class Popup {
         while (assocDiv.children[1]) {
             assocDiv.removeChild(assocDiv.lastChild);
         }
-        const assocWith = this.treeItem.expandAssocWith();
+        //const assocWith = this.treeItem.expandAssocWith(); idk what this does
         if (assocWith.length == 0) { assocDiv.hidden = true; }
         else {
             assocDiv.hidden = false;
