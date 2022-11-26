@@ -290,7 +290,9 @@ var TreeItem = class TreeItem {
 
         if (this.removable) {
             const remove = htmlToElement(`<a href="javascript:;" ">${this.constructor.icons.remove}</a>`);
-            this.loopButton.after(remove);
+            if (this.loopable){
+                this.loopButton.after(remove);
+            }
             remove.addEventListener("click", () => { this.remove(); });
             this.removeButton = remove;
         }
