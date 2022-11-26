@@ -86,7 +86,7 @@ fetch(`/clustered-files/`)
         const clusterfolders = fileList.cluster;
         
         clusterfolders.forEach(function (folderName){
-            new Face(folderName, { parent: clustersTree, associateWith: ["Speakers"] });
+            new Face(folderName, { parent: clustersTree, assocWith: ["Speakers"] });
 
             console.log(folderName);
         });
