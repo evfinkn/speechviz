@@ -97,7 +97,7 @@ app.get("/users", (req, res) => {
   }
 });
 
-app.get(/\/(audio|segments|video|waveforms|transcriptions|faceClusters)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
+app.get(/\/(audio|segments|video|waveforms|transcriptions)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
 
 //#region saving, loading, and resetting
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
