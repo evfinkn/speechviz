@@ -76,6 +76,25 @@ fetch(`/segments/${basename}-segments.json`)
         globals.highestId = highestId;
     });
 
+fetch(`/clustered-files/`)
+    .then(res => {
+        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
+        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+        return res.json();
+    })
+    .then(fileList => {
+        const clusterfolders = fileList.cluster;
+        //for (const [group, children, snr] of segments) { //children is segments, group is parent, snr is snr :)
+           //createTree(group, segmentsTree, children, snr);
+        //}
+        for (folderName of clusterfolders) {
+            console.log(folderName);
+        }
+        
+    })
+    .catch(error => {
+        console.log("No clustered faces for media.")
+    });
 
 fetch(`/transcriptions/${basename}-transcription.json`)
     .then(res => {
