@@ -1398,11 +1398,10 @@ var Face  = class Face extends TreeItem {
         // (can't use 'this' until after super() call, so can't define this.segment until after)
         super(id, { text, removable, renamable, render: false, assocWith: assocWith });
 
-        //this.playButton.style.display = "none";
-        //this.loopButton.style.display = "none";
-
         this.render();
         this.parent = parent;
+        this.playButton.style.display = "none";
+        this.loopButton.style.display = "none";
 
         this.popup = new Popup(this);
     }
