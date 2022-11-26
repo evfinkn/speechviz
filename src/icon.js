@@ -6,6 +6,8 @@ const segmentLoopIcon = feather.icons.repeat.toSvg({ "width": 12, "height": 12, 
 const segmentRemoveIcon = feather.icons.x.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
 const segmentIcons = { "play": segmentPlayIcon, "pause": segmentPauseIcon, "loop": segmentLoopIcon, "remove": segmentRemoveIcon }
 
+const faceIcons = { "remove": segmentRemoveIcon }
+
 const groupPlayIcon = feather.icons.play.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
 const groupPauseIcon = feather.icons.pause.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
 const groupLoopIcon = feather.icons.repeat.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
@@ -20,4 +22,4 @@ const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "gray" });
 
 const settingsIcon = feather.icons.settings.toSvg({ "stroke": "black" });
 
-export { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, undoIcon, redoIcon, settingsIcon };
+export { segmentIcons, groupIcons, faceIcons, zoomInIcon, zoomOutIcon, undoIcon, redoIcon, settingsIcon };
