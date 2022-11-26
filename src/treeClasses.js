@@ -1378,35 +1378,7 @@ var Face  = class Face extends TreeItem {
         //else { this.segment.update({ "labelText": newText }); }
     //}
 
-    render() {
-
-        if (this.li) { this.li.remove(); }
-
-        const li = htmlToElement(`<li><input type="checkbox" autocomplete="off" checked><span>${this.text}</span> <a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.play}   </a><a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.loop}   </a><ul class="nested active"></ul></li>`);
-        this.li = li;
-
-        this.checkbox = li.firstElementChild;
-        // event listeners need to use `() => {}` syntax instead of `function () {}` because
-        // `() => {}` doesn't rebind `this` (`this` will still refer to the TreeItem)
-        this.checkbox.addEventListener("click", () => { this.toggle(); });
-
-        this.span = li.children[1];
-        this.span.addEventListener("click", () => {
-            if (this.popup) { this.popup.show(); }
-        });
-        this.updateSpanTitle();
-
-        this.nested = li.children[4];
-
-        if (this.removable) {
-            const remove = htmlToElement(`<a href="javascript:;" ">${this.constructor.icons.remove}</a>`);
-            remove.addEventListener("click", () => { this.remove(); });
-            this.removeButton = remove;
-        }
-
-        // this is here for subclasses to define a style method if they want to apply specific CSS styles
-        this.style?.();
-    }
+    
 
 }
 
