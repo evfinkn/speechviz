@@ -1379,7 +1379,6 @@ var Face  = class Face extends TreeItem {
     //}
 
     render() {
-        const id = this.id;
 
         if (this.li) { this.li.remove(); }
 
@@ -1401,7 +1400,6 @@ var Face  = class Face extends TreeItem {
 
         if (this.removable) {
             const remove = htmlToElement(`<a href="javascript:;" ">${this.constructor.icons.remove}</a>`);
-            this.loopButton.after(remove);
             remove.addEventListener("click", () => { this.remove(); });
             this.removeButton = remove;
         }
