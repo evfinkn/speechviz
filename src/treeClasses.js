@@ -14,7 +14,7 @@
 import Picker from "vanilla-picker";
 import globals from "./globals";
 import { htmlToElement, sortByProp, toggleButton, arrayMean, objectMap, propertiesEqual, getRandomColor } from "./util";
-import { groupIcons, segmentIcons } from "./icon";
+import { groupIcons, segmentIcons, faceIcons } from "./icon";
 
 const peaks = globals.peaks;
 const undoStorage = globals.undoStorage;
@@ -643,6 +643,7 @@ var Popup = class Popup {
         radioButton.addEventListener("change", () => {
             //add functionality to associate with speakers here
             console.log("associate, function not provided yet");
+
 
             radioButton.checked = false;
             this.hide();
@@ -1362,7 +1363,7 @@ var Face  = class Face extends TreeItem {
      * @type {Object.<string, string>}
      * @static
      */
-     static icons = segmentIcons
+     static icons = faceIcons;
 
      /**
      * A list of segment properties. Used by TreeItem.getProperties() in order to copy the properties to an object
