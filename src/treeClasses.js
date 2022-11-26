@@ -406,6 +406,7 @@ var Popup = class Popup {
     moveDiv;
     /** */
     copyDiv;
+    assocDiv;
     /** */
     colorDiv;
     /** */
@@ -466,6 +467,12 @@ var Popup = class Popup {
             this.updateCopyTo();
             popupContent.append(this.copyDiv);
         }
+        
+        if (treeItem.associateWith){
+            popupContent.append(document.createElement("br"));
+            this.assocDiv = htmlToElement(`<div><h3>Associate ${text} with a speaker</h3></div>`);
+            popupContent.append(this.assocDiv);
+        }
 
         if (treeItem.colorable) {
             const colorDiv = htmlToElement(`<div><h3>Pick a new color for ${text}</h3></div>`);
@@ -507,6 +514,9 @@ var Popup = class Popup {
         if (this.copyDiv) {
             this.copyDiv.firstElementChild.innerHTML = `Copy ${newText} to another group`;
         }
+        if (this.assocDiv) {
+            this.assocDiv.firstElementChild.innerHTML = `Associate ${newText} with a speaker`
+        }
         if (this.colorDiv) {
             this.colorDiv.firstElementChild.innerHTML = `Pick a new color for ${newText}`;
         }
@@ -516,10 +526,11 @@ var Popup = class Popup {
     show() {
         if (this.moveDiv) { this.updateMoveTo(); }
         if (this.copyDiv) { this.updateCopyTo(); }
+        if (this.assocDiv) { this.updateAssocWith();}
         if (this.colorPicker) {
             this.colorPicker.setColor(this.treeItem.color || "#000000", true);
         }
-        if (this.renameDiv || !this?.moveDiv?.hidden || !this?.copyDiv?.hidden || this.colorDiv) {
+        if (this.renameDiv || !this?.moveDiv?.hidden || !this?.copyDiv?.hidden || !this?.assocDiv?.hidden || this.colorDiv) {
             this.popup.style.display = "block";
         }
     }
@@ -552,6 +563,19 @@ var Popup = class Popup {
         else {
             copyDiv.hidden = false;
             copyTo.forEach(dest => this.addCopyRadio(dest));
+        }
+    }
+
+    updateAssocWith() {
+        const assocDiv = this.assocDiv;
+        while (assocDiv.children[1]) {
+            assocDiv.removeChild(assocDiv.lastChild);
+        }
+        const assocWith = this.treeItem.expandAssocWith();
+        if (assocWith.length == 0) { assocDiv.hidden = true; }
+        else {
+            assocDiv.hidden = false;
+            assocWith.forEach(dest => this.addAssocRadio(dest));
         }
     }
 
@@ -601,6 +625,23 @@ var Popup = class Popup {
                 dest.sort("startTime");
             }
             dest.open();
+            radioButton.checked = false;
+            this.hide();
+        });
+    }
+
+    addAssocRadio(destId) {
+        const dest = TreeItem.byId[destId];
+
+        const radioDiv = htmlToElement(`<div><label><input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}</label><br></div>`);
+        const radioButton = radioDiv.firstElementChild.firstElementChild;
+
+        this.assocDiv.append(radioDiv);
+
+        radioButton.addEventListener("change", () => {
+            //add functionality to associate with speakers here
+            console.log("associate, function not provided yet");
+
             radioButton.checked = false;
             this.hide();
         });
