@@ -573,7 +573,7 @@ var Popup = class Popup {
         while (assocDiv.children[1]) {
             assocDiv.removeChild(assocDiv.lastChild);
         }
-        //const assocWith = this.treeItem.expandAssocWith(); idk what this does
+        const assocWith = this.treeItem.expandAssocWith();
         if (assocWith.length == 0) { assocDiv.hidden = true; }
         else {
             assocDiv.hidden = false;
@@ -1014,6 +1014,11 @@ var Group = class Group extends TreeItem {
     expandCopyTo() {
         const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
         const expanded = Group.#expand(copyToAsTreeItems, [this.id]);
+        return TreeItem.treeItemsToIds(expanded);
+    }
+    expandAssocWith() {
+        const assocWithAsTreeItems = TreeItem.idsToTreeItems(this.assocWith);
+        const expanded = Group.#expand(assocWithAsTreeItems, [this.id]);
         return TreeItem.treeItemsToIds(expanded);
     }
 
