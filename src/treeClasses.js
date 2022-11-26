@@ -40,7 +40,7 @@ var TreeItem = class TreeItem {
      */
     static icons = groupIcons;
     /** */
-    static properties = ["id", "text", "duration", "removable", "renamable", "path"];
+    static properties = ["id", "text", "duration", "removable", "playable", "loopable", "renamable", "path"];
 
     /** 
      * Checks if a TreeItem by the given id exists
@@ -92,6 +92,16 @@ var TreeItem = class TreeItem {
      */
     removable;
     /**
+     * A `boolean` indicating if this can be played on the tree
+     * @type {boolean}
+     */
+    playable;
+     /**
+     * A `boolean` indicating if this can be looped on the tree
+     * @type {boolean}
+     */
+    loopable;
+    /**
      * A boolean indicating if this can be renamed
      * @type {boolean}
      */
@@ -123,13 +133,13 @@ var TreeItem = class TreeItem {
      */
     span;
     /**
-     * The a element of the play button
-     * @type {Element}
+     * If this `TreeItem` is playable, the a element of the play button. Otherwise, null
+     * @type {Element|null}
      */
     playButton;
     /**
-     * The a element of the loop button
-     * @type {Element}
+     * If this `TreeItem` is loopable, the a element of the loop button. Otherwise, null
+     * @type {Element|null}
      */
     loopButton;
     /**
@@ -152,13 +162,15 @@ var TreeItem = class TreeItem {
      * @param {TreeItem[]=} options.children - An array of `TreeItem`s to put in this' nested content
      * @param {string=} options.text - The text to display in the tree. If null, uses `id` instead
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be removed from the tree
+     * @param {boolean} [options.playable=false] - Boolean indicating if this can be played from the tree
+     * @param {boolean} [options.loopable=false] - Boolean indicating if this can be looped from the tree
      * @param {boolean} [options.renamable=false] - Boolean indicating if this can renamed
      * @param {String[]=} [options.moveTo] - 
      * @param {String[]=} [options.copyTo] - 
      * @param {boolean} [options.render=true] - If true, calls render() in constructor. Otherwise, render() is not called
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, text = null, removable = false, renamable = false, moveTo = null, copyTo = null, render = true } = {}) {
+    constructor(id, { parent = null, children = null, text = null, removable = false, renamable = false, moveTo = null, copyTo = null, render = true, playable = true, loopable = true } = {}) {
         if (TreeItem.exists(id)) {
             throw new Error(`A TreeItem with the id ${id} already exists`);
         }
@@ -169,6 +181,8 @@ var TreeItem = class TreeItem {
 
         this.#text = text || id;
         this.removable = removable;
+        this.playable = playable;
+        this.loopable = loopable;
         this.renamable = renamable;
         this.moveTo = moveTo;
         this.copyTo = copyTo;
@@ -263,17 +277,24 @@ var TreeItem = class TreeItem {
         });
         this.updateSpanTitle();
 
-        this.playButton = li.children[2];
-        this.loopButton = li.children[3];
-        // use { once: true } because this.play() re-adds the event listener
-        this.playButton.addEventListener("click", () => { this.play(); }, { once: true });
-        this.loopButton.addEventListener("click", () => { this.play(true); }, { once: true });
+        if (this.playable){
+            this.playButton = li.children[2];
+            // use { once: true } because this.play() re-adds the event listener
+            this.playButton.addEventListener("click", () => { this.play(); }, { once: true });
+        }
+        if (this.loopable){
+            this.loopButton = li.children[3];
+            this.loopButton.addEventListener("click", () => { this.play(true); }, { once: true });
+        }
+        
 
         this.nested = li.children[4];
 
         if (this.removable) {
             const remove = htmlToElement(`<a href="javascript:;" ">${this.constructor.icons.remove}</a>`);
-            this.loopButton.after(remove);
+            if (this.loopable){
+                this.loopButton.after(remove);
+            }
             remove.addEventListener("click", () => { this.remove(); });
             this.removeButton = remove;
         }
@@ -639,8 +660,8 @@ var Groups = class Groups extends TreeItem {
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be removed from the tree
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, children = null, text = null, removable = false } = {}) {
-        super(id, { parent, children, text, removable });
+    constructor(id, { parent = null, children = null, text = null, removable = false, playable = true, loopable = true } = {}) {
+        super(id, { parent, children, text, removable, playable: playable, loopable: loopable });
 
         Groups.byId[id] = this;
     }
@@ -1336,18 +1357,19 @@ var Face  = class Face extends TreeItem {
      * @param {string[]=} options.associateWith - A group that this face should be associated with
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, text = null, removable = true, renamable = false, associateWith = null } = {}) {
+    constructor(id, { parent = null, text = null, removable = true, renamable = false, associateWith = null, playable = false, loopable = false } = {}) {
         // catch options contained within face
         text = text;
 
+        this.associateWith = associateWith;
+
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
-        super(id, { text, removable, renamable, render: false });
+        super(id, { text, removable, renamable, loopable: loopable, playable: playable });
 
-        this.render();
         this.parent = parent;
 
-        new Popup(this);
+        this.popup = new Popup(this);
     }
 
     get treeText() { return this.text; }  // backwards compatibility (database expects 'treeText')
