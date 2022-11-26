@@ -106,7 +106,7 @@ var TreeItem = class TreeItem {
      * @type {string[]}
      */
     copyTo;
-
+    
     /**
      * The li of this `TreeItem`
      * @type {Element}
@@ -634,7 +634,7 @@ var Groups = class Groups extends TreeItem {
      * @param {string} id - The unique identifier to give this `Groups`
      * @param {Object} options - An object containing options
      * @param {Groups=} options.parent - The `Groups` object this `Groups` belongs to
-     * @param {(Group|Groups)[]=} options.children - An array of `Group`s to put in this `Groups`
+     * @param {(Group|Groups|Face)[]=} options.children - An array of `Group`s to put in this `Groups` or Faces if the Groups is Clusters
      * @param {string=} options.text - The text to display in the tree. If null, uses `id` instead
      * @param {boolean} [options.removable=false] - Boolean indicating if this can be removed from the tree
      * @throws Throws an error if a `TreeItem` with `id` already exists
@@ -1300,6 +1300,104 @@ var Segment = class Segment extends TreeItem {
         const expanded = Segment.#expand(copyToAsTreeItems, [this.parent.id]);
         return TreeItem.treeItemsToIds(expanded);
     }
+}
+
+var Face  = class Face extends TreeItem {
+
+    /**
+     * An object containing all `Faces`s by their id.
+     * Key is id, value is corresponding `Face`:  {id: `Face`}
+     * @type {Object.<string, Face>}
+     * @static
+     */
+     static byId = {};
+
+     /**
+     * HTML strings for the play, pause, loop, and remove icons for `Segment`s in the tree
+     * @type {Object.<string, string>}
+     * @static
+     */
+     static icons = segmentIcons
+
+     /**
+     * A list of segment properties. Used by TreeItem.getProperties() in order to copy the properties to an object
+     * @type {string[]}
+     * @static
+     */
+    static properties = ["treeText"];
+
+      /**
+     * @param {string} id - The unique identifier to give the `TreeItem`
+     * @param {Object} options - An object containing options
+     * @param {Group=} options.parent - The `Group` this `Face` belongs to
+     * @param {string=} options.text - The text displayed in the tree for this item
+     * @param {boolean} [options.removable=true] - Boolean indicating if this can be removed from the tree
+     * @param {boolean} [options.renamable=false] - Boolean indicating if this can be renamed
+     * @param {string[]=} options.associateWith - A group that this face should be associated with
+     * @throws Throws an error if a `TreeItem` with `id` already exists
+     */
+    constructor(id, { parent = null, text = null, removable = true, renamable = false, associateWith = null } = {}) {
+        // catch options contained within face
+        text = text;
+
+        // don't render yet because some methods rely on this.segment but not defined yet
+        // (can't use 'this' until after super() call, so can't define this.segment until after)
+        super(id, { text, removable, renamable, render: false });
+
+        this.render();
+        this.parent = parent;
+
+        new Popup(this);
+    }
+
+    get treeText() { return this.text; }  // backwards compatibility (database expects 'treeText')
+
+    /** The `Group` this `Segment` belongs to */
+    get parent() { return super.parent; }
+    
+
+    render() {
+        super.render();
+        if (this.removeButton) {
+            this.removeButton.addEventListener("click", () => { 
+                // false at end of undo signals that the "deleted segment" was NOT deleted as part of a "deleted group"
+                undoStorage.push(["deleted segment", this.segment, this.getProperties(["id", "duration", "color", "labelText"]), false]);
+                // redoStorage.length = 0; //any time something new is done redos reset without changing its reference from globals.redoStorage
+            });
+        }
+    }
+
+    /** Updates the title of the span */
+    updateSpanTitle() {
+        this.span.title = `Start time: ${this.startTime.toFixed(2)}\nEnd time: ${this.endTime.toFixed(2)}\nDuration: ${this.duration.toFixed(2)}`;
+    }
+
+    /** Initialize the CSS styling of the `Segment` */
+    style() {
+        this.li.style.fontSize = "12px";
+        this.checkbox.style.transform = "scale(0.85)";
+    }
+
+    /** Removes this `Segment` from the tree and from Peaks */
+    remove() {
+        const id = this.id;
+        const parent = this.parent;
+
+
+        if (parent.hidden[id]) { delete parent.hidden[id]; }
+        else { delete parent.visible[id]; }
+
+        super.remove();
+    }
+
+    //rename(newText) {
+        //super.text = newText;
+        //if (this.parent) { this.segment.update({ labelText: `${this.parent.id}\n${newText}` }); }
+        //else { this.segment.update({ "labelText": newText }); }
+    //}
+
+    
+
 }
 
 export { TreeItem, Popup, Groups, Group, Segment };
