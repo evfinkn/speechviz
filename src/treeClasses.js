@@ -470,7 +470,7 @@ var Popup = class Popup {
             popupContent.append(this.copyDiv);
         }
         
-        if (treeItem.associateWith){
+        if (treeItem.assocWith){
             popupContent.append(document.createElement("br"));
             this.assocDiv = htmlToElement(`<div><h3>Associate ${text} with a speaker</h3></div>`);
             popupContent.append(this.assocDiv);
@@ -1376,7 +1376,7 @@ var Face  = class Face extends TreeItem {
      * @param {string=} options.text - The text displayed in the tree for this item
      * @param {boolean} [options.removable=true] - Boolean indicating if this can be removed from the tree
      * @param {boolean} [options.renamable=false] - Boolean indicating if this can be renamed
-     * @param {string[]=} options.associateWith - A group that this face should be associated with
+     * @param {string[]=} options.assocWith - A group that this face should be associated with
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
     constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null } = {}) {
