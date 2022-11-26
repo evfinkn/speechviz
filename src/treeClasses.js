@@ -684,8 +684,9 @@ var Groups = class Groups extends TreeItem {
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
     constructor(id, { parent = null, children = null, text = null, removable = false } = {}) {
+        console.log(id);
         super(id, { parent, children, text, removable });
-
+        console.log(id);
         Groups.byId[id] = this;
         if (id == "Clusters") {
             this.playButton.display = "none";
