@@ -14,7 +14,7 @@
 import Picker from "vanilla-picker";
 import globals from "./globals";
 import { htmlToElement, sortByProp, toggleButton, arrayMean, objectMap, propertiesEqual, getRandomColor } from "./util";
-import { groupIcons, segmentIcons, faceIcons } from "./icon";
+import { groupIcons, segmentIcons } from "./icon";
 
 const peaks = globals.peaks;
 const undoStorage = globals.undoStorage;
@@ -691,8 +691,8 @@ var Groups = class Groups extends TreeItem {
         Groups.byId[id] = this;
         if (id == "Clusters") {
             console.log("made to if");
-            this.playButton.display = "none";
-            this.loopButton.display = "none";
+            this.playButton.style.display = "none";
+            this.loopButton.style.display = "none";
         }
         
     }
