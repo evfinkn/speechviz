@@ -71,6 +71,7 @@ app.get("/clustered-files", (req, res) => {
   const files = {};
   files.cluster = fs.readdirSync("data/faceClusters/" + req.session.dir).filter(fileName => !exclude.has(fileName));
   files.inFaceFolder = req.session.inFaceFolder;
+  files.dir = req.session.dir;
   if (req.session.inFaceFolder == true) {
     faceFolder = req.session.faceFolder
     files.faceFolder = faceFolder;
