@@ -643,7 +643,7 @@ var Popup = class Popup {
         radioButton.addEventListener("change", () => {
             //add functionality to associate with speakers here
             console.log("associate, function not provided yet");
-            console.log(this.treeItem.li);
+            console.log(this.treeItem.li.children);
 
             radioButton.checked = false;
             this.hide();
