@@ -18,17 +18,16 @@ const originalGroups = {};
 
 const createTree = function (id, parent, children, snr) {
     if (!Array.isArray(children[0])) {  // group of segments
-        console.log("create tree array of segments")
-        console.log(id);
         if (id.includes("Speaker ")) {  // group is speakers, which need popups
-            console.log("in speaker");
-            console.log(children);
+            console.log(id);
+            console.log(parent);
             const group = new Group(id, { parent, snr, copyTo: ["Labeled"] });
-            console.log(group);
             peaks.segments.add(children).forEach(function (segment) {
                 new Segment(segment, { parent: group, moveTo: ["Speakers"], copyTo: ["Labeled"] });
                 originalGroups[segment.id] = id;
             });
+            console.log(group);
+            console.log(group.li);
         }
         else {  // group is VAD or Non-VAD, which don't need popups
             const group = new Group(id, { parent, snr });
