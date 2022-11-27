@@ -642,6 +642,7 @@ var Popup = class Popup {
 
         radioButton.addEventListener("change", () => {
             //add functionality to associate with speakers here
+            dest.li.insertBefore(this.treeItem.li.children[6], dest.li.children[4]);
             console.log("associate, function not provided yet");
             console.log(this.treeItem.li.children[6]);
 
