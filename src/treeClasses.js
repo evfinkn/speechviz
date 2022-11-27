@@ -887,8 +887,6 @@ var Group = class Group extends TreeItem {
      */
     constructor(id, { parent = null, children = null, snr = null, text = null, removable = false, renamable = false, color = null, colorable = false, moveTo = null, copyTo = null } = {}) {
         super(id, { parent, children, text, removable, renamable, moveTo, copyTo });  // always have to call constructor for super class (TreeItem)
-
-        console.log("group" + id);
         Group.byId[id] = this;
         this.snr = snr;
         if (children) { this.sort("startTime"); }
