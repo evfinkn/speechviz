@@ -50,7 +50,7 @@ const createTree = function (id, parent, children, snr) {
 const segmentsTree = new Groups("Segments");
 document.getElementById("tree").append(segmentsTree.li);
 
-const custom = new Group("Custom", { parent: segmentsTree, color: getRandomColor(), colorable: true });
+//const custom = new Group("Custom", { parent: segmentsTree, color: getRandomColor(), colorable: true });
 const labeled = new Groups("Labeled", { parent: segmentsTree });
 
 const clustersTree = new Groups("Clusters");
