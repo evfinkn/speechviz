@@ -1409,7 +1409,11 @@ var Face  = class Face extends TreeItem {
         this.playButton.style.display = "none";
         this.loopButton.style.display = "none";
         this.imagePath = imagePath;
-
+        li = this.li;
+        console.log(li.innerHTML);
+        li.innerHTML = li.innerHTML.replace(`<ul class="nested active"></ul></li>`, "") + `<a href="javascript:;" style="text-decoration:none;"></a><ul class="nested active"></ul></li>`;
+        console.log(li.innerHTML);
+        
         this.popup = new Popup(this);
     }
 
@@ -1432,9 +1436,6 @@ var Face  = class Face extends TreeItem {
 
     /** Removes this `Segment` from the tree and from Peaks */
     remove() {
-        const id = this.id;
-        const parent = this.parent;
-
         super.remove();
     }
 
