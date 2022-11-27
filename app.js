@@ -79,6 +79,7 @@ app.get("/clustered-files", (req, res) => {
     const imageFiles = {};
     files.cluster.forEach(function (folder) {
       images = fs.readdirSync("data/faceClusters/" + req.session.dir + "/" + folder).filter(fileName => !exclude.has(fileName));
+      console.log(images);
       noImageYet = true;
       counter = 0;
       while(noImageYet){
