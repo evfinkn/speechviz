@@ -92,7 +92,7 @@ fetch(`/clustered-files/`)
             console.log(images[folderName]);
             imagePath = images[folderName];
             console.log(imagePath);
-            new Face(folderName, { parent: clustersTree, assocWith: ["Speakers"], path: imagePath });
+            new Face(folderName, { parent: clustersTree, assocWith: ["Speakers"] });
         });
     
     })
