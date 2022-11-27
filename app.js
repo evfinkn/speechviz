@@ -74,7 +74,7 @@ app.get("/clustered-files", (req, res) => {
     faceFolder = req.session.faceFolder
     files.faceFolder = faceFolder;
   }
-  //else{//serve an image from each
+  else{//serve an image from each
     //const imageFiles = {};
     //files.cluster.forEach(function (folder) {
       //images = fs.readdirSync("data/faceClusters/" + req.session.dir + "/" + folder).filter(fileName => !exclude.has(fileName));
@@ -90,7 +90,7 @@ app.get("/clustered-files", (req, res) => {
     //files.images = imageFiles;
     console.log("images sent to speechviz");
     //console.log(files.images);
-  //}
+  }
   
   res.send(files);
 });
