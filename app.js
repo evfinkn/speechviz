@@ -78,23 +78,19 @@ app.get("/clustered-files", (req, res) => {
   else{//serve an image from each
     const imageFiles = {};
     files.cluster.forEach(function (folder) {
-      console.log(folder);
       images = fs.readdirSync("data/faceClusters/" + req.session.dir + "/" + folder).filter(fileName => !exclude.has(fileName));
-      console.log(images);
-      console.log(images[0]);
       noImageYet = true;
       counter = 0;
       while(noImageYet){
         fileName = images[counter];
-        console.log(fileName);
         if(path.extname(fileName) === ".jpg"){
           noImageYet = false;
           imageFiles[folder] = fileName;
-          console.log(imageFiles);
         }
       }
     });
     files.images = imageFiles;
+    console.log(imageFiles.face0)
     console.log("images sent to speechviz");
     console.log(files.images);
   }
