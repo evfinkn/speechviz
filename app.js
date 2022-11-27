@@ -86,7 +86,7 @@ app.get("/clustered-files", (req, res) => {
         path = images[counter];
         if(path.extname(fileName) === ".jpg")
           noImageYet = false; 
-          imageFiles.folder = path;
+          imageFiles[folder] = path;
         }
       });
     files.images = imageFiles;
