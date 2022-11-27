@@ -1394,7 +1394,7 @@ var Face  = class Face extends TreeItem {
      * @param {string[]=} options.assocWith - A group that this face should be associated with
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null, imagePath = null } = {}) {
+    constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null, dir = null, imagePath = null } = {}) {
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
         super(id, { text, removable, renamable, render: false, assocWith: assocWith });
@@ -1410,7 +1410,7 @@ var Face  = class Face extends TreeItem {
             window.location.replace(`/clustered-faces?faceFolder=${this.id}&inFaceFolder=true`);
         });
 
-        const imageLi = htmlToElement(`<li><img src='faceClusters/${imagePath}/${id}' alt='Example image of face'/></li>`);
+        const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' alt='Example image of face'/></li>`);
         var nest = this.li.lastElementChild;
         nest.appendChild(imageLi);
         this.popup = new Popup(this);
