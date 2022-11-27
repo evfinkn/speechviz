@@ -21,6 +21,7 @@ const createTree = function (id, parent, children, snr) {
         console.log("create tree array of segments")
         console.log(id);
         if (id.includes("Speaker ")) {  // group is speakers, which need popups
+            console.log("in speaker");
             const group = new Group(id, { parent, snr, copyTo: ["Labeled"] });
             peaks.segments.add(children).forEach(function (segment) {
                 new Segment(segment, { parent: group, moveTo: ["Speakers"], copyTo: ["Labeled"] });
