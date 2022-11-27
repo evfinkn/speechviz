@@ -10,7 +10,7 @@ fetch("/clustered-files")
         const clusterfolders = fileList.cluster;
         const fieldset = document.getElementById("file-selection");
         
-        if (clusterfolders?.length !== 0){
+        if (clusterfolders?.length !== 0 && !req.session.inFaceFolder){
             clusterfolders.forEach(function (folderName){
                 const div = htmlToElement(`<div><input type="radio" id="${folderName}cluster"" name="file-selection" value="${folderName}cluster"></input><label for="${folderName}cluster">${folderName}</label></div>`);
                 div.firstElementChild.addEventListener("change", function () {
