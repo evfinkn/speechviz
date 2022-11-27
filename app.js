@@ -85,11 +85,12 @@ app.get("/clustered-files", (req, res) => {
       console.log(files.cluster);
       while(noImageYet){
         path = images[counter];
-        if(path.extname(fileName) === ".jpg")
+        if(path.extname(fileName) === ".jpg"){
           noImageYet = false; 
           imageFiles[folder] = path;
         }
-      });
+      }
+    });
     files.images = imageFiles;
     console.log("images sent to speechviz");
     console.log(files.images);
