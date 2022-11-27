@@ -86,8 +86,7 @@ app.get("/clustered-files", (req, res) => {
           noImageYet = false; 
           imageFiles.folder = path;
         }
-      }
-      );
+      });
     files.images = imageFiles;
     console.log("images sent to speechviz");
     console.log(files.images);
