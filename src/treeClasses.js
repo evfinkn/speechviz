@@ -1411,8 +1411,6 @@ var Face  = class Face extends TreeItem {
         this.playButton.style.display = "none";
         this.loopButton.style.display = "none";
         this.imagePath = imagePath;
-        li = this.li;
-        console.log(li.innerHTML);
         const linkButton = htmlToElement(`<a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.faceImgIcon}</a>`);
         this.linkbutton = linkButton;
         this.removeButton.after(linkButton);
