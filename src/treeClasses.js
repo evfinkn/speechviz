@@ -1397,7 +1397,7 @@ var Face  = class Face extends TreeItem {
     constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null, imagePath = null } = {}) {
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
-        super(id, { text: text, removeable: removable, renamable: renamable, render: false, assocWith: assocWith });
+        super(id, { text, removable, renamable, render: false, assocWith: assocWith });
 
         this.render();
         this.parent = parent;
