@@ -24,6 +24,7 @@ const createTree = function (id, parent, children, snr) {
             console.log("in speaker");
             console.log(children);
             const group = new Group(id, { parent, snr, copyTo: ["Labeled"] });
+            console.log(group);
             peaks.segments.add(children).forEach(function (segment) {
                 new Segment(segment, { parent: group, moveTo: ["Speakers"], copyTo: ["Labeled"] });
                 originalGroups[segment.id] = id;
