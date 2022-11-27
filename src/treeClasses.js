@@ -684,13 +684,10 @@ var Groups = class Groups extends TreeItem {
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
     constructor(id, { parent = null, children = null, text = null, removable = false } = {}) {
-        console.log(id);
         super(id, { parent, children, text, removable, render: false });
-        console.log(id);
         this.render();
         Groups.byId[id] = this;
         if (id == "Clusters") {
-            console.log("made to if");
             this.playButton.style.display = "none";
             this.loopButton.style.display = "none";
         }
@@ -1379,7 +1376,7 @@ var Face  = class Face extends TreeItem {
      */
     static properties = ["treeText"];
 
-    path;
+    imagePath;
 
     static #expand(groups, exclude = []) {
         const expanded = [];
@@ -1402,7 +1399,7 @@ var Face  = class Face extends TreeItem {
      * @param {string[]=} options.assocWith - A group that this face should be associated with
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null, path = null } = {}) {
+    constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null, imagePath = null } = {}) {
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
         super(id, { text, removable, renamable, render: false, assocWith: assocWith });
@@ -1411,7 +1408,7 @@ var Face  = class Face extends TreeItem {
         this.parent = parent;
         this.playButton.style.display = "none";
         this.loopButton.style.display = "none";
-        this.path = path;
+        this.imagePath = imagePath;
 
         this.popup = new Popup(this);
     }
@@ -1424,8 +1421,8 @@ var Face  = class Face extends TreeItem {
         super.parent = newParent;  // call TreeItem's setter for parent
     }
 
-    get path() { return this.path; }
-    set path(path) { this.path = path; }
+    get imagePath() { return this.imagePath; }
+    set imagePath(path) { this.imagePath = path; }
 
     /** Initialize the CSS styling of the `Segment` */
     style() {
