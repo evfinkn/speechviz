@@ -1416,7 +1416,7 @@ var Face  = class Face extends TreeItem {
         this.removeButton.after(linkButton);
         console.log(this.id);
         linkButton.addEventListener("click", () => { 
-            window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}faceFolder=${this.id}&inFaceFolder=true`);
+            window.location.replace(`/clustered-faces?faceFolder=${this.id}&inFaceFolder=true`);
         });
         this.popup = new Popup(this);
     }
