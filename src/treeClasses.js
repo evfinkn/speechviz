@@ -1414,7 +1414,6 @@ var Face  = class Face extends TreeItem {
         const linkButton = htmlToElement(`<a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.image}</a>`);
         this.linkbutton = linkButton;
         this.removeButton.after(linkButton);
-        console.log(this.id);
         linkButton.addEventListener("click", () => { 
             window.location.replace(`/clustered-faces?faceFolder=${this.id}&inFaceFolder=true`);
         });
