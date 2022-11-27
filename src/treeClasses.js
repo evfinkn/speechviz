@@ -684,13 +684,13 @@ var Groups = class Groups extends TreeItem {
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
     constructor(id, { parent = null, children = null, text = null, removable = false } = {}) {
-        super(id, { parent, children, text, removable, render: false });
-        this.render();
-        Groups.byId[id] = this;
-        if (id == "Clusters") {
-            this.playButton.style.display = "none";
-            this.loopButton.style.display = "none";
-        }
+        super(id, { parent, children, text, removable, render: true });
+        //this.render();
+        //Groups.byId[id] = this;
+        //if (id == "Clusters") {
+            //this.playButton.style.display = "none";
+            //this.loopButton.style.display = "none";
+        //}
         
     }
 
