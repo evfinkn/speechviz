@@ -1378,6 +1378,8 @@ var Face  = class Face extends TreeItem {
 
     imagePath;
 
+    linkButton;
+
     static #expand(groups, exclude = []) {
         const expanded = [];
         for (const group of groups) {
@@ -1411,8 +1413,9 @@ var Face  = class Face extends TreeItem {
         this.imagePath = imagePath;
         li = this.li;
         console.log(li.innerHTML);
-        li.innerHTML = li.innerHTML.replace(`<ul class="nested active"></ul></li>`, "") + `<a href="javascript:;" style="text-decoration:none;"></a><ul class="nested active"></ul></li>`;
-        console.log(li.innerHTML);
+        const linkButton = htmlToElement(`<a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.faceImgIcon}</a>`);
+        this.linkbutton = linkButton;
+        this.removeButton.after(linkButton);
         
         this.popup = new Popup(this);
     }
