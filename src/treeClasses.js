@@ -1411,7 +1411,7 @@ var Face  = class Face extends TreeItem {
             window.location.replace(`/clustered-faces?faceFolder=${this.id}&inFaceFolder=true`);
         });
 
-        const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' width = 150 height = 150 alt='Example image of face'/></li>`);
+        const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' width = 50 height = 50 alt='Example image of face'/></li>`);
         var nest = this.li.lastElementChild;
         nest.appendChild(imageLi);
         this.popup = new Popup(this);
