@@ -1424,6 +1424,9 @@ var Face  = class Face extends TreeItem {
         super.parent = newParent;  // call TreeItem's setter for parent
     }
 
+    get path() { return this.path; }
+    set path(path) { this.path = path; }
+
     /** Initialize the CSS styling of the `Segment` */
     style() {
         this.li.style.fontSize = "12px";
