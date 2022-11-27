@@ -93,7 +93,7 @@ fetch(`/clustered-files/`)
     
     })
     .catch(error => {
-        console.error(error)//console.log("No clustered faces for media.");
+        console.log("No clustered faces for media.");
     });
 
 fetch(`/transcriptions/${basename}-transcription.json`)
