@@ -687,13 +687,14 @@ var Groups = class Groups extends TreeItem {
         console.log(id);
         super(id, { parent, children, text, removable, render: false });
         console.log(id);
+        this.render();
         Groups.byId[id] = this;
         if (id == "Clusters") {
             console.log("made to if");
             this.playButton.display = "none";
             this.loopButton.display = "none";
         }
-        this.render();
+        
     }
 
     /** Initialize the CSS styling of the `Groups` */
