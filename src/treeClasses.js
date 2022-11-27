@@ -1410,7 +1410,7 @@ var Face  = class Face extends TreeItem {
             window.location.replace(`/clustered-faces?faceFolder=${this.id}&inFaceFolder=true`);
         });
 
-        const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' width = 300 height = 100 alt='Example image of face'/></li>`);
+        const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' width = 150 height = 100 alt='Example image of face'/></li>`);
         var nest = this.li.lastElementChild;
         nest.appendChild(imageLi);
         this.popup = new Popup(this);
