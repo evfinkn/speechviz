@@ -1379,6 +1379,8 @@ var Face  = class Face extends TreeItem {
      */
     static properties = ["treeText"];
 
+    path;
+
     static #expand(groups, exclude = []) {
         const expanded = [];
         for (const group of groups) {
@@ -1400,7 +1402,8 @@ var Face  = class Face extends TreeItem {
      * @param {string[]=} options.assocWith - A group that this face should be associated with
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null } = {}) {
+    constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null, path = null } = {}) {
+        this.path = path;
         // don't render yet because some methods rely on this.segment but not defined yet
         // (can't use 'this' until after super() call, so can't define this.segment until after)
         super(id, { text, removable, renamable, render: false, assocWith: assocWith });
