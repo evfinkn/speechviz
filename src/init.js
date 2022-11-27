@@ -34,6 +34,9 @@ const createTree = function (id, parent, children, snr) {
             peaks.segments.add(children).forEach(function (segment) {
                 new Segment(segment, { parent: group });
             });
+            console.log(id);
+            console.log(group);
+            console.log(group.li);
         }
     }
     else {  // group of groups
