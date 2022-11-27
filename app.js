@@ -90,9 +90,6 @@ app.get("/clustered-files", (req, res) => {
       }
     });
     files.images = imageFiles;
-    console.log(imageFiles.face0);
-    console.log("images sent to speechviz");
-    console.log(files.images);
   }
   
   res.send(files);
