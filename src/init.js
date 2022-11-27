@@ -89,6 +89,7 @@ fetch(`/clustered-files/`)
         clusterfolders.forEach(function (folderName){
             console.log(folderName);
             console.log(images);
+            console.log(images[folderName]);
             imagePath = images[folderName];
             console.log(imagePath);
             new Face(folderName, { parent: clustersTree, assocWith: ["Speakers"], path: imagePath });
