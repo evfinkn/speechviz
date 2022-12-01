@@ -8,8 +8,6 @@ const fs = require("fs");
 /* GET home page. */
 router.get('/', (req, res, next) => {
     
-    console.log(req.session);
-    console.log(req.session.inFaceFolder);
     var folder;
     var faceFolder;
     var inFace;
@@ -38,22 +36,15 @@ router.get('/', (req, res, next) => {
         folder = req.session.dir;
     }
 
-    console.log("face cluster route");
-    console.log(req.session);
-    console.log(req.query);
-
     var dir = "faceClusters/" + folder + "/"
 
     if (!inFace){ //user needs to pick which face folder to view
         req.session.inFaceFolder = false;
-        console.log(req.session);
         res.render("facecluster", { "dir": dir, inFaceFolder: false });//send to views/facecluster.pug
     }
     else { //we are in a face folder so face folder is defined, and can therefore send names of the images to pug to render
         fs.readdir(("data/"+ dir + faceFolder + "/"), function(err, files){
-            console.log(files);
             req.session.inFaceFolder = true;
-            console.log(req.session);
             res.render("facecluster", { "images": files, "faceFolder": faceFolder, "dir": dir, "faceFolder": faceFolder,  inFaceFolder: true });//send to views/facecluster.pug
         });
     }
