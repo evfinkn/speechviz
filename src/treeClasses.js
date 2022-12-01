@@ -1405,6 +1405,7 @@ var Face  = class Face extends TreeItem {
         this.playButton.style.display = "none";
         this.loopButton.style.display = "none";
         const linkButton = htmlToElement(`<a href="/clustered-faces?faceFolder=${this.id}&inFaceFolder=true" style="text-decoration:none;" target="_blank" rel="noopener noreferrer">${this.constructor.icons.image}</a>`);
+        //rel="noopener noreferrer" is there to avoid tab nabbing
 
 
         this.linkbutton = linkButton;
