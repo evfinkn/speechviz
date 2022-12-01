@@ -1458,4 +1458,3 @@ var Face  = class Face extends TreeItem {
 }
 
 export { TreeItem, Popup, Groups, Group, Segment, Face };
-/
