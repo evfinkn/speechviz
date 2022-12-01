@@ -94,7 +94,7 @@ fetch(`/clustered-files/`)
             new Face(folderName, { parent: clustersTree, assocWith: ["Speakers"], dir: dir, imagePath: imagePath });
         });
     
-})
+    })
     .catch(error => {
         console.error(error);//console.log("No clustered faces for media.");
     });
