@@ -1404,12 +1404,14 @@ var Face  = class Face extends TreeItem {
         this.parent = parent;
         this.playButton.style.display = "none";
         this.loopButton.style.display = "none";
-        const linkButton = htmlToElement(`<a href="javascript:;" style="text-decoration:none;">${this.constructor.icons.image}</a>`);
+        const linkButton = htmlToElement(`<a href="/clustered-faces?faceFolder=${this.id}&inFaceFolder=true" style="text-decoration:none;" target="_blank" rel="noopener noreferrer">${this.constructor.icons.image}</a>`);
+
+
         this.linkbutton = linkButton;
         this.removeButton.after(linkButton);
-        linkButton.addEventListener("click", () => { 
-            window.location.replace(`/clustered-faces?faceFolder=${this.id}&inFaceFolder=true`);
-        });
+        //linkButton.addEventListener("click", () => { 
+            //window.location.replace(`/clustered-faces?faceFolder=${this.id}&inFaceFolder=true`);
+        //});
 
         const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' width = 100 height = 100 alt='Example image of face'/></li>`);
         var nest = this.li.lastElementChild;
@@ -1456,3 +1458,4 @@ var Face  = class Face extends TreeItem {
 }
 
 export { TreeItem, Popup, Groups, Group, Segment, Face };
+/
