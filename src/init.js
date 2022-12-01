@@ -78,7 +78,7 @@ fetch(`/segments/${basename}-segments.json`)
         globals.highestId = highestId;
     });
 
-fetch(`/clustered-files/`)
+/* fetch(`/clustered-files/`)
     .then(res => {
         if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
         else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
@@ -94,10 +94,11 @@ fetch(`/clustered-files/`)
             new Face(folderName, { parent: clustersTree, assocWith: ["Speakers"], dir: dir, imagePath: imagePath });
         });
     
-    })
+})
     .catch(error => {
         console.error(error);//console.log("No clustered faces for media.");
     });
+*/
 
 fetch(`/transcriptions/${basename}-transcription.json`)
     .then(res => {
