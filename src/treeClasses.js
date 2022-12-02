@@ -1409,9 +1409,12 @@ var Face  = class Face extends TreeItem {
         this.linkbutton = linkButton;
         this.removeButton.after(linkButton);
 
+        //store previous li to readd it when image is clicked
         const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' width = 100 height = 100 alt='Example image of face'/></li>`);
+
         imageLi.addEventListener("click", () => { 
             console.log("picture clicked");
+            console.log(imageLi);
             console.log(this.li.children);
         });
         var nest = this.li.lastElementChild;
