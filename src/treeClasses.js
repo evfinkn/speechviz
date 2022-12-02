@@ -1412,7 +1412,7 @@ var Face  = class Face extends TreeItem {
         const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' width = 100 height = 100 alt='Example image of face'/></li>`);
         imageLi.addEventListener("click", () => { 
             console.log("picture clicked");
-            console.log(this.li.children[4]);
+            console.log(this.li.children);
         });
         var nest = this.li.lastElementChild;
         nest.appendChild(imageLi);
