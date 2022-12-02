@@ -1406,15 +1406,15 @@ var Face  = class Face extends TreeItem {
         this.loopButton.style.display = "none";
         const linkButton = htmlToElement(`<a href="/clustered-faces?faceFolder=${this.id}&inFaceFolder=true" style="text-decoration:none;" target="_blank" rel="noopener noreferrer">${this.constructor.icons.image}</a>`);
         //rel="noopener noreferrer" is there to avoid tab nabbing
-
+        li = this.li;
 
         this.linkbutton = linkButton;
         this.removeButton.after(linkButton);
-        //linkButton.addEventListener("click", () => { 
-            //window.location.replace(`/clustered-faces?faceFolder=${this.id}&inFaceFolder=true`);
-        //});
 
         const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' width = 100 height = 100 alt='Example image of face'/></li>`);
+        imageLi.addEventListener("click", () => { 
+            this.li = li;
+        });
         var nest = this.li.lastElementChild;
         nest.appendChild(imageLi);
         this.popup = new Popup(this);
