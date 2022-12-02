@@ -1416,7 +1416,7 @@ var Face  = class Face extends TreeItem {
             console.log("picture clicked");
             console.log(imageLi);
             console.log(this.li.children);
-            this.li.lastElementChild.appendChild(imageLi);
+            this.li.lastElementChild.before.appendChild(imageLi);
         });
         var nest = this.li.lastElementChild;
         nest.appendChild(imageLi);
