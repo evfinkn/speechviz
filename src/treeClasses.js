@@ -644,7 +644,7 @@ var Popup = class Popup {
             //add functionality to associate with speakers here
             dest.li.insertBefore(this.treeItem.li.children[6], dest.li.children[4]);
             console.log(this.treeItem.li.children[6]);
-
+            //add something to see if its clicked and delete the image if it is
             radioButton.checked = false;
             this.hide();
         });
@@ -1416,6 +1416,7 @@ var Face  = class Face extends TreeItem {
             console.log("picture clicked");
             console.log(imageLi);
             console.log(this.li.children);
+            this.li.insertBefore(this.li.children[6], imageLi);
         });
         var nest = this.li.lastElementChild;
         nest.appendChild(imageLi);
