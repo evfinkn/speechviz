@@ -3,7 +3,7 @@ html(lang="en")
     head
         meta(charset="UTF-8")
         title Speechviz
-        link(rel="stylesheet", type="text/css", href="css/style.css")
+        link(rel="stylesheet" type="text/css" href="css/style.css")
     body 
         .navbar
             a(href="/") Back to file selection
@@ -15,18 +15,11 @@ html(lang="en")
             .column2#column2
                 #waveform-container
                     if isVideo
-                        if hasCluster
-                            video#media(controls="controls")
-                                source(src=`video/${file}`, type=mimetype)
-                                | Your browser does not support the video element.
-                            #zoomview-container
-                            #overview-container
-                        else
-                            video#media(controls="controls")
-                                source(src=`video/${file}`, type=mimetype)
-                                | Your browser does not support the video element.
-                            #zoomview-container
-                            #overview-container
+                        video#media(controls="controls")
+                            source(src=`video/${file}`, type=mimetype)
+                            | Your browser does not support the video element.
+                        #zoomview-container
+                        #overview-container
                     else
                         #zoomview-container
                         #overview-container
@@ -56,20 +49,22 @@ html(lang="en")
                                             br
                                             button.spdbtn 2x
                                             br
-                                        a(href="javascript:;", style="text-decoration:none;pointer-events:none;", data-action="zoom-in")
-                                        a(href="javascript:;", style="text-decoration:none;", data-action="zoom-out")
-                                        .dropdown
-                                            a#settings-button(href="javascript:;", style="text-decoration:none;")
+                                    a#zoomin.icon.button-off(href="javascript:;", title="Zoom in")
+                                    a#zoomout.icon.button-on(href="javascript:;", title="Zoom out")
+                                    a#undo.icon.button-on(href="javascript:;" title="Undo", style="padding-left:20px;")
+                                    a#redo.icon.button-on(href="javascript:;" title="Redo")
+                                    a#save.icon.button-on(href="javascript:;" title="Save" style="padding-left:20px;")
+                                    a#settings.icon.button-on(href="javascript:;" title="Settings" style="padding-left:20px;")
                                     div
                                         button(data-action="add-segment") Add Segment
                                     div
                                         input(type="text",id ="label", placeholder = "label")
                                         button(data-action="add-label") Add Label
-                                    div
-                                        button(data-action="save") Save
-                                        button(data-action="undo") Undo
-                                        button(data-action="redo") Redo
+                                    //div
+                                    //    button(data-action="save") Save
+                                    //    button(data-action="undo") Undo
+                                    //    button(data-action="redo") Redo
                             .column4#column4
-                                textarea#notes(rows="8", cols="60", placeholder="This is for any notes you wish to jot down")
+                                textarea#notes(rows="8" cols="60" placeholder="This is for any notes you wish to jot down")
 
-        script(type="application/javascript", src="js/init.js")
+        script(type="application/javascript" src="js/init.js")

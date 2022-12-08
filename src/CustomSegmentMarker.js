@@ -1,13 +1,15 @@
-import { Line } from 'konva/lib/shapes/Line';
-import { Rect } from 'konva/lib/shapes/Rect';
-import { Text } from 'konva/lib/shapes/Text';
+import { Line } from 'konva/lib/shapes/Line.js';
+import { Rect } from 'konva/lib/shapes/Rect.js';
+import { Text } from 'konva/lib/shapes/Text.js';
 
 /**
- * Custom marker that appears when hovering over segments. Same as default marker except the drag handle is higher.
- * Code is practically exactly the code for the default segment marker in Peaks, with 1 or 2 lines changed to make
- * the handle higher.
+ * A custom marker that appears when the mouse pointer hovers over segments on the Peaks waveform.
+ * The only difference from the default marker is that the drag handle is higher.
  */
 const CustomSegmentMarker = class CustomSegmentMarker {
+  // Code is practically exactly the code for the default segment marker in Peaks, with 1 or 2
+  // lines changed to make the handle higher.
+
   constructor(options) {
     this._options = options;
   }
@@ -110,7 +112,7 @@ const CustomSegmentMarker = class CustomSegmentMarker {
   }
 }
 
-/** Method used by Peaks to create a CustomSegmentMarker */
+/** Method used by Peaks to create a CustomSegmentMarker. */
 const createSegmentMarker = function (options) {
   return new CustomSegmentMarker(options)
 }

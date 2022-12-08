@@ -5,17 +5,22 @@ channels:
   - defaults
   - nvidia
   - anaconda
+  - huggingface
 dependencies:
   - cudatoolkit=11.3
   - numpy
+  - scipy
   - pip
   - pytorch
   - torchaudio
   - torchvision
+  - transformers
+  - huggingface_hub
   - cuda
   - cudnn
   - pip:
     - pyannote.audio
+    - imufusion
     - opencv-contrib-python
     - cmake
     - face_recognition

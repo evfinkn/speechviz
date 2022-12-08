@@ -1,0 +1,323 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Speechviz Documentation SettingsPopup.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">Speechviz Documentation</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    Documentation
+                </a>
+                
+                 
+                    
+                        <a
+                            class="link user-link "
+                            href="https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz"
+                        >
+                            GitLab
+                        </a>
+                    
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="GroupOfGroups.html">GroupOfGroups</a></li><li><a href="Popup.html">Popup</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#expandGroups">expandGroups</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>SettingsPopup.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import globals from "./globals";
+import { Segment } from "./treeClasses";
+import { htmlToElement } from "./util";
+
+const peaks = globals.peaks;
+const overview = peaks.views.getView('overview');
+const zoomview = peaks.views.getView('zoomview');
+
+/**
+ * An `Object` used to reset an input and setting back to its default values.
+ * @typedef {Object} DefaultSetting
+ * @prop {string} name - The name of the input of the setting.
+ * @prop {string} event - The name of the event listened to by the input.
+ * @prop {Object&lt;string, any>} props - An `Object` containing the name and default value for the
+ *      properties of the input.
+ */
+
+/** The popup containing extra settings for configuring the interface. */
+const SettingsPopup = class SettingsPopup {
+
+    /**
+     * The default settings of every input and setting in the popup.
+     * @type {Array.&lt;DefaultSetting>}
+     * @static
+     */
+    static defaults = [
+        {name: "amplitudeInput", event: "input", props: { value: "5" }},
+        {name: "autoScrollInput", event: "change", props: { checked: true }},
+        {name: "enableSeekInput", event: "change", props: { checked: true }},
+        {name: "showDragHandlesInput", event: "change", props: { checked: true }}
+    ];
+
+    /**
+     * The div element that contains all other elements.
+     * Displayed when the settings button is clicked.
+     * @type {!Element}
+     */
+    popup;
+    
+    /**
+     * The div element containing the actual content of the popup.
+     * @type {!Element}
+     */
+    popupContent;
+
+    // save inputs so can set them when resetting to defaults
+    /**
+     * The input element of the range that changes the amplitude of the waveform.
+     * @type {!Element}
+     */
+    amplitudeInput;
+
+    /**
+     * The input element of the checkbox that enables / disables autoscrolling on the waveform.
+     * @type {!Element}
+     */
+    autoScrollInput;
+
+    /**
+     * The input element of the checkbox that enables / disables seeking on the Peaks waveforms.
+     * @type {!Element}
+     */
+    enableSeekInput;
+
+    /**
+     * The input element of the checkbox that shows / hides the segments' drag handles.
+     * @type {!Element}
+     */
+    showDragHandlesInput;
+
+    /**
+     * The button element that resets all moved segments.
+     * @type {!Element}
+     */
+    resetMovedButton;
+
+    /**
+     * The button element that resets all saved changes.
+     * @type {!Element}
+     */
+    resetAllButton;
+
+    constructor() {
+        this.popup = htmlToElement("&lt;div class='popup'>&lt;/div>");
+        document.body.append(this.popup);
+
+        const popupContent = htmlToElement("&lt;div class='popup-content'>&lt;/div>");
+        this.popupContent = popupContent;
+        this.popup.appendChild(popupContent);
+
+        const closeButton = htmlToElement("&lt;a class='close'>&amp;times&lt;/a>");
+        popupContent.appendChild(closeButton);
+        closeButton.addEventListener("click", () => this.hide());
+
+        // setting to change size of waveform amplitudes (how tall the peaks of the waveform are)
+        const amplitudes = { "0": 0, "1": 0.1, "2": 0.25, "3": 0.5, "4": 0.75, "5": 1, "6": 1.5, "7": 2, "8": 3, "9": 4, "10": 5 };
+
+        const amplitudeDiv = htmlToElement("&lt;div>&lt;label>Amplitude scale &lt;input type='range' min='0' max='10' step='1'>&lt;/label>&lt;/div>")
+        popupContent.append(amplitudeDiv);
+
+        this.amplitudeInput = amplitudeDiv.firstElementChild.firstElementChild;
+        this.amplitudeInput.addEventListener("input", function () {
+            const scale = amplitudes[this.value];
+            zoomview.setAmplitudeScale(scale);
+            overview.setAmplitudeScale(scale);
+        });
+
+        // setting to enable auto-scroll (peaks viewer moves forward with audio)
+        const autoScrollDiv = htmlToElement("&lt;div>&lt;label>&lt;input type='checkbox' checked> Auto scroll&lt;/label>&lt;/div>");
+        popupContent.append(autoScrollDiv);
+
+        this.autoScrollInput = autoScrollDiv.firstElementChild.firstElementChild;
+        this.autoScrollInput.addEventListener("change", function () { zoomview.enableAutoScroll(this.checked); });
+
+        // setting to enable seeking (clicking peaks to jump to a time)
+        const enableSeekDiv = htmlToElement("&lt;div>&lt;label>&lt;input type='checkbox' checked> Enable click to seek&lt;/label>&lt;/div>");
+        popupContent.append(enableSeekDiv);
+
+        this.enableSeekInput = enableSeekDiv.firstElementChild.firstElementChild;
+        this.enableSeekInput.addEventListener("change", function () {
+            zoomview.enableSeek(this.checked);
+            overview.enableSeek(this.checked);
+        });
+
+        // setting to show segments' drag handles
+        const showDragHandlesDiv = htmlToElement("&lt;div>&lt;label>&lt;input type='checkbox' checked> Show segments' time drag handles&lt;/label>&lt;/div>");
+        popupContent.append(showDragHandlesDiv);
+
+        this.showDragHandlesInput = showDragHandlesDiv.firstElementChild.firstElementChild;
+        this.showDragHandlesInput.addEventListener("change", function () {
+            Object.values(Segment.byId).forEach(segment => segment.toggleDragHandles(this.checked));
+        });
+
+        const fetchOptions = {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json; charset=UTF-8" },
+            body: JSON.stringify({ "user": globals.user, "filename": globals.filename, "highestId": globals.highestId })
+        };  // fine to use same body for both requests because "reset" request will just ignore highestId
+
+        // resets all of the pipeline segments that have been moved from one group to another
+        this.resetMovedButton = htmlToElement("&lt;button>Reset moved&lt;/button>");
+        this.resetMovedButton.addEventListener("click", function () {
+            if (confirm("This will reset all moved speaker segments.\nAre you sure you want to continue?")) {
+                fetch("reset-moved", fetchOptions)
+                    .then(res => {
+                        if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+                        window.location.reload();
+                    })
+                    .catch(error => console.error(`Error while resetting moved: ${error}`));
+            }
+        });
+
+        // deletes all saved segments
+        this.resetAllButton = htmlToElement("&lt;button>Reset all&lt;/button>");
+        this.resetAllButton.addEventListener("click", function () {
+            if (confirm("This will delete ALL saved segments.\nAre you sure you want to continue?")) {
+                fetch("reset", fetchOptions)
+                    .then(res => {
+                        if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+                        window.location.reload();
+                    })
+                    .catch(error => console.error(`Error while resetting moved: ${error}`));
+            }
+        });
+
+        popupContent.append(document.createElement("br"));
+        popupContent.append(this.resetMovedButton);
+        popupContent.append(document.createElement("br"));
+        popupContent.append(this.resetAllButton);
+    }
+
+    /** Updates content and displays this popup. */
+    show() { this.popup.style.display = "block"; }
+
+    /** Hides this popup. */
+    hide() { this.popup.style.display = "none"; }
+
+    /** Sets the inputs and settings back to their defaults. */
+    setToDefaults() {
+        for (const { name, event, props } of SettingsPopup.defaults) {
+            const input = this[name];
+            Object.keys(props).forEach(key => input[key] = props[key]);
+            input.dispatchEvent(new Event(event));
+        }
+    }
+}
+
+export default SettingsPopup;</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.0</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+
+</body>
+</html>

@@ -1,25 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>JSDoc: Class: Segment</title>
 
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Speechviz Documentation Segment</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
 </head>
 
-<body>
 
-<div id="main">
 
-    <h1 class="page-title">Class: Segment</h1>
-
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
     
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">Speechviz Documentation</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    Documentation
+                </a>
+                
+                 
+                    
+                        <a
+                            class="link user-link "
+                            href="https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz"
+                        >
+                            GitLab
+                        </a>
+                    
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="GroupOfGroups.html">GroupOfGroups</a></li><li><a href="Popup.html">Popup</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#expandGroups">expandGroups</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Class</p>
+                    <h1>Segment</h1>
+                </header>
+                
 
 
 
@@ -28,9 +102,9 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>Segment<span class="signature">(segment, options)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>Segment<span class="signature">(segment<span class="signature-attributes">non-null</span>, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span></h2>
         
-            <div class="class-description">Class representing a Peaks.js segment and its item in a tree</div>
+            <div class="class-description"><p>A <code>TreeItem</code> for a Peaks.js segment.</p></div>
         
     
 </header>
@@ -39,18 +113,29 @@
     <div class="container-overview">
     
         
-
-    
-    <h2>Constructor</h2>
-    
-
-    
-    <h4 class="name" id="Segment"><span class="type-signature"></span>new Segment<span class="signature">(segment, options)</span><span class="type-signature"></span></h4>
-    
-
-    
+            <div class='vertical-section'>
+                <div class="members">
+                    <div class="member">
+                        <div class=name>
+                            <span class="tag">Constructor</span>
+                        </div>
+                        
 
 
+    
+    <h4 class="name" id="Segment">
+        <a class="href-link" href="#Segment">#</a>
+        
+        <span class="code-name">
+            
+                new Segment<span class="signature">(segment<span class="signature-attributes">non-null</span>, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
 
 
 
@@ -62,293 +147,352 @@
 
     <h5>Parameters:</h5>
     
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
+<div class="table-container">
+    <table class="params table">
+        <thead>
         <tr>
             
-                <td class="name"><code>segment</code></td>
+            <th>Name</th>
             
 
-            <td class="type">
-            
-                
-<span class="param-type">Peaks.Segment</span>
-
+            <th>Type</th>
 
             
-            </td>
-
+            <th>Attributes</th>
             
 
             
+            <th>Default</th>
+            
 
-            <td class="description last">An instance of a `Peaks.Segment`</td>
+            <th class="last">Description</th>
         </tr>
+        </thead>
 
-    
-
-        <tr>
-            
-                <td class="name"><code>options</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">An object containing options
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
+        <tbody>
         
 
-        <th>Type</th>
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>segment</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Peaks.Segment</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last"><p>The Peaks segment being represented in the tree by the
+<code>Segment</code>.</p></td>
+</tr>
+
 
         
-        <th>Attributes</th>
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>options</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Object.&lt;string, any></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+          &lt;nullable><br>
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last"><p>Options to customize the segment.</p></td>
+</tr>
+
+  
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>parent</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type"><a href="Group.html">Group</a></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+          &lt;nullable><br>
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last"><p>The <code>Group</code> that contains the segment in its nested
+content.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>text</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last"><p>The text to show in the segment's span (and therefore in the
+the tree).</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>removable</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          false
+      
+      </td>
+  
+
+  <td class="description last"><p>Indicates if the segment can be removed from
+the tree.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>renamable</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          false
+      
+      </td>
+  
+
+  <td class="description last"><p>Indicates if the segment can be renamed.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>moveTo</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;string></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+          &lt;nullable><br>
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last"><p>An array of the ids of <code>TreeItem</code>s that the segment can
+be moved to. <code>null</code> if the group isn't moveable.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>copyTo</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;string></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+          &lt;nullable><br>
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last"><p>An array of the ids of <code>TreeItem</code>s that the segment can
+be copied to. <code>null</code> if the group isn't copyable.</p></td>
+</tr>
+
+  
+
+
         
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>parent</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Group.html">Group</a></span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">The `Group` this `Segment` belongs to</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>text</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">The text displayed in the tree for this item</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>removable</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last">Boolean indicating if this can be removed from the tree</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>renamable</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last">Boolean indicating if this can be renamed</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code></code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code></code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
+        </tbody>
+    </table>
+</div>
 
 
 
@@ -379,18 +523,19 @@
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line15">line 15</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1228">line 1228</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -406,28 +551,43 @@
 
 
 
-<h5>Throws:</h5>
 
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Throws:</label></div>
+        <div class="column is-10">
+            
+                    
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>If a <code>TreeItem</code> with <code>segment.id</code> already exists.</p></div>
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+<code class="param-type">Error</code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+
+
+
+                    </div>
+                </div>
+            </div>
         
-
-    <div class="param-desc">
-    
-        Throws an error if a `TreeItem` with `id` already exists
     
     </div>
-
-
     
-
-
-
-
-
-
-
-    
-    </div>
-
     
         <h3 class="subsection-title">Extends</h3>
 
@@ -452,93 +612,41 @@
     
 
     
-        <h3 class="subsection-title">Members</h3>
-
-        
+        <div class='vertical-section'>
+            <h1>Members</h1>
+            <div class="members">
             
-<h4 class="name" id=".highestId"><span class="type-signature">(static) </span>highestId<span class="type-signature"> :number</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Object.&lt;string, <a href="Segment.html">Segment</a>></code>
+
+
+    </span>
+
+<h4 class="name" id="byId">
+    <a class="href-link" href="#byId">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        byId
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The highest number id of all Segments
+    <p>An object containing all <code>Segment</code>s by their id.
+Key is id, value is corresponding <code>Segment</code>:
+{id: <code>Segment</code>}</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">number</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line29">line 29</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="byId"><span class="type-signature"></span>byId<span class="type-signature"></span></h4>
-
-
-
-
-<div class="description">
-    An object containing all `Segment`s by their id.
-Key is id, value is corresponding `Segment`:  {id: `Segment`}
-</div>
-
-
 
 
 
@@ -574,18 +682,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line21">line 21</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1237">line 1237</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -593,25 +702,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
+</div>
+            
+                <div class="member">
 
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
         
-            
-<h4 class="name" id="checkbox"><span class="type-signature"></span>checkbox<span class="type-signature"> :Element</span></h4>
+<code class="param-type">Element</code>
+
+
+    </span>
+
+<h4 class="name" id="checkbox">
+    <a class="href-link" href="#checkbox">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        checkbox
+    </span>
+    
+</h4>
 
 
 
 
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-
-
-        </li>
-    </ul>
+<div class="description">
+    <p>The input element of the checkbox used to toggle this item.</p>
+</div>
 
 
 
@@ -647,18 +768,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line66">line 66</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line178">line 178</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -666,19 +788,34 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="checked"><span class="type-signature"></span>checked<span class="type-signature"></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">boolean</code>
+
+
+    </span>
+
+<h4 class="name" id="checked">
+    <a class="href-link" href="#checked">#</a>
+    
+    <span class="code-name">
+        checked
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    Boolean indicating if this `TreeItem`'s checkbox is checked. Equivalent to `this.checkbox.checked`
+    <p>A <code>boolean</code> indicating if this item's checkbox is checked.
+Equivalent to <code>checkbox.checked</code>.</p>
 </div>
-
-
 
 
 
@@ -714,18 +851,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line166">line 166</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line303">line 303</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -733,29 +871,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="children"><span class="type-signature"></span>children<span class="type-signature"> :Array.&lt;<a href="TreeItem.html">TreeItem</a>></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></code>
+
+
+    </span>
+
+<h4 class="name" id="children">
+    <a class="href-link" href="#children">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        children
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    Array of `TreeItem`s contained in this `TreeItem`'s nested content
+    <p>An array of <code>TreeItem</code>s contained in this item's nested content.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -791,18 +937,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line47">line 47</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line121">line 121</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -810,29 +957,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="color"><span class="type-signature"></span>color<span class="type-signature"> :string</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type"><a href="global.html#Color">Color</a></code>
+
+
+    </span>
+
+<h4 class="name" id="color">
+    <a class="href-link" href="#color">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        color
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The segment's color. Hex string of the form '#RRGGBB'
+    <p>This segment's color in the Peaks waveform.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">string</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -863,11 +1018,75 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
+    
 
     
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line109">line 109</a>
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1351">line 1351</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Array.&lt;string></code>
+
+
+    </span>
+
+<h4 class="name" id="copyTo">
+    <a class="href-link" href="#copyTo">#</a>
+    
+        
+            <span class='tag'>nullable</span>
+        
+    
+    <span class="code-name">
+        copyTo
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>An array of the ids of <code>TreeItem</code>s that this item can be copied to.
+<code>null</code> if this item isn't copyable.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#copyTo">TreeItem#copyTo</a>
     </li></ul></dd>
     
 
@@ -876,25 +1095,65 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line166">line 166</a>
+            </span>
+        </p>
+    
 </dl>
 
 
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="copyTo"><span class="type-signature"></span>copyTo<span class="type-signature"></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">boolean</code>
+
+
+    </span>
+
+<h4 class="name" id="currentlyEditable">
+    <a class="href-link" href="#currentlyEditable">#</a>
+    
+    <span class="code-name">
+        currentlyEditable
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    Array of ids of `Group`s and `Groups`s that this segment can be copied to
+    <p>A <code>boolean</code> indicating if this segment is currently editable.
+If the segment isn't editable, this is always <code>false</code>. Otherwise, this is <code>true</code> if this
+segment's drag handles are shown and <code>false</code> if they're hidden.</p>
 </div>
-
-
 
 
 
@@ -925,18 +1184,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line51">line 51</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1274">line 1274</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -944,19 +1204,33 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="duration"><span class="type-signature"></span>duration<span class="type-signature"></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">number</code>
+
+
+    </span>
+
+<h4 class="name" id="duration">
+    <a class="href-link" href="#duration">#</a>
+    
+    <span class="code-name">
+        duration
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    How long this `TreeItem`'s audio lasts, in seconds
+    <p>How long this item's audio lasts in seconds.</p>
 </div>
-
-
 
 
 
@@ -992,18 +1266,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line51">line 51</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line136">line 136</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1011,29 +1286,34 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="editable"><span class="type-signature"></span>editable<span class="type-signature"> :boolean</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">boolean</code>
+
+
+    </span>
+
+<h4 class="name" id="editable">
+    <a class="href-link" href="#editable">#</a>
+    
+    <span class="code-name">
+        editable
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    Whether the segment is user-editable
+    <p>A <code>boolean</code> indicating if this segment can be edited. If it is editable, this segment will
+have handles at its start and end that allow changing its start and end times.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">boolean</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -1064,18 +1344,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line104">line 104</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1345">line 1345</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1083,29 +1364,33 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="endTime"><span class="type-signature"></span>endTime<span class="type-signature"> :number</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">number</code>
+
+
+    </span>
+
+<h4 class="name" id="endTime">
+    <a class="href-link" href="#endTime">#</a>
+    
+    <span class="code-name">
+        endTime
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The segment's end time in seconds
+    <p>This segment's end time in seconds.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">number</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -1136,18 +1421,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line99">line 99</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1337">line 1337</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1155,19 +1441,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="icons"><span class="type-signature"></span>icons<span class="type-signature"></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Object.&lt;string, string></code>
+
+
+    </span>
+
+<h4 class="name" id="icons">
+    <a class="href-link" href="#icons">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        icons
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    HTML strings for the play, pause, loop, and remove icons for `Segment`s in the tree
+    <p>HTML strings for the play, pause, loop, and remove icons for <code>Segment</code>s in the tree.</p>
 </div>
-
-
 
 
 
@@ -1203,18 +1507,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line23">line 23</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1244">line 1244</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1222,19 +1527,33 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="id"><span class="type-signature"></span>id<span class="type-signature"></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">string</code>
+
+
+    </span>
+
+<h4 class="name" id="id">
+    <a class="href-link" href="#id">#</a>
+    
+    <span class="code-name">
+        id
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The unique identifier of this `TreeItem`
+    <p>The unique identifier of this item.</p>
 </div>
-
-
 
 
 
@@ -1270,18 +1589,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line37">line 37</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line108">line 108</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1289,29 +1609,34 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="labelText"><span class="type-signature"></span>labelText<span class="type-signature"> :string</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">string</code>
+
+
+    </span>
+
+<h4 class="name" id="labelText">
+    <a class="href-link" href="#labelText">#</a>
+    
+    <span class="code-name">
+        labelText
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    A text label which is displayed the user hovers the mouse pointer over the segment
+    <p>The segment's text label.
+It is displayed when the segment is hovered over by the mouse pointer.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">string</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -1342,18 +1667,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line114">line 114</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1358">line 1358</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1361,29 +1687,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="li"><span class="type-signature"></span>li<span class="type-signature"> :Element</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Element</code>
+
+
+    </span>
+
+<h4 class="name" id="li">
+    <a class="href-link" href="#li">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        li
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The li of this `TreeItem`
+    <p>The li element that is displayed and that contains all other elements.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -1419,18 +1753,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line61">line 61</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line172">line 172</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1438,29 +1773,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="loopButton"><span class="type-signature"></span>loopButton<span class="type-signature"> :Element</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Element</code>
+
+
+    </span>
+
+<h4 class="name" id="loopButton">
+    <a class="href-link" href="#loopButton">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        loopButton
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The a element of the loop button
+    <p>The a element of the loop button.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -1496,18 +1839,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line86">line 86</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line196">line 196</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1515,29 +1859,38 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="loopSvg"><span class="type-signature"></span>loopSvg<span class="type-signature"> :Element</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Array.&lt;string></code>
+
+
+    </span>
+
+<h4 class="name" id="moveTo">
+    <a class="href-link" href="#moveTo">#</a>
+    
+        
+            <span class='tag'>nullable</span>
+        
+    
+    <span class="code-name">
+        moveTo
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The svg of the loop button icon
+    <p>An array of the ids of <code>TreeItem</code>s that this item can be moved to.
+<code>null</code> if this item isn't moveable.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -1554,7 +1907,7 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="TreeItem.html#loopSvg">TreeItem#loopSvg</a>
+        <a href="TreeItem.html#moveTo">TreeItem#moveTo</a>
     </li></ul></dd>
     
 
@@ -1573,18 +1926,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line91">line 91</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line159">line 159</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1592,91 +1946,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="moveTo"><span class="type-signature"></span>moveTo<span class="type-signature"></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Element</code>
+
+
+    </span>
+
+<h4 class="name" id="nested">
+    <a class="href-link" href="#nested">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        nested
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    Array of ids of `Group`s and `Groups`s that this segment can be moved to
+    <p>The ul element containing the nested content (the children) of this item.</p>
 </div>
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line49">line 49</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="nested"><span class="type-signature"></span>nested<span class="type-signature"> :Element</span></h4>
-
-
-
-
-<div class="description">
-    The ul element containing the nested content (the children) of this `TreeItem`
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -1712,18 +2012,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line106">line 106</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line216">line 216</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1731,19 +2032,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="parent"><span class="type-signature"></span>parent<span class="type-signature"></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type"><a href="Group.html">Group</a></code>
+
+
+    </span>
+
+<h4 class="name" id="parent">
+    <a class="href-link" href="#parent">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        parent
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The `Group` this `Segment` belongs to
+    <p>The <code>Group</code> that contains the segment in its nested content.</p>
 </div>
-
-
 
 
 
@@ -1779,18 +2098,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line127">line 127</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1382">line 1382</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1798,32 +2118,39 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="path"><span class="type-signature"></span>path<span class="type-signature"> :Array.&lt;<a href="TreeItem.html">TreeItem</a>>|null</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></code>
+
+
+    </span>
+
+<h4 class="name" id="path">
+    <a class="href-link" href="#path">#</a>
+    
+        
+            <span class='tag'>nullable</span>
+        
+    
+    <span class="code-name">
+        path
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    null if this `TreeItem` doesn't have a parent. Otherwise, an array containing this' parent, this' parent's parent, etc. Top-most parents are first in the array, with this' parent being last. For example: [great-great-grandparent, great-grandparent, grandparent, parent]
+    <p><code>null</code> if this item doesn't have a parent. Otherwise, an array containing this item's parent,
+this item's parent's parent, etc. Top-most parents are first in the array, with this item's
+parent being last. For example, <code>[root, great-grandparent, grandparent, parent]</code>.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></span>
-|
-
-<span class="param-type">null</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -1859,18 +2186,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line173">line 173</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line312">line 312</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1878,25 +2206,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
+</div>
+            
+                <div class="member">
 
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
         
-            
-<h4 class="name" id="playButton"><span class="type-signature"></span>playButton<span class="type-signature"> :Element</span></h4>
+<code class="param-type">Element</code>
+
+
+    </span>
+
+<h4 class="name" id="playButton">
+    <a class="href-link" href="#playButton">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        playButton
+    </span>
+    
+</h4>
 
 
 
 
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-
-
-        </li>
-    </ul>
+<div class="description">
+    <p>The a element of the play button.</p>
+</div>
 
 
 
@@ -1932,18 +2272,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line76">line 76</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line190">line 190</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -1951,92 +2292,38 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="playSvg"><span class="type-signature"></span>playSvg<span class="type-signature"> :Element</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type"><a href="Popup.html">Popup</a></code>
+
+
+    </span>
+
+<h4 class="name" id="popup">
+    <a class="href-link" href="#popup">#</a>
+    
+        
+            <span class='tag'>nullable</span>
+        
+    
+    <span class="code-name">
+        popup
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The svg of the play button icon
+    <p>The <code>Popup</code> that is shown when this item (specifically <code>span</code>) is clicked.
+<code>null</code> if this item doesn't have any properties shown in a <code>Popup</code>.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-overrides">Overrides:</dt>
-    <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="TreeItem.html#playSvg">TreeItem#playSvg</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line81">line 81</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="popup"><span class="type-signature"></span>popup<span class="type-signature"></span></h4>
-
-
-
-
-
 
 
 
@@ -2072,11 +2359,74 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
+    
 
     
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line108">line 108</a>
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line210">line 210</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Array.&lt;string></code>
+
+
+    </span>
+
+<h4 class="name" id="properties">
+    <a class="href-link" href="#properties">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        properties
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Names of properties to get in <code>getProperties</code>.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="TreeItem.html#properties">TreeItem#properties</a>
     </li></ul></dd>
     
 
@@ -2085,25 +2435,63 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1251">line 1251</a>
+            </span>
+        </p>
+    
 </dl>
 
 
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="removable"><span class="type-signature"></span>removable<span class="type-signature"></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">boolean</code>
+
+
+    </span>
+
+<h4 class="name" id="removable">
+    <a class="href-link" href="#removable">#</a>
+    
+    <span class="code-name">
+        removable
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    Boolean indicating if this can be removed from the tree
+    <p>A <code>boolean</code> indicating if this item can be removed from the tree.</p>
 </div>
-
-
 
 
 
@@ -2139,18 +2527,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line53">line 53</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line142">line 142</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -2158,32 +2547,38 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="removeButton"><span class="type-signature"></span>removeButton<span class="type-signature"> :Element|null</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Element</code>
+
+
+    </span>
+
+<h4 class="name" id="removeButton">
+    <a class="href-link" href="#removeButton">#</a>
+    
+        
+            <span class='tag'>nullable</span>
+        
+    
+    <span class="code-name">
+        removeButton
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    If this `TreeItem` is removable, the a element of the remove button. Otherwise, null
+    <p>The a element of the remove button.
+<code>null</code> if this item isn't removable.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-|
-
-<span class="param-type">null</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -2219,12 +2614,6 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line96">line 96</a>
-    </li></ul></dd>
     
 
     
@@ -2232,85 +2621,12 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="removeSvg"><span class="type-signature"></span>removeSvg<span class="type-signature"> :Element|null</span></h4>
-
-
-
-
-<div class="description">
-    If this `TreeItem` is removable, the svg of the remove button icon. Otherwise, null
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-|
-
-<span class="param-type">null</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-overrides">Overrides:</dt>
-    <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="TreeItem.html#removeSvg">TreeItem#removeSvg</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line101">line 101</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line203">line 203</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -2318,19 +2634,33 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="renamable"><span class="type-signature"></span>renamable<span class="type-signature"></span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">boolean</code>
+
+
+    </span>
+
+<h4 class="name" id="renamable">
+    <a class="href-link" href="#renamable">#</a>
+    
+    <span class="code-name">
+        renamable
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    Boolean indicating if this can be renamed
+    <p>A <code>boolean</code> indicating if this item can be renamed.</p>
 </div>
-
-
 
 
 
@@ -2366,18 +2696,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line55">line 55</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line148">line 148</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -2385,29 +2716,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="segment"><span class="type-signature"></span>segment<span class="type-signature"> :Peaks.Segment</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Peaks.Segment</code>
+
+
+    </span>
+
+<h4 class="name" id="segment">
+    <a class="href-link" href="#segment">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        segment
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    A Peaks.js segment
+    <p>The Peaks.js segment being represented in the tree by this <code>Segment</code>.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Peaks.Segment</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -2438,18 +2777,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line47">line 47</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1257">line 1257</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -2457,25 +2797,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
+</div>
+            
+                <div class="member">
 
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
         
-            
-<h4 class="name" id="span"><span class="type-signature"></span>span<span class="type-signature"> :Element</span></h4>
+<code class="param-type">Element</code>
+
+
+    </span>
+
+<h4 class="name" id="span">
+    <a class="href-link" href="#span">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        span
+    </span>
+    
+</h4>
 
 
 
 
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Element</span>
-
-
-        </li>
-    </ul>
+<div class="description">
+    <p>The span element containing the text shown in <code>li</code>.</p>
+</div>
 
 
 
@@ -2511,18 +2863,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line71">line 71</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line184">line 184</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -2530,29 +2883,33 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-        
+</div>
             
-<h4 class="name" id="startTime"><span class="type-signature"></span>startTime<span class="type-signature"> :number</span></h4>
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">number</code>
+
+
+    </span>
+
+<h4 class="name" id="startTime">
+    <a class="href-link" href="#startTime">#</a>
+    
+    <span class="code-name">
+        startTime
+    </span>
+    
+</h4>
 
 
 
 
 <div class="description">
-    The segment's start time in seconds
+    <p>This segment's start time in seconds.</p>
 </div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">number</span>
-
-
-        </li>
-    </ul>
 
 
 
@@ -2583,18 +2940,237 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line94">line 94</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1330">line 1330</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">string</code>
+
+
+    </span>
+
+<h4 class="name" id="treeText">
+    <a class="href-link" href="#treeText">#</a>
+    
+    <span class="code-name">
+        treeText
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>The text shown in <code>span</code> (and therefore in the tree).</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1364">line 1364</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+            </div>
+        </div>
+    
+
+    
+        <div class='vertical-section'>
+            <h1>Methods</h1>
+            <div class="members">
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="copy">
+        <a class="href-link" href="#copy">#</a>
+        
+        <span class="code-name">
+            
+                copy<span class="signature">(copyParent<span class="signature-attributes">non-null</span>)</span><span class="type-signature"> &rarr; (nullable) {<a href="Segment.html">Segment</a>}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Copies this segment to another <code>Group</code>.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>copyParent</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type"><a href="Group.html">Group</a></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p><code>Group</code> to add the copied segment to.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1566">line 1566</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -2603,18 +3179,359 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
             
-<h4 class="name" id="text"><span class="type-signature"></span>text<span class="type-signature"></span></h4>
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>The copied segment if <code>copyParent</code> didn't already have a copy of this
+segment. Otherwise, <code>null</code>.</p></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type"><a href="Segment.html">Segment</a></code>
 
 
-
-
-<div class="description">
-    The text displayed in the tree
+    </div>
+    
 </div>
 
+                
+        </div>
+    </div>
 
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="expandCopyTo">
+        <a class="href-link" href="#expandCopyTo">#</a>
+        
+        <span class="code-name">
+            
+                expandCopyTo<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Converts <code>copyTo</code> to <code>TreeItem</code>s and expands the groups.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="global.html#expandGroups">expandGroups</a></li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1595">line 1595</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="expandMoveTo">
+        <a class="href-link" href="#expandMoveTo">#</a>
+        
+        <span class="code-name">
+            
+                expandMoveTo<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Converts <code>moveTo</code> to <code>TreeItem</code>s and expands the groups.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="global.html#expandGroups">expandGroups</a></li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1585">line 1585</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="getProperties">
+        <a class="href-link" href="#getProperties">#</a>
+        
+        <span class="code-name">
+            
+                getProperties<span class="signature">(exclude<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"> &rarr; (non-null) {Object.&lt;string, any>}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets the properties of this item specified by <code>properties</code>.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>exclude</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;string></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+          &lt;nullable><br>
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          null
+      
+      </td>
+  
+
+  <td class="description last"><p>Names of properties to exclude from the returned <code>Object</code>.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
 
 
 
@@ -2631,7 +3548,7 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
     <dt class="tag-overrides">Overrides:</dt>
     <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="TreeItem.html#text">TreeItem#text</a>
+        <a href="TreeItem.html#getProperties">TreeItem#getProperties</a>
     </li></ul></dd>
     
 
@@ -2650,256 +3567,26 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line159">line 159</a>
-    </li></ul></dd>
     
 
     
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="copy"><span class="type-signature"></span>copy<span class="signature">(copyParent)</span><span class="type-signature"> &rarr; {<a href="Segment.html">Segment</a>|null}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Copies this `Segment` to a `Group`
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>copyParent</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Group.html">Group</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">`Group` to add the copy to</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line168">line 168</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Null if `copyParent` already has a copy of this `Segment`, otherwise the copied `Segment`
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Segment.html">Segment</a></span>
-|
-
-<span class="param-type">null</span>
-
-
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>properties</li>
+        </ul>
     </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="expandCopyTo"><span class="type-signature"></span>expandCopyTo<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
     
 
     
 
     
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line188">line 188</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line330">line 330</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -2920,108 +3607,58 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-
-        
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
             
+                    
 
+<div class="columns">
     
-
+    <div class='param-desc column is-7'><p>An <code>Object</code> containing this item's properties.</p></div>
     
-    <h4 class="name" id="expandMoveTo"><span class="type-signature"></span>expandMoveTo<span class="signature">()</span><span class="type-signature"></span></h4>
     
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line182">line 182</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
         
-            
+<code class="param-type">Object.&lt;string, any></code>
 
+
+    </div>
     
-
-    
-    <h4 class="name" id="open"><span class="type-signature"></span>open<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Shows this `TreeItem`'s nested content and shows nested content of each parent in the path of the `TreeItem`
 </div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="open">
+        <a class="href-link" href="#open">#</a>
+        
+        <span class="code-name">
+            
+                open<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Opens (unhides) this item's nested content and the nested content of each item in <code>path</code>.
+This doesn't toggle any of the items; it only opens the tree along <code>path</code>.</p>
+    </div>
+    
 
 
 
@@ -3065,18 +3702,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line300">line 300</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line486">line 486</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -3099,22 +3737,30 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
-            
 
-    
-
-    
-    <h4 class="name" id="play"><span class="type-signature"></span>play<span class="signature">(loop<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Plays the segment
 </div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="play">
+        <a class="href-link" href="#play">#</a>
+        
+        <span class="code-name">
+            
+                play<span class="signature">(loop<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Plays this segment.</p>
+    </div>
+    
 
 
 
@@ -3126,72 +3772,75 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
     <h5>Parameters:</h5>
     
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
+<div class="table-container">
+    <table class="params table">
+        <thead>
         <tr>
             
-                <td class="name"><code>loop</code></td>
+            <th>Name</th>
             
 
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
+            <th>Type</th>
 
             
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
+            <th>Attributes</th>
             
 
             
-                <td class="default">
-                
-                    false
-                
-                </td>
+            <th>Default</th>
             
 
-            <td class="description last">If true, loops the segment</td>
+            <th class="last">Description</th>
         </tr>
+        </thead>
 
-    
-    </tbody>
-</table>
+        <tbody>
+        
 
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>loop</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          false
+      
+      </td>
+  
+
+  <td class="description last"><p>If <code>true</code>, loops this segment (reaching the end of the
+segment will restart playing at the beginning).</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
 
 
 
@@ -3222,18 +3871,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line245">line 245</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1533">line 1533</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -3256,22 +3906,30 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
-            
 
-    
-
-    
-    <h4 class="name" id="remove"><span class="type-signature"></span>remove<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Removes this `Segment` from the tree and from Peaks
 </div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="remove">
+        <a class="href-link" href="#remove">#</a>
+        
+        <span class="code-name">
+            
+                remove<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Removes this segment from the tree and Peaks waveform.</p>
+    </div>
+    
 
 
 
@@ -3315,18 +3973,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line206">line 206</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1434">line 1434</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -3349,22 +4008,30 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
-            
 
-    
-
-    
-    <h4 class="name" id="rename"><span class="type-signature"></span>rename<span class="signature">(newId)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Renames the `TreeItem`, replacing its id and text in the tree
 </div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="rename">
+        <a class="href-link" href="#rename">#</a>
+        
+        <span class="code-name">
+            
+                rename<span class="signature">(newId)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Renames this segment, replacing its id, text, and labelText.</p>
+    </div>
+    
 
 
 
@@ -3376,52 +4043,54 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
     <h5>Parameters:</h5>
     
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
+<div class="table-container">
+    <table class="params table">
+        <thead>
         <tr>
             
-                <td class="name"><code>newId</code></td>
+            <th>Name</th>
             
 
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
+            <th>Type</th>
 
             
 
             
 
-            <td class="description last">The new id</td>
+            <th class="last">Description</th>
         </tr>
+        </thead>
 
-    
-    </tbody>
-</table>
+        <tbody>
+        
 
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>newId</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>the new id to give this segment.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
 
 
 
@@ -3457,18 +4126,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line239">line 239</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1452">line 1452</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -3484,73 +4154,37 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-<h5>Throws:</h5>
-<ul>
-        <li>
-
-    <div class="param-desc">
-    
-        Throws an error if this `TreeItem` cannot be renamed
-    
-    </div>
-
-</li>
-    
-        <li>
-
-    <div class="param-desc">
-    
-        Throws an error if a `TreeItem` with `newId` already exists
-    
-    </div>
-
-</li>
-    </ul>
 
 
-<h5>Returns:</h5>
 
-        
-<div class="param-desc">
-    Boolean indicating if renaming was successful
+
+
+
+
+
 </div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">boolean</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
             
+                <div class="member">
 
+
+    
+    <h4 class="name" id="render">
+        <a class="href-link" href="#render">#</a>
+        
+        <span class="code-name">
+            
+                render<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
     
 
     
-    <h4 class="name" id="render"><span class="type-signature"></span>render<span class="signature">()</span><span class="type-signature"></span></h4>
     
-
+    <div class="description">
+        <p>Generates the HTML for this item.</p>
+    </div>
     
-
-
-
-<div class="description">
-    Generates the HTML for the `TreeItem`
-</div>
 
 
 
@@ -3594,18 +4228,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line188">line 188</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line345">line 345</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -3628,22 +4263,30 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
-            
 
-    
-
-    
-    <h4 class="name" id="sort"><span class="type-signature"></span>sort<span class="signature">(by)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Sorts this `TreeItem`'s children in the tree
 </div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="sort">
+        <a class="href-link" href="#sort">#</a>
+        
+        <span class="code-name">
+            
+                sort<span class="signature">(by)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Sorts this item's children in the tree.</p>
+    </div>
+    
 
 
 
@@ -3655,52 +4298,54 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
     <h5>Parameters:</h5>
     
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
+<div class="table-container">
+    <table class="params table">
+        <thead>
         <tr>
             
-                <td class="name"><code>by</code></td>
+            <th>Name</th>
             
 
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
+            <th>Type</th>
 
             
 
             
 
-            <td class="description last">The name of the property to sort by</td>
+            <th class="last">Description</th>
         </tr>
+        </thead>
 
-    
-    </tbody>
-</table>
+        <tbody>
+        
 
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>by</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>The name of the property to sort by.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
 
 
 
@@ -3736,18 +4381,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line259">line 259</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line440">line 440</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -3770,22 +4416,30 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
-            
 
-    
-
-    
-    <h4 class="name" id="style"><span class="type-signature"></span>style<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Initialize the CSS styling of the `Segment`
 </div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="style">
+        <a class="href-link" href="#style">#</a>
+        
+        <span class="code-name">
+            
+                style<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Sets the CSS styling of the segment's elements.</p>
+    </div>
+    
 
 
 
@@ -3824,18 +4478,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line195">line 195</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1428">line 1428</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -3858,22 +4513,32 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
-            
 
-    
-
-    
-    <h4 class="name" id="toggle"><span class="type-signature"></span>toggle<span class="signature">(force<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Toggles the item in the tree and hides/unhides this `Segment` from the Peaks waveform
 </div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="toggle">
+        <a class="href-link" href="#toggle">#</a>
+        
+        <span class="code-name">
+            
+                toggle<span class="signature">(force<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {boolean}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Toggles this segment on / off.
+Specifically, toggles this segment's elements on / off and shows / hides its Peaks segment
+on the Peaks waveform.</p>
+    </div>
+    
 
 
 
@@ -3885,72 +4550,75 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
     <h5>Parameters:</h5>
     
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
+<div class="table-container">
+    <table class="params table">
+        <thead>
         <tr>
             
-                <td class="name"><code>force</code></td>
+            <th>Name</th>
             
 
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
+            <th>Type</th>
 
             
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
+            <th>Attributes</th>
             
 
             
-                <td class="default">
-                
-                    null
-                
-                </td>
+            <th>Default</th>
             
 
-            <td class="description last">If given, forces the item to toggle on/off. If true, force checks the checkbox, turns on the buttons, and unhides the segment in Peaks. If false, force unchecks the checkbox, turns off the buttons, and hides the segment in Peaks. If force equals this.checked, no toggling is done.</td>
+            <th class="last">Description</th>
         </tr>
+        </thead>
 
-    
-    </tbody>
-</table>
+        <tbody>
+        
 
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>force</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          null
+      
+      </td>
+  
+
+  <td class="description last"><p>If unspecified, this segment is always toggled. Otherwise, this
+segment is only toggled if its current state isn't equal to <code>force</code>.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
 
 
 
@@ -3986,18 +4654,26 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line222">line 222</a>
-    </li></ul></dd>
     
 
     
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>toggleTree</li>
+        </ul>
+    </dd>
+    
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1468">line 1468</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -4018,24 +4694,60 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-
-
-        
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
             
+                    
 
+<div class="columns">
     
-
+    <div class='param-desc column is-7'><p>A <code>boolean</code> indiciating if any toggling was done. In other words, when
+<code>force == null</code>, returns <code>true</code>. Otherwise, returns <code>force !== checked</code>.</p></div>
     
-    <h4 class="name" id="toggleTree"><span class="type-signature"></span>toggleTree<span class="signature">(force<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
     
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">boolean</code>
 
+
+    </div>
     
-
-
-
-<div class="description">
-    Toggles the checkbox in the tree, toggles the buttons, and hides/unhides the item's nested content.
 </div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="toggleDragHandles">
+        <a class="href-link" href="#toggleDragHandles">#</a>
+        
+        <span class="code-name">
+            
+                toggleDragHandles<span class="signature">(force<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; (nullable) {boolean}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Toggles this segment's drag handles.
+This only has an effect if this segment is editable as only editable segments have drag
+handles.</p>
+    </div>
+    
 
 
 
@@ -4047,72 +4759,279 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
     <h5>Parameters:</h5>
     
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
+<div class="table-container">
+    <table class="params table">
+        <thead>
         <tr>
             
-                <td class="name"><code>force</code></td>
+            <th>Name</th>
             
 
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
+            <th>Type</th>
 
             
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
+            <th>Attributes</th>
             
 
             
-                <td class="default">
-                
-                    null
-                
-                </td>
+            <th>Default</th>
             
 
-            <td class="description last">If given, forces the item to toggle on/off. If true, force checks the checkbox, turns on the buttons, and unhides the nested content. If false, force unchecks the checkbox, turns off the buttons, and hides the nested content. If force equals this.checked, no toggling is done.</td>
+            <th class="last">Description</th>
         </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>force</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          null
+      
+      </td>
+  
+
+  <td class="description last"><p>If unspecified, the drag handles are always toggled. Otherwise,
+the drag handles are only toggled if their current state isn't equal to <code>force</code>.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
 
     
-    </tbody>
-</table>
 
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1501">line 1501</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>If this segment is editable, returns a <code>boolean</code> indiciating if any
+toggling was done. In other words, when <code>force == null</code>, returns <code>true</code> and returns
+<code>force !== checked</code> when <code>force != null</code>. If this segment isn't editable, returns
+<code>null</code>.</p></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">boolean</code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="toggleTree">
+        <a class="href-link" href="#toggleTree">#</a>
+        
+        <span class="code-name">
+            
+                toggleTree<span class="signature">(force<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {boolean}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Toggles this item's elements on / off.
+Toggling on / off does the following:</p>
+<ul>
+<li>Checks / unchecks <code>checkbox</code>.</li>
+<li>Hides / unhides this item's nested content.</li>
+<li>Makes <code>playButton</code>, <code>loopButton</code> and <code>removeButton</code> clickable / unclickable.</li>
+<li>Colors <code>playButton</code>, <code>loopButton</code> and <code>removeButton</code> black / gray.</li>
+</ul>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>force</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          null
+      
+      </td>
+  
+
+  <td class="description last"><p>If unspecified, this item is always toggled. Otherwise, this item
+is only toggled if its current state isn't equal to <code>force</code>.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
 
 
 
@@ -4148,18 +5067,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="TreeItem.js.html">TreeItem.js</a>, <a href="TreeItem.js.html#line279">line 279</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line458">line 458</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -4177,45 +5097,61 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-<h5>Returns:</h5>
 
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>A <code>boolean</code> indiciating if any toggling was done. In other words, when
+<code>force == null</code>, returns <code>true</code>. Otherwise, returns <code>force !== checked</code>.</p></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
         
-<div class="param-desc">
-    Always returns true if `force` is null. Otherwise, returns false if `force` equals this.checked, true otherwise. In other words, returns true if any toggling was done, false otherwise.
+<code class="param-type">boolean</code>
+
+
+    </div>
+    
 </div>
 
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">boolean</span>
-
-
-    </dd>
-</dl>
-
-    
+                
+        </div>
+    </div>
 
 
 
 
-
-        
+</div>
             
+                <div class="member">
 
+
+    
+    <h4 class="name" id="update">
+        <a class="href-link" href="#update">#</a>
+        
+        <span class="code-name">
+            
+                update<span class="signature">(options<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
     
 
     
-    <h4 class="name" id="toSimple"><span class="type-signature"></span>toSimple<span class="signature">(exclude<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
     
-
+    <div class="description">
+        <p>Updates properties of the Peaks segment.</p>
+    </div>
     
-
-
 
 
 
@@ -4227,72 +5163,235 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
     <h5>Parameters:</h5>
     
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
+<div class="table-container">
+    <table class="params table">
+        <thead>
         <tr>
             
-                <td class="name"><code>exclude</code></td>
+            <th>Name</th>
             
 
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;string></span>
-
+            <th>Type</th>
 
             
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
+            <th>Attributes</th>
             
 
             
-                <td class="default">
-                
-                    []
-                
-                </td>
-            
 
-            <td class="description last">A list of properties to exclude from the returned object</td>
+            <th class="last">Description</th>
         </tr>
+        </thead>
 
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>options</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Object.&lt;string, any></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>Options specifying the new values of the
+properties being updated.</p></td>
+</tr>
+
+  
+  
     
-    </tbody>
-</table>
+<tr class="deep-level-1">
+  
+      <td class="name"><code>startTime</code></td>
+  
 
+  <td class="type">
+  
+      
+<code class="param-type">number</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>The segment's start time in seconds.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>endTime</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">number</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>The segment's end time in seconds.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>editable</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>Indicates if the segment can be edited (moved around).</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>color</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type"><a href="global.html#Color">Color</a></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+          &lt;nullable><br>
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>The segment's color in the Peaks waveform.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>labelText</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>The segment's text label.</p></td>
+</tr>
+
+  
+
+
+        
+        </tbody>
+    </table>
+</div>
 
 
 
@@ -4323,12 +5422,6 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line150">line 150</a>
-    </li></ul></dd>
     
 
     
@@ -4336,345 +5429,12 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    An object containing this `Segment`'s properties
-</div>
-
-
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="update"><span class="type-signature"></span>update<span class="signature">(options)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Updates properties of the Peaks segment.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>options</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">An object containing options
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>startTime</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">The segment's start time in seconds</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>endTime</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">The segment's end time in seconds</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>editable</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Whether the segment is user-editable</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>color</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">The segment's color</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>labelText</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">A text label which is displayed when the user hovers the mouse pointer over the segment</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line124">line 124</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1376">line 1376</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -4697,22 +5457,30 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
-            
 
-    
-
-    
-    <h4 class="name" id="updateDuration"><span class="type-signature"></span>updateDuration<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Updates the duration using the segment's start and end times
 </div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="updateDuration">
+        <a class="href-link" href="#updateDuration">#</a>
+        
+        <span class="code-name">
+            
+                updateDuration<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Updates <code>duration</code> using this segment's start and end times.</p>
+    </div>
+    
 
 
 
@@ -4756,18 +5524,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line273">line 273</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1414">line 1414</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -4790,22 +5559,129 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
-            
 
-    
-
-    
-    <h4 class="name" id="updateSpanTitle"><span class="type-signature"></span>updateSpanTitle<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Updates the title of the span
 </div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="updateEditable">
+        <a class="href-link" href="#updateEditable">#</a>
+        
+        <span class="code-name">
+            
+                updateEditable<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Updates this segment's editability.
+Called when this segment is toggled. It is used to update the Peaks segment's
+editability in order to show / hide the drag handles.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1522">line 1522</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="updateSpanTitle">
+        <a class="href-link" href="#updateSpanTitle">#</a>
+        
+        <span class="code-name">
+            
+                updateSpanTitle<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Updates the title (tooltip) of <code>span</code>.</p>
+    </div>
+    
 
 
 
@@ -4849,18 +5725,19 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
     
 
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Segment.js.html">Segment.js</a>, <a href="Segment.js.html#line282">line 282</a>
-    </li></ul></dd>
     
 
     
 
     
 
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1423">line 1423</a>
+            </span>
+        </p>
     
 </dl>
 
@@ -4883,7 +5760,11 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-        
+
+</div>
+            
+            </div>
+        </div>
     
 
     
@@ -4896,19 +5777,28 @@ Key is id, value is corresponding `Segment`:  {id: `Segment`}
 
 
 
-</div>
-
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Group.html">Group</a></li><li><a href="Groups.html">Groups</a></li><li><a href="Segment.html">Segment</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li></ul>
-</nav>
-
-<br class="clear">
-
-<footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.11</a> on Sun Sep 18 2022 14:10:34 GMT-0500 (Central Daylight Time)
-</footer>
-
-<script> prettyPrint(); </script>
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.0</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
 <script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+
 </body>
 </html>

@@ -3,4 +3,15 @@ torchvision
 torchaudio
 pyannote.audio
 numpy
+scipy
 librosa
+imufusion
+transformers
+huggingface_hub
+cuda-python
+nvidia-cudnn
+opencv-contrib-python
+cmake
+face_recognition
+imutils
+scikit-learn
