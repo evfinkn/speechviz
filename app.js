@@ -71,7 +71,7 @@ app.get("/clustered-files", (req, res) => {
   const exclude = new Set([".DS_Store"]);
   console.log(req.session);
   const files = {};
-  const commonDir = "data/faceClusters/" + req.session.dir;
+  const commonDir = "data/faceClusters/" + req.session.dir + "/";
   files.cluster = fs.readdirSync(commonDir).filter(fileName => !exclude.has(fileName));
   files.inFaceFolder = req.session.inFaceFolder;
   files.dir = req.session.dir;
