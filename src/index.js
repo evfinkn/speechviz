@@ -31,7 +31,9 @@ fetch("/user")  // fetch currently logged-in user
                     const fieldset = document.getElementById("user-selection");
                     fieldset.hidden = false;
                     users.forEach(function (user) {
-                        const div = htmlToElement(`<div><input type="radio" id="${user}" name="user-selection" value="${user}"></input><label for="${user}">${user}</label></div>`);
+                        const div = htmlToElement(`<div><input type="radio" id="${user}" name=`
+                                                  + `"user-selection" value="${user}"></input>`
+                                                  + `<label for="${user}">${user}</label></div>`);
                         if (user == "admin") {  // default user for admin is admin, so check admin radio button
                             div.firstElementChild.checked = true;
                         }
@@ -63,25 +65,35 @@ fetch("/filelist")
             fieldset.append(htmlToElement("<strong>Audio files</strong>"));  // header for audio files
 
             audiofiles.forEach(function (fileName) {  // add radio buttons for each audio file
-                const div = htmlToElement(`<div><input type="radio" id="${fileName}" name="file-selection" value="${fileName}"></input><label for="${fileName}">${fileName}</label></div>`);
+                const div = htmlToElement(`<div><input type="radio" id="${fileName}"`
+                                          + ` name="file-selection" value="${fileName}">` 
+                                          + `</input><label for="${fileName}">${fileName}`
+                                          + `</label></div>`);
                 div.firstElementChild.addEventListener("change", function () {
                     // when radio button clicked, open that audio file in viz
-                    window.location.replace(`/viz?${user ? "user=" + user + "&" : ""}file=${this.value}&type=audio`);
+                    window.location.replace(`/viz?${user ? "user=" + user + "&" : ""}`
+                                            + `file=${this.value}&type=audio`);
                 });
                 fieldset.append(div);
             });
 
-            fieldset.append(document.createElement("br"));  // add separation between audio and video file sections
+            // add separation between audio and video file sections
+            fieldset.append(document.createElement("br"));  
         }
 
         if (videofiles?.length !== 0) {
-            fieldset.append(htmlToElement("<strong>Video files</strong>"));  // header for video files
+            // header for video files
+            fieldset.append(htmlToElement("<strong>Video files</strong>"));
 
             videofiles.forEach(function (fileName) {  // add radio buttons for each video file
-                const div = htmlToElement(`<div><input type="radio" id="${fileName}" name="file-selection" value="${fileName}"></input><label for="${fileName}">${fileName}</label></div>`);
+                const div = htmlToElement(`<div><input type="radio" id="${fileName}"`
+                                          + ` name="file-selection" value="${fileName}">`
+                                          + `</input><label for="${fileName}">${fileName}`
+                                          + `</label></div>`);
                 div.firstElementChild.addEventListener("change", function () {
                     // when radio button clicked, open that video file in viz
-                    window.location.replace(`/viz?${user ? "user=" + user + "&" : ""}file=${this.value}&type=video`);
+                    window.location.replace(`/viz?${user ? "user=" + user + "&" : ""}`
+                                            + `file=${this.value}&type=video`);
                 });
                 fieldset.append(div);
             });
@@ -89,11 +101,16 @@ fetch("/filelist")
         if (clusterfolders?.length !== 0){
             fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));  // header for video files
             clusterfolders.forEach(function (folderName){
-                const div = htmlToElement(`<div><input type="radio" id="${folderName}cluster"" name="file-selection" value="${folderName}cluster"></input><label for="${folderName}cluster">${folderName}</label></div>`);
+                const div = htmlToElement(`<div><input type="radio" id="${folderName}cluster"`
+                                          + ` name="file-selection" value="${folderName}cluster">`
+                                          + `</input><label for="${folderName}cluster">`
+                                          + `${folderName}</label></div>`);
                 div.firstElementChild.addEventListener("change", function () {
                     // when radio button clicked, open that video file in viz
 
-                    window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}dir=${this.value.replace('cluster', '')}&inFaceFolder=false`);
+                    window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}`
+                                            + `dir=${this.value.replace('cluster', '')}`
+                                            + `&inFaceFolder=false`);
                 });
                 fieldset.append(div);
             });
