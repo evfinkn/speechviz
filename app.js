@@ -29,7 +29,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
 /**
- The checkAuthentification method will be executed on all incoming requests (excluding pages starting with /login)
+ The checkAuthentification method will be executed on all incoming requests 
+ (excluding pages starting with /login)
  It is based on the example from https://gist.github.com/smebberson/1581536
  Essentially, you will have to obtain an authorization per session.
  */
@@ -38,7 +39,8 @@ function checkAuthentification(req, res, next) {
   if (reqUrl.startsWith('/login')) { next(); }
   else {
     if (!req.session || !req.session.authenticated) {
-      res.redirect(`/login?referer=${reqUrl}`);  // will redirect to requested url after successful login
+      // will redirect to requested url after successful login
+      res.redirect(`/login?referer=${reqUrl}`);
     }
     else { next(); }  // authenticated
   }
@@ -118,7 +120,8 @@ app.get("/users", (req, res) => {
   }
 });
 
-app.get(/\/(audio|segments|video|waveforms|transcriptions)/, (req, res) => res.sendFile(req.url, {root: __dirname + "/data"}));
+app.get(/\/(audio|segments|video|waveforms|transcriptions)/, 
+    (req, res) => res.sendFile(req.url,  {root: __dirname + "/data"}));
 
 //#region saving, loading, and resetting
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
@@ -135,7 +138,10 @@ const insertLabel = db.prepare("INSERT INTO labels(label) VALUES(?)");
 const selectPathId = db.prepare("SELECT id FROM paths WHERE path=?");
 const insertPath = db.prepare("INSERT INTO paths(path) VALUES(?)");
 
-const insertSegment = db.prepare("INSERT INTO annotations(fileId,userId,startTime,endTime,editable,labelId,id,pathId,treeText,removable) VALUES(?,?,?,?,?,?,?,?,?,?)");
+const insertSegment = db.prepare("INSERT INTO "
+    + "annotations(fileId,userId,startTime,endTime,editable,labelId,id,pathId,treeText,removable) "
+    + "VALUES(?,?,?,?,?,?,?,?,?,?)");
+
 const insertNotes = db.prepare("INSERT INTO notes(fileId,userId,notes) VALUES(?,?,?)");
 
 const save = db.transaction((filename, user, segments, notes) => {
@@ -174,7 +180,10 @@ app.use("/save/", (req, res) => {
   res.end();
 });
 
-const selectSegments = db.prepare("SELECT startTime,endTime,editable,labelId,id,pathId,treeText,removable FROM annotations WHERE fileId=? AND userId=?");
+const selectSegments = db.prepare("SELECT "
+    + "startTime,endTime,editable,labelId,id,pathId,treeText,removable "
+    + "FROM annotations WHERE fileId=? AND userId=?");
+
 
 const selectLabel = db.prepare("SELECT label FROM labels WHERE id=?");
 const selectPath = db.prepare("SELECT path FROM paths WHERE id=?");
