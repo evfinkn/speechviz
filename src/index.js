@@ -115,12 +115,12 @@ fetch("/filelist")
             fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
             clusterfolders.forEach(function (folderName){
                 //folderName matches corresponding video fileName, so give it a different id
-                const div = createRadioDiv(folderName + "cluster", "file-selection")
+                const div = createRadioDiv(folderName + " Clusters", "file-selection")
                 div.firstElementChild.addEventListener("change", function () {
                     // when radio button clicked, show each cluster folder to choose which to view
                     // remove its different id, go to correct folder
                     window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}`
-                                            + `dir=${this.value.replace('cluster', '')}`
+                                            + `dir=${this.value.replace(' Clusters', '')}`
                                             + `&inFaceFolder=false`);
                 });
                 fieldset.append(div);
