@@ -53,8 +53,8 @@ const analysis = new GroupOfGroups("Analysis");
 document.getElementById("tree").append(analysis.li);
 
 const clusters = new Group("Clusters");
-clustersTree.playButton.style.display = "none"
-clustersTree.loopButton.style.display = "none";
+clusters.playButton.style.display = "none"
+clusters.loopButton.style.display = "none";
 document.getElementById("tree").append(clusters.li);
 
 const custom = new Group("Custom", {
