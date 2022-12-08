@@ -85,9 +85,9 @@ fetch(`/clustered-files/`)
         return res.json();
     })
     .then(fileList => {
-        const clusterfolders = fileList.cluster;
-        const dir = fileList.dir;
-        const images = fileList.images;
+        const clusterfolders = fileList.cluster; //folder of each found cluster
+        const dir = fileList.dir; //name of the overal folder, same as the video shown in speechviz
+        const images = fileList.images; //default image for each of the faces to show in speechviz
         
         clusterfolders.forEach(function (folderName){
             var imagePath = images[folderName];
