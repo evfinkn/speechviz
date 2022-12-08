@@ -1344,6 +1344,10 @@ var Segment = class Segment extends TreeItem {
     
 }
 
+/**
+ * A `TreeItem` for a face from clustering face detection on the video
+ * @extends TreeItem
+ */
 var Face  = class Face extends TreeItem {
 
     /**
@@ -1355,23 +1359,37 @@ var Face  = class Face extends TreeItem {
      static byId = {};
 
      /**
-     * HTML strings for the play, pause, loop, and remove icons for `Segment`s in the tree
+     * HTML strings for the remove icons for `Face`s in the tree
      * @type {Object.<string, string>}
      * @static
      */
      static icons = segmentIcons;
 
      /**
-     * A list of segment properties. Used by TreeItem.getProperties() in order to copy the properties to an object
-     * @type {string[]}
+     * Names of properties to get in `getProperties`.
+     * @type {!Array.<string>}
      * @static
      */
     static properties = ["treeText"];
 
+    /**
+     * Path to image displayed for a face
+     * @type {string}
+     */
     imagePath;
 
+    /**
+     * Button that links to a page with every single face in this cluster
+     */
     linkButton;
 
+    /**
+     * Expands an array consisting of `Face`s and `Groups` by replacing `Groups` with their `Group` children
+     * @param {(Face|Groups)[]} groups - Array of `Face`s and `Groups`s
+     * @param {Face[]=} exclude - Array of `Face`s to exclude from expanded array
+     * @returns {Group[]} The expanded array
+     * @static
+     */
     static #expand(groups, exclude = []) {
         const expanded = [];
         for (const group of groups) {
@@ -1390,26 +1408,32 @@ var Face  = class Face extends TreeItem {
      * @param {string=} options.text - The text displayed in the tree for this item
      * @param {boolean} [options.removable=true] - Boolean indicating if this can be removed from the tree
      * @param {boolean} [options.renamable=false] - Boolean indicating if this can be renamed
-     * @param {string[]=} options.assocWith - A group that this face should be associated with
+     * @param {string[]=} options.assocWith - A Speaker that this face should be associated with
+     * @param {string=} options.dir - The folder representing the clusters of faces for this video
+     * @param {string=} options.imagePath - The name of the image shown for this face
      * @throws Throws an error if a `TreeItem` with `id` already exists
      */
-    constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null, dir = null, imagePath = null } = {}) {
-        // don't render yet because some methods rely on this.segment but not defined yet
-        // (can't use 'this' until after super() call, so can't define this.segment until after)
+    constructor(id, { parent = null, text = null, removable = true, renamable = false, assocWith = null, 
+                      dir = null, imagePath = null } = {}) {
+        // (can't use 'this' until after super() call, so can't get rid of playButton, etc. until after super())
         super(id, { text, removable, renamable, render: false, assocWith: assocWith });
 
         this.render();
         this.parent = parent;
         this.playButton.style.display = "none";
         this.loopButton.style.display = "none";
-        const linkButton = htmlToElement(`<a href="/clustered-faces?faceFolder=${this.id}&inFaceFolder=true" style="text-decoration:none;" target="_blank" rel="noopener noreferrer">${this.constructor.icons.image}</a>`);
         //rel="noopener noreferrer" is there to avoid tab nabbing
+        const linkButton = htmlToElement(`<a href="/clustered-faces?faceFolder=`
+                                         + `${this.id}&inFaceFolder=true" style="text-decoration:none;"`
+                                         + ` target="_blank" rel="noopener noreferrer">`
+                                         + `${this.constructor.icons.image}</a>`);
 
         this.linkbutton = linkButton;
         this.removeButton.after(linkButton);
 
         //store previous li to readd it when image is clicked
-        const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}' width = 100 height = 100 alt='Example image of face'/></li>`);
+        const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}'`
+                                      + ` width = 100 height = 100 alt='Example image of face'/></li>`);
 
         imageLi.addEventListener("click", () => { 
             this.li.children[this.li.children.length-2].appendChild(imageLi);
@@ -1419,14 +1443,25 @@ var Face  = class Face extends TreeItem {
         this.popup = new Popup(this);
     }
 
+    /**
+     * The text shown in `span` (and therefore in the tree).
+     * @type {string}
+     */
     get treeText() { return this.text; }  // backwards compatibility (database expects 'treeText')
 
-    /** The `Group` this `Segment` belongs to */
+    /**
+     * The `Group` that contains the segment in its nested content.
+     * @type {!Group}
+     */
     get parent() { return super.parent; }
     set parent(newParent) {
         super.parent = newParent;  // call TreeItem's setter for parent
     }
 
+    /**
+     * The path to the image displayed for this face
+     * @type {string}
+     */
     get imagePath() { return this.imagePath; }
     set imagePath(path) { this.imagePath = path; }
 
@@ -1441,17 +1476,14 @@ var Face  = class Face extends TreeItem {
         super.remove();
     }
 
+    /**
+     * Converts `assocWith` to `TreeItem`s and expands the groups.
+     */
     expandAssocWith() {
         const assocWithAsTreeItems = TreeItem.idsToTreeItems(this.assocWith);
         const expanded = Face.#expand(assocWithAsTreeItems, [this.id]);
         return TreeItem.treeItemsToIds(expanded);
     }
-
-    //rename(newText) {
-        //super.text = newText;
-        //if (this.parent) { this.segment.update({ labelText: `${this.parent.id}\n${newText}` }); }
-        //else { this.segment.update({ "labelText": newText }); }
-    //}
 
     
 
