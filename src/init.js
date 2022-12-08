@@ -1,6 +1,6 @@
 import Split from 'split.js';  // library for resizing columns by dragging
 import globals from "./globals.js";
-import { GroupOfGroups, Group, Segment, TreeItem } from "./treeClasses.js";
+import { GroupOfGroups, Group, Segment, TreeItem, Face } from "./treeClasses.js";
 import { GraphIMU } from './graphicalClasses.js';
 import SettingsPopup from './SettingsPopup.js';
 import { getRandomColor, sortByProp, toggleButton, checkResponseStatus } from "./util.js";
@@ -52,6 +52,11 @@ const createTree = function (id, parent, children, snr) {
 const analysis = new GroupOfGroups("Analysis");
 document.getElementById("tree").append(analysis.li);
 
+const clusters = new Group("Clusters");
+clustersTree.playButton.style.display = "none"
+clustersTree.loopButton.style.display = "none";
+document.getElementById("tree").append(clusters.li);
+
 const custom = new Group("Custom", {
     parent: analysis,
     color: getRandomColor(),
@@ -81,6 +86,26 @@ fetch(`/segments/${basename}-segments.json`)
         globals.highestId = 0;
     });
 
+fetch(`/clustered-files/`)
+    .then(res => {
+        if (!res.ok) { throw new Error('Network response was not OK'); }  // Network error
+        else if (res.status != 200) { throw new Error(`${res.status} ${res.statusText}`); }  // not 200 is error
+        return res.json();
+    })
+    .then(fileList => {
+        const clusterfolders = fileList.cluster; //folder of each found cluster
+        const dir = fileList.dir; //name of the overal folder, same as the video shown in speechviz
+        const images = fileList.images; //default image for each of the faces to show in speechviz
+        
+        clusterfolders.forEach(function (folderName){
+            var imagePath = images[folderName];
+            new Face(folderName, { parent: clustersTree, assocWith: ["Speakers"], dir: dir, imagePath: imagePath });
+        });
+    
+    })
+    .catch(error => {
+        console.error(error);//console.log("No clustered faces for media.");
+    });
 
 fetch(`/transcriptions/${basename}-transcription.json`)
     .then(checkResponseStatus)

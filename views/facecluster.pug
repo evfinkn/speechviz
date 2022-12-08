@@ -1,0 +1,26 @@
+doctype html
+html(lang="en")
+    head
+        title Speechviz
+    body
+        .navbar
+            if inFaceFolder
+                a(href="/clustered-faces?inFaceFolder=false") Back to face selection
+            else
+                a(href="/") Back to file selection
+        fieldset#user-selection(hidden=true)
+            legend(style="font-size:20px;") Select a user:
+        if inFaceFolder
+            fieldset#face-display 
+                legend(style="font-size:20px;") Clustered Faces for #{faceFolder}:
+                //https://github.com/pugjs/pug/issues/2648
+                //? and over stops it from breaking when images hasn't been sent yet
+                each image in images ? images : []
+                    img(src=("" + dir + faceFolder + "/" + image))
+        else
+            legend(style="font-size:20px;") Select which cluster you'd like to view:
+            fieldset#file-selection 
+        
+
+
+        script(type="application/javascript", src="js/faceCluster.js")
