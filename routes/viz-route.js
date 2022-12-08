@@ -10,20 +10,22 @@ router.get('/', (req, res, next) => {
     req.session.inFaceFolder = false;
 
     if (req.query.type === "video") {
-        
         if (fs.readdirSync("data/video").includes(file)) {
             if (fs.readdirSync("data/faceClusters").includes(file)) {
-                res.render("viz", { "user": req.session.user, "file": file, "mimetype": mime.getType(file), isVideo: true, hasCluster: true });
+                res.render("viz", { "user": req.session.user, "file": file, 
+                           "mimetype": mime.getType(file), isVideo: true});
             }
             else{
-                res.render("viz", { "user": req.session.user, "file": file, "mimetype": mime.getType(file), isVideo: true, hasCluster: false });
+                res.render("viz", { "user": req.session.user, "file": file, 
+                                    "mimetype": mime.getType(file), isVideo: true});
             }
         }
         else { res.redirect("/"); }
     }
     else {
         if (fs.readdirSync("data/audio").includes(file)) {
-            res.render("viz", { "user": req.session.user, "file": file, "mimetype": mime.getType(file), isVideo: false, hasCluster: false });
+            res.render("viz", { "user": req.session.user, "file": file, 
+                                "mimetype": mime.getType(file), isVideo: false});
         }
         else { res.redirect("/"); }
     }
