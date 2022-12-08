@@ -7,6 +7,7 @@ const feather = require('feather-icons');
  * @prop {string} pause - SVG string for the pause button icon.
  * @prop {string} loop - SVG string for the loop button icon.
  * @prop {string} remove - SVG string for the remove button icon.
+ * @prop {string} image - SVG string for the image button icon.
  */
 
 // the segment and group button icons have shared properties so just
@@ -31,7 +32,7 @@ const faceImgIcon = feather.icons.image.toSvg(faceImgOptions);
 
 
 /**
- * The button icons for `Segment`s.
+ * The button icons for `Segment`s and `Face`s.
  * @type {TreeItemButtonIcons}
  */
 const segmentIcons = {

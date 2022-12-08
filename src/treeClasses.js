@@ -1803,7 +1803,7 @@ var Face  = class Face extends TreeItem {
                                          + `${this.id}&inFaceFolder="true"` 
                                          + ` style="text-decoration:none;"`
                                          + ` target="_blank" rel="noopener noreferrer">`
-                                         + `${this.constructor.icons.image}</a>`);
+                                         + `${segmentIcons.icons.image}</a>`);
 
         this.linkbutton = linkButton;
         this.removeButton.after(linkButton);
