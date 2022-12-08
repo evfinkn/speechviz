@@ -16,7 +16,7 @@ html(lang="en")
                 //https://github.com/pugjs/pug/issues/2648
                 //? and over stops it from breaking when images hasn't been sent yet
                 each image in images ? images : []
-                    img(src=("" + dir + "/" + faceFolder + "/" + image))
+                    img(src=("" + dir + faceFolder + "/" + image))
         else
             legend(style="font-size:20px;") Select which cluster you'd like to view:
             fieldset#file-selection 
