@@ -46,7 +46,7 @@ document.getElementById("tree").append(segmentsTree.li);
 const custom = new Group("Custom", { parent: segmentsTree, color: getRandomColor(), colorable: true });
 const labeled = new Groups("Labeled", { parent: segmentsTree });
 
-const clustersTree = new Groups("Clusters");
+const clustersTree = new Group("Clusters");
 clustersTree.playButton.style.display = "none"
 clustersTree.loopButton.style.display = "none";
 document.getElementById("tree").append(clustersTree.li);
