@@ -99,15 +99,15 @@ fetch("/filelist")
             });
         }
         if (clusterfolders?.length !== 0){
-            fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));  // header for video files
+            // header for cluster folders
+            fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
             clusterfolders.forEach(function (folderName){
                 const div = htmlToElement(`<div><input type="radio" id="${folderName}cluster"`
                                           + ` name="file-selection" value="${folderName}cluster">`
                                           + `</input><label for="${folderName}cluster">`
                                           + `${folderName}</label></div>`);
                 div.firstElementChild.addEventListener("change", function () {
-                    // when radio button clicked, open that video file in viz
-
+                    // when radio button clicked, show each cluster folder to choose which to view
                     window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}`
                                             + `dir=${this.value.replace('cluster', '')}`
                                             + `&inFaceFolder=false`);
