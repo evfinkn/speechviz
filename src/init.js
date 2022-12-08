@@ -99,7 +99,7 @@ fetch(`/clustered-files/`)
         
         clusterfolders.forEach(function (folderName){
             var imagePath = images[folderName];
-            new Face(folderName, { parent: clustersTree, assocWith: ["Speakers"], dir: dir, imagePath: imagePath });
+            new Face(folderName, { parent: clusters, assocWith: ["Speakers"], dir: dir, imagePath: imagePath });
         });
     
     })
