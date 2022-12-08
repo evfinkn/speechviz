@@ -1772,14 +1772,6 @@ var Face  = class Face extends TreeItem {
      */
     linkButton;
 
-    /**
-     * @see expandGroups
-     */
-    static #expand(groups, exclude = []) {
-        expandGroups(groups, exclude);
-    }
-
-
      /**
      * @param {string} id - The unique identifier to give the `TreeItem`.
      * @param {?Object.<string, any>=} options - Options to customize the `TreeItem`.
@@ -1870,11 +1862,9 @@ var Face  = class Face extends TreeItem {
      */
     expandAssocWith() {
         const assocWithAsTreeItems = TreeItem.idsToTreeItems(this.assocWith);
-        const expanded = Face.#expand(assocWithAsTreeItems, [this.id]);
+        const expanded = expandGroups(assocWithAsTreeItems, [this.id]);
         return TreeItem.treeItemsToIds(expanded);
     }
-
-    
 
 }
 
