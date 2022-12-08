@@ -71,7 +71,7 @@ app.get("/clustered-files", (req, res) => {
   const exclude = new Set([".DS_Store"]);
   console.log(req.session);
   const files = {};
-  const commonDir = "data/faceClusters/" + req.session.dir;
+  const commonDir = "data/faceClusters/" + req.session.dir + "/";
   files.cluster = fs.readdirSync(commonDir).filter(fileName => !exclude.has(fileName));
   files.inFaceFolder = req.session.inFaceFolder;
   files.dir = req.session.dir;
@@ -82,7 +82,7 @@ app.get("/clustered-files", (req, res) => {
   else{//serve an image from each cluster to viz for display
     const imageFiles = {};
     files.cluster.forEach(function (folder) {
-      images = fs.readdirSync(commonDir + "/" + folder).filter(fileName => !exclude.has(fileName));
+      images = fs.readdirSync(commonDir + folder).filter(fileName => !exclude.has(fileName));
       noImageYet = true;
       counter = 0;
       while(noImageYet){ //grab first image in cluster and send to viz
