@@ -1431,11 +1431,13 @@ var Face  = class Face extends TreeItem {
         this.linkbutton = linkButton;
         this.removeButton.after(linkButton);
 
-        //store previous li to readd it when image is clicked
+        //change width and height here if you want a different sized image to show
         const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}'`
                                       + ` width = 100 height = 100 alt='Example image of face'/></li>`);
-
-        imageLi.addEventListener("click", () => { 
+        //store previous html of image to reset its position when the image is clicked
+        imageLi.addEventListener("click", () => {
+            //nested should be the 2nd to last child, where popup is the last,
+            //just like happens in the next 3 lines 
             this.li.children[this.li.children.length-2].appendChild(imageLi);
         });
         var nest = this.li.lastElementChild;
@@ -1450,7 +1452,7 @@ var Face  = class Face extends TreeItem {
     get treeText() { return this.text; }  // backwards compatibility (database expects 'treeText')
 
     /**
-     * The `Group` that contains the segment in its nested content.
+     * The `Group` that contains the Face in its nested content.
      * @type {!Group}
      */
     get parent() { return super.parent; }
@@ -1471,9 +1473,10 @@ var Face  = class Face extends TreeItem {
         this.checkbox.style.transform = "scale(0.85)";
     }
 
-    /** Removes this `Segment` from the tree and from Peaks */
+    /** Removes this `Face` from the tree and from Peaks */
     remove() {
         super.remove();
+        //add something to move folder out of cluster to a "recycle bin"
     }
 
     /**
