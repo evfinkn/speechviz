@@ -255,7 +255,7 @@ def process_audio(*args, scan_dir=True, reprocess=False, quiet=False, verbose=Fa
     elif file_ext == "" and scan_dir:
         ls = subprocess.run(["ls", file_path], stdout=subprocess.PIPE).stdout.decode().split("\n")[:-1]  # get files in dir
         if "audio" in ls:  # if "audio" dir is in file_path, run process_audio on "audio" dir
-            if verbose:
+            if verbose:     
                 print(f"Detected audio directory. Running process_audio on {file_path}/audio")
             process_audio(f"{file_path}/audio", scan_dir=scan_dir, reprocess=reprocess, quiet=quiet, verbose=verbose, split_channels=split_channels)
         if "video" in ls:  # if "video" dir is in file_path, run process_audio on "video" dir
@@ -403,7 +403,7 @@ def encode_faces(images, encode_output, detection_model, images_output):
 
     # dump the facial encodings data to disk
     print("[INFO] serializing encodings...")
-    f = open(encode_input, "wb")
+    f = open(encode_output, "wb")
     f.write(pickle.dumps(data))
     f.close()
 
@@ -412,7 +412,7 @@ def encode_faces(images, encode_output, detection_model, images_output):
     #based off of https://pyimagesearch.com/2018/07/09/face-clustering-with-python/
 
 
-def cluster_faces(encode_input, jobs, epsilon):
+def cluster_faces(encode_input, jobs, epsilon, file_path, reprocess=False):
     # load the serialized face encodings + bounding box locations from
     # disk, then extract the set of encodings to so we can cluster on
     # them
@@ -424,7 +424,7 @@ def cluster_faces(encode_input, jobs, epsilon):
     # cluster the embeddings
     print("[INFO] clustering...")
     #dbscan
-    clt = DBSCAN(float(epsilon), metric="euclidean", n_jobs=args["jobs"])
+    clt = DBSCAN(float(epsilon), metric="euclidean", n_jobs=jobs)
 
     #uncomment this and recomment clt above, OPTICS is like dbscan but sweeps through different
     #epsilon values, and picks which one it thinks is right. I haven't had success with it but could 
@@ -436,6 +436,33 @@ def cluster_faces(encode_input, jobs, epsilon):
     labelIDs = np.unique(clt.labels_)
     numUniqueFaces = len(np.where(labelIDs > -1)[0])
     print("[INFO] # unique faces: {}".format(numUniqueFaces))
+
+    #setup the output
+    file_dir = os.path.dirname(file_path)  # get the file directory
+    file_dir = "." if file_dir == "" else file_dir
+    file_name, _ = os.path.splitext(os.path.basename(file_path)) # get the file name and extension
+                
+    separate_dirs = False
+    if not "regex" in globals():
+        regex = re.compile(r".*(?=/(audio|video)$)")    
+    match = regex.match(file_dir)
+    if match:
+        data_dir = match[0]  # data_dir is file_path for the dir containing audio, waveforms, and segments dirs
+        separate_dirs = True
+        subprocess.run(["mkdir", f"{data_dir}/faceClusters"], capture_output=True)
+
+    # filepaths for the waveform, and segments files
+    face_dir = file_dir if not separate_dirs else f"{data_dir}/faceClusters"
+    face_path = f"{face_dir}/{file_name}"
+
+    # check if audio has already been processed and only process if reprocess is passed in as True
+    if os.path.exists(face_path) and not reprocess:
+        print(f"{file_path} has already been encoded and clustered. To reprocess it, use the '-r' argument")
+        return
+    elif os.path.exists(face_path) and reprocess:
+        shutil.rmtree(face_path, ignore_errors=True) #delete the folder and then remake it
+
+
 
     # loop over the unique face integers
     for labelID in labelIDs:
@@ -462,7 +489,7 @@ def cluster_faces(encode_input, jobs, epsilon):
 
             faces.append(resized)
         counter = 0
-        def baseFilePath(faceNum): return args["outputs"] + "/face" + str(faceNum)
+        def baseFilePath(faceNum): face_path + "/face" + str(faceNum)
         for face in faces:
             counter += 1
             if not os.path.isdir(baseFilePath(labelID)):
@@ -470,9 +497,6 @@ def cluster_faces(encode_input, jobs, epsilon):
             cv2.imwrite(baseFilePath(labelID) + "/Num" + str(counter) + ".jpg", face)
 
     #built off of https://pyimagesearch.com/2018/07/09/face-clustering-with-python/
-
-    shutil.rmtree(dest, ignore_errors=True)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process audio files.")
@@ -482,18 +506,18 @@ if __name__ == "__main__":
     parser.add_argument("--split-channels", action="store_true", help="Generate a waveform for each channel instead of merging into 1 waveform")
     parser.add_argument("path", nargs="*", help="The path to the file to process. If an audio file, processes the audio file. If a directory, processes every audio file in the directory. If a text file, processes the path on each line")
     # encode face args
-    ap.add_argument("-i", "--dataset", type=str, required=False,
+    parser.add_argument("-i", "--dataset", type=str, required=False,
 	    help="path to input directory of faces + images")
-    ap.add_argument("-e", "--encodings", type=str, required=False,
+    parser.add_argument("-e", "--encodings", type=str, required=False,
         help="path to serialized db of facial encodings")
-    ap.add_argument("-d", "--detection-method", type=str, default="cnn",
+    parser.add_argument("-d", "--detection-method", type=str, default="cnn",
         help="face detection model to use: either `hog` or `cnn`")
-    ap.add_argument("-o", "--outputs", type=str, required=False,
+    parser.add_argument("-o", "--outputs", type=str, required=False,
         help="If given, will output detected faces to this folder")
     # cluster face args
-    ap.add_argument("-j", "--jobs", type=int, default=-1,
+    parser.add_argument("-j", "--jobs", type=int, default=-1,
         help="# of parallel jobs to run (-1 will use all CPUs)")
-    ap.add_argument("-eps", "--epsilon", default=.4,
+    parser.add_argument("-eps", "--epsilon", default=.4,
         help="Controls how far away points can be from one antoher to still be a cluster. Too", \
         "small and all will be considered noise, too large and all will be grouped as 1 face.")
 
@@ -503,10 +527,17 @@ if __name__ == "__main__":
     process_audio(*args.path, reprocess=args.reprocess, quiet=args.quiet, verbose=args.verbose, split_channels=args.split_channels)
     if not args.quiet or args.verbose:
         print(f"\nProcessing took a total of {time.perf_counter() - start_time:.4f} seconds")
-    #handle encode_faces
-    if args.dataset and (len(*args.path) == 1) : #gave images, and only one file
-        encode_faces(images = args.dataset, encode_output = args.encodings,
-                     detection_model = args.detection-method, images_output = args.outputs)
-        cluster_faces(encode_input = args.encodings, jobs = args.jobs, epsilon = args.epsilon)
+    #handle encode_faces and cluster_faces
+    #gave only one file
+    if (len(args.path) == 1):
+        file_path = args[0]  # args[0] is--at this point--the only argument in args
+        file_dir = os.path.dirname(file_path)  # get the file directory
+        file_dir = "." if file_dir == "" else file_dir
+        file_name, file_ext = os.path.splitext(os.path.basename(file_path)) # get the file name and extension
+        if args.dataset and (file_ext == ".mp4" or file_ext == ".mov"):
+            encode_faces(images=args.dataset, encode_output=args.encodings,
+                        detection_model=args["detection-method"], images_output=args.outputs)
+            cluster_faces(encode_input=args.encodings, jobs=args.jobs, epsilon=args.epsilon,
+                          file_path=file_path, reprocess=args.reprocess)
 
         
