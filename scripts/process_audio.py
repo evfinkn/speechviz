@@ -518,8 +518,7 @@ if __name__ == "__main__":
     parser.add_argument("-j", "--jobs", type=int, default=-1,
         help="# of parallel jobs to run (-1 will use all CPUs)")
     parser.add_argument("-eps", "--epsilon", default=.4,
-        help="Controls how far away points can be from one antoher to still be a cluster. Too", \
-        "small and all will be considered noise, too large and all will be grouped as 1 face.")
+        help="Controls how far away points can be from one antoher to still be a cluster. Too small and all will be considered noise, too large and all will be grouped as 1 face.")
 
     args = parser.parse_args()
     if not args.quiet or args.verbose:
