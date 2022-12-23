@@ -95,7 +95,7 @@ def get_diarization(file_path, samples, sr, verbose):
     if not "diar_pipe" in globals():  # diar_pipe hasn't been initialized yet
         if verbose:
             print("Initializing diarization pipeline")
-        diar_pipe = Pipeline.from_pretrained("pyannote/speaker-diarization@2022.07")
+        diar_pipe = Pipeline.from_pretrained("pyannote/speaker-diarization@2022.07", use_auth_token="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")
     
     if verbose:
         print("Running the diarization pipeline")
