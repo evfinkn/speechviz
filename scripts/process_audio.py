@@ -1,13 +1,13 @@
-# from pyannote.audio import Pipeline
-import numpy as np
-import librosa
-import json
 import os
 import re
-import subprocess
-import argparse
 import math
+import json
 import time
+import argparse
+import subprocess
+
+import numpy as np
+import librosa
 
 import util
 
