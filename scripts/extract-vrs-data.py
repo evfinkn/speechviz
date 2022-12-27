@@ -49,7 +49,7 @@ STREAM_UNITS = {  # dicts containing the units of the sensor's measurements
     "1202-2": {"accelerometer": "m/s^2", "gyroscope": "rad/s"}, 
     "1203-1": {"magnetometer": "T"}, 
 }
-STREAM_DATA_TO_OUTPUT = {  # what fields from the data of the streams should be saved
+requested_streams = {  # what fields from the data of the streams should be saved
     # values are tuples instead of sets to ensure order is maintained
     "247-1": ("capture_timestamp_ns", "temperature", "pressure"),  # barometer
     "281-1": ("capture_timestamp_ns", "latitude", "longitude", "altitude"),  # gps
@@ -65,18 +65,24 @@ def get_device_stream_id(device):
     return f"{device['device_type_id']}-{device['device_instance_id']}"
 
 
-def create_device_dtype(device, stream_id):
-    if stream_id not in STREAM_DATA_TO_OUTPUT:
+def create_device_dtype(device, stream_id, requested_streams):
+    # if this is None, either it's not in requested_streams or the
+    # value for stream_id is None, which means include no fields
+    if stream_id not in requested_streams:
         return None  # don't create dtype for this stream because not saving its data
         
     vrs_tag = device["vrs_tag"]
+    # not sure why but some streams use DL:Data:2:0 and others use DL:Data:1:0
     data_layout = vrs_tag.get("DL:Data:2:0") or vrs_tag.get("DL:Data:1:0")
     data_layout = data_layout["data_layout"]
     
     fields = []
+    requested_fields = requested_streams[stream_id]
     for field in data_layout:
         field_name = field.get("name")
-        if field_name not in STREAM_DATA_TO_OUTPUT[stream_id]:
+        # if requested_fields is ... (Ellipsis, a Python built-in like None),
+        # then all fields are extracted for stream_id
+        if requested_fields is not ... and field_name not in requested_fields:
             continue  # skip this field because not saving its data
         
         # timestamps are ints in nanoseconds but we want float so that we can convert
@@ -93,13 +99,22 @@ def create_device_dtype(device, stream_id):
                 field_dtype = field_dtype(field["size"])  # create the dtype from size
         
         fields.append((field_name, field_dtype))
+
+    # Need to save the field names for formatting later. Otherwise, if you just use the
+    # field names of the record being formatted, there might be fields that weren't
+    # included in the dtype (i.e. strings)
+    if requested_fields is ...:
+        if len(fields) == 0:
+            requested_streams[stream_id] = None
+        else:
+            requested_streams[stream_id] = tuple(field[0] for field in fields)
     
     if len(fields) == 0:
         return None
     return np.dtype(fields)
 
 
-def create_device_data_arrays(devices):
+def create_device_data_arrays(devices, requested_streams):
     device_data_arrays = {}
     for device in devices:
         number_of_records = device["data"]["number_of_records"]
@@ -107,19 +122,22 @@ def create_device_data_arrays(devices):
             continue  # skip because no data to save
         
         stream_id = get_device_stream_id(device)
-        if stream_id not in STREAM_DATA_TO_OUTPUT:
+        if stream_id not in requested_streams:
             continue  # skip this stream because not saving its data
-        device_dtype = create_device_dtype(device, stream_id)
-            
-        device_data_arrays[stream_id] = np.empty(number_of_records, dtype=device_dtype)
+        device_dtype = create_device_dtype(device, stream_id, requested_streams)
+        if device_dtype is not None:
+            device_data_arrays[stream_id] = np.empty(number_of_records, dtype=device_dtype)
     return device_data_arrays
 
 
 def format_data_record(data_record, stream_id):
-    fields = STREAM_DATA_TO_OUTPUT[stream_id]
-    formatted_data = []
-    for field in fields:
-        formatted_data.append(data_record[field])
+    fields = requested_streams[stream_id]
+    if fields is ...:
+        formatted_data = list(data_record.values())
+    else:
+        formatted_data = []
+        for field in fields:
+            formatted_data.append(data_record[field])
     return tuple(formatted_data)
     
     
@@ -296,7 +314,7 @@ def extract_data(file,
             if record_info["type"] == "Data":
                 # "metadata" is an array of dicts with keys "name" and "value"
                 data = build_dict_from_dict_list(record["content"][0]["metadata"])
-                formatted_data = format_data_record(data, stream)
+                formatted_data = format_data_record(data, stream, requested_streams)
                 arrays[stream][indices[stream]] = formatted_data
                 indices[stream] += 1
                 
