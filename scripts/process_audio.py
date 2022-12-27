@@ -6,9 +6,10 @@ import os
 import re
 import subprocess
 import argparse
-import random
 import math
 import time
+
+import util
 
 
 def format_segment(start, end, color, label):
@@ -89,8 +90,6 @@ def get_diarization(file_path, samples, sr, verbose):
 
     if not "Pipeline" in globals():
         from pyannote.audio import Pipeline
-        
-    random.seed(2)
     
     if not "diar_pipe" in globals():  # diar_pipe hasn't been initialized yet
         if verbose:
@@ -105,10 +104,9 @@ def get_diarization(file_path, samples, sr, verbose):
         print(f"Diarization pipeline completed in {time.perf_counter() - start_time:.4f} seconds")
         print("Looping through the annotations")
         loop_start_time = time.perf_counter()
-        
 
     # format the speakers segments for peaks
-    colors = iter(lambda: f"#{random.randrange(255):02x}{random.randrange(255):02x}{random.randrange(255):02x}", 1)
+    colors = util.random_color_generator(2)
     spkrs_colors = {}   # dictionary to store speaker's colors   key = speaker, value = color
     spkrs_segs = {}
     spkrs_times = {}

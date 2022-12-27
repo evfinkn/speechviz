@@ -55,3 +55,24 @@ def recurse_loads(string):
                     obj[key][i] = recurse_loads(obj[key][i])
     finally:
         return obj
+
+
+def random_color_generator(seed: int | None = None) -> Iterator[str]:
+    """Indefinitely generates random colors as hexadecimal strings.
+    
+    Parameters
+    ----------
+    seed : int, optional
+        The seed to initialize the random number generator with.
+        
+    Yields
+    -------
+    str
+        A hex color string in the form "#RRGGBB".
+    """
+    rng = random.Random(seed) # Random instance because we don't want to share context
+    while True: # while True because this is an infinite generator
+        r = rng.randrange(255)
+        g = rng.randrange(255)
+        b = rng.randrange(255)
+        yield f"#{r:02x}{g:02x}{b:02x}"
