@@ -1,11 +1,11 @@
 import os
 import re
 import csv
-import json
 import time
 import argparse
 import subprocess
 
+import orjson
 import numpy as np
 
 import util
@@ -182,6 +182,25 @@ def create_video(output_dir, stream, keep_images=False, verbose=0):
         print(f"Created the video for {stream} in {time.perf_counter() - start_time:.4f} seconds")
 
 
+# It might be surprising, but using replace + orjson is actually faster than using other
+# json libraries that support "NaN". Here were my tests of the main while loop using the
+# different json libraries:
+# ccf5a3cc - 56.1 MB (%%timeit -n 10 -r 10)
+#   - json: 887 ms ± 3.82 ms per loop
+#   - orjson + .replace: 330 ms ± 2.41 ms per loop
+#   - ujson: 488 ms ± 6.95 ms per loop
+# b903d8ed - 6.4 GB (%%timeit -n 1 -r 1)
+# - json: 1min 40s
+# - orjson + .replace: 37.9 s
+# - ujson: 55 s
+def load_json_with_nan(s):
+    """Loads a JSON string containing "NaN" using orjson.
+    orjson throws an except if the JSON contains "NaN", so this function loads the JSON after
+    replacing "NaN" with "null".
+    """
+    return orjson.loads(s.replace("NaN", "null"))
+
+
 def route_file(*args, verbose=0, scan_dir=True, **kwargs):
     """ Handles the different types of files (txt, dir, vrs) that can be input to this scripts """
     if verbose:
@@ -296,21 +315,24 @@ def extract_data(file,
         metadata_start_time = time.perf_counter()
         
     with open(f"{output_dir}/metadata.jsons", encoding="utf-8") as metadata_file:
-        metadata = json.loads(metadata_file.readline())  # main metadata of vrs file
-        calib = metadata["tags"]["calib_json"]  # save original calibration string
+        metadata = load_json_with_nan(metadata_file.readline())  # main metadata of vrs file
+        # save original calibration string to use in create_poses.py (for aria_data_tools)
+        calib = metadata["tags"]["calib_json"]
         metadata = util.recurse_loads(metadata)
 
         arrays = create_device_data_arrays(metadata["devices"])
         indices = dict.fromkeys(arrays.keys(), 0)
 
         while (info_line := metadata_file.readline()) != "":  # loop through records of the streams
-            record_info = json.loads(info_line)   # loads the record info
+            record_info = load_json_with_nan(info_line)   # loads the record info
+            # we'll need to read the record because either using it or passing over it
+            record_line = metadata_file.readline()
             stream = record_info["stream"]  # stream id, i.e. "1201-1"
-            if stream not in STREAM_DATA_TO_OUTPUT:
-                metadata_file.readline()  # skipping this record since not outputting its data
-                continue
+            if stream not in requested_streams:
+                continue  # skipping this record since not outputting its data
             
-            record = json.loads(metadata_file.readline())  # read the actual record
+            # loads after skipping so don't waste time parsing record we're not going to use
+            record = load_json_with_nan(record_line)
             if record_info["type"] == "Data":
                 # "metadata" is an array of dicts with keys "name" and "value"
                 data = build_dict_from_dict_list(record["content"][0]["metadata"])
