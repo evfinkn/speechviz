@@ -43,22 +43,17 @@ STREAM_NAMES = {  # used to get the file name from a stream id
     "1203-1": "magnetometer", 
 }
 STREAM_UNITS = {  # dicts containing the units of the sensor's measurements
-    # "211-1": {}, # "214-1": {}, # "231-1": {}, 
     "247-1": {"temperature": "deg. C", "pressure": "Pa"}, 
     "281-1": {"latitude": "dec. deg.", "latitude": "dec. deg.", "altitude": "m"}, 
-    # "282-1": {}, # "283-1": {}, # "285-1": {}, # "1201-1": {}, # "1201-2": {}, 
     "1202-1": {"accelerometer": "m/s^2", "gyroscope": "rad/s"}, 
     "1202-2": {"accelerometer": "m/s^2", "gyroscope": "rad/s"}, 
     "1203-1": {"magnetometer": "T"}, 
 }
 STREAM_DATA_TO_OUTPUT = {  # what fields from the data of the streams should be saved
     # values are tuples instead of sets to ensure order is maintained
-    # "211-1": (), # "214-1": (), # "231-1": (), 
     "247-1": ("capture_timestamp_ns", "temperature", "pressure"),  # barometer
     "281-1": ("capture_timestamp_ns", "latitude", "longitude", "altitude"),  # gps
-    # "282-1": (), # "283-1": (), 
     "285-1": ("monotonic_timestamp_ns", "real_timestamp_ns"),  # time
-    # "1201-1": (), # "1201-2": (), 
     "1202-1": ("capture_timestamp_ns", "accelerometer", "gyroscope"),  # imu-right
     "1202-2": ("capture_timestamp_ns", "accelerometer", "gyroscope"),  # imu-left
     "1203-1": ("capture_timestamp_ns", "magnetometer"),  # magnetometer
