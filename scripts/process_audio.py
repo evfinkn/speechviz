@@ -44,7 +44,7 @@ def get_complement_times(times, duration):
 def get_complement_segments(segments, duration, color, label, times=None):
     times = [(seg["startTime"], seg["endTime"]) for seg in segments] if times is None else times
     comp_times = get_complement_times(times, duration)
-    return [{"startTime": start, "endTime": end, "color": color, "labelText": label} for start, end in comp_times]
+    return [format_segment(start, end, color, label) for start, end in comp_times]
 
 
 def rms(powers):  # give it a list, and it finds the root mean squared
@@ -84,7 +84,7 @@ def snr_from_times(signal_times, samples, sr, *, noise_rms=None):
     return snr(signal_powers, noise_rms)
 
 
-def get_diarization(file_path, samples, sr, verbose):
+def get_diarization(file, auth_token, samples, sr, verbose=0):
     # use global pipeline so it doesn't need to be re-initialized (which is time-consuming)
     global diar_pipe, Pipeline
 
@@ -94,12 +94,12 @@ def get_diarization(file_path, samples, sr, verbose):
     if not "diar_pipe" in globals():  # diar_pipe hasn't been initialized yet
         if verbose:
             print("Initializing diarization pipeline")
-        diar_pipe = Pipeline.from_pretrained("pyannote/speaker-diarization@2022.07")
+        diar_pipe = Pipeline.from_pretrained("pyannote/speaker-diarization@2.1", use_auth_token=auth_token)
     
     if verbose:
         print("Running the diarization pipeline")
         start_time = time.perf_counter()
-    diar = diar_pipe(file_path)
+    diar = diar_pipe(file.path)
     if verbose:
         print(f"Diarization pipeline completed in {time.perf_counter() - start_time:.4f} seconds")
         print("Looping through the annotations")
@@ -156,12 +156,15 @@ def get_diarization(file_path, samples, sr, verbose):
         print(f"SNRs calculated in {(time.perf_counter() - snr_start_time) * 1000:.4f} milliseconds")
         print(f"Diarization completed in {time.perf_counter() - start_time:.4f} seconds")
 
+    # TODO: Change this to return a dict and then change viz.js to take a dict
+    # because this is confusing. It could be something like:
+    # {"type": "GroupOfGroups", name="Speakers", children=[{"type": "Group", ...}, ...]}
     # arrange spkrs_segs so that it's an array of tuples containing a speaker, that speaker's segments, and that speaker's snr
     # i.e. spkrs_segs = [ ("Speaker 1", [...], spkr_1_snr), ("Speaker 2", [...], spkr_2_snr), ... ]
     return ("Speakers", [(spkr, spkrs_segs[spkr], spkrs_snrs[spkr]) for spkr in spkrs])
 
 
-def get_vad(file_path, duration, verbose):
+def get_vad(file, auth_token, duration, verbose=0):
     # use global pipeline so it doesn't need to be re-initialized (which is time-consuming)
     global vad_pipe, Pipeline
     
@@ -171,18 +174,17 @@ def get_vad(file_path, duration, verbose):
     if not "vad_pipe" in globals():  # vad_pipe hasn't been initialized yet
         if verbose:
             print("Initializing VAD pipeline")
-        vad_pipe = Pipeline.from_pretrained("pyannote/voice-activity-detection")
+        vad_pipe = Pipeline.from_pretrained("pyannote/voice-activity-detection", use_auth_token=auth_token)
     
     if verbose:
         print("Running the VAD pipeline")
         start_time = time.perf_counter()
-    vad = vad_pipe(file_path)
+    vad = vad_pipe(file.path)
     if verbose:
         print(f"VAD pipeline completed in {time.perf_counter() - start_time:.4f} seconds")
         print("Looping through the annotations")
         loop_start_time = time.perf_counter()
 
-    
     # format the vad segments for peaks
     vad_segs = []
     vad_times = []
@@ -203,152 +205,159 @@ def get_vad(file_path, duration, verbose):
         print(f"Non-VAD created in {(time.perf_counter() - non_vad_start_time) * 1000:.4f} milliseconds")
         print(f"VAD completed in {time.perf_counter() - start_time:.4f} seconds")
         
+    # TODO: See TODO at end of get_diarization
     return (("VAD", vad_segs), ("Non-VAD", non_vad_segs))
 
 
-def process_audio(*args, scan_dir=True, reprocess=False, quiet=False, verbose=False, split_channels=False):
-    global regex  # use global regex so it doesn't need to be re-initialized
-    
-    if verbose:
-        print()  # to visually separate the output of each call to process_audio
-    
+def route_file(*args, verbose=0, scan_dir=True, **kwargs):
     if len(args) == 0:
         args = [os.getcwd()]  # if no file or directory given, use directory script was called from
     elif len(args) > 1:  # if multiple files (or directories) given, run function on each one
         for arg in args:
-            process_audio(arg, scan_dir=scan_dir, reprocess=reprocess, quiet=quiet, verbose=verbose, split_channels=split_channels)
+            route_file(arg, verbose=verbose, scan_dir=scan_dir, **kwargs)
         return  # stop function because all processing done in the function calls in the for loop
     
     file_path = args[0]  # args[0] is--at this point--the only argument in args
-    file_dir = os.path.dirname(file_path)  # get the file directory
-    file_dir = "." if file_dir == "" else file_dir
-    file_name, file_ext = os.path.splitext(os.path.basename(file_path)) # get the file name and extension
+    file = util.FileInfo(file_path)
     
     # if given text file, run the function on each line
-    if file_ext == ".txt":
+    if file.ext == ".txt":
         if verbose:
-            print(f"{file_path} is a text file. Running process_audio on the file on each line...")
-        with open(file_path) as file:
-            for line in file.read().split("\n"):
-                process_audio(line, scan_dir=scan_dir, reprocess=reprocess, quiet=quiet, verbose=verbose, split_channels=split_channels)
+            print(f"{file.path} is a text file. Running process_audio on the file on each line...")
+        with open(file.path) as txtfile:
+            for line in txtfile.read().split("\n"):
+                route_file(line, verbose=verbose, scan_dir=scan_dir, **kwargs)
         return
     
-    # run process audio on every file in file_path if it is a dir and scan_dir is True
-    elif file_ext == "" and scan_dir:
-        ls = subprocess.run(["ls", file_path], stdout=subprocess.PIPE).stdout.decode().split("\n")[:-1]  # get files in dir
-        if "audio" in ls:  # if "audio" dir is in file_path, run process_audio on "audio" dir
+    # run process audio on every file in file.path if it is a dir and scan_dir is True
+    elif file.ext == "" and scan_dir:
+        ls = subprocess.run(["ls", file.path], stdout=subprocess.PIPE).stdout.decode().split("\n")[:-1]  # get files in dir
+        if "audio" in ls:  # if "audio" dir is in file.path, run process_audio on "audio" dir
             if verbose:
-                print(f"Detected audio directory. Running process_audio on {file_path}/audio")
-            process_audio(f"{file_path}/audio", scan_dir=scan_dir, reprocess=reprocess, quiet=quiet, verbose=verbose, split_channels=split_channels)
-        if "video" in ls:  # if "video" dir is in file_path, run process_aduio on "video" dir
+                print(f"Detected audio directory. Running process_audio on {file.path}/audio")
+            route_file(f"{file.path}/audio", verbose=verbose, scan_dir=scan_dir, **kwargs)
+        if "video" in ls:  # if "video" dir is in file.path, run process_aduio on "video" dir
             if verbose:
-                if "audio" in ls:
-                    print()
-                print(f"Detected video directory. Running process_audio on {file_path}/video")
-            process_audio(f"{file_path}/video", scan_dir=scan_dir, reprocess=reprocess, quiet=quiet, verbose=verbose, split_channels=split_channels)
+                print(f"Detected video directory. Running process_audio on {file.path}/video")
+            route_file(f"{file.path}/video", verbose=verbose, scan_dir=scan_dir, **kwargs)
         if "audio" not in ls and "video" not in ls:
             if verbose:
-                print(f"{file_path} is a directory. Running process_audio on each file...")
-            for file in ls:
-                process_audio(f"{file_path}/{file}", scan_dir=False, reprocess=reprocess, quiet=quiet, verbose=verbose, split_channels=split_channels)
-        return
+                print(f"{file.path} is a directory. Running process_audio on each file...")
+            for dir_file in ls:
+                route_file(f"{file.path}/{dir_file}", verbose=verbose, scan_dir=False, **kwargs)
     
-    elif file_ext.casefold() in (".mp4", ".mov"):
-        if not quiet or verbose:
-            print(f"processing {file_path}")
+    elif file.ext.casefold() in (".mp4", ".mov"):
         if verbose:
-            print(f"{file_path} is a video. Extracting the audio")
+            print(f"{file.path} is a video. Extracting the audio")
             
-        audio_path = f"{file_dir}/{file_name}.wav"
-        subprocess.run(["ffmpeg", "-y", "-i", file_path, audio_path], capture_output=not verbose, check=True)
-        process_audio(audio_path, reprocess=reprocess, quiet=quiet, verbose=verbose)
+        audio_path = f"{file.dir}/{file.name}.wav"
+        subprocess.run(["ffmpeg", "-y", "-i", file.path, audio_path], capture_output=verbose < 2, check=True)
+        # could just call process_audio directly on audio_path, but I think it makes more sense
+        # to have the next elif statement be the only place process_audio is called
+        # FIXME: actually I'm fairly certain this whole elif block can be deleted
+        # process_audio converts to wav already
+        route_file(audio_path, verbose=verbose, scan_dir=scan_dir, **kwargs)
         subprocess.run(["rm", "-f", audio_path], capture_output=True)
     
-    # if file_path is a sound file, process it
-    elif file_ext.casefold() in (".mp3", ".wav", ".flac", ".ogg", ".opus", ".mp4", ".mov"):
-        # check if output is being split between audio, waveforms, and segments directories
-        # and if so, get the base directory for the three subdirectories
-        if not quiet or verbose:
-            print(f"processing {file_path}")
-            start_time = time.perf_counter()
-        
-        separate_dirs = False
-        if not "regex" in globals():
-            regex = re.compile(r".*(?=/(audio|video)$)")    
-        match = regex.match(file_dir)
-        if match:
-            data_dir = match[0]  # data_dir is file_path for the dir containing audio, waveforms, and segments dirs
-            if verbose:
-                print(f"Separating files into audio, waveforms, and segments directories. Data directory path is '{data_dir}'")
-            separate_dirs = True
-            subprocess.run(["mkdir", f"{data_dir}/waveforms"], capture_output=True)
-            subprocess.run(["mkdir", f"{data_dir}/segments"], capture_output=True)
-                
-        # filepaths for the waveform, and segments files
-        json_dir = file_dir if not separate_dirs else f"{data_dir}/waveforms"
-        json_path = f"{json_dir}/{file_name}-waveform.json"
-        segs_dir = file_dir if not separate_dirs else f"{data_dir}/segments"
-        segs_path = f"{segs_dir}/{file_name}-segments.json"
-        # check if audio has already been processed and only process if reprocess is passed in as True
-        if os.path.exists(json_path) and os.path.exists(segs_path) and not reprocess:
-            if not quiet or verbose:
-                print(f"{file_path} has already been processed. To reprocess it, use the '-r' argument")
-            return
-        
-        # create the waveform
-        if verbose:
-            print(f"Creating {json_path}")
-        if split_channels:
-            subprocess.run(["audiowaveform", f"-i{file_path}", f"-o{json_path}", "-b", "8", "--split-channels"], capture_output=not verbose, check=True)
-        else:
-            subprocess.run(["audiowaveform", f"-i{file_path}", f"-o{json_path}", "-b", "8"], capture_output=not verbose, check=True)
+    # if file.path is a sound file, process it
+    elif file.ext.casefold() in (".mp3", ".wav", ".flac", ".ogg", ".opus", ".mp4", ".mov"):
+        process_audio(file, verbose=verbose, **kwargs)
 
-        # if the audio isn't in wav format, convert it to wav (pipeline requires wav)
-        made_wav = False
-        if file_ext != ".wav":
-            old_path = file_path
-            file_path = f"{file_dir}/{file_name}.wav"
-            if verbose:
-                print(f"Creating {file_path}")
-            subprocess.run(["ffmpeg", "-y", "-i", old_path, file_path], capture_output=not verbose, check=True)
-            made_wav = True
-        
-        samples, sr = librosa.load(file_path, sr=None)
-        duration = librosa.get_duration(y=samples, sr=sr)
-        
-        segs = []
-        segs.append(get_diarization(file_path, samples, sr, verbose))
-        segs.extend(get_vad(file_path, duration, verbose))
 
-        # save the segments
+def process_audio(file, auth_token, reprocess=False, quiet=False, verbose=0, split_channels=False):
+    global regex  # use global regex so it doesn't need to be re-initialized
+    
+    # check if output is being split between audio, waveforms, and segments directories
+    # and if so, get the base directory for the three subdirectories
+    if not quiet or verbose:
+        print(f"processing {file.path}")
+        start_time = time.perf_counter()
+    
+    separate_dirs = False
+    if not "regex" in globals():
+        regex = re.compile(r".*(?=/(audio|video)$)")    
+    match = regex.match(file.dir)
+    if match:
+        data_dir = match[0]  # data_dir is file.path for the dir containing audio, waveforms, and segments dirs
         if verbose:
-            print(f"Creating {segs_path}")
-        with open(segs_path, "w") as file:
-            json.dump(segs, file)
+            print(f"Separating files into audio, waveforms, and segments directories. Data directory path is '{data_dir}'")
+        separate_dirs = True
+        subprocess.run(["mkdir", f"{data_dir}/waveforms"], capture_output=True)
+        subprocess.run(["mkdir", f"{data_dir}/segments"], capture_output=True)
             
-        # if converted to wav, remove that wav file (since it was only needed for the diarization
-        if made_wav:
-            if verbose:
-                print(f"Deleting {file_path}")
-            subprocess.run(["rm", "-f", file_path], capture_output=True)
-        
+    # filepaths for the waveform, and segments files
+    waveform_dir = file.dir if not separate_dirs else f"{data_dir}/waveforms"
+    waveform_path = f"{waveform_dir}/{file.name}-waveform.json"
+    segs_dir = file.dir if not separate_dirs else f"{data_dir}/segments"
+    segs_path = f"{segs_dir}/{file.name}-segments.json"
+
+    # only recreate the waveform if it doesn't already exist
+    if os.path.exists(waveform_path) and not reprocess:
+        if verbose:
+            print(f"{waveform_path} already exists. To recreate it, use the -r argument")
+    else: # create the waveform
+        if verbose:
+            print(f"Creating {waveform_path}")
+        if split_channels:
+            subprocess.run(["audiowaveform", f"-i{file.path}", f"-o{waveform_path}", "-b", "8", "--split-channels"], capture_output=verbose < 2, check=True)
+        else:
+            subprocess.run(["audiowaveform", f"-i{file.path}", f"-o{waveform_path}", "-b", "8"], capture_output=verbose < 2, check=True)
+
+    # check if audio has already been processed and only process if reprocess is passed in as True
+    if os.path.exists(segs_path) and not reprocess:
         if not quiet or verbose:
-            # if wav file was made, switch file_path back to original file
-            file_path = old_path if "old_path" in locals() else file_path
-            print(f"Processed {file_path} in {time.perf_counter() - start_time:.4f} seconds")
+            print(f"{file.path} has already been processed. To reprocess it, use the '-r' argument")
+        return
+
+    # if the audio isn't in wav format, convert it to wav (pipeline requires wav)
+    made_wav = False
+    if file.ext != ".wav":
+        old_path = file.path
+        file.path = f"{file.dir}/{file.name}.wav"
+        if verbose:
+            print(f"Creating {file.path}")
+        subprocess.run(["ffmpeg", "-y", "-i", old_path, file.path], capture_output=verbose < 2, check=True)
+        made_wav = True
+    
+    samples, sr = librosa.load(file.path, sr=None)
+    duration = librosa.get_duration(y=samples, sr=sr)
+    
+    segs = []
+    segs.append(get_diarization(file, auth_token, samples, sr, verbose))
+    segs.extend(get_vad(file, auth_token, duration, verbose))
+
+    # save the segments
+    if verbose:
+        print(f"Creating {segs_path}")
+    with open(segs_path, "w") as segs_file:
+        json.dump(segs, segs_file)
+        
+    # if converted to wav, remove that wav file (since it was only needed for the diarization
+    if made_wav:
+        if verbose:
+            print(f"Deleting {file.path}")
+        subprocess.run(["rm", "-f", file.path], capture_output=True)
+    
+    if not quiet or verbose:
+        # if wav file was made, switch file.path back to original file
+        file.path = old_path if "old_path" in locals() else file.path
+        print(f"Processed {file.path} in {time.perf_counter() - start_time:.4f} seconds")
             
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process audio files.")
     parser.add_argument("-r", "--reprocess", action="store_true", help="Reprocess audio files detected to have already been processed")
     parser.add_argument("-q", "--quiet", action="store_true", help="Don't print anything")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Print various debugging information")
+    parser.add_argument("-v", "--verbose", action="count", default=0, help="Print various debugging information")
     parser.add_argument("--split-channels", action="store_true", help="Generate a waveform for each channel instead of merging into 1 waveform")
+    parser.add_argument("--auth-token", help="PyAnnote authentication token. Retrieved from the environment variable PYANNOTE_AUTH_TOKEN if not given")
     parser.add_argument("path", nargs="*", help="The path to the file to process. If an audio file, processes the audio file. If a directory, processes every audio file in the directory. If a text file, processes the path on each line")
     args = parser.parse_args()
+    args.auth_token = os.environ.get("PYANNOTE_AUTH_TOKEN", args.auth_token)
+    if args.auth_token is None:
+        raise Exception("To run the diarization and VAD pipelines, you need a PyAnnotate authentication token. Pass it in with the --auth-token option or set the PYANNOTE_AUTH_TOKEN environment variable.")
     if not args.quiet or args.verbose:
         start_time = time.perf_counter()
-    process_audio(*args.path, reprocess=args.reprocess, quiet=args.quiet, verbose=args.verbose, split_channels=args.split_channels)
+    route_file(*util.namespace_pop(args, "path"), **vars(args))
     if not args.quiet or args.verbose:
         print(f"\nProcessing took a total of {time.perf_counter() - start_time:.4f} seconds")
-

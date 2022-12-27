@@ -57,6 +57,26 @@ def recurse_loads(string):
         return obj
 
 
+def namespace_pop(namespace, attr_name):
+    """Pops an attribute from a argparse Namespace object.
+
+    Parameters
+    ----------
+    namespace : argparse.Namespace
+        The `Namespace` to pop the attribute from.
+    attr_name : str
+        The name of the attribute to pop.
+
+    Returns
+    -------
+    any
+        The popped attribute.
+    """
+    attr = getattr(namespace, attr_name)
+    delattr(namespace, attr_name)
+    return attr
+
+
 def random_color_generator(seed: int | None = None) -> Iterator[str]:
     """Indefinitely generates random colors as hexadecimal strings.
     
