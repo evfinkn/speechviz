@@ -126,22 +126,6 @@ def format_data_record(data_record, stream_id):
     for field in fields:
         formatted_data.append(data_record[field])
     return tuple(formatted_data)
-
-
-def recurse_loads(string):
-    """ Recursively loads JSON contained in a string, i.e. nested JSON strings in loaded dicts and arrays """
-    obj = string
-    try:  # try to catch any JSON errors and obj not being dict errors
-        if isinstance(obj, str):
-            obj = json.loads(string)
-        for key in obj.keys():  # load JSON from any strings, dicts, and arrays in obj
-            if isinstance(obj[key], (str, dict)):
-                obj[key] = recurse_loads(obj[key])
-            elif isinstance(obj[key], list):
-                for i in range(len(obj[key])):
-                    obj[key][i] = recurse_loads(obj[key][i])
-    finally:
-        return obj
     
     
 def build_dict_from_dict_list(dict_list, out_dict=None):
@@ -301,7 +285,7 @@ def extract_data(file,
     with open(f"{output_dir}/metadata.jsons", encoding="utf-8") as metadata_file:
         metadata = json.loads(metadata_file.readline())  # main metadata of vrs file
         calib = metadata["tags"]["calib_json"]  # save original calibration string
-        metadata = recurse_loads(metadata)
+        metadata = util.recurse_loads(metadata)
 
         arrays = create_device_data_arrays(metadata["devices"])
         indices = dict.fromkeys(arrays.keys(), 0)

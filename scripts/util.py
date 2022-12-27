@@ -1,11 +1,12 @@
 import os
+import json
+import random
 import dataclasses
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 
 import numpy as np
 
 
-@dataclasses.dataclass
 class FileInfo:
     
     path: str
@@ -13,7 +14,7 @@ class FileInfo:
     name: str
     ext: str
     
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         directory = os.path.dirname(path)
         directory = "." if directory == "" else directory  # in case file is in cwd
         name, extension = os.path.splitext(os.path.basename(path))
@@ -38,3 +39,19 @@ def get_nearest_index(array, value):
         return i - 1
     else:
         return i
+    
+
+def recurse_loads(string):
+    """ Recursively loads JSON contained in a string, i.e. nested JSON strings in loaded dicts and arrays """
+    obj = string
+    try:  # try to catch any JSON errors and obj not being dict errors
+        if isinstance(obj, str):
+            obj = json.loads(string)
+        for key in obj.keys():  # load JSON from any strings, dicts, and arrays in obj
+            if isinstance(obj[key], (str, dict)):
+                obj[key] = recurse_loads(obj[key])
+            elif isinstance(obj[key], list):
+                for i in range(len(obj[key])):
+                    obj[key][i] = recurse_loads(obj[key][i])
+    finally:
+        return obj
