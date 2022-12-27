@@ -79,6 +79,7 @@ fetch("/filelist")
     .then(fileList => {  // object with arrays for audio filenames and video filenames
         const audiofiles = fileList.audio;
         const videofiles = fileList.video;
+        const clusterfolders = fileList.cluster;
         const fieldset = document.getElementById("file-selection");
 
         if (audiofiles?.length !== 0) {
@@ -93,20 +94,38 @@ fetch("/filelist")
             });
 
             // add separation between audio and video file sections
-            fieldset.append(document.createElement("br"));
+            fieldset.append(document.createElement("br"));  
         }
 
         if (videofiles?.length !== 0) {
-            fieldset.append(htmlToElement("<strong>Video files</strong>"));  // header
+            // header for video files
+            fieldset.append(htmlToElement("<strong>Video files</strong>"));
 
             videofiles.forEach(function (fileName) {  // add radio buttons for each video file
                 const div = createRadioDiv(fileName, "file-selection");
                 div.firstElementChild.addEventListener("change", function () {
-                    openViz(this.value, "video", user);
+                    openViz(this.value, "video", user)
+                });
+                fieldset.append(div);
+            });
+        }
+
+        if (clusterfolders?.length !== 0){
+            // header for cluster folders
+            fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
+            clusterfolders.forEach(function (folderName){
+                //folderName matches corresponding video fileName, so give it a different id
+                const div = createRadioDiv(folderName + " Clusters", "file-selection")
+                div.firstElementChild.addEventListener("change", function () {
+                    // when radio button clicked, show each cluster folder to choose which to view
+                    // remove its different id, go to correct folder
+                    window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}`
+                                            + `dir=${this.value.replace(' Clusters', '')}`
+                                            + `&inFaceFolder=false`);
                 });
                 fieldset.append(div);
             });
         }
     })
-    // catch error if fetch unsuccessful
+    // catch err thrown by res if any
     .catch(error => { console.error('Error during fetch: ', error); });

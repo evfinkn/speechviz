@@ -1,7 +1,7 @@
 <div align="center">
     <center>
         <h1>
-            speechviz
+            Speechviz
         </h1>
         <h3>
             An annotation tool for analyzing real-world auditory soundscapes
@@ -12,9 +12,9 @@
 
 <br>
 
-# speechviz
+# Speechviz
 
-speechviz is a tool to
+Speechviz is a tool to
 1. Automatically process audio and video data—performing speaker diarization,
 voice-activity detection, speech recognition, and face detection
 2. Visualize the generated annotations in a user-friendly interface that allows

@@ -14,7 +14,8 @@ ap.add_argument("-e", "--encodings", required=True,
 ap.add_argument("-j", "--jobs", type=int, default=-1,
         help="# of parallel jobs to run (-1 will use all CPUs)")
 ap.add_argument("-eps", "--epsilon", default=.4,
-        help="Controls how far away points can be from one antoher to still be a cluster. Too small and all will be considered noise, too large and all will be grouped as 1 face.")
+        help="Controls how far away points can be from one antoher to still be a cluster. Too", \
+        "small and all will be considered noise, too large and all will be grouped as 1 face.")
 ap.add_argument("-o", "--outputs", required=True)
 args = vars(ap.parse_args())
 
@@ -30,7 +31,10 @@ encodings = [d["encoding"] for d in data]
 print("[INFO] clustering...")
 #dbscan
 clt = DBSCAN(float(args["epsilon"]), metric="euclidean", n_jobs=args["jobs"])
-#uncomment this and recomment clt above, OPTICS is like dbscan but sweeps through different epsilon values, and picks which one it thinks is right. I haven't had success with it but could be worth a shot later.
+
+#uncomment this and recomment clt above, OPTICS is like dbscan but sweeps through different
+#epsilon values, and picks which one it thinks is right. I haven't had success with it but could 
+#be worth a shot later.
 #clt = OPTICS(min_samples=2)
 clt.fit(encodings)
 
@@ -52,7 +56,8 @@ for labelID in labelIDs:
         image = cv2.imread(data[i]["imagePath"])
         (top, right, bottom, left) = data[i]["loc"]
         face = image[top:bottom, left:right]
-        #resize image so it displays better on speechviz, https://stackoverflow.com/questions/64609524/resize-an-image-with-a-max-width-and-height-using-opencv
+        #resize image so it displays better on speechviz, 
+        #https://stackoverflow.com/questions/64609524/resize-an-image-with-a-max-width-and-height-using-opencv
         maxwidth, maxheight = 200, 200
         f1 = maxwidth / face.shape[1]
         f2 = maxheight / face.shape[0]
@@ -63,10 +68,11 @@ for labelID in labelIDs:
 
         faces.append(resized)
     counter = 0
+    def baseFilePath(faceNum): return args["outputs"] + "/face" + str(faceNum)
     for face in faces:
         counter += 1
-        if not os.path.isdir(args["outputs"] + "/face" + str(labelID)):
-        	os.makedirs(args["outputs"] + "/face" + str(labelID))
-        cv2.imwrite(args["outputs"] + "/face" + str(labelID) + "/Num" + str(counter) + ".jpg", face)
+        if not os.path.isdir(baseFilePath(labelID)):
+        	os.makedirs(baseFilePath(labelID))
+        cv2.imwrite(baseFilePath(labelID) + "/Num" + str(counter) + ".jpg", face)
 
 #built off of https://pyimagesearch.com/2018/07/09/face-clustering-with-python/

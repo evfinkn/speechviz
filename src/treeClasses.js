@@ -178,7 +178,8 @@ var TreeItem = class TreeItem {
      * @type {?string[]}
      */
     copyTo;
-
+    assocWith;
+    
     /**
      * The li element that is displayed and that contains all other elements.
      * @type {!Element}
@@ -247,6 +248,8 @@ var TreeItem = class TreeItem {
      *      item be copied to. `null` if the item isn't copyable.
      * @param {boolean} [options.render=true] - If `true`, `render()` is called in the constructor.
      *      Otherwise, `render()` is not called and is left to the user to call.
+     * @param {?Array.<string>=} [options.assocWith] - An array of the ids of `TreeItem`s that the
+     *      item can be associated with. `null` if the item isn't moveable.
      * @throws {Error} If a `TreeItem` with `id` already exists.
      */
     constructor(id, {
@@ -257,7 +260,8 @@ var TreeItem = class TreeItem {
         renamable = false,
         moveTo = null,
         copyTo = null,
-        render = true
+        render = true,
+        assocWith = null
     } = {}) {
 
         if (TreeItem.exists(id)) {
@@ -273,6 +277,7 @@ var TreeItem = class TreeItem {
         this.renamable = renamable;
         this.moveTo = moveTo;
         this.copyTo = copyTo;
+        this.assocWith = assocWith;
 
         if (render) {
             this.render();
@@ -319,9 +324,9 @@ var TreeItem = class TreeItem {
     set checked(bool) { this.checkbox.checked = bool; }
 
     /** 
-     * `null` if this item doesn't have a parent. Otherwise, an array containing this item's parent,
-     * this item's parent's parent, etc. Top-most parents are first in the array, with this item's
-     * parent being last. For example, `[root, great-grandparent, grandparent, parent]`.
+     * `null` if this item doesn't have a parent. Otherwise, an array containing this item's 
+     * parent, this item's parent's parent, etc. Top-most parents are first in the array, with this
+     * item's parent being last. For example, `[root, great-grandparent, grandparent, parent]`.
      * @type {?Array.<TreeItem>}
      */
     get path() {
@@ -566,11 +571,19 @@ var Popup = class Popup {
     moveDiv;
 
     /**
-     * The div element containing the radio buttons used to move `treeItem` if `treeItem.copyTo`.
+     * The div element containing the radio buttons used to copy `treeItem` if `treeItem.copyTo`.
      * Otherwise, `null`.
      * @type {?Element}
      */
     copyDiv;
+
+    /**
+     * The div element containing the radio buttons used to associate 
+     * `treeItem` if `treeItem.assocWith`.
+     * Otherwise, `null`.
+     * @type {?Element}
+     */
+    assocDiv;
 
     /**
      * The div element containing `colorPicker` if `treeItem.colorable`. Otherwise, `null`.
@@ -646,6 +659,12 @@ var Popup = class Popup {
             this.updateCopyTo();
             popupContent.append(this.copyDiv);
         }
+        
+        if (treeItem.assocWith){
+            popupContent.append(document.createElement("br"));
+            this.assocDiv = htmlToElement(`<div><h3>Associate ${text} with a speaker</h3></div>`);
+            popupContent.append(this.assocDiv);
+        }
 
         if (treeItem.colorable) {
             const colorDiv = htmlToElement(`<div><h3>Pick a new color for ${text}</h3></div>`);
@@ -691,6 +710,9 @@ var Popup = class Popup {
         if (this.copyDiv) {
             this.copyDiv.firstElementChild.innerHTML = `Copy ${newText} to another group`;
         }
+        if (this.assocDiv) {
+            this.assocDiv.firstElementChild.innerHTML = `Associate ${newText} with a speaker`
+        }
         if (this.colorDiv) {
             this.colorDiv.firstElementChild.innerHTML = `Pick a new color for ${newText}`;
         }
@@ -700,10 +722,12 @@ var Popup = class Popup {
     show() {
         if (this.moveDiv) { this.updateMoveTo(); }
         if (this.copyDiv) { this.updateCopyTo(); }
+        if (this.assocDiv) { this.updateAssocWith();}
         if (this.colorPicker) {
             this.colorPicker.setColor(this.treeItem.color || "#000000", true);
         }
-        if (this.renameDiv || !this?.moveDiv?.hidden || !this?.copyDiv?.hidden || this.colorDiv) {
+        if (this.renameDiv || !this?.moveDiv?.hidden || !this?.copyDiv?.hidden 
+            || !this?.assocDiv?.hidden || this.colorDiv) {
             this.popup.style.display = "block";
         }
     }
@@ -744,6 +768,19 @@ var Popup = class Popup {
         else {
             copyDiv.hidden = false;
             copyTo.forEach(dest => this.addCopyRadio(dest));
+        }
+    }
+
+    updateAssocWith() {
+        const assocDiv = this.assocDiv;
+        while (assocDiv.children[1]) {
+            assocDiv.removeChild(assocDiv.lastChild);
+        }
+        const assocWith = this.treeItem.expandAssocWith();
+        if (assocWith.length == 0) { assocDiv.hidden = true; }
+        else {
+            assocDiv.hidden = false;
+            assocWith.forEach(dest => this.addAssocRadio(dest));
         }
     }
 
@@ -798,6 +835,26 @@ var Popup = class Popup {
                 dest.sort("startTime");
             }
             dest.open();
+            radioButton.checked = false;
+            this.hide();
+        });
+    }
+
+    addAssocRadio(destId) {
+        const dest = TreeItem.byId[destId];
+
+        const radioDiv = htmlToElement("<div><label>"
+                                       + `<input type="radio" name="${this.treeItem.id}-radios"`
+                                       + `autocomplete="off"> ${destId}</label><br></div>`);
+        const radioButton = radioDiv.firstElementChild.firstElementChild;
+
+        this.assocDiv.append(radioDiv);
+
+        radioButton.addEventListener("change", () => {
+            //add functionality to associate with speakers here
+            dest.li.insertBefore(this.treeItem.li.children[6].firstElementChild,
+                                 dest.li.children[4]);
+            //add something to see if its clicked and delete the image if it is
             radioButton.checked = false;
             this.hide();
         });
@@ -1258,6 +1315,7 @@ var Group = class Group extends TreeItem {
         const expanded = expandGroups(copyToAsTreeItems, [this.id]);
         return TreeItem.treeItemsToIds(expanded);
     }
+    
 
     /**
      * Gets this group's `Segment`s.
@@ -1671,6 +1729,144 @@ var Segment = class Segment extends TreeItem {
         const expanded = expandGroups(copyToAsTreeItems, [this.parent.id]);
         return TreeItem.treeItemsToIds(expanded);
     }
+    
 }
 
-export { TreeItem, Popup, GroupOfGroups, Group, Segment };
+/**
+ * A `TreeItem` for a face from clustering face detection on the video
+ * @extends TreeItem
+ */
+var Face  = class Face extends TreeItem {
+
+    /**
+     * An object containing all `Faces`s by their id.
+     * Key is id, value is corresponding `Face`:  {id: `Face`}
+     * @type {Object.<string, Face>}
+     * @static
+     */
+     static byId = {};
+
+     /**
+     * HTML strings for the remove icons for `Face`s in the tree
+     * @type {Object.<string, string>}
+     * @static
+     */
+     static icons = segmentIcons;
+
+     /**
+     * Names of properties to get in `getProperties`.
+     * @type {!Array.<string>}
+     * @static
+     */
+    static properties = ["treeText"];
+
+    /**
+     * Path to image displayed for a face
+     * @type {string}
+     */
+    imagePath;
+
+    /**
+     * Button that links to a page with every single face in this cluster
+     * @type {string}
+     */
+    linkButton;
+
+     /**
+     * @param {string} id - The unique identifier to give the `TreeItem`.
+     * @param {?Object.<string, any>=} options - Options to customize the `TreeItem`.
+     * @param {?Group=} options.parent - The `Group` that contains the item in its nested
+     *      content.
+     * @param {string=} options.text - The text to show in the item's span (and therefore in the
+     *      tree). If `null`, `id` is used.
+     * @param {boolean} [options.removable=true] - Indicates if the item can be removed from the
+     *      tree.
+     * @param {boolean} [options.renamable=false] - Indicates if the item can be renamed.
+     * @param {?Array.<string>=} [options.assocWith] - An array of the ids of `TreeItem`s that the
+     *      Face can be associated with. `null` if the Face isn't able to be associated.
+     * @param {string=} options.dir - The folder representing the clusters of faces for this video
+     * @param {string=} options.imagePath - The name of the image shown for this face
+     * @throws {Error} If a `TreeItem` with `id` already exists.
+     */
+    constructor(id, { parent = null, text = null, removable = true, renamable = false, 
+                      assocWith = null, dir = null, imagePath = null } = {}) {
+        // (can't use 'this' until after super() call,
+        // so can't get rid of playButton, etc. until after super())
+        super(id, { text, removable, renamable, render: false, assocWith: assocWith });
+
+        this.render();
+        this.parent = parent;
+        this.playButton.style.display = "none";
+        this.loopButton.style.display = "none";
+        //rel="noopener noreferrer" is there to avoid tab nabbing
+        const linkButton = htmlToElement(`<a href="/clustered-faces?faceFolder=`
+                                         + `${this.id}&inFaceFolder="true"` 
+                                         + ` style="text-decoration:none;"`
+                                         + ` target="_blank" rel="noopener noreferrer"`
+                                         + ` class="button-on">`
+                                         + `${this.constructor.icons.image}</a>`);
+
+        this.linkbutton = linkButton;
+        this.removeButton.after(linkButton);
+
+        //change width and height here if you want a different sized image to show
+        const imageLi = htmlToElement(`<li><img src='faceClusters/${dir}/${id}/${imagePath}'`
+                                      + ` width = 100 height = 100` 
+                                      + ` alt="Example image of face"/></li>`);
+        //store previous html of image to reset its position when the image is clicked
+        imageLi.addEventListener("click", () => {
+            //nested should be the 2nd to last child, where popup is the last,
+            //just like happens in the next 3 lines 
+            this.li.children[this.li.children.length-2].appendChild(imageLi);
+        });
+        var nest = this.li.lastElementChild;
+        nest.appendChild(imageLi);
+        this.popup = new Popup(this);
+    }
+
+    /**
+     * The text shown in `span` (and therefore in the tree).
+     * @type {string}
+     */
+    get treeText() { return this.text; }  // backwards compatibility (database expects 'treeText')
+
+    /**
+     * The `Group` that contains the Face in its nested content.
+     * @type {!Group}
+     */
+    get parent() { return super.parent; }
+    set parent(newParent) {
+        super.parent = newParent;  // call TreeItem's setter for parent
+    }
+
+    /**
+     * The path to the image displayed for this face
+     * @type {string}
+     */
+    get imagePath() { return this.imagePath; }
+    set imagePath(path) { this.imagePath = path; }
+
+    /** Initialize the CSS styling of the `Segment` */
+    style() {
+        this.li.style.fontSize = "12px";
+        this.checkbox.style.transform = "scale(0.85)";
+    }
+
+    /** Removes this `Face` from the tree and from Peaks */
+    remove() {
+        super.remove();
+        //add something to move folder out of cluster to a "recycle bin"
+    }
+
+    /**
+     * Converts `assocWith` to `TreeItem`s and expands the groups.
+     */
+    expandAssocWith() {
+        const assocWithAsTreeItems = TreeItem.idsToTreeItems(this.assocWith);
+        const expanded = expandGroups(assocWithAsTreeItems, [this.id]);
+        return TreeItem.treeItemsToIds(expanded);
+    }
+
+}
+
+export { TreeItem, Popup, GroupOfGroups, Group, Segment, Face };

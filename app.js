@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 
 const index = require("./routes/index-route");
+const clusteredFaces = require('./routes/face-cluster-route')
 const viz = require("./routes/viz-route");
 const login = require("./routes/login-route");
 const changePassword = require("./routes/change-password-route");
@@ -52,9 +53,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(checkAuthentification)
 
-app.use("/", index);
-app.use("/viz", viz);
-app.use("/login", login);
+app.use('/', index);
+app.use('/clustered-faces', clusteredFaces);
+app.use('/viz', viz);
+app.use('/login', login);
 app.use("/change-password", changePassword);
 app.use("/settings", settings);
 
@@ -65,6 +67,40 @@ app.get("/logout", (req, res) => {
     return;
 });
 
+app.get("/clustered-files", (req, res) => {
+  const exclude = new Set([".DS_Store"]);
+  console.log(req.session);
+  const files = {};
+  const commonDir = "data/faceClusters/" + req.session.dir + "/";
+  files.cluster = fs.readdirSync(commonDir).filter(fileName => !exclude.has(fileName));
+  files.inFaceFolder = req.session.inFaceFolder;
+  files.dir = req.session.dir;
+  if (req.session.inFaceFolder == true) { 
+    faceFolder = req.session.faceFolder
+    files.faceFolder = faceFolder;
+  }
+  else{//serve an image from each cluster to viz for display
+    const imageFiles = {};
+    files.cluster.forEach(function (folder) {
+      images = fs.readdirSync(commonDir + folder).filter(fileName => !exclude.has(fileName));
+      noImageYet = true;
+      counter = 0;
+      while(noImageYet){ //grab first image in cluster and send to viz
+        fileName = images[counter];
+        if(path.extname(fileName) === ".jpg"){
+          noImageYet = false;
+          imageFiles[folder] = fileName;
+        }
+      }
+    });
+
+    files.images = imageFiles;
+    files.dir = req.session.dir;
+  }
+  
+  res.send(files);
+});
+
 app.get("/filelist", (req, res) => {
     // I just used a Set because Set.has() should be faster than Array.includes()
     // files to exclude from the file list. ".DS_STORE" is a hidden file on mac in all folders
@@ -72,6 +108,7 @@ app.get("/filelist", (req, res) => {
     const files = {};
     files.audio = fs.readdirSync("data/audio").filter(fileName => !exclude.has(fileName));
     files.video = fs.readdirSync("data/video").filter(fileName => !exclude.has(fileName));
+    files.cluster = fs.readdirSync("data/faceClusters").filter(fileName => !exclude.has(fileName));
     res.send(files);
 });
 
