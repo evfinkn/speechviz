@@ -130,7 +130,7 @@ def create_device_data_arrays(devices, requested_streams):
     return device_data_arrays
 
 
-def format_data_record(data_record, stream_id):
+def format_data_record(data_record, stream_id, requested_streams):
     fields = requested_streams[stream_id]
     if fields is ...:
         formatted_data = list(data_record.values())
@@ -320,7 +320,7 @@ def extract_data(file,
         calib = metadata["tags"]["calib_json"]
         metadata = util.recurse_loads(metadata)
 
-        arrays = create_device_data_arrays(metadata["devices"])
+        arrays = create_device_data_arrays(metadata["devices"], requested_streams)
         indices = dict.fromkeys(arrays.keys(), 0)
 
         while (info_line := metadata_file.readline()) != "":  # loop through records of the streams
