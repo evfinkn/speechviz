@@ -61,7 +61,8 @@ requested_streams = {  # what fields from the data of the streams should be save
 
 
 def get_device_stream_id(device):
-    """ Gets the stream ID from the dict of a device, i.e. "1201-1" """
+    """Gets the stream ID from the dict of a device, i.e. "1201-1".
+    """
     return f"{device['device_type_id']}-{device['device_instance_id']}"
 
 
@@ -142,7 +143,8 @@ def format_data_record(data_record, stream_id, requested_streams):
     
     
 def build_dict_from_dict_list(dict_list, out_dict=None):
-    """ Builds a dict from an array of dicts with keys "name" and "value" """
+    """Builds a dict from an array of dicts with keys "name" and "value".
+    """
     if out_dict is None:
         out_dict = {}
     for d in dict_list:
@@ -167,10 +169,11 @@ create_video_script = f"{scripts_dir}/create-video.sh"
 
 
 def create_video(output_dir, stream, keep_images=False, verbose=0):
-    """ Creates an mp4 video file from a directory of images """
     if verbose:
         print(f"Creating the video for {stream}")
         start_time = time.perf_counter()
+    """Creates an mp4 video file from a directory of images.
+    """
         
     subprocess.run(["bash", create_video_script, f"{output_dir}/{stream}"], capture_output=not verbose)
     subprocess.run(["mv", f"{output_dir}/{stream}/{stream}.mp4", f"{output_dir}/{stream}.mp4"], 
@@ -202,10 +205,8 @@ def load_json_with_nan(s):
 
 
 def route_file(*args, verbose=0, scan_dir=True, **kwargs):
-    """ Handles the different types of files (txt, dir, vrs) that can be input to this scripts """
-    if verbose:
-        print()  # to visually separate the output of each call to extract_data
-    
+    """Handles the different types of files (txt, dir, vrs) that can be input to this scripts.
+    """
     if len(args) == 0:
         args = [os.getcwd()]  # if no file or directory given, use directory script was called from
     elif len(args) > 1:  # if multiple files (or directories) given, run function on each one
@@ -256,7 +257,8 @@ def extract_data(file,
                  keep_metadata=False, 
                  quiet=False, 
                  verbose=0):
-    """ Extract all of the data (videos, audio, and sensor) from a vrs file """
+    """Extract all of the data (videos, audio, and sensor) from a VRS file.
+    """
     
     if not quiet or verbose:
         print(f"Processing {file.path}")
