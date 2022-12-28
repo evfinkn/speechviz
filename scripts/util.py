@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import os
+import glob
 import json
 import random
-import dataclasses
-from collections.abc import Iterable, Iterator
+import subprocess
+from typing import Optional, Union
+from collections.abc import Iterable, Iterator, Callable
 
 import numpy as np
 
@@ -22,8 +26,18 @@ class FileInfo:
         self.dir = directory
         self.name = name
         self.ext = extension
-        
-        
+
+    def __repr__(self) -> str:
+        return self.path
+
+
+def verbose_printer(quiet: bool, verbose: int) -> Callable[[str, int], None]:
+    def inner(string: str, verbose_level: int = 1) -> None:
+        if (verbose_level == 0 and not quiet) or (verbose >= verbose_level):
+            print(string)
+    return inner
+
+
 def flatten(arr):
     for val in arr:
         if isinstance(val, Iterable) and not isinstance(val, str):
@@ -77,7 +91,7 @@ def namespace_pop(namespace, attr_name):
     return attr
 
 
-def random_color_generator(seed: int | None = None) -> Iterator[str]:
+def random_color_generator(seed: Optional[int] = None) -> Iterator[str]:
     """Indefinitely generates random colors as hexadecimal strings.
     
     Parameters
@@ -96,3 +110,106 @@ def random_color_generator(seed: int | None = None) -> Iterator[str]:
         g = rng.randrange(255)
         b = rng.randrange(255)
         yield f"#{r:02x}{g:02x}{b:02x}"
+
+
+def expand_files(files: Union[str, list[str]], wildcard=False) -> Iterator[str]:
+    """Generates an expanded list of files.
+
+    Parameters
+    ----------
+    files : str or list of str
+    wildcard : bool, default=False
+        Whether any of the file paths contain a wildcard ("*") that needs to be expanded.
+
+    Yields
+    ------
+    str
+        If `wildcard` is `False`, this function simply yields the files. Otherwise, this
+        function yields the files expanded from the wildcards in the files.
+    """
+    if isinstance(files, str):
+        files = [files]
+    if not wildcard:
+        yield from files
+    else:
+        yield from flatten([glob.glob(file) for file in files])
+
+
+def mv(srcs: Union[str, list[str]], dest: str, wildcard: bool = False) -> subprocess.CompletedProcess[str]:
+    """Wrapper for the "mv" shell command.
+
+    Parameters
+    ----------
+    srcs : str or list of str
+        The paths of the files to move.
+    dest : str
+        The path to move the files to.
+    wildcard : bool, default=False
+        Whether any of the file paths contain a wildcard ("*") that needs to be expanded.
+
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The completed process containing info about the "mv" command that was run.
+    """
+    return subprocess.run(["mv", *expand_files(srcs, wildcard), dest], capture_output=True)
+
+
+def rm(files: Union[str, list[str]], wildcard: bool = False) -> subprocess.CompletedProcess[str]:
+    """Wrapper for the "rm" shell command.
+    The "-r" and "-f" options are always passed.
+
+    Parameters
+    ----------
+    files : str or list of str
+        The paths of the files to remove.
+    wildcard : bool, default=False
+        Whether any of the file paths contain a wildcard ("*") that needs to be expanded.
+    
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The completed process containing info about the "rm" command that was run.
+    """
+    return subprocess.run(["rm", "-r", "-f", *expand_files(files, wildcard)], capture_output=True)
+
+
+def mkdir(dirs: Union[str, list[str]]) -> subprocess.CompletedProcess[str]:
+    """Wrapper for the "mkdir" shell command.
+
+    Parameters
+    ----------
+    dirs : str or list of str
+        The paths of the directories to create.
+
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The completed process containing info about the "mkdir" command that was run.
+    """
+    return subprocess.run(["mkdir", *expand_files(dirs)], capture_output=True)
+
+
+def ls(dir: str) -> list[str]:
+    """Wrapper for the "ls" shell command.
+
+    Parameters
+    ----------
+    dir : str
+        The path to the directory to list the contents of.
+
+    Returns
+    -------
+    list of str
+        The contents of the directory.
+    """
+    # using expand_files doesn't work because it includes relative path in each file name,
+    # i.e. expand_files(".") returns ["./file1.txt", "./file2.txt"] but the actual ls
+    # command doesn't do that, it gives ["file1.txt", "file2.txt"] which is what we want
+
+    # stdout=subprocess.PIPE makes the output retrievable
+    # .stdout retrieves the output as type bytes
+    # .decode() converts bytes to str
+    # the individual items are separated by newlines so split by newline into list
+    # the last element in the list is always "" so exclude it with [:-1]
+    return subprocess.run(["ls", dir], stdout=subprocess.PIPE).stdout.decode().split("\n")[:-1]
