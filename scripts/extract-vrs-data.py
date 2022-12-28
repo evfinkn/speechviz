@@ -253,12 +253,22 @@ def extract_data(file,
                  headers=True, 
                  rename=True, 
                  nanoseconds=False, 
-                 keep_images=False, 
-                 keep_metadata=False, 
+                 images=False, 
+                 metadata=False, 
                  quiet=False, 
                  verbose=0):
     """Extract all of the data (videos, audio, and sensor) from a VRS file.
     """
+    # I didn't want to name the options stuff like --keep-metadata because then the
+    # opposite would be --no-keep-metadata which doesn't really make sense, but I also
+    # didn't want to name them just the regular --metadata because then the actual data
+    # would have to be named stuff like metadata_obj, so renaming these here is my
+    # compromise
+    save_calib = calib
+    keep_images = images
+    keep_metadata = metadata
+
+    vprint = util.verbose_printer(quiet, verbose)
     
     if not quiet or verbose:
         print(f"Processing {file.path}")
@@ -361,7 +371,7 @@ def extract_data(file,
     if verbose:
         print("Writing files")
         
-    if calib:
+    if save_calib:
         with open(f"{output_dir}/calib.txt", "w") as calib_file:
             calib_file.write(calib)
     for stream, data in arrays.items():
@@ -407,56 +417,51 @@ def extract_data(file,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract sensor data from VRS files.")
-    parser.add_argument("path", 
-                        nargs="*", 
+    parser.add_argument("path",
+                        nargs="*",
                         help="The path to the file to process. If a VRS file, "
                              "processes the VRS file. If a directory, processes "
                              "every VRS file in the directory. If a text file, "
-                             "processes the path on each line")
+                             "processes the path on each line.")
     # parser.add_argument("-o", "--output-dir", 
     #                     help="The path to the directory to save the extracted data in")
-    parser.add_argument("-r", "--reprocess", 
-                        action="store_true", 
-                        help="Reprocess VRS files detected to have already been processed")
-    # parser.add_argument("--no-calib", 
-    #                     action="store_true", 
-    #                     help="Don't save the calibration data")
+    parser.add_argument("-r", "--reprocess",
+                        action=argparse.BooleanOptionalAction, # allows --no-reprocess
+                        default=False,
+                        help="Reprocess VRS files detected to have already been processed.")
+    parser.add_argument("--calib",
+                        action=argparse.BooleanOptionalAction,
+                        default=True,
+                        help="Save the calibration data required for create_poses.py. Default is True.")
     # parser.add_argument("--no-headers",
     #                     action="store_true", 
     #                     help="Don't add the headers to the CSV files")
-    parser.add_argument("--no-rename", 
-                        action="store_true", 
-                        help="Don't rename the audio and video files")
+    parser.add_argument("--rename", 
+                        action=argparse.BooleanOptionalAction,
+                        default=True,
+                        help="Rename the audio and video files from the stream's id to the stream's"
+                             "device name. Default is True.")
     # parser.add_argument("--nanoseconds", 
     #                     action="store_true", 
     #                     help="Save the data's timestamps in nanoseconds instead of seconds")
-    parser.add_argument("--keep-images", 
+    parser.add_argument("--images",
+                        action=argparse.BooleanOptionalAction,
+                        default=False,
+                        help="Save the cameras' image files. Default is False.")
+    parser.add_argument("--metadata",
+                        action=argparse.BooleanOptionalAction,
+                        default=False,
+                        help="Save the metadata.jsons file. Default is False.")
+    parser.add_argument("-q", "--quiet",
                         action="store_true",
-                        help="Don't delete the camera images after creating the videos")
-    parser.add_argument("--keep-metadata", 
-                        action="store_true", 
-                        help="Don't delete the metadata.jsons file after extracting the data")
-    parser.add_argument("-q", "--quiet", 
-                        action="store_true", 
-                        help="Don't print anything")
-    parser.add_argument("-v", "--verbose", 
-                        action="count", 
-                        default=0, 
-                        help="Print various debugging information")
+                        help="Don't print anything.")
+    parser.add_argument("-v", "--verbose",
+                        action="count",
+                        default=0,
+                        help="Print various debugging information.")
     
     args = parser.parse_args()
-    if not args.quiet or args.verbose:
-        start_time = time.perf_counter()
-    route_file(*args.path, 
-               # output_dir=args.output_dir, 
-               reprocess=args.reprocess, 
-               calib=True, 
-               headers=True, 
-               rename=not args.no_rename, 
-               nanoseconds=False, 
-               keep_images=args.keep_images, 
-               keep_metadata=args.keep_metadata, 
-               quiet=args.quiet, 
-               verbose=args.verbose)
+    start_time = time.perf_counter()
+    route_file(*util.namespace_pop(args, "path"), **vars(args))
     if not args.quiet or args.verbose:
         print(f"Extraction took a total of {time.perf_counter() - start_time:.4f} seconds")
