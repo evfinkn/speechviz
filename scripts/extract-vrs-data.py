@@ -169,20 +169,19 @@ create_video_script = f"{scripts_dir}/create-video.sh"
 
 
 def create_video(output_dir, stream, keep_images=False, verbose=0):
-    if verbose:
-        print(f"Creating the video for {stream}")
-        start_time = time.perf_counter()
     """Creates an mp4 video file from a directory of images.
     """
+    # quiet doesn't matter because we only use verbose_level > 0 in this function
+    vprint = util.verbose_printer(False, verbose)
+    vprint(f"Creating the video for {stream}")
+    start_time = time.perf_counter()
         
     subprocess.run(["bash", create_video_script, f"{output_dir}/{stream}"], capture_output=not verbose)
-    subprocess.run(["mv", f"{output_dir}/{stream}/{stream}.mp4", f"{output_dir}/{stream}.mp4"], 
-                   capture_output=True)
+    util.mv(f"{output_dir}/{stream}/{stream}.mp4", f"{output_dir}/{stream}.mp4")
     if not keep_images:
-        subprocess.run(["rm", "-r", "-f", f"{output_dir}/{stream}"], capture_output=True)
+        util.rm(f"{output_dir}/{stream}")
     
-    if verbose:
-        print(f"Created the video for {stream} in {time.perf_counter() - start_time:.4f} seconds")
+    vprint(f"Created the video for {stream} in {time.perf_counter() - start_time:.4f} seconds")
 
 
 # It might be surprising, but using replace + orjson is actually faster than using other
@@ -216,11 +215,11 @@ def route_file(*args, verbose=0, scan_dir=True, **kwargs):
     
     path = args[0]  # args[0] is--at this point--the only argument in args
     file = util.FileInfo(path)
+    vprint = util.verbose_printer(False, verbose)
     
     # if given text file, run the function on each line
     if file.ext == ".txt":
-        if verbose:
-            print(f"{file.path} is a text file. Running extract_data on the file on each line...")
+        vprint(f"{file.path} is a text file. Running extract_data on the file on each line...")
         with open(file.path) as txtfile:
             for line in txtfile.read().split("\n"):
                 route_file(line, verbose=verbose, scan_dir=scan_dir, **kwargs)
@@ -228,22 +227,29 @@ def route_file(*args, verbose=0, scan_dir=True, **kwargs):
     
     # route every file in file.path if it is a dir and scan_dir is True
     elif file.ext == "" and scan_dir:
-        ls = subprocess.run(["ls", file.path], stdout=subprocess.PIPE).stdout.decode().split("\n")[:-1]  # get files in dir
-        if "vrs" in ls:  # if "vrs" dir is in file.path, run extract_data on "vrs" dir
-            if verbose:
-                print(f"Detected vrs directory. Running extract_data on {file.path}/vrs")
+        dir_files = util.ls(file.path)
+        if "vrs" in dir_files:  # if "vrs" dir is in file.path, run extract_data on "vrs" dir
+            vprint(f"Detected vrs directory. Running extract_data on {file.path}/vrs")
             route_file(f"{file.path}/vrs", verbose=verbose, scan_dir=scan_dir, **kwargs)
         else:
-            if verbose:
-                print(f"{file.path} is a directory. Running extract_data on each file...")
+            vprint(f"{file.path} is a directory. Running extract_data on each file...")
             # output_dir = kwargs["output_dir"]
-            for dir_file in ls:
+            for dir_file in dir_files:
                 # if output_dir:
                 #     kwargs["output_dir"] = f"{output_dir}/{file.name}"
                 route_file(f"{file.path}/{dir_file}", verbose=verbose, scan_dir=False, **kwargs)
     
     elif file.ext.casefold() == ".vrs":
         extract_data(file, verbose=verbose, **kwargs)
+
+
+# The next functions are separate from the main function just in case another script
+# wants to import and use them, as well as for readability
+def vrs_extract_all(vrsfile, to, verbose=0):
+    """Wrapper the "vrs extract-all" shell command.
+    """
+    return subprocess.run(["vrs", "extract-all", vrsfile.path, "--to", to], 
+                          capture_output=verbose < 2, check=True)
 
 
 def extract_data(file, 
@@ -270,61 +276,50 @@ def extract_data(file,
 
     vprint = util.verbose_printer(quiet, verbose)
     
-    if not quiet or verbose:
-        print(f"Processing {file.path}")
-        start_time = time.perf_counter()
+    vprint(f"Processing {file.path}", 0)
+    start_time = time.perf_counter()
         
     data_dir = get_data_dir(file.dir)
     if not data_dir:
         raise Exception("Couldn't find the \"data\" directory.")
     output_dir = f"{data_dir}/graphical/{file.name}"
-    if verbose:
-        print(f"Data directory path is '{data_dir}'")
-        print(f"Output directory path is '{output_dir}'")
-            
+    vprint(f"Data directory path is '{data_dir}'")
+    vprint(f"Output directory path is '{output_dir}'")
+    
     # check if vrs has already been processed and only process if reprocess is True
     if os.path.exists(output_dir) and not reprocess:
-        if not quiet or verbose:
-            print(f"{file.path} has already been processed. To reprocess it, use the '-r' argument")
+        vprint(f"{file.path} has already been processed. To reprocess it, use the '-r' argument", 0)
         return
-    subprocess.run(["mkdir", output_dir], capture_output=True)
+    util.mkdir(output_dir)
     
-    if verbose:
-        print("Running \"vrs extract-all\"")
-        vrs_start_time = time.perf_counter()
-    subprocess.run(["vrs", "extract-all", file.path, "--to", output_dir], capture_output=verbose < 2, check=True)
-    if verbose:
-        print(f"\"vrs extract-all\" finished in {time.perf_counter() - vrs_start_time:.4f} seconds")
+    vprint("Running \"vrs extract-all\"")
+    vrs_start_time = time.perf_counter()
+    vrs_extract_all(file, output_dir, verbose)
+    vprint(f"\"vrs extract-all\" finished in {time.perf_counter() - vrs_start_time:.4f} seconds")
         
-    if verbose:
-        print("Creating videos from the images")
-        video_start_time = time.perf_counter()
+    vprint("Creating videos from the images")
+    video_start_time = time.perf_counter()
     
     for stream in ("1201-1", "1201-2", "211-1", "214-1"):
         create_video(output_dir, stream, keep_images, verbose)
     
-    if verbose:
-        print(f"Created the videos in {time.perf_counter() - video_start_time:.4f} seconds")
-        print("Moving the audio file")
+    vprint(f"Created the videos in {time.perf_counter() - video_start_time:.4f} seconds")
 
-    # str instead of list and shell=True to make shell run command so can use the wildcard
-    subprocess.run(f"mv {output_dir}/231-1/* {output_dir}/231-1.wav", shell=True, capture_output=True)
-    subprocess.run(["rm", "-r", "-f", f"{output_dir}/231-1"], capture_output=True)
+    util.mv(f"{output_dir}/231-1/*", f"{output_dir}/231-1.wav", True)
+    util.rm(f"{output_dir}/231-1")
     
     if rename:
-        if verbose:
-            print("Renaming the audio and video files")
+        vprint("Renaming the audio and video files")
         old_path = f"{output_dir}/231-1.wav"
         new_path = f"{output_dir}/{STREAM_NAMES['231-1']}.wav"
-        subprocess.run(["mv", old_path, new_path], capture_output=True)
+        util.mv(old_path, new_path)
         for stream in ("1201-1", "1201-2", "211-1", "214-1"):
             old_path = f"{output_dir}/{stream}.mp4"
             new_path = f"{output_dir}/{STREAM_NAMES[stream]}.mp4"
-            subprocess.run(["mv", old_path, new_path], capture_output=True)
+            util.mv(old_path, new_path)
         
-    if verbose:
-        print("Extracting sensor data from metadata.jsons")
-        metadata_start_time = time.perf_counter()
+    vprint("Extracting sensor data from metadata.jsons")
+    metadata_start_time = time.perf_counter()
         
     with open(f"{output_dir}/metadata.jsons", encoding="utf-8") as metadata_file:
         metadata = load_json_with_nan(metadata_file.readline())  # main metadata of vrs file
@@ -352,9 +347,8 @@ def extract_data(file,
                 arrays[stream][indices[stream]] = formatted_data
                 indices[stream] += 1
                 
-    if verbose:
-        print(f"Extracting sensor data finished in {time.perf_counter() - metadata_start_time:.4f} seconds")
-        print("Converting to unix timestamps")
+    vprint(f"Extracting sensor data finished in {time.perf_counter() - metadata_start_time:.4f} seconds")
+    print("Converting to unix timestamps")
         
     first_device_timestamp, first_unix_timestamp = arrays["285-1"][0]
     if not nanoseconds:
@@ -368,8 +362,7 @@ def extract_data(file,
         data["capture_timestamp_ns"] -= first_device_timestamp
         data["capture_timestamp_ns"] += first_unix_timestamp
         
-    if verbose:
-        print("Writing files")
+    vprint("Writing files")
         
     if save_calib:
         with open(f"{output_dir}/calib.txt", "w") as calib_file:
@@ -406,13 +399,11 @@ def extract_data(file,
                 writer.writerow(util.flatten(row))
                 
     if not keep_metadata:
-        if verbose:
-            print("Removing metadata.jsons")
-        subprocess.run(["rm", "-f", f"{output_dir}/metadata.jsons"], capture_output=True)
-    subprocess.run(["rm", "-f", f"{output_dir}/ReadMe.md"], capture_output=True)
+        vprint("Removing metadata.jsons")
+        util.rm(f"{output_dir}/metadata.jsons")
+    util.rm(f"{output_dir}/ReadMe.md")
 
-    if not quiet or verbose:
-        print(f"Processed {file.path} in {time.perf_counter() - start_time:.4f} seconds")
+    vprint(f"Processed {file.path} in {time.perf_counter() - start_time:.4f} seconds", 0)
 
 
 if __name__ == "__main__":
