@@ -5,6 +5,7 @@ import re
 import math
 import json
 import time
+import pathlib
 import argparse
 import subprocess
 from typing import Optional
@@ -13,6 +14,9 @@ import numpy as np
 import librosa
 
 import util
+
+AUDIO_FILES = {".mp3", ".wav", ".flac", ".ogg", ".opus"}
+VIDEO_FILES = {".mp4", ".mov"}
 
 
 def format_segment(start, end, color, label):
@@ -239,22 +243,8 @@ def route_file(*args, verbose=0, scan_dir=True, **kwargs):
             for dir_file in dir_files:
                 route_file(f"{file.path}/{dir_file}", verbose=verbose, scan_dir=False, **kwargs)
     
-    elif file.ext.casefold() in (".mp4", ".mov"):
-        if verbose:
-            print(f"{file.path} is a video. Extracting the audio")
-            
-        audio_path = f"{file.dir}/{file.name}.wav"
-        ffmpeg(file.path, audio_path, verbose)
-        # could just call process_audio directly on audio_path, but I think it makes more sense
-        # to have the next elif statement be the only place process_audio is called
-        # FIXME: actually I'm fairly certain this whole elif block can be deleted
-        # process_audio converts to wav already
-        # ACTUALLY maybe it wouldn't work since ffmpeg is after audiowaveform
-        route_file(audio_path, verbose=verbose, scan_dir=scan_dir, **kwargs)
-        util.rm(audio_path)
-    
-    # if file.path is a sound file, process it
-    elif file.ext.casefold() in (".mp3", ".wav", ".flac", ".ogg", ".opus", ".mp4", ".mov"):
+    # if file.path is an audio or video file, process it
+    elif file.ext.casefold() in AUDIO_FILES or file.ext.casefold() in VIDEO_FILES:
         process_audio(file, verbose=verbose, **kwargs)
 
 
@@ -353,39 +343,52 @@ def process_audio(file, auth_token, reprocess=False, quiet=False, verbose=0, spl
     segs_dir = file.dir if not separate_dirs else f"{data_dir}/segments"
     segs_path = f"{segs_dir}/{file.name}-segments.json"
 
+    # if the audio isn't in wav format, it'll need to be converted to wav (pipeline requires wav)
+    made_wav = False
+    if file.ext.casefold() != ".wav":
+        old_path = file.path
+        new_path = f"{file.dir}/{file.name}.wav"
+
     # only recreate the waveform if it doesn't already exist
     if os.path.exists(waveform_path) and not reprocess:
         vprint(f"{waveform_path} already exists. To recreate it, use the -r argument", 0)
     else: # create the waveform
+        # audiowaveform requires an audio file, so convert to wav if file is a video file
+        if file.ext.casefold() in VIDEO_FILES:
+            vprint(f"Creating {new_path}")
+            ffmpeg(old_path, new_path, verbose)
+            file = util.FileInfo(new_path)
+            made_wav = True
         vprint(f"Creating {waveform_path}")
         audiowaveform(file.path, waveform_path, verbose, split_channels)
 
     # check if audio has already been processed and only process if reprocess is passed in as True
     if os.path.exists(segs_path) and not reprocess:
         vprint(f"{file.path} has already been processed. To reprocess it, use the '-r' argument", 0)
-        return
-
-    # if the audio isn't in wav format, convert it to wav (pipeline requires wav)
-    made_wav = False
-    if file.ext != ".wav":
-        old_path = file.path
-        file.path = f"{file.dir}/{file.name}.wav"
-        vprint(f"Creating {file.path}")
-        ffmpeg(old_path, file.path, verbose)
-        made_wav = True
-    
-    samples, sr = librosa.load(file.path, sr=None)
-    duration = librosa.get_duration(y=samples, sr=sr)
-    
-    segs = []
-    segs.append(get_diarization(file, auth_token, samples, sr, verbose))
-    segs.extend(get_vad(file, auth_token, duration, verbose))
-
-    # save the segments
-    vprint(f"Creating {segs_path}")
-    with open(segs_path, "w") as segs_file:
-        json.dump(segs, segs_file)
+    else:
+        # I know that this convert to wav part is duplicate code as above, but the original way
+        # was that the video files were converted to wav before process_audio was called, even
+        # though they might not need to be reprocessed (meaning time is wasted converting)
+        # so this fixes that
+        # if we didn't need to make the waveform, the file might still not be a wav file
+        if file.ext.casefold() != ".wav":
+            vprint(f"Creating {new_path}")
+            ffmpeg(old_path, new_path, verbose)
+            file = util.FileInfo(new_path)
+            made_wav = True
+            
+        samples, sr = librosa.load(file.path, sr=None)
+        duration = librosa.get_duration(y=samples, sr=sr)
         
+        segs = []
+        segs.append(get_diarization(file, auth_token, samples, sr, verbose))
+        segs.extend(get_vad(file, auth_token, duration, verbose))
+
+        # save the segments
+        vprint(f"Creating {segs_path}")
+        with open(segs_path, "w") as segs_file:
+            json.dump(segs, segs_file)
+            
     # if converted to wav, remove that wav file (since it was only needed for the diarization
     if made_wav:
         vprint(f"Deleting {file.path}")
