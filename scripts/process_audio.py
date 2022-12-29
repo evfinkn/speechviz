@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import re
 import math
@@ -5,6 +7,7 @@ import json
 import time
 import argparse
 import subprocess
+from typing import Optional
 
 import numpy as np
 import librosa
@@ -51,15 +54,12 @@ def rms(powers):  # give it a list, and it finds the root mean squared
     squares_sum = np.sum(np.square(powers))
     if len(powers) != 0:
         return math.sqrt(squares_sum / (len(powers)))
-    else:
-        return 0
+    return 0
 
 
 def snr(signal, noise):
     signal_rms = rms(signal) if not isinstance(signal, float) else signal
     noise_rms = rms(noise) if not isinstance(noise, float) else noise
-    print("Signal RMS is " + str(signal_rms))
-    print("Noise RMS is " + str(noise_rms))
     return (signal_rms - noise_rms) / noise_rms
 
 
@@ -74,7 +74,7 @@ def samples_from_times(times, samples, sr):
     return samps
 
 
-def snr_from_times(signal_times, samples, sr, *, noise_rms=None):
+def snr_from_times(signal_times, samples, sr, noise_rms=None):
     signal_samps = samples_from_times(signal_times, samples, sr)
     signal_powers = np.square(signal_samps)
     if noise_rms is None:
@@ -85,25 +85,27 @@ def snr_from_times(signal_times, samples, sr, *, noise_rms=None):
 
 
 def get_diarization(file, auth_token, samples, sr, verbose=0):
-    # use global pipeline so it doesn't need to be re-initialized (which is time-consuming)
-    global diar_pipe, Pipeline
-
-    if not "Pipeline" in globals():
-        from pyannote.audio import Pipeline
+    # use global diar_pipe so it doesn't need to be re-initialized (which is time-consuming)
+    global diar_pipe
+    # lazy import Pipeline because it takes a while to import. If it were imported at the top,
+    # then someone doing `python process_audio.py -h` would have to wait a while just to see the
+    # help message. We don't need to do `if "Pipeline" in globals()` because python caches imports,
+    # so it isn't actually getting reimported every time get_diarization is called
+    from pyannote.audio import Pipeline # lazy import because 
     
+    # quiet doesn't matter because we only use verbose_level > 0 in this function
+    vprint = util.verbose_printer(False, verbose)
+
     if not "diar_pipe" in globals():  # diar_pipe hasn't been initialized yet
-        if verbose:
-            print("Initializing diarization pipeline")
+        vprint("Initializing diarization pipeline")
         diar_pipe = Pipeline.from_pretrained("pyannote/speaker-diarization@2.1", use_auth_token=auth_token)
     
-    if verbose:
-        print("Running the diarization pipeline")
-        start_time = time.perf_counter()
+    vprint("Running the diarization pipeline")
+    start_time = time.perf_counter()
     diar = diar_pipe(file.path)
-    if verbose:
-        print(f"Diarization pipeline completed in {time.perf_counter() - start_time:.4f} seconds")
-        print("Looping through the annotations")
-        loop_start_time = time.perf_counter()
+    vprint(f"Diarization pipeline completed in {time.perf_counter() - start_time:.4f} seconds")
+    vprint("Looping through the annotations to create the speaker segments")
+    loop_start_time = time.perf_counter()
 
     # format the speakers segments for peaks
     colors = util.random_color_generator(2)
@@ -141,20 +143,18 @@ def get_diarization(file, auth_token, samples, sr, verbose=0):
         diar_times = librosa.samples_to_time(diar_times, sr=sr)
         diar_times = [(diar_times[i], diar_times[i + 1]) for i in range(0, len(diar_times), 2)]
 
-    if verbose:
-        print(f"Loop completed in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
-        print("Calculating SNRs")
-        snr_start_time = time.perf_counter()
+    vprint(f"Speaker segments created in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
+    vprint("Calculating SNRs")
+    snr_start_time = time.perf_counter()
     
     noise_times = get_complement_times(diar_times, len(samples) / sr)
     noise_samps = samples_from_times(noise_times, samples, sr)
     noise_powers = np.square(noise_samps)
     noise_rms = rms(noise_powers)
-    spkrs_snrs = {spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms=noise_rms) for spkr in spkrs}
+    spkrs_snrs = {spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms) for spkr in spkrs}
     
-    if verbose:
-        print(f"SNRs calculated in {(time.perf_counter() - snr_start_time) * 1000:.4f} milliseconds")
-        print(f"Diarization completed in {time.perf_counter() - start_time:.4f} seconds")
+    vprint(f"SNRs calculated in {(time.perf_counter() - snr_start_time) * 1000:.4f} milliseconds")
+    vprint(f"get_diarization completed in {time.perf_counter() - start_time:.4f} seconds")
 
     # TODO: Change this to return a dict and then change viz.js to take a dict
     # because this is confusing. It could be something like:
@@ -166,24 +166,22 @@ def get_diarization(file, auth_token, samples, sr, verbose=0):
 
 def get_vad(file, auth_token, duration, verbose=0):
     # use global pipeline so it doesn't need to be re-initialized (which is time-consuming)
-    global vad_pipe, Pipeline
-    
-    if not "Pipeline" in globals():
-        from pyannote.audio import Pipeline
+    global vad_pipe
+    from pyannote.audio import Pipeline
+
+    # quiet doesn't matter because we only use verbose_level > 0 in this function
+    vprint = util.verbose_printer(False, verbose)
     
     if not "vad_pipe" in globals():  # vad_pipe hasn't been initialized yet
-        if verbose:
-            print("Initializing VAD pipeline")
+        vprint("Initializing VAD pipeline")
         vad_pipe = Pipeline.from_pretrained("pyannote/voice-activity-detection", use_auth_token=auth_token)
     
-    if verbose:
-        print("Running the VAD pipeline")
-        start_time = time.perf_counter()
+    vprint("Running the VAD pipeline")
+    start_time = time.perf_counter()
     vad = vad_pipe(file.path)
-    if verbose:
-        print(f"VAD pipeline completed in {time.perf_counter() - start_time:.4f} seconds")
-        print("Looping through the annotations")
-        loop_start_time = time.perf_counter()
+    vprint(f"VAD pipeline completed in {time.perf_counter() - start_time:.4f} seconds")
+    vprint("Looping through the annotations to create the VAD segments")
+    loop_start_time = time.perf_counter()
 
     # format the vad segments for peaks
     vad_segs = []
@@ -194,16 +192,14 @@ def get_vad(file, auth_token, duration, verbose=0):
         vad_segs.append(format_segment(start, end, "#5786c9", "VAD"))
         vad_times.append((start, end))
         
-    if verbose:
-        print(f"Loop completed in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
-        print("Creating the non-VAD segments")
-        non_vad_start_time = time.perf_counter()
+    vprint(f"VAD segments created in {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds")
+    vprint("Creating the non-VAD segments")
+    non_vad_start_time = time.perf_counter()
         
     non_vad_segs = get_complement_segments(vad_segs, duration, "#b59896", "Non-VAD", times=vad_times)
     
-    if verbose:
-        print(f"Non-VAD created in {(time.perf_counter() - non_vad_start_time) * 1000:.4f} milliseconds")
-        print(f"VAD completed in {time.perf_counter() - start_time:.4f} seconds")
+    vprint(f"Non-VAD segments created in {(time.perf_counter() - non_vad_start_time) * 1000:.4f} milliseconds")
+    vprint(f"get_vad completed in {time.perf_counter() - start_time:.4f} seconds")
         
     # TODO: See TODO at end of get_diarization
     return (("VAD", vad_segs), ("Non-VAD", non_vad_segs))
@@ -219,11 +215,11 @@ def route_file(*args, verbose=0, scan_dir=True, **kwargs):
     
     file_path = args[0]  # args[0] is--at this point--the only argument in args
     file = util.FileInfo(file_path)
+    vprint = util.verbose_printer(False, verbose)
     
     # if given text file, run the function on each line
     if file.ext == ".txt":
-        if verbose:
-            print(f"{file.path} is a text file. Running process_audio on the file on each line...")
+        vprint(f"{file.path} is a text file. Running process_audio on the file on each line...")
         with open(file.path) as txtfile:
             for line in txtfile.read().split("\n"):
                 route_file(line, verbose=verbose, scan_dir=scan_dir, **kwargs)
@@ -231,19 +227,16 @@ def route_file(*args, verbose=0, scan_dir=True, **kwargs):
     
     # run process audio on every file in file.path if it is a dir and scan_dir is True
     elif file.ext == "" and scan_dir:
-        ls = subprocess.run(["ls", file.path], stdout=subprocess.PIPE).stdout.decode().split("\n")[:-1]  # get files in dir
-        if "audio" in ls:  # if "audio" dir is in file.path, run process_audio on "audio" dir
-            if verbose:
-                print(f"Detected audio directory. Running process_audio on {file.path}/audio")
+        dir_files = util.ls(file.path)
+        if "audio" in dir_files:  # if "audio" dir is in file.path, run process_audio on "audio" dir
+            vprint(f"Detected audio directory. Running process_audio on {file.path}/audio")
             route_file(f"{file.path}/audio", verbose=verbose, scan_dir=scan_dir, **kwargs)
-        if "video" in ls:  # if "video" dir is in file.path, run process_aduio on "video" dir
-            if verbose:
-                print(f"Detected video directory. Running process_audio on {file.path}/video")
+        if "video" in dir_files:  # if "video" dir is in file.path, run process_aduio on "video" dir
+            vprint(f"Detected video directory. Running process_audio on {file.path}/video")
             route_file(f"{file.path}/video", verbose=verbose, scan_dir=scan_dir, **kwargs)
-        if "audio" not in ls and "video" not in ls:
-            if verbose:
-                print(f"{file.path} is a directory. Running process_audio on each file...")
-            for dir_file in ls:
+        if "audio" not in dir_files and "video" not in dir_files:
+            vprint(f"{file.path} is a directory. Running process_audio on each file...")
+            for dir_file in dir_files:
                 route_file(f"{file.path}/{dir_file}", verbose=verbose, scan_dir=False, **kwargs)
     
     elif file.ext.casefold() in (".mp4", ".mov"):
@@ -251,39 +244,108 @@ def route_file(*args, verbose=0, scan_dir=True, **kwargs):
             print(f"{file.path} is a video. Extracting the audio")
             
         audio_path = f"{file.dir}/{file.name}.wav"
-        subprocess.run(["ffmpeg", "-y", "-i", file.path, audio_path], capture_output=verbose < 2, check=True)
+        ffmpeg(file.path, audio_path, verbose)
         # could just call process_audio directly on audio_path, but I think it makes more sense
         # to have the next elif statement be the only place process_audio is called
         # FIXME: actually I'm fairly certain this whole elif block can be deleted
         # process_audio converts to wav already
+        # ACTUALLY maybe it wouldn't work since ffmpeg is after audiowaveform
         route_file(audio_path, verbose=verbose, scan_dir=scan_dir, **kwargs)
-        subprocess.run(["rm", "-f", audio_path], capture_output=True)
+        util.rm(audio_path)
     
     # if file.path is a sound file, process it
     elif file.ext.casefold() in (".mp3", ".wav", ".flac", ".ogg", ".opus", ".mp4", ".mov"):
         process_audio(file, verbose=verbose, **kwargs)
 
 
+def ffmpeg(
+    input: str,
+    output: str,
+    verbose: int = 0, 
+    input_options: Optional[list[str]] = None,
+    output_options: Optional[list[str]] = None):
+    """Wrapper for the `ffmpeg` command.
+    Supports a single input and output.
+
+    Parameters
+    ----------
+    input : str
+        The file to input into `ffmpeg`.
+    output : str
+        The file for `ffmpeg` to output to. If a file at the path already exists,
+        it will be overwritten.
+    verbose : int, default=0
+        If greater than or equal to 2, `ffmpeg`'s output to stdout will be printed.
+    input_options : list of str, optional
+        `ffmpeg` options to apply to the input file.
+    output_options : list of str, optional
+        `ffmpeg` options to apply to the output file.
+
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The completed process containing info about the `ffmpeg` command that was run.
+    """
+    args = ["ffmpeg", "-y"]
+    if input_options:
+        args.extend(input_options)
+    args.extend(["-i", input])
+    if output_options:
+        args.extend(output_options)
+    args.append(output)
+    return subprocess.run(args, capture_output=verbose < 2, check=True)
+
+
+def audiowaveform(
+    input: str,
+    output: str,
+    verbose: int = 0,
+    split_channels: bool = False,
+    options: Optional[list[str]] = None):
+    """Wrapper for the `audiowaveform` command.
+
+    Parameters
+    ----------
+    input : str
+        The file to input into `audiowaveform`.
+    output : str
+        The file for `audiowaveform` to output to. If a file at the path already exists,
+        it will be overwritten.
+    verbose : int, default=0
+        If greater than or equal to 2, `audiowaveforms`'s output to stdout will be printed.
+    split_channels : boolean, default=False
+        Generate a waveform for each channel instead of merging into 1 waveform.
+    options : list of str, optional
+        Additional options to pass in.
+
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The completed process containing info about the `audiowaveform` command that was run.
+    """
+    args = ["audiowaveform", f"-i{input}", f"-o{output}", "-b", "8"]
+    if split_channels:
+        args.append("--split-channels")
+    if options:
+        args.extend(options)
+    return subprocess.run(args, capture_output=verbose < 2, check=True)
+
+
 def process_audio(file, auth_token, reprocess=False, quiet=False, verbose=0, split_channels=False):
-    global regex  # use global regex so it doesn't need to be re-initialized
+    vprint = util.verbose_printer(quiet, verbose)
+    vprint(f"processing {file.path}", 0)
+    start_time = time.perf_counter()
     
     # check if output is being split between audio, waveforms, and segments directories
     # and if so, get the base directory for the three subdirectories
-    if not quiet or verbose:
-        print(f"processing {file.path}")
-        start_time = time.perf_counter()
-    
     separate_dirs = False
-    if not "regex" in globals():
-        regex = re.compile(r".*(?=/(audio|video)$)")    
-    match = regex.match(file.dir)
+    match = re.match(".*(?=/(audio|video)$)", file.dir)
     if match:
         data_dir = match[0]  # data_dir is file.path for the dir containing audio, waveforms, and segments dirs
-        if verbose:
-            print(f"Separating files into audio, waveforms, and segments directories. Data directory path is '{data_dir}'")
+        vprint(f"Separating files into audio, waveforms, and segments directories. Data directory path is '{data_dir}'")
         separate_dirs = True
-        subprocess.run(["mkdir", f"{data_dir}/waveforms"], capture_output=True)
-        subprocess.run(["mkdir", f"{data_dir}/segments"], capture_output=True)
+        util.mkdir(f"{data_dir}/waveforms")
+        util.mkdir(f"{data_dir}/segments")
             
     # filepaths for the waveform, and segments files
     waveform_dir = file.dir if not separate_dirs else f"{data_dir}/waveforms"
@@ -293,20 +355,14 @@ def process_audio(file, auth_token, reprocess=False, quiet=False, verbose=0, spl
 
     # only recreate the waveform if it doesn't already exist
     if os.path.exists(waveform_path) and not reprocess:
-        if verbose:
-            print(f"{waveform_path} already exists. To recreate it, use the -r argument")
+        vprint(f"{waveform_path} already exists. To recreate it, use the -r argument", 0)
     else: # create the waveform
-        if verbose:
-            print(f"Creating {waveform_path}")
-        if split_channels:
-            subprocess.run(["audiowaveform", f"-i{file.path}", f"-o{waveform_path}", "-b", "8", "--split-channels"], capture_output=verbose < 2, check=True)
-        else:
-            subprocess.run(["audiowaveform", f"-i{file.path}", f"-o{waveform_path}", "-b", "8"], capture_output=verbose < 2, check=True)
+        vprint(f"Creating {waveform_path}")
+        audiowaveform(file.path, waveform_path, verbose, split_channels)
 
     # check if audio has already been processed and only process if reprocess is passed in as True
     if os.path.exists(segs_path) and not reprocess:
-        if not quiet or verbose:
-            print(f"{file.path} has already been processed. To reprocess it, use the '-r' argument")
+        vprint(f"{file.path} has already been processed. To reprocess it, use the '-r' argument", 0)
         return
 
     # if the audio isn't in wav format, convert it to wav (pipeline requires wav)
@@ -314,9 +370,8 @@ def process_audio(file, auth_token, reprocess=False, quiet=False, verbose=0, spl
     if file.ext != ".wav":
         old_path = file.path
         file.path = f"{file.dir}/{file.name}.wav"
-        if verbose:
-            print(f"Creating {file.path}")
-        subprocess.run(["ffmpeg", "-y", "-i", old_path, file.path], capture_output=verbose < 2, check=True)
+        vprint(f"Creating {file.path}")
+        ffmpeg(old_path, file.path, verbose)
         made_wav = True
     
     samples, sr = librosa.load(file.path, sr=None)
@@ -327,21 +382,18 @@ def process_audio(file, auth_token, reprocess=False, quiet=False, verbose=0, spl
     segs.extend(get_vad(file, auth_token, duration, verbose))
 
     # save the segments
-    if verbose:
-        print(f"Creating {segs_path}")
+    vprint(f"Creating {segs_path}")
     with open(segs_path, "w") as segs_file:
         json.dump(segs, segs_file)
         
     # if converted to wav, remove that wav file (since it was only needed for the diarization
     if made_wav:
-        if verbose:
-            print(f"Deleting {file.path}")
-        subprocess.run(["rm", "-f", file.path], capture_output=True)
+        vprint(f"Deleting {file.path}")
+        util.rm(file.path)
     
-    if not quiet or verbose:
-        # if wav file was made, switch file.path back to original file
-        file.path = old_path if "old_path" in locals() else file.path
-        print(f"Processed {file.path} in {time.perf_counter() - start_time:.4f} seconds")
+    # if wav file was made, switch file.path back to original file
+    file.path = old_path if "old_path" in locals() else file.path
+    vprint(f"Processed {file.path} in {time.perf_counter() - start_time:.4f} seconds", 0)
             
 
 if __name__ == "__main__":
@@ -356,8 +408,7 @@ if __name__ == "__main__":
     args.auth_token = os.environ.get("PYANNOTE_AUTH_TOKEN", args.auth_token)
     if args.auth_token is None:
         raise Exception("To run the diarization and VAD pipelines, you need a PyAnnotate authentication token. Pass it in with the --auth-token option or set the PYANNOTE_AUTH_TOKEN environment variable.")
-    if not args.quiet or args.verbose:
-        start_time = time.perf_counter()
+    start_time = time.perf_counter()
     route_file(*util.namespace_pop(args, "path"), **vars(args))
     if not args.quiet or args.verbose:
-        print(f"\nProcessing took a total of {time.perf_counter() - start_time:.4f} seconds")
+        print(f"Processing took a total of {time.perf_counter() - start_time:.4f} seconds")
