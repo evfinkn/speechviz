@@ -7,6 +7,7 @@ import argparse
 import pickle
 import cv2
 import os
+import shutil
 
 def main(raw_args=None):
     # construct the argument parser and parse the arguments
@@ -44,13 +45,16 @@ def main(raw_args=None):
     numUniqueFaces = len(np.where(labelIDs > -1)[0])
     print("[INFO] # unique faces: {}".format(numUniqueFaces))
 
+    if os.path.isdir(args["outputs"]): 
+        #overwrite old clusters so they don't build upon an old version and mix together
+        shutil.rmtree(args["outputs"])
+    os.makedirs(args["outputs"])
+
     # loop over the unique face integers
     for labelID in labelIDs:
         print("[INFO] faces for face ID: {}".format(labelID))
         idxs = np.where(clt.labels_ == labelID)[0]
         faces = []
-        if not os.path.isdir(args["outputs"]):
-            os.makedirs(args["outputs"])
         # loop over the sampled indexes
         for i in idxs:
         # load the input image and extract the face ROI
