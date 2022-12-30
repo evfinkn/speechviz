@@ -23,4 +23,7 @@ videoName = headAndTail[1]
 #call encode_faces.py and call cluster_faces.py
 #https://stackoverflow.com/questions/44734858/python-calling-a-module-that-uses-argparser
 encode(["-i", args["dataset"], "-e", args["dataset"] + "/" + videoName + ".pickle", "-d", args["detection_method"]])
+if os.path.isdir("data/faceClusters/" + videoName): 
+    #overwrite old clusters so they don't build upon an old version and mix together
+    shutil.rmtree(args["outputs"])
 cluster(["-e", args["dataset"] + "/" + videoName + ".pickle", "-j", str(args["jobs"]), "-eps", str(args["epsilon"]), "-o", "data/faceClusters/" + videoName])
