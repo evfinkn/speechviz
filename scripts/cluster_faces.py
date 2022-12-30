@@ -45,10 +45,9 @@ def main(raw_args=None):
     numUniqueFaces = len(np.where(labelIDs > -1)[0])
     print("[INFO] # unique faces: {}".format(numUniqueFaces))
 
-    if os.path.isdir(args["outputs"]): 
-        #overwrite old clusters so they don't build upon an old version and mix together
-        shutil.rmtree(args["outputs"])
-    os.makedirs(args["outputs"])
+    if not os.path.isdir(args["outputs"]): 
+        os.makedirs(args["outputs"])
+    
 
     # loop over the unique face integers
     for labelID in labelIDs:
