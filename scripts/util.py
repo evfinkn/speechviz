@@ -1,35 +1,16 @@
 from __future__ import annotations
 
-import os
 import glob
 import json
 import random
 import pathlib
+import argparse
 import subprocess
 from typing import List, Optional, Union
 from collections.abc import Iterable, Iterator, Callable
 
 import numpy as np
 
-
-class FileInfo:
-    
-    path: str
-    dir: str
-    name: str
-    ext: str
-    
-    def __init__(self, path: str) -> None:
-        directory = os.path.dirname(path)
-        directory = "." if directory == "" else directory  # in case file is in cwd
-        name, extension = os.path.splitext(os.path.basename(path))
-        self.path = path
-        self.dir = directory
-        self.name = name
-        self.ext = extension
-
-    def __repr__(self) -> str:
-        return self.path
 Path = Union[str, pathlib.Path]
 Paths = List[Path]
 
