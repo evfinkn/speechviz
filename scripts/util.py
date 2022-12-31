@@ -219,6 +219,28 @@ def ls(dir: Path) -> list[str]:
     return subprocess.run(["ls", dir], stdout=subprocess.PIPE).stdout.decode().split("\n")[:-1]
 
 
+# https://stackoverflow.com/a/5389547
+def grouped(iterable: Iterable, n: int) -> zip:
+    """Groups the elements of an iterable.
+
+    Parameters
+    ----------
+    iterable : Iterable
+    n : int
+        The number of elements to put in each group.
+    
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> iterable = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    >>> list(grouped(iterable, 3))
+    [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
+    """
+    return zip(*([iter(iterable)] * n))
+
+
 # I really hate to include this class here, but argparse didn't add it until Python 3.9, and
 # aria-data-tools uses Python 3.8. This action is really useful though, so I just copied this
 # from the official implementation at

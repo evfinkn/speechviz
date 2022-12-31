@@ -1,8 +1,8 @@
 import os
 import csv
 import time
+import pathlib
 import argparse
-import subprocess
 from dataclasses import dataclass
 
 import imufusion
@@ -14,8 +14,8 @@ import util
 
 RADIAN_TO_DEGREE_FACTOR = 180 / np.pi
 DEGREE_TO_RADIAN_FACTOR = np.pi / 180
-EARTH_GRAVITATIONAL_ACCELERATION = 9.8067
-        
+EARTH_GRAVITATIONAL_ACCELERATION = 9.8067        
+
 
 def run_ahrs(timestamp, accelerometer, gyroscope, magnetometer, sample_rate):
     # Instantiate algorithms
@@ -110,31 +110,32 @@ def calculate_position(timestamp, acceleration, sample_rate):
     return position
         
 
-def create_poses(file_dir, 
-                 reprocess=False, 
-                 headers=True, 
-                 quiet=False, 
+def create_poses(imu_path: pathlib.Path,
+                 mag_path: pathlib.Path,
+                 reprocess: bool = False,
+                 headers=True,
+                 positions=False,
+                 quiet=False,
                  verbose=0):
-    
-    if not quiet or verbose:
-        print(f"Processing {file_dir}")
-        start_time = time.perf_counter()
-        
-    if os.path.exists(f"{file_dir}/pose.csv") and not reprocess:
-        if not quiet or verbose:
-            print(f"Poses for {file_dir} have already been created. To recreate them, use the '-r' argument")
+
+    parent = imu_path.parent
+    vprint = util.verbose_printer(quiet, verbose)
+    vprint(f"Processing {parent}")
+    start_time = time.perf_counter()
+
+    pose_path = parent / "pose.csv"
+    if pose_path.exists() and not reprocess:
+        vprint(f"Poses for {parent} have already been created. To recreate them, use the '-r' argument", 0)
         return
         
-    if verbose:
-        print("Loading data")
-    
-    with open(f"{file_dir}/calib.txt", encoding="utf-8") as file:
+    vprint("Loading data")
+    with open(parent / "calib.txt", encoding="utf-8") as file:
         calibration = file.read()
     device_model = datatools.sensors.DeviceModel.fromJson(calibration)
     accelerometer_calibration = device_model.getImuCalib("imu-left").accel
     gyroscope_calibration  = device_model.getImuCalib("imu-left").gyro
     
-    imu_data = np.genfromtxt(f"{file_dir}/imu-left.csv", delimiter=",", skip_header=1)
+    imu_data = np.genfromtxt(imu_path, delimiter=",", skip_header=1)
     timestamp = imu_data[:, 0]
     timestamp -= timestamp[0]
     accelerometer = imu_data[:, 1:4]
@@ -145,7 +146,7 @@ def create_poses(file_dir,
         gyroscope[i] = gyroscope_calibration.rectify(gyroscope[i])
         gyroscope[i] *= RADIAN_TO_DEGREE_FACTOR  # imufusion requires degrees
         
-    mag_data = np.genfromtxt(f"{file_dir}/magnetometer.csv", delimiter=",", skip_header=1)
+    mag_data = np.genfromtxt(mag_path, delimiter=",", skip_header=1)
     # ahrs.update ignores the magnetometer measurement if the input is the zero vector, so filling
     # zeros in between the actual measurements and passing those into ahrs.update doesn't mess with
     # the algorithm / results.
@@ -161,113 +162,111 @@ def create_poses(file_dir,
     sample_rates = 1 / np.diff(timestamp)
     sample_rate = round(np.mean(sample_rates))
     
-    if verbose:
-        print("Running ahrs")
-        ahrs_start_time = time.perf_counter()
-    
+    vprint("Running ahrs")
+    ahrs_start_time = time.perf_counter()
     quaternion, acceleration = run_ahrs(timestamp, accelerometer, gyroscope, magnetometer, sample_rate)
-    
-    if verbose:
-        print(f"ahrs finished in {time.perf_counter() - ahrs_start_time:.4f} seconds")
-        print("Calculating position")
+    vprint(f"ahrs finished in {time.perf_counter() - ahrs_start_time:.4f} seconds")
+    if positions:
+        vprint("Calculating position")
         position_start_time = time.perf_counter()
-        
-    position = calculate_position(timestamp, acceleration, sample_rate)
+        position = calculate_position(timestamp, acceleration, sample_rate)
+        vprint(f"Calculated positions in {time.perf_counter() - position_start_time:.4f} seconds")
+        header = "t,x,y,z,qw,qx,qy,qz".split(",")
+    else:
+        header = "t,qw,qx,qy,qz".split(",")
     
-    if verbose:
-        print(f"Calculated positions in {time.perf_counter() - position_start_time:.4f} seconds")
-        print("Writing files")
-    
-    with open(f"{file_dir}/pose.csv", "w", newline="") as file:
+    vprint("Writing files")
+    with pose_path.open("w", newline="") as file:
         # reshape timestamp into a column vector for np.concatenate
         timestamp = timestamp.reshape(timestamp.shape[0], 1)
-        data = np.concatenate((timestamp, position, quaternion), axis=1)
+        if positions:
+            data = np.concatenate((timestamp, position, quaternion), axis=1)
+        else:
+            data = np.concatenate((timestamp, quaternion), axis=1)
         writer = csv.writer(file)
         if headers:
-            header = "t,x,y,z,qw,qx,qy,qz".split(",")
+            file.write("# ") # first row is the header row, add # to indicate it's a comment
             writer.writerow(header)
         writer.writerows(data)
         
-    if not quiet or verbose:
-        print(f"Processed {file_dir} in {time.perf_counter() - start_time:.4f} seconds")
+    vprint(f"Processed {parent} in {time.perf_counter() - start_time:.4f} seconds", 0)
         
+
+def route_dir(dir, verbose=0, **kwargs):
+    imu_path = dir / "imu-left.csv"
+    mag_path = dir / "magnetometer.csv"
+    if imu_path.exists() and mag_path.exists():
+        create_poses(imu_path, mag_path, verbose=verbose, **kwargs)
+
         
-def route_file(*args, verbose=0, scan_dir=2, **kwargs):
+def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kwargs):
     """ Handles the different types of files (txt, dir, csv) that can be input to this scripts """
-    if verbose:
-        print()  # to visually separate the output of each call to extract_data
+
+    vprint = util.verbose_printer(quiet, verbose)
     
-    if len(args) == 0:
-        args = [os.getcwd()]  # if no file or directory given, use directory script was called from
-    elif len(args) > 1:  # if multiple files (or directories) given, run function on each one
-        if len(args) == 2:
-            file1 = util.FileInfo(args[0])
-            file2 = util.FileInfo(args[1])
-            if (file1.dir == file2.dir and file1.ext == file2.ext == ".csv" and
-                ((file1.name == "imu-left" and file2.name == "magnetometer") or
-                (file1.name == "magnetometer" and file2.name == "imu-left"))):
-                
-                create_poses(file1.dir, verbose=verbose, **kwargs)
-        else:
-            for arg in args:
-                route_file(arg, scan_dir=scan_dir, **kwargs)
+    if len(paths) == 0:
+        paths = [os.getcwd()]  # if no file or directory given, use directory script was called from
+    elif len(paths) > 1:  # if multiple files (or directories) given, run function on each one
+        if len(paths) == 2:
+            path1, path2 = paths
+            if path1.parent != path2.parent:
+                vprint(f"{path1} and {path2} need to be in the same directory.", 0)
+            if path1.name == "imu-left.csv" and path2.name == "magnetometer.csv":
+                create_poses(path1, path2, quiet=quiet, verbose=verbose, **kwargs)
+            elif path2.name == "imu-left.csv" and path1.name == "magnetometer.csv":
+                create_poses(path2, path1, quiet=quiet, verbose=verbose, **kwargs)
+        elif paths[0].is_dir(): # assume paths is all paths to directories
+            for path in paths:
+                route_file(path, quiet=quiet, verbose=verbose, **kwargs)
+        else: # paths is a list of imu_left and magnetometer paths
+            for path1, path2 in util.grouped(paths, 2):
+                route_file(path1, path2, quiet=quiet, verbose=verbose, **kwargs)
         return  # stop function because all processing done in the function calls in the for loop
     
-    path = args[0]  # args[0] is--at this point--the only argument in args
-    file = util.FileInfo(path)
+    path = paths[0]  # paths[0] is--at this point--the only argument in paths
     
-    # if given text file, run the function on each line
-    if file.ext == ".txt":
-        if verbose:
-            print(f"{file.path} is a text file. Routing the file on each line...")
-        with open(file.path) as txtfile:
-            for line in txtfile.read().split("\n"):
-                route_file(line, scan_dir=scan_dir, **kwargs)
-        return
-    
-    # route every file in file.path if it is a dir and scan_dir is True
-    elif file.ext == "" and scan_dir:
-        ls = subprocess.run(["ls", file.path], stdout=subprocess.PIPE).stdout.decode().split("\n")[:-1]  # get files in dir
-        if "imu-left.csv" in ls and "magnetometer.csv" in ls:  # if the csv files in dir, run create_poses
-            create_poses(file.path, verbose=verbose, **kwargs)
-        elif scan_dir >= 2:
-            if verbose:
-                print(f"{file.path} is a directory. Routing the subdirectories...")
-            for dir_file in ls:
-                route_file(f"{file.path}/{dir_file}", verbose=verbose, scan_dir=scan_dir - 1, **kwargs)
+    if path.is_dir():
+        if path.name == "data":
+            path = path / "graphical"
+        if path.name == "graphical":
+            for dir in path.iterdir():
+                route_dir(dir, quiet=quiet, verbose=verbose, **kwargs)
+        elif path.parent.name == "graphical":
+            route_dir(path, quiet=quiet, verbose=verbose, **kwargs)
+        else:
+            vprint(f"{path} is an invalid directory. Must be either the data directory, the graphical directory, or a subdirectory of the graphical directory", 0)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create pose data from IMU and magnetometer data.")
-    parser.add_argument("path", 
-                        nargs="*", 
+    parser.add_argument("path",
+                        nargs="*",
+                        type=pathlib.Path,
                         help="The path to the directory to process. If the directory"
                              "contains an imu-left.csv file and a magnetometer.csv file,"
                              "Otherwise, it applies that process to the subdirectories"
                              "of path")
-    parser.add_argument("-r", "--reprocess", 
-                        action="store_true", 
+    parser.add_argument("-r", "--reprocess",
+                        action="store_true",
                         help="Reprocess files detected to have already been processed")
     # parser.add_argument("--no-headers",
     #                     action="store_true", 
     #                     help="Don't add the headers to the CSV files")
-    parser.add_argument("-q", "--quiet", 
-                        action="store_true", 
+    parser.add_argument("--positions",
+                        action=util.BooleanOptionalAction,
+                        default=False,
+                        help="Whether to calculate positions. Note that the calculation currently isn't very accurate. Default is False.")
+    parser.add_argument("-q", "--quiet",
+                        action="store_true",
                         help="Don't print anything")
-    parser.add_argument("-v", "--verbose", 
-                        action="count", 
-                        default=0, 
+    parser.add_argument("-v", "--verbose",
+                        action="count",
+                        default=0,
                         help="Print various debugging information")
     
     args = parser.parse_args()
-    if not args.quiet or args.verbose:
-        start_time = time.perf_counter()
-    # route_file(*args.path, 
-    #            reprocess=args.reprocess, 
-    #            headers=True, 
-    #            quiet=args.quiet, 
-    #            verbose=args.verbose)
-    route_file(*args.path, reprocess=args.reprocess, quiet=args.quiet, verbose=args.verbose)
+    start_time = time.perf_counter()
+    route_file(*util.namespace_pop(args, "path"), **vars(args))
     if not args.quiet or args.verbose:
         print(f"Pose creation took a total of {time.perf_counter() - start_time:.4f} seconds")
     
