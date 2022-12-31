@@ -4,8 +4,9 @@ import os
 import glob
 import json
 import random
+import pathlib
 import subprocess
-from typing import Optional, Union
+from typing import List, Optional, Union
 from collections.abc import Iterable, Iterator, Callable
 
 import numpy as np
@@ -29,6 +30,8 @@ class FileInfo:
 
     def __repr__(self) -> str:
         return self.path
+Path = Union[str, pathlib.Path]
+Paths = List[Path]
 
 
 def verbose_printer(quiet: bool, verbose: int) -> Callable[[str, int], None]:
@@ -112,7 +115,7 @@ def random_color_generator(seed: Optional[int] = None) -> Iterator[str]:
         yield f"#{r:02x}{g:02x}{b:02x}"
 
 
-def expand_files(files: Union[str, list[str]], wildcard=False) -> Iterator[str]:
+def expand_files(files: Paths, wildcard=False) -> Iterator[Path]:
     """Generates an expanded list of files.
 
     Parameters
@@ -127,15 +130,16 @@ def expand_files(files: Union[str, list[str]], wildcard=False) -> Iterator[str]:
         If `wildcard` is `False`, this function simply yields the files. Otherwise, this
         function yields the files expanded from the wildcards in the files.
     """
-    if isinstance(files, str):
+    if isinstance(files, (str, pathlib.Path)):
         files = [files]
     if not wildcard:
         yield from files
     else:
-        yield from flatten([glob.glob(file) for file in files])
+        # convert to str because glob doesn't work on pathlib.Path
+        yield from flatten([glob.glob(str(file)) for file in files])
 
 
-def mv(srcs: Union[str, list[str]], dest: str, wildcard: bool = False) -> subprocess.CompletedProcess[str]:
+def mv(srcs: Paths, dest: str, wildcard: bool = False) -> subprocess.CompletedProcess[str]:
     """Wrapper for the "mv" shell command.
 
     Parameters
@@ -155,7 +159,7 @@ def mv(srcs: Union[str, list[str]], dest: str, wildcard: bool = False) -> subpro
     return subprocess.run(["mv", *expand_files(srcs, wildcard), dest], capture_output=True)
 
 
-def rm(files: Union[str, list[str]], wildcard: bool = False) -> subprocess.CompletedProcess[str]:
+def rm(files: Paths, wildcard: bool = False) -> subprocess.CompletedProcess[str]:
     """Wrapper for the "rm" shell command.
     The "-r" and "-f" options are always passed.
 
@@ -174,7 +178,7 @@ def rm(files: Union[str, list[str]], wildcard: bool = False) -> subprocess.Compl
     return subprocess.run(["rm", "-r", "-f", *expand_files(files, wildcard)], capture_output=True)
 
 
-def mkdir(dirs: Union[str, list[str]]) -> subprocess.CompletedProcess[str]:
+def mkdir(dirs: Paths) -> subprocess.CompletedProcess[str]:
     """Wrapper for the "mkdir" shell command.
 
     Parameters
@@ -190,7 +194,7 @@ def mkdir(dirs: Union[str, list[str]]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["mkdir", *expand_files(dirs)], capture_output=True)
 
 
-def ls(dir: str) -> list[str]:
+def ls(dir: Path) -> list[str]:
     """Wrapper for the "ls" shell command.
 
     Parameters
