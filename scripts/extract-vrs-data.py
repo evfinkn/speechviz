@@ -1,7 +1,8 @@
-import os
-import re
+from __future__ import annotations
+
 import csv
 import time
+import pathlib
 import argparse
 import subprocess
 
@@ -153,22 +154,11 @@ def build_dict_from_dict_list(dict_list, out_dict=None):
     return out_dict
 
 
-def get_data_dir(file_dir):  # data_dir is path to the dir containing vrs and graphical dirs
-    global regex  # use global regex so it doesn't need to be re-initialized
-    if not "regex" in globals():
-        regex = re.compile(r".*(?=/vrs$)")
-        
-    match = regex.match(file_dir)
-    data_dir = match[0] if match else None
-    return data_dir
+scripts_dir = pathlib.Path(__file__).parent
+create_video_script = scripts_dir / "create-video.sh"
 
 
-# https://stackoverflow.com/a/595332
-scripts_dir = os.path.dirname(os.path.realpath(__file__))  # get directory this script is in
-create_video_script = f"{scripts_dir}/create-video.sh"
-
-
-def create_video(output_dir, stream, keep_images=False, verbose=0):
+def create_video(output_dir: pathlib.Path, stream: str, keep_images: bool = False, verbose: int = 0):
     """Creates an mp4 video file from a directory of images.
     """
     # quiet doesn't matter because we only use verbose_level > 0 in this function
@@ -176,10 +166,10 @@ def create_video(output_dir, stream, keep_images=False, verbose=0):
     vprint(f"Creating the video for {stream}")
     start_time = time.perf_counter()
         
-    subprocess.run(["bash", create_video_script, f"{output_dir}/{stream}"], capture_output=not verbose)
-    util.mv(f"{output_dir}/{stream}/{stream}.mp4", f"{output_dir}/{stream}.mp4")
+    subprocess.run(["bash", create_video_script, output_dir / stream], capture_output=not verbose)
+    util.mv(output_dir / stream / f"{stream}.mp4", output_dir / f"{stream}.mp4")
     if not keep_images:
-        util.rm(f"{output_dir}/{stream}")
+        util.rm(output_dir / stream)
     
     vprint(f"Created the video for {stream} in {time.perf_counter() - start_time:.4f} seconds")
 
@@ -203,44 +193,34 @@ def load_json_with_nan(s):
     return orjson.loads(s.replace("NaN", "null"))
 
 
-def route_file(*args, verbose=0, scan_dir=True, **kwargs):
+def route_dir(dir, verbose=0, scan_dir=True, **kwargs):
+    if verbose:
+        print(f"Running process_audio on each file in {dir}")
+    for path in dir.iterdir():
+        route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
+
+
+def route_file(*paths: pathlib.Path, verbose: int = 0, scan_dir: bool = True, **kwargs):
     """Handles the different types of files (txt, dir, vrs) that can be input to this scripts.
     """
-    if len(args) == 0:
-        args = [os.getcwd()]  # if no file or directory given, use directory script was called from
-    elif len(args) > 1:  # if multiple files (or directories) given, run function on each one
-        for arg in args:
-            route_file(arg, verbose=verbose, scan_dir=scan_dir, **kwargs)
+    if len(paths) == 0:
+        paths = [pathlib.Path.cwd()]  # if no file or directory given, use directory script was called from
+    elif len(paths) > 1:  # if multiple files (or directories) given, run function on each one
+        for path in paths:
+            route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
         return  # stop function because all processing done in the function calls in the for loop
     
-    path = args[0]  # args[0] is--at this point--the only argument in args
-    file = util.FileInfo(path)
-    vprint = util.verbose_printer(False, verbose)
-    
-    # if given text file, run the function on each line
-    if file.ext == ".txt":
-        vprint(f"{file.path} is a text file. Running extract_data on the file on each line...")
-        with open(file.path) as txtfile:
-            for line in txtfile.read().split("\n"):
-                route_file(line, verbose=verbose, scan_dir=scan_dir, **kwargs)
-        return
-    
+    path = paths[0]  # paths[0] is--at this point--the only argument in paths
+
+    if path.suffix.casefold() == ".vrs":
+        extract_data(path, verbose=verbose, **kwargs)
+
     # route every file in file.path if it is a dir and scan_dir is True
-    elif file.ext == "" and scan_dir:
-        dir_files = util.ls(file.path)
-        if "vrs" in dir_files:  # if "vrs" dir is in file.path, run extract_data on "vrs" dir
-            vprint(f"Detected vrs directory. Running extract_data on {file.path}/vrs")
-            route_file(f"{file.path}/vrs", verbose=verbose, scan_dir=scan_dir, **kwargs)
+    elif path.is_dir() and scan_dir:
+        if path.name == "data": # the data dir was passed so run on data/vrs
+            route_dir(path / "vrs", verbose=verbose, scan_dir=scan_dir, **kwargs)
         else:
-            vprint(f"{file.path} is a directory. Running extract_data on each file...")
-            # output_dir = kwargs["output_dir"]
-            for dir_file in dir_files:
-                # if output_dir:
-                #     kwargs["output_dir"] = f"{output_dir}/{file.name}"
-                route_file(f"{file.path}/{dir_file}", verbose=verbose, scan_dir=False, **kwargs)
-    
-    elif file.ext.casefold() == ".vrs":
-        extract_data(file, verbose=verbose, **kwargs)
+            route_dir(path, verbose=verbose, scan_dir=False, **kwargs)
 
 
 # The next functions are separate from the main function just in case another script
@@ -248,12 +228,11 @@ def route_file(*args, verbose=0, scan_dir=True, **kwargs):
 def vrs_extract_all(vrsfile, to, verbose=0):
     """Wrapper the "vrs extract-all" shell command.
     """
-    return subprocess.run(["vrs", "extract-all", vrsfile.path, "--to", to], 
+    return subprocess.run(["vrs", "extract-all", vrsfile, "--to", to],
                           capture_output=verbose < 2, check=True)
 
 
-def extract_data(file, 
-                 # output_dir, 
+def extract_data(path: pathlib.Path, 
                  reprocess=False, 
                  calib=True, 
                  headers=True, 
@@ -275,53 +254,47 @@ def extract_data(file,
     keep_metadata = metadata
 
     vprint = util.verbose_printer(quiet, verbose)
-    
-    vprint(f"Processing {file.path}", 0)
+    vprint(f"Processing {path}", 0)
     start_time = time.perf_counter()
-        
-    data_dir = get_data_dir(file.dir)
-    if not data_dir:
-        raise Exception("Couldn't find the \"data\" directory.")
-    output_dir = f"{data_dir}/graphical/{file.name}"
-    vprint(f"Data directory path is '{data_dir}'")
+
+    if len(path.parents) < 2 or path.parents[1].name != "data":
+        raise Exception("Input file must be in either data/audio or data/video")
+    data_dir = path.parents[1]
+    output_dir = data_dir / "graphical" / path.stem
     vprint(f"Output directory path is '{output_dir}'")
     
     # check if vrs has already been processed and only process if reprocess is True
-    if os.path.exists(output_dir) and not reprocess:
-        vprint(f"{file.path} has already been processed. To reprocess it, use the '-r' argument", 0)
+    if output_dir.exists() and not reprocess:
+        vprint(f"{path} has already been processed. To reprocess it, use the '-r' argument", 0)
         return
     util.mkdir(output_dir)
     
     vprint("Running \"vrs extract-all\"")
     vrs_start_time = time.perf_counter()
-    vrs_extract_all(file, output_dir, verbose)
+    vrs_extract_all(path, output_dir, verbose)
     vprint(f"\"vrs extract-all\" finished in {time.perf_counter() - vrs_start_time:.4f} seconds")
         
     vprint("Creating videos from the images")
     video_start_time = time.perf_counter()
-    
     for stream in ("1201-1", "1201-2", "211-1", "214-1"):
         create_video(output_dir, stream, keep_images, verbose)
-    
     vprint(f"Created the videos in {time.perf_counter() - video_start_time:.4f} seconds")
-
-    util.mv(f"{output_dir}/231-1/*", f"{output_dir}/231-1.wav", True)
-    util.rm(f"{output_dir}/231-1")
+    util.mv(output_dir / "231-1/*", output_dir / "231-1.wav", True)
+    util.rm(output_dir / "231-1")
     
     if rename:
         vprint("Renaming the audio and video files")
-        old_path = f"{output_dir}/231-1.wav"
-        new_path = f"{output_dir}/{STREAM_NAMES['231-1']}.wav"
+        old_path = output_dir / "231-1.wav"
+        new_path = output_dir / f"{STREAM_NAMES['231-1']}.wav"
         util.mv(old_path, new_path)
         for stream in ("1201-1", "1201-2", "211-1", "214-1"):
-            old_path = f"{output_dir}/{stream}.mp4"
-            new_path = f"{output_dir}/{STREAM_NAMES[stream]}.mp4"
+            old_path = output_dir / f"{stream}.mp4"
+            new_path = output_dir / f"{STREAM_NAMES[stream]}.mp4"
             util.mv(old_path, new_path)
         
     vprint("Extracting sensor data from metadata.jsons")
     metadata_start_time = time.perf_counter()
-        
-    with open(f"{output_dir}/metadata.jsons", encoding="utf-8") as metadata_file:
+    with open(output_dir / "metadata.jsons", encoding="utf-8") as metadata_file:
         metadata = load_json_with_nan(metadata_file.readline())  # main metadata of vrs file
         # save original calibration string to use in create_poses.py (for aria_data_tools)
         calib = metadata["tags"]["calib_json"]
@@ -365,7 +338,7 @@ def extract_data(file,
     vprint("Writing files")
         
     if save_calib:
-        with open(f"{output_dir}/calib.txt", "w") as calib_file:
+        with open(output_dir / "calib.txt", "w") as calib_file:
             calib_file.write(calib)
     for stream, data in arrays.items():
         if stream == "285-1":
@@ -390,9 +363,10 @@ def extract_data(file,
                 cols = [f"{col} ({units})" for col in cols]
                 header.extend(cols)
         
-        with open(f"{output_dir}/{STREAM_NAMES[stream]}.csv", "w", newline="") as csv_file:
+        with open(output_dir / f"{STREAM_NAMES[stream]}.csv", "w", newline="") as csv_file:
             writer = csv.writer(csv_file)
             if headers:
+                csv_file.write("# ") # first row is the header row, add # to indicate it's a comment
                 writer.writerow(header)
             for row in data:
                 # have to use custom flatten because np.flatten doesn't work on structured arrays
@@ -400,22 +374,20 @@ def extract_data(file,
                 
     if not keep_metadata:
         vprint("Removing metadata.jsons")
-        util.rm(f"{output_dir}/metadata.jsons")
-    util.rm(f"{output_dir}/ReadMe.md")
+        util.rm(output_dir / "metadata.jsons")
+    util.rm(output_dir / "ReadMe.md")
 
-    vprint(f"Processed {file.path} in {time.perf_counter() - start_time:.4f} seconds", 0)
+    vprint(f"Processed {path} in {time.perf_counter() - start_time:.4f} seconds", 0)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract sensor data from VRS files.")
     parser.add_argument("path",
                         nargs="*",
+                        type=pathlib.Path,
                         help="The path to the file to process. If a VRS file, "
                              "processes the VRS file. If a directory, processes "
-                             "every VRS file in the directory. If a text file, "
-                             "processes the path on each line.")
-    # parser.add_argument("-o", "--output-dir", 
-    #                     help="The path to the directory to save the extracted data in")
+                             "every VRS file in the directory.")
     parser.add_argument("-r", "--reprocess",
                         action=util.BooleanOptionalAction, # allows --no-reprocess
                         default=False,
