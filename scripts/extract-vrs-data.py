@@ -417,18 +417,18 @@ if __name__ == "__main__":
     # parser.add_argument("-o", "--output-dir", 
     #                     help="The path to the directory to save the extracted data in")
     parser.add_argument("-r", "--reprocess",
-                        action=argparse.BooleanOptionalAction, # allows --no-reprocess
+                        action=util.BooleanOptionalAction, # allows --no-reprocess
                         default=False,
                         help="Reprocess VRS files detected to have already been processed.")
     parser.add_argument("--calib",
-                        action=argparse.BooleanOptionalAction,
+                        action=util.BooleanOptionalAction,
                         default=True,
                         help="Save the calibration data required for create_poses.py. Default is True.")
     # parser.add_argument("--no-headers",
     #                     action="store_true", 
     #                     help="Don't add the headers to the CSV files")
     parser.add_argument("--rename", 
-                        action=argparse.BooleanOptionalAction,
+                        action=util.BooleanOptionalAction,
                         default=True,
                         help="Rename the audio and video files from the stream's id to the stream's"
                              "device name. Default is True.")
@@ -436,11 +436,11 @@ if __name__ == "__main__":
     #                     action="store_true", 
     #                     help="Save the data's timestamps in nanoseconds instead of seconds")
     parser.add_argument("--images",
-                        action=argparse.BooleanOptionalAction,
+                        action=util.BooleanOptionalAction,
                         default=False,
                         help="Save the cameras' image files. Default is False.")
     parser.add_argument("--metadata",
-                        action=argparse.BooleanOptionalAction,
+                        action=util.BooleanOptionalAction,
                         default=False,
                         help="Save the metadata.jsons file. Default is False.")
     parser.add_argument("-q", "--quiet",
