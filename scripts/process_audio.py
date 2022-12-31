@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import re
-import math
 import json
 import time
 import pathlib
@@ -57,7 +56,7 @@ def get_complement_segments(segments, duration, color, label, times=None):
 def rms(powers):  # give it a list, and it finds the root mean squared
     squares_sum = np.sum(np.square(powers))
     if len(powers) != 0:
-        return math.sqrt(squares_sum / (len(powers)))
+        return np.sqrt(squares_sum / (len(powers)))
     return 0
 
 
