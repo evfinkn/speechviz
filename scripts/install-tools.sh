@@ -20,7 +20,7 @@ sudo -E pip3 install --no-cache-dir \
 	pybind11[global] numpy \
 	typing dataclasses pytest parameterized Pillow
 
-# install VRS	
+# install VRS
 cd /tmp
 git clone https://github.com/facebookresearch/vrs.git
 mkdir vrs_Build

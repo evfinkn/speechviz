@@ -1,7 +1,8 @@
-const feather = require('feather-icons');
+const feather = require("feather-icons");
 
 /**
- * An `Object` containing the icons for play, pause, loop, remove, and image buttons of a `TreeItem`.
+ * An `Object` containing the icons for play, pause, loop, remove, and
+ * image buttons of a `TreeItem`.
  * @typedef {Object.<string, string>} TreeItemButtonIcons
  * @prop {string} play - SVG string for the play button icon.
  * @prop {string} pause - SVG string for the pause button icon.
@@ -12,17 +13,28 @@ const feather = require('feather-icons');
 
 // the segment and group button icons have shared properties so just
 // combine these into what's needed
-const playAndPauseOptions = { "stroke": "inherit", "fill": "inherit" };
-const loopRemoveImageOptions = { "stroke": "inherit", "stroke-width": 2.5 }
-const widthHeight12 = { "width": 12, "height": 12 };
-const widthHeight15 = { "width": 15, "height": 15 };
-const widthHeight17 = { "width": 17, "height": 17 };
+const playAndPauseOptions = { stroke: "inherit", fill: "inherit" };
+const loopRemoveImageOptions = { stroke: "inherit", "stroke-width": 2.5 };
+const widthHeight12 = { width: 12, height: 12 };
+const widthHeight15 = { width: 15, height: 15 };
+const widthHeight17 = { width: 17, height: 17 };
 
-const segmentPlayPauseOptions = Object.assign({}, playAndPauseOptions, widthHeight12);
-const segmentLoopOptions = Object.assign({}, loopRemoveImageOptions, widthHeight12);
-const segmentRemoveOptions = Object.assign({}, loopRemoveImageOptions, widthHeight15);
-const faceImgOptions = Object.assign({}, loopRemoveImageOptions, widthHeight15)
-
+const segmentPlayPauseOptions = Object.assign(
+  {},
+  playAndPauseOptions,
+  widthHeight12
+);
+const segmentLoopOptions = Object.assign(
+  {},
+  loopRemoveImageOptions,
+  widthHeight12
+);
+const segmentRemoveOptions = Object.assign(
+  {},
+  loopRemoveImageOptions,
+  widthHeight15
+);
+const faceImgOptions = Object.assign({}, loopRemoveImageOptions, widthHeight15);
 
 const segmentPlayIcon = feather.icons.play.toSvg(segmentPlayPauseOptions);
 const segmentPauseIcon = feather.icons.pause.toSvg(segmentPlayPauseOptions);
@@ -30,22 +42,33 @@ const segmentLoopIcon = feather.icons.repeat.toSvg(segmentLoopOptions);
 const segmentRemoveIcon = feather.icons.x.toSvg(segmentRemoveOptions);
 const faceImgIcon = feather.icons.image.toSvg(faceImgOptions);
 
-
 /**
  * The button icons for `Segment`s and `Face`s.
  * @type {TreeItemButtonIcons}
  */
 const segmentIcons = {
-    "play": segmentPlayIcon,
-    "pause": segmentPauseIcon,
-    "loop": segmentLoopIcon,
-    "remove": segmentRemoveIcon,
-    "image": faceImgIcon
-}
+  play: segmentPlayIcon,
+  pause: segmentPauseIcon,
+  loop: segmentLoopIcon,
+  remove: segmentRemoveIcon,
+  image: faceImgIcon,
+};
 
-const groupPlayPauseOptions = Object.assign({}, playAndPauseOptions, widthHeight15);
-const groupLoopOptions = Object.assign({}, loopRemoveImageOptions, widthHeight15);
-const groupRemoveOptions = Object.assign({}, loopRemoveImageOptions, widthHeight17);
+const groupPlayPauseOptions = Object.assign(
+  {},
+  playAndPauseOptions,
+  widthHeight15
+);
+const groupLoopOptions = Object.assign(
+  {},
+  loopRemoveImageOptions,
+  widthHeight15
+);
+const groupRemoveOptions = Object.assign(
+  {},
+  loopRemoveImageOptions,
+  widthHeight17
+);
 
 const groupPlayIcon = feather.icons.play.toSvg(groupPlayPauseOptions);
 const groupPauseIcon = feather.icons.pause.toSvg(groupPlayPauseOptions);
@@ -57,55 +80,55 @@ const groupRemoveIcon = feather.icons.x.toSvg(groupRemoveOptions);
  * @type {TreeItemButtonIcons}
  */
 const groupIcons = {
-    "play": groupPlayIcon,
-    "pause": groupPauseIcon,
-    "loop": groupLoopIcon,
-    "remove": groupRemoveIcon
+  play: groupPlayIcon,
+  pause: groupPauseIcon,
+  loop: groupLoopIcon,
+  remove: groupRemoveIcon,
 };
 
 /**
  * SVG string for the zoom-in button icon.
  * @type {string}
  */
-const zoomInIcon = feather.icons["zoom-in"].toSvg({ "stroke": "inherit" });
+const zoomInIcon = feather.icons["zoom-in"].toSvg({ stroke: "inherit" });
 
 /**
  * SVG string for the zoom-out button icon.
  * @type {string}
  */
-const zoomOutIcon = feather.icons["zoom-out"].toSvg({ "stroke": "inherit" });
+const zoomOutIcon = feather.icons["zoom-out"].toSvg({ stroke: "inherit" });
 
 /**
  * SVG string for the undo button icon.
  * @type {string}
  */
-const undoIcon = feather.icons["corner-up-left"].toSvg({ "stroke": "inherit" });
+const undoIcon = feather.icons["corner-up-left"].toSvg({ stroke: "inherit" });
 
 /**
  * SVG string for the redo button icon.
  * @type {string}
  */
-const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "inherit" });
+const redoIcon = feather.icons["corner-up-right"].toSvg({ stroke: "inherit" });
 
 /**
  * SVG string for the save button icon.
  * @type {string}
  */
-const saveIcon = feather.icons.save.toSvg({ "stroke": "inherit" });
+const saveIcon = feather.icons.save.toSvg({ stroke: "inherit" });
 
 /**
  * SVG string for the settings button icon.
  * @type {string}
  */
-const settingsIcon = feather.icons.settings.toSvg({ "stroke": "inherit" });
+const settingsIcon = feather.icons.settings.toSvg({ stroke: "inherit" });
 
 export {
-    segmentIcons,
-    groupIcons,
-    zoomInIcon,
-    zoomOutIcon,
-    undoIcon,
-    redoIcon,
-    saveIcon,
-    settingsIcon
+  segmentIcons,
+  groupIcons,
+  zoomInIcon,
+  zoomOutIcon,
+  undoIcon,
+  redoIcon,
+  saveIcon,
+  settingsIcon,
 };

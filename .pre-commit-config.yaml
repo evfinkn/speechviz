@@ -1,0 +1,40 @@
+default_language_version:
+  python: python3.10
+exclude: (doc|patches)\/
+repos:
+  - repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+    - id: black
+      args: [--experimental-string-processing]
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.11.4
+    hooks:
+      - id: isort
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.7.1
+    hooks:
+      - id: prettier
+        files: \.(css|html|js|md|pug)$
+        additional_dependencies:
+          - prettier@2.8.1
+          - "@prettier/plugin-pug@2.3.0"
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.31.0
+    hooks:
+      - id: eslint
+        additional_dependencies:
+          - eslint@8.31.0
+          - eslint-config-prettier@8.5.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-json
+      - id: check-yaml

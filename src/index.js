@@ -8,7 +8,9 @@ let user;
  * Set the user.
  * @param {string} newUser - The new user's name.
  */
-const setUser = function (newUser) { user = newUser; }
+const setUser = function (newUser) {
+  user = newUser;
+};
 
 /**
  * Opens the main interface to visualize the specified file.
@@ -17,115 +19,128 @@ const setUser = function (newUser) { user = newUser; }
  * @param {?string} user - The name of the user opening the file.
  */
 const openViz = function (fileName, type, user = null) {
-    if (user !== null) {
-        window.location.replace(`/viz?user=${user}file=${fileName}&type=${type}`);
-    }
-    else {
-        window.location.replace(`/viz?file=${fileName}&type=${type}`);
-    }
-}
+  if (user !== null) {
+    window.location.replace(`/viz?user=${user}file=${fileName}&type=${type}`);
+  } else {
+    window.location.replace(`/viz?file=${fileName}&type=${type}`);
+  }
+};
 
 /**
  * Creates a div containing a radio input and a label.
- * @param {string} id - The string to use for the input's id and value attributes and the label's
- *      text.
+ * @param {string} id - The string to use for the input's id and value attributes
+ *      and the label's text.
  * @param {string} name - The string to use for the input's name attribute.
  */
 const createRadioDiv = function (id, name) {
-    return htmlToElement(`<div>
+  return htmlToElement(`<div>
         <input type="radio" id="${id}" name="${name}" value="${id}"></input>
         <label for="${id}">${id}</label>
     </div>`);
-}
+};
 
 // Need to fetch user instead of using url param because otherwise anyone could
 // just set themselves to admin by changing url param
-fetch("/user")  // fetch currently logged-in user
-    .then(checkResponseStatus)
-    .then(response => response.text())
-    .then(user => {
-        // admin is able to view all users' annotations
-        // so make radio buttons for selecting which user
-        if (user == "admin") {
-            fetch("/users")  // fetch list of all users
-                .then(checkResponseStatus)
-                .then(res => res.json())
-                // add radio buttons for each user
-                .then(users => {  // users is array of usernames
-                    setUser("admin");
-                    const fieldset = document.getElementById("user-selection");
-                    fieldset.hidden = false;
-                    users.forEach(function (user) {
-                        const div = createRadioDiv(user, "user-selection");
-                        div.firstElementChild.addEventListener("change", function () {
-                            setUser(this.value);
-                        });
-                        // default user for admin is admin, so check admin radio button
-                        if (user == "admin") { div.firstElementChild.checked = true; }
-                        fieldset.append(div);
-                    });
-                })
-                // catch error if fetch unsuccessful
-                .catch(error => { console.error("Error during fetch: ", error); });
-        }
-    })
-    // catch error if fetch unsuccessful
-    .catch(error => { console.error("Error during fetch: ", error); });
+fetch("/user") // fetch currently logged-in user
+  .then(checkResponseStatus)
+  .then((response) => response.text())
+  .then((user) => {
+    // admin is able to view all users' annotations
+    // so make radio buttons for selecting which user
+    if (user == "admin") {
+      fetch("/users") // fetch list of all users
+        .then(checkResponseStatus)
+        .then((res) => res.json())
+        // add radio buttons for each user
+        .then((users) => {
+          // users is array of usernames
+          setUser("admin");
+          const fieldset = document.getElementById("user-selection");
+          fieldset.hidden = false;
+          users.forEach(function (user) {
+            const div = createRadioDiv(user, "user-selection");
+            div.firstElementChild.addEventListener("change", function () {
+              setUser(this.value);
+            });
+            // default user for admin is admin, so check admin radio button
+            if (user == "admin") {
+              div.firstElementChild.checked = true;
+            }
+            fieldset.append(div);
+          });
+        })
+        // catch error if fetch unsuccessful
+        .catch((error) => {
+          console.error("Error during fetch: ", error);
+        });
+    }
+  })
+  // catch error if fetch unsuccessful
+  .catch((error) => {
+    console.error("Error during fetch: ", error);
+  });
 
 fetch("/filelist")
-    .then(checkResponseStatus)
-    .then(response => response.json())
-    // add radio buttons for each file
-    .then(fileList => {  // object with arrays for audio filenames and video filenames
-        const audiofiles = fileList.audio;
-        const videofiles = fileList.video;
-        const clusterfolders = fileList.cluster;
-        const fieldset = document.getElementById("file-selection");
+  .then(checkResponseStatus)
+  .then((response) => response.json())
+  // add radio buttons for each file
+  .then((fileList) => {
+    // object with arrays for audio filenames and video filenames
+    const audiofiles = fileList.audio;
+    const videofiles = fileList.video;
+    const clusterfolders = fileList.cluster;
+    const fieldset = document.getElementById("file-selection");
 
-        if (audiofiles?.length !== 0) {
-            fieldset.append(htmlToElement("<strong>Audio files</strong>"));  // header
+    if (audiofiles?.length !== 0) {
+      fieldset.append(htmlToElement("<strong>Audio files</strong>")); // header
 
-            audiofiles.forEach(function (fileName) {  // add radio buttons for each audio file
-                const div = createRadioDiv(fileName, "file-selection");
-                div.firstElementChild.addEventListener("change", function () {
-                    openViz(this.value, "audio", user);
-                });
-                fieldset.append(div);
-            });
+      audiofiles.forEach(function (fileName) {
+        // add radio buttons for each audio file
+        const div = createRadioDiv(fileName, "file-selection");
+        div.firstElementChild.addEventListener("change", function () {
+          openViz(this.value, "audio", user);
+        });
+        fieldset.append(div);
+      });
 
-            // add separation between audio and video file sections
-            fieldset.append(document.createElement("br"));  
-        }
+      // add separation between audio and video file sections
+      fieldset.append(document.createElement("br"));
+    }
 
-        if (videofiles?.length !== 0) {
-            // header for video files
-            fieldset.append(htmlToElement("<strong>Video files</strong>"));
+    if (videofiles?.length !== 0) {
+      // header for video files
+      fieldset.append(htmlToElement("<strong>Video files</strong>"));
 
-            videofiles.forEach(function (fileName) {  // add radio buttons for each video file
-                const div = createRadioDiv(fileName, "file-selection");
-                div.firstElementChild.addEventListener("change", function () {
-                    openViz(this.value, "video", user)
-                });
-                fieldset.append(div);
-            });
-        }
+      videofiles.forEach(function (fileName) {
+        // add radio buttons for each video file
+        const div = createRadioDiv(fileName, "file-selection");
+        div.firstElementChild.addEventListener("change", function () {
+          openViz(this.value, "video", user);
+        });
+        fieldset.append(div);
+      });
+    }
 
-        if (clusterfolders?.length !== 0){
-            // header for cluster folders
-            fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
-            clusterfolders.forEach(function (folderName){
-                //folderName matches corresponding video fileName, so give it a different id
-                const div = createRadioDiv(folderName + " Clusters", "file-selection")
-                div.firstElementChild.addEventListener("change", function () {
-                    // when radio button clicked, show each cluster folder to choose which to view
-                    // remove its different id, go to correct folder
-                    window.location.replace(`/clustered-faces?${user ? "user=" + user + "&" : ""}`
-                                            + `dir=${this.value.replace(' Clusters', '')}`
-                                            + `&inFaceFolder=false`);
-                });
-                fieldset.append(div);
-            });
-        }
-    })
-    // catch err thrown by res if any
-    .catch(error => { console.error('Error during fetch: ', error); });
+    if (clusterfolders?.length !== 0) {
+      // header for cluster folders
+      fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
+      clusterfolders.forEach(function (folderName) {
+        // folderName matches corresponding video fileName, so give it a different id
+        const div = createRadioDiv(folderName + " Clusters", "file-selection");
+        div.firstElementChild.addEventListener("change", function () {
+          // when radio button clicked, show each cluster folder to choose which to view
+          // remove its different id, go to correct folder
+          window.location.replace(
+            `/clustered-faces?${user ? "user=" + user + "&" : ""}` +
+              `dir=${this.value.replace(" Clusters", "")}` +
+              `&inFaceFolder=false`
+          );
+        });
+        fieldset.append(div);
+      });
+    }
+  })
+  // catch err thrown by res if any
+  .catch((error) => {
+    console.error("Error during fetch: ", error);
+  });

@@ -1,5 +1,5 @@
 body {
-  font-family: 'Helvetica neue', Helvetica, Arial, sans-serif;
+  font-family: "Helvetica neue", Helvetica, Arial, sans-serif;
 }
 
 #speed-button {
@@ -126,7 +126,7 @@ body {
 }
 
 p code {
-  margin-left: 4em
+  margin-left: 4em;
 }
 
 .column {
@@ -245,7 +245,7 @@ ul,
 }
 
 .gutter.gutter-horizontal {
-  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==");
   cursor: col-resize;
 }
 

@@ -15,19 +15,20 @@
 # Speechviz
 
 Speechviz is a tool to
+
 1. Automatically process audio and video data—performing speaker diarization,
-voice-activity detection, speech recognition, and face detection
+   voice-activity detection, speech recognition, and face detection
 2. Visualize the generated annotations in a user-friendly interface that allows
-playing the audio segments and refining the generated annotations to correct any errors
+   playing the audio segments and refining the generated annotations to correct any errors
 
 ## Contents
 
 - [Docker / Podman image](#docker--podman-image)
 - [Manual installation](#manual-installation)
-    - [Setup the interface](#setup-the-interface)
-    - [Install script dependencies](#install-script-dependencies)
-        - [pip](#pip)
-        - [conda](#conda)
+  - [Setup the interface](#setup-the-interface)
+  - [Install script dependencies](#install-script-dependencies)
+    - [pip](#pip)
+    - [conda](#conda)
 - [Usage](#usage)
 - [Troubleshooting](#troubleshooting)
 
@@ -67,7 +68,6 @@ To install with PyTorch CPU support only:
 
     pip3 install --extra-index-url "https://download.pytorch.org/whl/cpu" -r requirements.txt
 
-
 To install with PyTorch CUDA support (Linux and Windows only):
 
     pip3 install --extra-index-url "https://download.pytorch.org/whl/cu116" -r requirements.txt
@@ -92,15 +92,16 @@ For a more in-depth usage guide, see [USAGE.md](USAGE.md).
 
 ## Troubleshooting
 
-[comment]: # (ERROR: Could not install packages due to an OSError: Proxy URL had no scheme, should start with http:// or https://)
+[comment]: # "ERROR: Could not install packages due to an OSError: Proxy URL had no scheme, should start with http:// or https://"
+
 If installing on Bigcore, you are likely to run into an error relating to a proxy URL.
 To resolve this, run the following command:
 
     http_proxy="http://$(echo $http_proxy)" && https_proxy="http://$(echo $https_proxy)"
 
-[comment]: # (subprocess.CalledProcessError: Command '['ffmpeg', ... 'output_file_here']' returned non-zero exit status 127.)
+[comment]: # "subprocess.CalledProcessError: Command '['ffmpeg', ... 'output_file_here']' returned non-zero exit status 127."
+
 If you receive a `subprocess.CalledProcessError` relating to `ffmpeg`, running the
 following should resolve the issue:
 
     conda update ffmpeg
-

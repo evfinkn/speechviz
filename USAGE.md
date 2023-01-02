@@ -24,7 +24,7 @@ To process an audio (.mp3, .wav, .flac, .ogg, or .opus) file or a video (.mp4 or
 
 While the file doesn't have to be in `data/audio` or `data/video`, if it is, it outputs the
 waveform and segments files into the appropriate directories used by the interface. Otherwise,
-the files are output to the same directory that the input file is in.  
+the files are output to the same directory that the input file is in.
 
 The waveform file contains the data used to visualize the waveform of the audio on the
 interface. The segments file contains the annotations of the unique speakers, the voice activity,
@@ -40,11 +40,11 @@ move the file to `data/vrs` and run
 
 Unlike `process_audio.py`, the file must be in `data/vrs` for `extract-vrs-data.py` to work.
 The files are output to `data/graphical/FILE_NAME` where `FILE_NAME` is `FILE` without the
-extension.  
+extension.
 
 The script extracts the videos from the eye-tracking, SLAM-left, SLAM-right, and RGB cameras;
 the audio from the microphones; the magnetometer data; the IMU-left and IMU-right data; the GPS
-data (if any); and the barometer data (if any).  
+data (if any); and the barometer data (if any).
 
 Pose data (data specifying the position and rotation) of the glasses can be created by running
 
@@ -77,7 +77,7 @@ The following command will run speech recognition on a file:
 
 Similar to `process_audio.py`, `transcribe.py` doesn't require the file to be in `data/audio` or
 `data/video`. If it is, the transcription file is output to `data/transcriptions`. Otherwise,
-the file is output to the same directory as the input file.  
+the file is output to the same directory as the input file.
 
 Currently, the speech recognition isn't very good at correctly recognizing the words spoken in
 noisy audio files, and the transcription can't be disabled in the interface yet, so using this
@@ -109,19 +109,19 @@ If you want to automatically encode and cluster, and have it put the correct inf
 
     python3 scripts/encode_and_cluster.py -i data/imagesForEncoding/nameOfFolderWithImages
 
-Note: It is very important that the name of the folder with images from the video matches the 
-name of the video that it corresponds to. For example, if your video is called `video1.mp4`, the 
+Note: It is very important that the name of the folder with images from the video matches the
+name of the video that it corresponds to. For example, if your video is called `video1.mp4`, the
 `nameOfFolderWithImages` should also be called `video1.mp4` before you use encode_and_cluster.py.
- 
+
 If you want to manually just encode or just re-cluster, you can use the appropriate script between
 scripts/encode_faces.py and scripts/cluster_faces.py.
 
 The script encode_faces.py encodes information about detecting faces in 128 dimensions. This can
-later be clustered based on the encodings. 
+later be clustered based on the encodings.
 
 Encoding faces is able to be done without human intervention and takes a while, so you don't want
-to repeat doing it once it has been already done once. Clustering requires some human input, 
-doesn't take as long, and its accuracy can change dramatically based on the parameter --epsilon 
+to repeat doing it once it has been already done once. Clustering requires some human input,
+doesn't take as long, and its accuracy can change dramatically based on the parameter --epsilon
 making it appealing to rerun just clustering to improve results.
 
 To run encoding,
@@ -177,28 +177,29 @@ these directories also needs a respective waveform file in `data/waveforms` name
 `FILE_NAME-waveform.json` where `FILE_NAME` is `FILE` without the extension. If you ran
 `process_audio.py` on `FILE` while it was in its respective directory, the waveform file
 will already be in its correct folder, and a segments file containing the annotations will be in
-`data/segments`. Segments files aren't required to view a file in the interface.  
+`data/segments`. Segments files aren't required to view a file in the interface.
 
 Clicking on a file in the list open's up the main interface which contains the waveform and
 annotations (if any) for the file. Some notable features:
-* On the left of the screen is a tree containing the analysis for the file. Checking an item will
+
+- On the left of the screen is a tree containing the analysis for the file. Checking an item will
   enable that group / segment in the waveform and show its children in the tree (if any).
-* Some tree items have a popup that is displayed when the tree item's text is clicked. This popup
+- Some tree items have a popup that is displayed when the tree item's text is clicked. This popup
   contains options for its respective tree item which differ depending on the kind of group /
   segment it is. For example, a segment under a speaker can be moved and copied; a custom segment
   can be moved and renamed; and a labeled group can be moved, renamed, and recolored.
-* A labeled group can be created by entering a name into the textbox and clicking the `Add Label`
+- A labeled group can be created by entering a name into the textbox and clicking the `Add Label`
   button next to it. It will then appear in the `Labeled` group. Other groups can then be moved to
   that label.
-* Custom segments can be added by clicking the `Add Segment` button, which will add a
+- Custom segments can be added by clicking the `Add Segment` button, which will add a
   2.5-second-long segment at the current time under the `Custom` group.
-* Editable segments (such as custom ones) have handles at their start and end that can be dragged
+- Editable segments (such as custom ones) have handles at their start and end that can be dragged
   to change when it starts and end.
-* Notes can help to remember who is who (e.g. "Speaker 1 is the man with the raspy voice") and can
+- Notes can help to remember who is who (e.g. "Speaker 1 is the man with the raspy voice") and can
   be taken in the big text box. The notes are saved.
-* A change can be undone by clicking the undo button or using the keyboard shortcut `Ctrl+Z`
+- A change can be undone by clicking the undo button or using the keyboard shortcut `Ctrl+Z`
   (`Cmd+Z` on Mac). Redoing changes is currently unimplemented.
-* Other options can be found by clicking the settings button (its icon is a gear).
-* To save, click the save button (its icon is a floppy disk) or press `Ctrl+S` (`Cmd+S` on Mac).
+- Other options can be found by clicking the settings button (its icon is a gear).
+- To save, click the save button (its icon is a floppy disk) or press `Ctrl+S` (`Cmd+S` on Mac).
 
 This is by no means an exhaustive list.

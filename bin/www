@@ -23,8 +23,8 @@ const server = http.createServer(app);
 
 const os = require("os");
 const nets = os.networkInterfaces();
-const netIP = Object.values(nets)  // get ip accessible from other computers on the network
-    .map(net => net.filter(net => net.family === "IPv4" && !net.internal))  // get external IPv4s
+const netIP = Object.values(nets)  // get ip accessible from computers on the network
+    .map(net => net.filter(net => net.family === "IPv4" && !net.internal))  // get IPv4s
     .map(net => net?.[0]?.address)   // get the address from the the nets
     .filter(address => address)[0];  // filter out undefined and get the 1st element
 
@@ -44,10 +44,10 @@ function onError(error) {
             console.log("Non-privileged users can't listen on ports below 1024.\n"
                 + "Run the server using sudo or use a different port.")
             process.exit(1);
-        case 'EADDRINUSE':
+        case 'EADDRINUSE': // eslint-disable-line no-fallthrough
             console.log(`Port ${port} is already in use.`);
             process.exit(1);
-        default:
+        default: // eslint-disable-line no-fallthrough
             throw error;
     }
 }

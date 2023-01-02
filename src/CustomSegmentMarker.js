@@ -1,14 +1,15 @@
-import { Line } from 'konva/lib/shapes/Line.js';
-import { Rect } from 'konva/lib/shapes/Rect.js';
-import { Text } from 'konva/lib/shapes/Text.js';
+import { Line } from "konva/lib/shapes/Line.js";
+import { Rect } from "konva/lib/shapes/Rect.js";
+import { Text } from "konva/lib/shapes/Text.js";
 
 /**
- * A custom marker that appears when the mouse pointer hovers over segments on the Peaks waveform.
- * The only difference from the default marker is that the drag handle is higher.
+ * A custom marker that appears when the mouse pointer hovers over segments on
+ * the Peaks waveform. The only difference from the default marker is that the
+ * drag handle is higher.
  */
 const CustomSegmentMarker = class CustomSegmentMarker {
-  // Code is practically exactly the code for the default segment marker in Peaks, with 1 or 2
-  // lines changed to make the handle higher.
+  // Code is practically exactly the code for the default segment marker
+  // in Peaks, with 1 or 2 lines changed to make the handle higher.
 
   constructor(options) {
     this._options = options;
@@ -21,8 +22,9 @@ const CustomSegmentMarker = class CustomSegmentMarker {
 
     var xPosition = this._options.startMarker ? -24 : 24;
 
-    var time = this._options.startMarker ? this._options.segment.startTime :
-      this._options.segment.endTime;
+    var time = this._options.startMarker
+      ? this._options.segment.startTime
+      : this._options.segment.endTime;
 
     // Label - create with default y, the real value is set in fitToView().
     this._label = new Text({
@@ -32,8 +34,8 @@ const CustomSegmentMarker = class CustomSegmentMarker {
       fontFamily: this._options.fontFamily,
       fontSize: this._options.fontSize,
       fontStyle: this._options.fontStyle,
-      fill: '#000',
-      textAlign: 'center'
+      fill: "#000",
+      textAlign: "center",
     });
 
     this._label.hide();
@@ -46,7 +48,7 @@ const CustomSegmentMarker = class CustomSegmentMarker {
       height: handleHeight,
       fill: this._options.color,
       stroke: this._options.color,
-      strokeWidth: 1
+      strokeWidth: 1,
     });
 
     // Vertical Line - create with default y and points, the real values
@@ -55,7 +57,7 @@ const CustomSegmentMarker = class CustomSegmentMarker {
       x: 0,
       y: 0,
       stroke: this._options.color,
-      strokeWidth: 1
+      strokeWidth: 1,
     });
 
     group.add(this._label);
@@ -73,7 +75,7 @@ const CustomSegmentMarker = class CustomSegmentMarker {
     var xPosition = self._options.startMarker ? -24 : 24;
 
     if (self._options.draggable) {
-      group.on('dragstart', function () {
+      group.on("dragstart", function () {
         if (self._options.startMarker) {
           self._label.setX(xPosition - self._label.getWidth());
         }
@@ -81,12 +83,12 @@ const CustomSegmentMarker = class CustomSegmentMarker {
         self._label.show();
       });
 
-      group.on('dragend', function () {
+      group.on("dragend", function () {
         self._label.hide();
       });
     }
 
-    self._handle.on('mouseover touchstart', function () {
+    self._handle.on("mouseover touchstart", function () {
       if (self._options.startMarker) {
         self._label.setX(xPosition - self._label.getWidth());
       }
@@ -94,7 +96,7 @@ const CustomSegmentMarker = class CustomSegmentMarker {
       self._label.show();
     });
 
-    self._handle.on('mouseout touchend', function () {
+    self._handle.on("mouseout touchend", function () {
       self._label.hide();
     });
   }
@@ -110,11 +112,11 @@ const CustomSegmentMarker = class CustomSegmentMarker {
   timeUpdated(time) {
     this._label.setText(this._options.layer.formatTime(time));
   }
-}
+};
 
 /** Method used by Peaks to create a CustomSegmentMarker. */
 const createSegmentMarker = function (options) {
-  return new CustomSegmentMarker(options)
-}
+  return new CustomSegmentMarker(options);
+};
 
 export default createSegmentMarker;
