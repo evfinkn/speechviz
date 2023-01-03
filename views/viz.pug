@@ -15,11 +15,13 @@ html(lang="en")
       #column2.column2
         #waveform-container
           if isVideo
-            video#media(controls="controls")
-              source(src=`video/${file}`, type=mimetype)
-              | Your browser does not support the video element.
-            #zoomview-container
-            #overview-container
+            #visual(style="overflow: auto")
+              video#media(controls="controls")
+                source(src=`video/${file}`, type=mimetype)
+                | Your browser does not support the video element.
+            div
+              #zoomview-container
+              #overview-container
           else
             #zoomview-container
             #overview-container
