@@ -89,6 +89,19 @@ def init_database():
     )
     conn.commit()
 
+    # create faces table
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS faces(
+        fileId INTEGER,
+        userId INTEGER,
+        speaker INTEGER,
+        faceNum INTEGER,
+        FOREIGN KEY(fileId) references audiofiles(id),
+        FOREIGN KEY(userId) references users(id)
+    )"""
+    )
+    conn.commit()
+
     conn.close()
 
 
