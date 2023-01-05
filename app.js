@@ -73,39 +73,39 @@ app.get("/logout", (req, res) => {
 
 app.get("/clustered-files", (req, res) => {
   const exclude = new Set([".DS_Store"]);
-  console.log(req.session);
   const files = {};
   const commonDir = "data/faceClusters/" + req.session.dir + "/";
-  files.cluster = fs
-    .readdirSync(commonDir)
-    .filter((fileName) => !exclude.has(fileName));
-  files.inFaceFolder = req.session.inFaceFolder;
-  files.dir = req.session.dir;
-  if (req.session.inFaceFolder == true) {
-    const faceFolder = req.session.faceFolder;
-    files.faceFolder = faceFolder;
-  } else {
-    // serve an image from each cluster to viz for display
-    const imageFiles = {};
-    files.cluster.forEach(function (folder) {
-      const images = fs
-        .readdirSync(commonDir + folder)
-        .filter((fileName) => !exclude.has(fileName));
-      let noImageYet = true;
-      while (noImageYet) {
-        // grab first image in cluster and send to viz
-        const fileName = images[0];
-        if (path.extname(fileName) === ".jpg") {
-          noImageYet = false;
-          imageFiles[folder] = fileName;
-        }
-      }
-    });
-
-    files.images = imageFiles;
+  if (fs.readdirSync("data/faceClusters/").includes(req.session.dir)) {
+    files.cluster = fs
+      .readdirSync(commonDir)
+      .filter((fileName) => !exclude.has(fileName));
+    files.inFaceFolder = req.session.inFaceFolder;
     files.dir = req.session.dir;
-  }
+    if (req.session.inFaceFolder == true) {
+      const faceFolder = req.session.faceFolder;
+      files.faceFolder = faceFolder;
+    } else {
+      // serve an image from each cluster to viz for display
+      const imageFiles = {};
+      files.cluster.forEach(function (folder) {
+        const images = fs
+          .readdirSync(commonDir + folder)
+          .filter((fileName) => !exclude.has(fileName));
+        let noImageYet = true;
+        while (noImageYet) {
+          // grab first image in cluster and send to viz
+          const fileName = images[0];
+          if (path.extname(fileName) === ".jpg") {
+            noImageYet = false;
+            imageFiles[folder] = fileName;
+          }
+        }
+      });
 
+      files.images = imageFiles;
+      files.dir = req.session.dir;
+    }
+  }
   res.send(files);
 });
 
