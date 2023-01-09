@@ -262,7 +262,7 @@ def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kw
         # done in the function calls in the for loop
         return
 
-    path = paths[0]  # paths[0] is--at this point--the only argument in paths
+    path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
     if path.is_dir():
         if path.name == "data":

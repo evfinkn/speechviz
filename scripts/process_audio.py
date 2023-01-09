@@ -264,7 +264,7 @@ def route_file(*paths: pathlib.Path, verbose=0, scan_dir=True, **kwargs):
         # done in the function calls in the for loop
         return
 
-    path = paths[0]  # paths[0] is--at this point--the only argument in paths
+    path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
     # if file.path is an audio or video file, process it
     if path.suffix.casefold() in AUDIO_FILES or path.suffix.casefold() in VIDEO_FILES:

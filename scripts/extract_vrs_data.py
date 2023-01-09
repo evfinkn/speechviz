@@ -222,7 +222,7 @@ def route_file(*paths: pathlib.Path, verbose: int = 0, scan_dir: bool = True, **
         # done in the function calls in the for loop
         return
 
-    path = paths[0]  # paths[0] is--at this point--the only argument in paths
+    path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
     if path.suffix.casefold() == ".vrs":
         extract_data(path, verbose=verbose, **kwargs)
