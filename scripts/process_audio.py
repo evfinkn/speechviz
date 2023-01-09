@@ -4,9 +4,7 @@ import argparse
 import json
 import os
 import pathlib
-import subprocess
 import time
-from typing import Optional
 
 import librosa
 import numpy as np
@@ -283,83 +281,6 @@ def route_file(*paths: pathlib.Path, verbose=0, scan_dir=True, **kwargs):
             route_dir(path, verbose=verbose, scan_dir=False, **kwargs)
 
 
-def ffmpeg(
-    input: str,
-    output: str,
-    verbose: int = 0,
-    input_options: Optional[list[str]] = None,
-    output_options: Optional[list[str]] = None,
-):
-    """Wrapper for the `ffmpeg` command.
-    Supports a single input and output.
-
-    Parameters
-    ----------
-    input : str
-        The file to input into `ffmpeg`.
-    output : str
-        The file for `ffmpeg` to output to. If a file at the path already exists,
-        it will be overwritten.
-    verbose : int, default=0
-        If greater than or equal to 2, `ffmpeg`'s output to stdout will be printed.
-    input_options : list of str, optional
-        `ffmpeg` options to apply to the input file.
-    output_options : list of str, optional
-        `ffmpeg` options to apply to the output file.
-
-    Returns
-    -------
-    subprocess.CompletedProcess
-        The completed process containing info about the `ffmpeg` command that was run.
-    """
-    args = ["ffmpeg", "-y"]
-    if input_options:
-        args.extend(input_options)
-    args.extend(["-i", input])
-    if output_options:
-        args.extend(output_options)
-    args.append(output)
-    return subprocess.run(args, capture_output=verbose < 2, check=True)
-
-
-def audiowaveform(
-    input: str,
-    output: str,
-    verbose: int = 0,
-    split_channels: bool = False,
-    options: Optional[list[str]] = None,
-):
-    """Wrapper for the `audiowaveform` command.
-
-    Parameters
-    ----------
-    input : str
-        The file to input into `audiowaveform`.
-    output : str
-        The file for `audiowaveform` to output to. If a file at the path already
-        exists, it will be overwritten.
-    verbose : int, default=0
-        If greater than or equal to 2, `audiowaveforms`'s output to stdout will
-        be printed.
-    split_channels : boolean, default=False
-        Generate a waveform for each channel instead of merging into 1 waveform.
-    options : list of str, optional
-        Additional options to pass in.
-
-    Returns
-    -------
-    subprocess.CompletedProcess
-        The completed process containing info about the `audiowaveform` command
-        that was run.
-    """
-    args = ["audiowaveform", f"-i{input}", f"-o{output}", "-b", "8"]
-    if split_channels:
-        args.append("--split-channels")
-    if options:
-        args.extend(options)
-    return subprocess.run(args, capture_output=verbose < 2, check=True)
-
-
 def process_audio(
     path: pathlib.Path,
     auth_token,
@@ -400,11 +321,11 @@ def process_audio(
         # convert to wav if the file is a video file
         if path.suffix.casefold() in VIDEO_FILES:
             vprint(f"Creating {new_path}")
-            ffmpeg(old_path, new_path, verbose)
+            util.ffmpeg(old_path, new_path, verbose)
             path = new_path
             made_wav = True
         vprint(f"Creating {waveform_path}")
-        audiowaveform(path, waveform_path, verbose, split_channels)
+        util.audiowaveform(path, waveform_path, verbose, split_channels)
 
     if segs_path.exists() and not reprocess:
         vprint(
@@ -418,7 +339,7 @@ def process_audio(
         # and new_path, but that might waste time if the file doesn't need processed
         if path.suffix.casefold() != ".wav":
             vprint(f"Creating {new_path}")
-            ffmpeg(old_path, new_path, verbose)
+            util.ffmpeg(old_path, new_path, verbose)
             path = new_path
             made_wav = True
 
