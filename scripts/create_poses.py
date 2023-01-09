@@ -137,7 +137,7 @@ def create_poses(
 
     parent = imu_path.parent
     vprint = util.verbose_printer(quiet, verbose)
-    vprint(f"Processing {parent}")
+    vprint(f"Processing {parent}", 0)
     start_time = time.perf_counter()
 
     pose_path = parent / "pose.csv"
@@ -158,7 +158,6 @@ def create_poses(
 
     imu_data = np.genfromtxt(imu_path, delimiter=",", skip_header=1)
     timestamp = imu_data[:, 0]
-    timestamp -= timestamp[0]
     accelerometer = imu_data[:, 1:4]
     gyroscope = imu_data[:, 4:]
     for i in range(len(timestamp)):
