@@ -44,7 +44,7 @@ STREAM_NAMES = {  # used to get the file name from a stream id
 }
 STREAM_UNITS = {  # dicts containing the units of the sensor's measurements
     "247-1": {"temperature": "deg. C", "pressure": "Pa"},
-    "281-1": {"latitude": "dec. deg.", "latitude": "dec. deg.", "altitude": "m"},
+    "281-1": {"latitude": "dec. deg.", "longitude": "dec. deg.", "altitude": "m"},
     "1202-1": {"accelerometer": "m/s^2", "gyroscope": "rad/s"},
     "1202-2": {"accelerometer": "m/s^2", "gyroscope": "rad/s"},
     "1203-1": {"magnetometer": "T"},
@@ -450,7 +450,7 @@ if __name__ == "__main__":
         action=util.BooleanOptionalAction,
         default=True,
         help=(
-            "Rename the audio and video files from the stream's id to the stream's"
+            "Rename the audio and video files from the stream's id to the stream's "
             "device name. Default is True."
         ),
     )
