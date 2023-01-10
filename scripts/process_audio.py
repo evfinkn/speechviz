@@ -405,17 +405,18 @@ if __name__ == "__main__":
             " file. If a directory, processes every audio file in the directory."
         ),
     )
-    args = parser.parse_args()
-    args.auth_token = os.environ.get("PYANNOTE_AUTH_TOKEN", args.auth_token)
-    if args.auth_token is None:
+
+    args = vars(parser.parse_args())
+    args["auth_token"] = os.environ.get("PYANNOTE_AUTH_TOKEN", args["auth_token"])
+    if args["auth_token"] is None:
         raise Exception(
             "To run the diarization and VAD pipelines, you need a PyAnnotate"
             " authentication token. Pass it in with the --auth-token option or set the"
             " PYANNOTE_AUTH_TOKEN environment variable."
         )
     start_time = time.perf_counter()
-    route_file(*util.namespace_pop(args, "path"), **vars(args))
-    if not args.quiet or args.verbose:
+    route_file(*args.pop("path"), **args)
+    if not args["quiet"] or args["verbose"]:
         print(
             f"Processing took a total of {time.perf_counter() - start_time:.4f} seconds"
         )

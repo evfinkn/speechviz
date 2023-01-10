@@ -480,10 +480,10 @@ if __name__ == "__main__":
         help="Print various debugging information.",
     )
 
-    args = parser.parse_args()
+    args = vars(parser.parse_args())
     start_time = time.perf_counter()
-    route_file(*util.namespace_pop(args, "path"), **vars(args))
-    if not args.quiet or args.verbose:
+    route_file(*args.pop("path"), **args)
+    if not args["quiet"] or args["verbose"]:
         print(
             f"Extraction took a total of {time.perf_counter() - start_time:.4f} seconds"
         )
