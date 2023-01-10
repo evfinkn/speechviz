@@ -16,3 +16,4 @@ face_recognition
 imutils
 scikit-learn
 pre-commit
+orjson
