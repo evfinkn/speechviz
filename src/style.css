@@ -1,57 +1,67 @@
+/* TODO: remove unused styles */
 body {
   font-family: "Helvetica neue", Helvetica, Arial, sans-serif;
 }
 
-#speed-button {
-  background-color: #3478f6;
-  color: white;
-  padding: 10px;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
+#titles,
+#waveform-container {
+  margin: 0px 12px;
+  width: auto;
 }
 
-#speed-button:hover,
-#speed-button:focus {
-  background-color: rgb(42, 100, 214);
+#zoomview-container,
+#overview-container {
+  margin: 0 0 24px 0;
+  line-height: 0;
+  -moz-box-shadow: 3px 3px 20px #919191;
+  -webkit-box-shadow: 3px 3px 20px #919191;
+  box-shadow: 3px 3px 20px #919191;
 }
 
-.dropdown {
-  position: relative;
-  display: inline-block;
+#zoomview-container {
+  height: 200px;
 }
 
-.settings-content {
-  padding-left: 8px;
+#overview-container {
+  height: 85px;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 25px;
+}
+
+audio {
+  width: inherit;
+}
+
+#controls {
+  flex: 1;
+  /* margin-left: 1em; */
+}
+
+#seek-time {
+  width: 4em;
+}
+
+ul {
+  margin-left: 0px;
+  padding-left: 25px;
+  list-style-type: none;
+}
+
+#Segments {
+  margin: 0;
+  padding: 0;
+}
+
+.nested {
   display: none;
-  position: absolute;
-  background-color: #f1f1f1;
-  overflow: auto;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 1;
 }
 
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #f1f1f1;
-  overflow: auto;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-}
-
-.speed-content {
-  text-align: center;
-  width: 50px;
-}
-
-.spdbtn {
-  min-height: 25px;
-  font-size: 10px;
-  width: 100%;
-}
-
-.show {
+.active {
   display: block;
 }
 
@@ -72,68 +82,18 @@ body {
   pointer-events: none;
 }
 
-#titles,
-#waveform-container {
-  margin: 24px auto;
-  width: 1000px;
-}
-
-#zoomview-container,
-#overview-container {
-  margin: 0 0 24px 0;
-  line-height: 0;
-  -moz-box-shadow: 3px 3px 20px #919191;
-  -webkit-box-shadow: 3px 3px 20px #919191;
-  box-shadow: 3px 3px 20px #919191;
-}
-
-#zoomview-container {
-  height: 200px;
-}
-
-#overview-container {
-  height: 85px;
-}
-
-#demo-controls {
-  margin: 0 auto 24px auto;
-  width: 1000px;
-  display: flex;
-  align-items: center;
-}
-
-#demo-controls button {
-  background: #fff;
-  border: 1px solid #919191;
-  cursor: pointer;
-}
-
-#audio {
-  flex: 0 0 30%;
-}
-
-#controls {
-  flex: 1;
-  margin-left: 1em;
-}
-
-#seek-time {
-  width: 4em;
-}
-
-.hide {
-  display: none;
-}
-
-p code {
-  margin-left: 4em;
+.column,
+.column2,
+.column3,
+.column4 {
+  box-sizing: border-box;
+  margin: 10px;
 }
 
 .column {
   white-space: nowrap;
   float: left;
-  width: 17%;
-  padding: 10px;
+  width: 20%;
   overflow-x: scroll;
   overflow-y: auto;
   height: calc(100vh - 65px);
@@ -141,15 +101,13 @@ p code {
 
 .column2 {
   float: right;
-  width: 79%;
-  padding: 10px;
-  height: 470px;
+  width: 80%;
+  height: calc(100vh - 65px);
 }
 
 .column3 {
   float: left;
-  width: 40%;
-  padding: 10px;
+  width: 45%;
   overflow-y: auto;
   height: auto;
 }
@@ -157,7 +115,6 @@ p code {
 .column4 {
   float: right;
   width: 55%;
-  padding: 10px;
   overflow-y: auto;
   height: auto;
 }
@@ -168,33 +125,20 @@ p code {
   clear: both;
 }
 
-ul {
-  margin-left: 0px;
-  padding-left: 25px;
+.split {
+  display: flex;
+  flex-direction: row;
 }
 
-ul,
-#Segments {
-  list-style-type: none;
+.gutter {
+  background-color: #eee;
+  background-repeat: no-repeat;
+  background-position: 50%;
 }
 
-#Segments {
-  margin: 0;
-  padding: 0;
-}
-
-.nested {
-  display: none;
-}
-
-.active {
-  display: block;
-}
-
-.nolink {
-  background: none;
-  border: none;
-  text-decoration: none;
+.gutter.gutter-horizontal {
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==");
+  cursor: col-resize;
 }
 
 .popup {
@@ -233,29 +177,93 @@ ul,
   cursor: pointer;
 }
 
-.split {
-  display: flex;
-  flex-direction: row;
+.dropdown {
+  position: relative;
+  display: inline-block;
 }
 
-.gutter {
-  background-color: #eee;
-  background-repeat: no-repeat;
-  background-position: 50%;
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  overflow: auto;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
 
-.gutter.gutter-horizontal {
-  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==");
-  cursor: col-resize;
+#speed-button {
+  background-color: #3478f6;
+  color: white;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
 }
 
-.navbar {
+#speed-button:hover,
+#speed-button:focus {
+  background-color: rgb(42, 100, 214);
+}
+
+.speed-content {
+  text-align: center;
+  width: 50px;
+}
+
+.spdbtn {
+  min-height: 25px;
+  font-size: 10px;
+  width: 100%;
+}
+
+/* FIXME: I think this one's unused */
+#audio {
+  flex: 0 0 30%;
+}
+
+/* FIXME: I think this one's unused */
+.settings-content {
+  padding-left: 8px;
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  overflow: auto;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+/* FIXME: I think this one's unused */
+.show {
+  display: block;
+}
+
+/* FIXME: the next 2 are definitely unused (I think they're from the Peaks.js demo) */
+#demo-controls {
+  margin: 0 auto 24px auto;
+  width: 1000px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 25px;
 }
 
-audio {
-  width: inherit;
+#demo-controls button {
+  background: #fff;
+  border: 1px solid #919191;
+  cursor: pointer;
+}
+
+/* FIXME: I think this one's unused */
+.hide {
+  display: none;
+}
+
+/* FIXME: I think this one's unused */
+p code {
+  margin-left: 4em;
+}
+
+/* FIXME: I think this one's unused */
+.nolink {
+  background: none;
+  border: none;
+  text-decoration: none;
 }
