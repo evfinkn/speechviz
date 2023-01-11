@@ -148,19 +148,46 @@ fetch(`/transcriptions/${basename}-transcription.json`)
   .then((words) => words.map((word) => peaks.points.add(word)))
   .catch(() => console.log("No transcription for media."));
 
+const poseRegex = /pose.*\.csv/;
 const visualContainer = document.getElementById("visual");
 if (visualContainer) {
-  fetch(`/graphical/${basename}/pose.csv`)
+  // get the list of files in the graphical dir for the file being visualized
+  const dir = `/graphical/${basename}`;
+  fetch(dir)
     .then(checkResponseStatus)
-    .then((response) => response.text())
-    .then((text) => {
-      return text
-        .split("\n")
-        .slice(1) // exclude header row
-        .map((row) => row.split(",").map(parseFloat));
+    // response is json string containing an array of file names
+    .then((response) => response.json())
+    .then((files) => {
+      if (files.length == 0) {
+        throw new Error("No pose data for media.");
+      } else {
+        // filter out non-pose files
+        files = files.filter((file) => poseRegex.test(file));
+        // fetch each pose file
+        return Promise.all(files.map((file) => fetch(`${dir}/${file}`)));
+      }
     })
+    .then((responses) =>
+      Promise.all(responses.map((response) => response.text()))
+    )
+    .then((texts) =>
+      texts.map((text) => {
+        return text
+          .split("\n")
+          .slice(1) // exclude header row
+          .map((row) => row.split(",").map(parseFloat));
+      })
+    )
     .then((data) => {
-      const width = visualContainer.offsetWidth - media.offsetWidth;
+      let width;
+      if (media.offsetWidth > visualContainer.offsetWidth) {
+        // video is wider than the column so resize it to fit
+        media.width = visualContainer.offsetWidth;
+        width = media.width;
+      } else {
+        // size the GraphIMU so that it fills the rest of the column
+        width = visualContainer.offsetWidth - media.offsetWidth;
+      }
       const height = media.offsetHeight;
       new GraphIMU(visualContainer, data, { width: width, height: height });
     })

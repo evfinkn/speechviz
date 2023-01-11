@@ -83,7 +83,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="GroupOfGroups.html">GroupOfGroups</a></li><li><a href="Popup.html">Popup</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#expandGroups">expandGroups</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="Face.html">Face</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="GroupOfGroups.html">GroupOfGroups</a></li><li><a href="Popup.html">Popup</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createRadioDiv">createRadioDiv</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#expandGroups">expandGroups</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#openViz">openViz</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#saveIcon">saveIcon</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#setUser">setUser</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
                 
             </nav>
         </div>
@@ -117,145 +117,165 @@
 
 
     <section>
-        <article><h1>Speech Visualization</h1>
-<p>This will take an audio file and visualize various characteristics. Currently, you can see when speakers speak in the file and when there is voice activity (and conversely no voice activity). Additionally, you can play any given segment of speech by a given speaker by pressing the play button. If you press the loop button right next to it, the segment will play on repeat.</p>
+        <article><div align="center">
+    <center>
+        <h1>
+            Speechviz
+        </h1>
+        <h3>
+            An annotation tool for analyzing real-world auditory soundscapes
+        </h3>
+        ![interface](/uploads/7815e2d5b3dd463d14d01923eb339510/interface.png)
+    </center>
+</div>
+<br>
+<h1>Speechviz</h1>
+<p>Speechviz is a tool to</p>
+<ol>
+<li>Automatically process audio and video data—performing speaker diarization,
+voice-activity detection, speech recognition, and face detection</li>
+<li>Visualize the generated annotations in a user-friendly interface that allows
+playing the audio segments and refining the generated annotations to correct
+any errors</li>
+</ol>
 <h2>Contents</h2>
 <ul>
-<li><a href="#docker-podman-image">Docker / Podman image</a></li>
-<li><a href="#manual-installation">Manual installation</a></li>
+<li><a href="#speechviz">Speechviz</a>
+<ul>
+<li><a href="#contents">Contents</a></li>
+<li><a href="#pyannote-access">pyannote access</a></li>
+<li><a href="#docker--podman-image">Docker / Podman image</a></li>
+<li><a href="#manual-installation">Manual installation</a>
+<ul>
+<li><a href="#setup-the-interface">Setup the interface</a></li>
+<li><a href="#install-script-dependencies">Install script dependencies</a>
+<ul>
+<li><a href="#pip">pip</a></li>
+<li><a href="#conda">conda</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a href="#usage">Usage</a></li>
-<li><a href="#vrs-data-extraction">VRS data extraction</a></li>
-<li><a href="#face-detection-and-clustering">Face Detection and Clustering</a></li>
 <li><a href="#troubleshooting">Troubleshooting</a></li>
 </ul>
+</li>
+</ul>
+<h2>pyannote access</h2>
+<p>Before you can get started, you'll have to get an access token
+to use pyannote. You can do so by following these steps:</p>
+<ol>
+<li>Login to or signup for https://huggingface.co/</li>
+<li>Visit each of the following and accept the user conditions:
+<ul>
+<li>https://huggingface.co/pyannote/segmentation</li>
+<li>https://huggingface.co/pyannote/speaker-diarization</li>
+<li>https://huggingface.co/pyannote/voice-activity-detection</li>
+</ul>
+</li>
+<li>Go to https://huggingface.co/settings/tokens and create an access token</li>
+<li>Set your <code>PYANNOTE_AUTH_TOKEN</code> environment variable to your access token</li>
+</ol>
 <h2>Docker / Podman image</h2>
-<pre><code>git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
+<p>The image is built from the
+<a href="https://github.com/facebookresearch/Aria_data_tools/">Aria Data Tools</a>
+image, so you'll need to build that container first.</p>
+<pre class="prettyprint source lang-bash"><code>git clone https://github.com/facebookresearch/Aria_data_tools.git
+cd Aria_data_tools
+# replace docker with podman if you're using podman
+docker build -t aria_data_tools .
+</code></pre>
+<p>After that's finished, build the Speechviz container.</p>
+<pre class="prettyprint source lang-bash"><code>git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
 cd speechviz
-docker build . -t speechviz
+# these next 2 make files that you'll mount into the container
+npm run mkdir
+python3 scripts/db_init.py
+# if you're using docker:
+docker build -e PYANNOTE_AUTH_TOKEN -t speechviz .
+# if you're using podman:
+podman build --env=PYANNOTE_AUTH_TOKEN -t speechviz .
 </code></pre>
 <p>Note that the above commands build the image with PyTorch CPU support only.
 If you'd like to include support for CUDA, follow the instructions for using the
 <a href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html">NVIDIA Container Toolkit</a>
 and add <code>--build-arg cuda=true</code> to the <code>docker build</code> command above:</p>
-<pre><code>docker build --build-arg cuda=true . -t speechviz
+<pre class="prettyprint source lang-bash"><code># if you're using docker:
+docker build --build-arg cuda=true \
+    -e PYANNOTE_AUTH_TOKEN -t speechviz .
+# if you're using podman:
+podman build --build-arg cuda=true \
+    --env=PYANNOTE_AUTH_TOKEN -t speechviz .
+</code></pre>
+<p>You can start the container by—while you're in the cloned
+speechviz directory—running</p>
+<pre class="prettyprint source lang-bash"><code># replace docker with podman if you're using podman
+docker run -it \
+    -v ./data:/speechviz/data \
+    -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
+    speechviz
+</code></pre>
+<p>If you're going to use the interface in the container, use the <code>-p PORT:PORT</code> option.
+By default, the interface uses port 3000, so the command for that port is</p>
+<pre class="prettyprint source lang-bash"><code># replace docker with podman if you're using podman
+docker run -it -p 3000:3000 \
+    -v ./data:/speechviz/data \
+    -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
+    speechviz
 </code></pre>
 <h2>Manual installation</h2>
-<pre><code>git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
+<pre class="prettyprint source lang-bash"><code>git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
 cd speechviz
 </code></pre>
 <h3>Setup the interface</h3>
-<pre><code>npm install
+<pre class="prettyprint source lang-bash"><code>npm install
 npm run mkdir
-python3 src/scripts/db_init.py
+python3 scripts/db_init.py
 </code></pre>
 <h3>Install script dependencies</h3>
-<p>If you'll be using <code>extract-vrs-data.sh</code>, you will need to install <a href="https://github.com/facebookresearch/vrs">VRS</a>.
-To use <code>process_audio.py</code>, you will need to install <a href="https://github.com/bbc/audiowaveform">audiowaveform</a>
-and <a href="https://ffmpeg.org/">ffmpeg</a>. The remaining dependencies for <code>process_audio.py</code> can be installed using <code>pip</code> or <code>conda</code>.</p>
+<p>To use <code>process_audio.py</code>, you will need to install
+<a href="https://github.com/bbc/audiowaveform">audiowaveform</a>
+and <a href="https://ffmpeg.org/">ffmpeg</a>. The remaining dependencies for <code>process_audio.py</code>
+can be installed using <code>pip</code> or <code>conda</code>.
+For <code>encode_faces.py</code> and <code>cluster_faces.py</code>, you will need to install
+<a href="USAGE.md#face-detection-and-clustering">dlib</a>.
+If you'll be using <code>extract-vrs-data.py</code>, you will need to install
+<a href="https://github.com/facebookresearch/vrs">VRS</a>.
+Lastly, for <code>create_poses.py</code>, you will need to install
+<a href="https://github.com/facebookresearch/Aria_data_tools/">Aria Data Tools</a>.</p>
 <h4>pip</h4>
 <p>To install with PyTorch CPU support only:</p>
-<pre><code>pip3 install --extra-index-url &quot;https://download.pytorch.org/whl/cpu&quot; -r requirements.txt
+<pre class="prettyprint source lang-bash"><code>pip3 install --extra-index-url \
+    &quot;https://download.pytorch.org/whl/cpu&quot; \
+    -r requirements.txt
 </code></pre>
 <p>To install with PyTorch CUDA support (Linux and Windows only):</p>
-<pre><code>pip3 install --extra-index-url &quot;https://download.pytorch.org/whl/cu116&quot; -r requirements.txt
+<pre class="prettyprint source lang-bash"><code>pip3 install --extra-index-url \
+    &quot;https://download.pytorch.org/whl/cu116&quot; \
+    -r requirements.txt cuda-python nvidia-cudnn
 </code></pre>
 <h4>conda</h4>
-<pre><code>conda env create -f environment.yml
+<pre class="prettyprint source lang-bash"><code>conda env create -f environment.yml
 </code></pre>
 <h2>Usage</h2>
-<p>Before running the server, you'll need to process some audio. To do so, run:</p>
-<pre><code>python3 src/scripts/process_audio.py FILE
+<p>Audio can be processed by moving the audio file to <code>data/audio</code>
+(or <code>data/video</code> for video files) and running</p>
+<pre class="prettyprint source lang-bash"><code>python3 scripts/process_audio.py data/audio/FILE
 </code></pre>
-<p>For more information, run:</p>
-<pre><code>python3 src/scripts/process_audio.py -h
+<p>Then, to view the results on the interface, run</p>
+<pre class="prettyprint source lang-bash"><code>npm start
 </code></pre>
-<p><br><br></p>
-<p>To start the server, run:</p>
-<pre><code>npm start
-</code></pre>
-<p>and then open http://localhost:3000 in your browser.</p>
-<p>By default, the server listens on port 3000. To specify a different port, run with the port option:</p>
-<pre><code>npm start -- --port=PORT
-</code></pre>
-<p>where PORT is the port you want the server to listen on.</p>
-<p><br><br></p>
-<p>To actually display any audio, you need to:</p>
-<ol>
-<li>Add the audio file to the <code>data/audio</code> directory.</li>
-<li>Add the json file for the waveform (generated by the pipeline) to the <code>data/waveforms</code> directory.</li>
-<li>Add the json file for the segments (generated by the pipeline) to the <code>data/segments</code> directory.</li>
-</ol>
-<p>For example, for the file <code>example.mp3</code>, there should be <code>data/audio/example.mp3</code>, <code>data/waveforms/example-waveform.json</code>, and <code>data/segments/example-segments.json</code>.</p>
-<h2>VRS data extraction</h2>
-<pre><code>git clone https://github.com/facebookresearch/Aria_data_tools.git
-podman build . --network=host -t aria_data_tools
-podman run -it --volume &lt;your_local_data&gt;:/data aria_data_tools:latest
-</code></pre>
-<p>It is reccomended you use bigcore for this as we have encountered VRS build issues on Windows 11/Mac os.</p>
-<p>To get video from a VRS file, while in the container cd to the folder the vrs file is in. Then run:</p>
-<pre><code>vrs extract-images file.vrs --to image-folder + 1201-1
-</code></pre>
-<p>where + 1201-1 can be substituded for whichever sensor you want to get video from. 1201-1 is the first SLAM left camera. A complete list of sensors used with ARIA can be seen <a href="https://facebookresearch.github.io/Aria_data_tools/docs/sensors-measurements/#naming-conventions-for-all-tools">here</a></p>
-<p>Next cd to where ./create-video.sh is, in the main Speechviz folder then run</p>
-<pre><code>src/scripts/create-video.sh path/to/image-folder
-</code></pre>
-<p>This will give you an mp4 of all the images extracted without any of the audio.</p>
-<p>So the next step is audio extraction. For audio run:</p>
-<pre><code>vrs extract-audio file.vrs --to image-folder
-</code></pre>
-<p>Next write exit to leave the container. The next step is to use ffmpeg to rotate the video 90 degrees clockwise because by default the images are recorded rotated 90 degrees counterclockwise.</p>
-<pre><code>ffmpeg -i vid.mp4 -vf transpose=1 output.mp4
-</code></pre>
-<p>After that you will have to change the audio file you got from wav to mp3 so it can be combined with the mp4.</p>
-<pre><code>ffmpeg -i input-file.wav -vn -ar 44100 -ac 2 -b:a 192k output-file.mp3
-</code></pre>
-<p>Lastly combine the mp4 and mp3 to get a video with audio.</p>
-<pre><code>ffmpeg -i input.mp4 -i input.mp3 -c copy -map 0:v:0 -map 1:a:0 output.mp4
-</code></pre>
-<p>At this point if you want to then analyze the video with speechviz move the video to data/video and run</p>
-<pre><code>python3 src/scripts/process_audio.py data/video
-</code></pre>
-<h2>Face Detection and Clustering</h2>
-<p>First we need to build dlib, this assumes you have a gpu. If you just want to use cpu use DDLIB_USE_CUDA = 0 instead.</p>
-<pre><code>git clone https://github.com/davisking/dlib.git
-cd dlib
-mkdir build
-cd build
-cmake .. -DDLIB_USE_CUDA=1
-cd ..
-python3 setup.py install
-</code></pre>
-<p>A rather annoying bug can occur where your gcc compiler can be higher than is compatible with cuda, if you get a message saying DLIB WILL NOT USE CUDA try hanging cmake and python 3 lines to the following respectively.</p>
-<pre><code>cmake .. -DDLIB_USE_CUDA=1 -DUSE_AVX_INSTRUCTIONS=1 -DCUDA_HOST_COMPILER=/path/to/gcc/compiler/version10/or/lower
-python3 setup.py install --set CUDA_HOST_COMPILER=/path/to/gcc/compiler/version10/or/lower
-</code></pre>
-<p>Now gpu use should be supported for dlib.</p>
-<p>There are two steps. Encoding information about detecting faces in 128 dimensions, and then clustering those detected faces based on the encodings. Encoding faces is able to be done without human intervention and takes a while, so you don't want to repeat doing it. Clustering requires some human input, doesn't take as long, and could be repeated so it is split up from encoding.</p>
-<p>To run encoding,</p>
-<pre><code>python encode_faces.py --dataset folderWithImages --encodings whereEncodingsWillBeStored.pickle -d cnn --outputs folderForFacesDetected
-</code></pre>
-<p>Where -d takes in the detection method. cnn is more accurate, but needs a gpu to not be super slow. hog is the alternative which is fast and can be done with just a cpu, but is less accurate.</p>
-<p>--outputs creates a folder named what it was given. This will not be populated unless you uncomment the code in encode_faces.py below line 59: #uncomment below to see what faces are detected. This will fill the folder outputs was given with all the faces detected which can be useful to see if the faces you're finding are accurate.</p>
-<p>Next we need to cluster the faces to see how many unique people have been identified.</p>
-<pre><code>python cluster_faces.py --encodings encodingYouMadeEarlier.pickle --outputs outputFolderOfFaces --epsilon epsilonFloatNumber
-</code></pre>
-<p>Where epsilon is a parameter for the clustering method DBSCAN. DBSCAN clusters groups based on density of points <a href="https://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_comparison.html">comarison of DBSCAN to other clustering</a>. Epsilon controls how far points can be from one another and still considered a neighborhood. As a result too small a value, and no clusters will be found, they will all be considered noise. Too large an epsilon and all will be considered the same cluster. Finding the correct epsilon can take some trial and error, and for the few tests I've done with this data it has fallen around .35 and .4. As a rule of thumb when you find too many faces, increase epsilon and if you find too few, lower epsilon.</p>
-<p>This will make a few folders in a folder given to outputs. testLabel-1 is faces that it found to be noise, and testLabel0, testLabel1, etc each are folders containing the faces it thinks are the same person.</p>
+<p>and open http://localhost:3000.<br>
+For a more in-depth usage guide, see <a href="USAGE.md">USAGE.md</a>.</p>
 <h2>Troubleshooting</h2>
-<p>If installing on Bigcore, you are likely to run into the following error:</p>
-<pre><code>ERROR: Could not install packages due to an OSError: Proxy URL had no scheme, should start with http:// or https://
+<p>If installing on Bigcore, you are likely to run into an error relating to a proxy URL.
+To resolve this, run the following command:</p>
+<pre class="prettyprint source lang-bash"><code>http_proxy=&quot;http://$(echo $http_proxy)&quot; && https_proxy=&quot;http://$(echo $https_proxy)&quot;
 </code></pre>
-<p>To resolve this, run the following command:</p>
-<pre><code>http_proxy=&quot;http://$(echo $http_proxy)&quot; &amp;&amp; https_proxy=&quot;http://$(echo $https_proxy)&quot;
-</code></pre>
-<p><br><br></p>
-<p>If you receive this error:</p>
-<pre><code>subprocess.CalledProcessError: Command '['ffmpeg', '-y', '-i', 'input_file_here' 'output_file_here']' returned non-zero exit status 127.
-</code></pre>
-<p>Running</p>
-<pre><code>conda update ffmpeg
-</code></pre>
-<p>should resolve the issue.</p></article>
+<p>If you receive a <code>subprocess.CalledProcessError</code> relating to <code>ffmpeg</code>, running the
+following should resolve the issue:</p>
+<pre class="prettyprint source lang-bash"><code>conda update ffmpeg
+</code></pre></article>
     </section>
 
 
@@ -267,7 +287,7 @@ python3 setup.py install --set CUDA_HOST_COMPILER=/path/to/gcc/compiler/version1
             
             <footer class="footer">
                 <div class="content has-text-centered">
-                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.0</a></p>
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.11</a></p>
                     <p class="sidebar-created-by">
                         <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
                         <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
