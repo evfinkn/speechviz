@@ -19,7 +19,8 @@ Speechviz is a tool to
 1. Automatically process audio and video data—performing speaker diarization,
    voice-activity detection, speech recognition, and face detection
 2. Visualize the generated annotations in a user-friendly interface that allows
-   playing the audio segments and refining the generated annotations to correct any errors
+   playing the audio segments and refining the generated annotations to correct
+   any errors
 
 ## Contents
 
