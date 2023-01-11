@@ -144,8 +144,24 @@ app.get("/users", (req, res) => {
 });
 
 app.get(
-  /\/(audio|segments|video|waveforms|transcriptions|graphical)/,
-  (req, res) => res.sendFile(req.url, { root: __dirname + "/data" })
+  /\/(audio|segments|video|waveforms|transcriptions|graphical|faceClusters)/,
+  (req, res) => {
+    const url = "data" + req.url;
+    fs.promises
+      .stat(url)
+      .then((stat) => {
+        // if it's a directory, return list of file names in that directory
+        if (stat.isDirectory()) {
+          return res.send(fs.readdirSync(url));
+        }
+        // if it's a file, return the file
+        else {
+          return res.sendFile(url, { root: __dirname });
+        }
+      })
+      // catch error from stat when file doesn't exist
+      .catch(() => res.status(404).send("Not Found"));
+  }
 );
 
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
