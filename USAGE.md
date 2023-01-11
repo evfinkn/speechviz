@@ -2,12 +2,14 @@
 
 ## Contents
 
-- [Processing](#processing)
-  - [Audio and video files](#audio-and-video-files)
-  - [VRS files](#vrs-files)
-  - [Speech recognition](#speech-recognition)
-  - [Face detection and clustering](#face-detection-and-clustering)
-- [Interface](#interface)
+- [Usage](#usage)
+  - [Contents](#contents)
+  - [Processing](#processing)
+    - [Audio and video files](#audio-and-video-files)
+    - [VRS files](#vrs-files)
+    - [Speech recognition](#speech-recognition)
+    - [Face detection and clustering](#face-detection-and-clustering)
+  - [Interface](#interface)
 
 ## Processing
 
@@ -17,10 +19,12 @@ All the Python scripts have a list of useful options that can be viewed by passi
 
 To process an audio (.mp3, .wav, .flac, .ogg, or .opus) file or a video (.mp4 or .mov) file, run
 
-    # to process an audio file
-    python3 scripts/process_audio.py data/audio/FILE
-    # processing a video file is the same command, just a different directory
-    python3 scripts/process_audio.py data/video/FILE
+```bash
+# to process an audio file
+python3 scripts/process_audio.py data/audio/FILE
+# processing a video file is the same command, just a different directory
+python3 scripts/process_audio.py data/video/FILE
+```
 
 While the file doesn't have to be in `data/audio` or `data/video`, if it is, it outputs the
 waveform and segments files into the appropriate directories used by the interface. Otherwise,
@@ -36,7 +40,9 @@ To process a .vrs file created by
 [Project Aria glasses](https://about.meta.com/realitylabs/projectaria/),
 move the file to `data/vrs` and run
 
-    python3 scripts/extract-vrs-data.py data/vrs/FILE
+```bash
+python3 scripts/extract-vrs-data.py data/vrs/FILE
+```
 
 Unlike `process_audio.py`, the file must be in `data/vrs` for `extract-vrs-data.py` to work.
 The files are output to `data/graphical/FILE_NAME` where `FILE_NAME` is `FILE` without the
@@ -48,21 +54,27 @@ data (if any); and the barometer data (if any).
 
 Pose data (data specifying the position and rotation) of the glasses can be created by running
 
-    python3 scripts/create_poses.py data/graphical/FILE_NAME
+```bash
+python3 scripts/create_poses.py data/graphical/FILE_NAME
+```
 
 To visualize the pose data in the interface, you'll need to process one of the videos from the
 cameras. After picking one of the videos, you can optionally run these commands:
 
-    # Rotate the video to the correct orientation
-    ffmpeg -i input.mp4 -vf transpose=1 output.mp4
-    # If you're going to combine the audio and video, convert the audio to mp3
-    ffmpeg -i input.wav -vn -ar 44100 -ac 2 -b:a 192k output.mp3
-    # Combine the audio and video
-    ffmpeg -i input.mp4 -i input.mp3 -c copy -map 0:v:0 -map 1:a:0 output.mp4
+```bash
+# Rotate the video to the correct orientation
+ffmpeg -i input.mp4 -vf transpose=1 output.mp4
+# If you're going to combine the audio and video, convert the audio to mp3
+ffmpeg -i input.wav -vn -ar 44100 -ac 2 -b:a 192k output.mp3
+# Combine the audio and video
+ffmpeg -i input.mp4 -i input.mp3 -c copy -map 0:v:0 -map 1:a:0 output.mp4
+```
 
 Finally, rename the video to `FILE_NAME.mp4`, move it to `data/video`, and run
 
-    python3 scripts/process_audio.py data/video/FILE_NAME.mp4
+```bash
+python3 scripts/process_audio.py data/video/FILE_NAME.mp4
+```
 
 Once finished, open it in the interface (which will automatically detect the pose file).
 
@@ -70,10 +82,12 @@ Once finished, open it in the interface (which will automatically detect the pos
 
 The following command will run speech recognition on a file:
 
-    # to transcribe an audio file
-    python3 scripts/transcribe.py data/audio/FILE
-    # processing a video file is the same command, just a different directory
-    python3 scripts/transcribe.py data/video/FILE
+```bash
+# to transcribe an audio file
+python3 scripts/transcribe.py data/audio/FILE
+# processing a video file is the same command, just a different directory
+python3 scripts/transcribe.py data/video/FILE
+```
 
 Similar to `process_audio.py`, `transcribe.py` doesn't require the file to be in `data/audio` or
 `data/video`. If it is, the transcription file is output to `data/transcriptions`. Otherwise,
@@ -88,26 +102,35 @@ script isn't recommended.
 First we need to build dlib. This assumes you have a gpu; if you just want to use the cpu, use
 `DDLIB_USE_CUDA=0` instead.
 
-    git clone https://github.com/davisking/dlib.git
-    cd dlib
-    mkdir build
-    cd build
-    cmake .. -DDLIB_USE_CUDA=1
-    cd ..
-    python3 setup.py install
+```bash
+git clone https://github.com/davisking/dlib.git
+cd dlib
+mkdir build
+cd build
+cmake .. -DDLIB_USE_CUDA=1
+cd ..
+python3 setup.py install
+```
 
 A rather annoying bug can occur where the version of your gcc compiler is higher than versions
 compatible with cuda. If you get a message saying `DLIB WILL NOT USE CUDA`, try changing cmake and
 python 3 lines to the following respectively:
 
-    cmake .. -DDLIB_USE_CUDA=1 -DUSE_AVX_INSTRUCTIONS=1 -DCUDA_HOST_COMPILER=/path/to/gcc/compiler/version10/or/lower
-    python3 setup.py install --set CUDA_HOST_COMPILER=/path/to/gcc/compiler/version10/or/lower
+```bash
+cmake .. -DDLIB_USE_CUDA=1 -DUSE_AVX_INSTRUCTIONS=1 \
+    -DCUDA_HOST_COMPILER=/path/to/gcc/compiler/version10/or/lower
+python3 setup.py install \
+    --set CUDA_HOST_COMPILER=/path/to/gcc/compiler/version10/or/lower
+```
 
 Now gpu use should be supported for dlib.
 
 If you want to automatically encode and cluster, and have it put the correct information in the appropriate directories for visualization, run
 
-    python3 scripts/encode_and_cluster.py -i data/imagesForEncoding/nameOfFolderWithImages
+```bash
+python3 scripts/encode_and_cluster.py \
+    -i data/imagesForEncoding/nameOfFolderWithImages
+```
 
 Note: It is very important that the name of the folder with images from the video matches the
 name of the video that it corresponds to. For example, if your video is called `video1.mp4`, the
@@ -126,11 +149,20 @@ making it appealing to rerun just clustering to improve results.
 
 To run encoding,
 
-    python3 scripts/encode_faces.py --dataset videoNamedFolderWithImages --encodings data/imagesForEncoding/videoName/videoName.pickle -d cnn --outputs optionalFolderForFacesDetected
+```bash
+python3 scripts/encode_faces.py \
+    --dataset videoNamedFolderWithImages \
+    --encodings data/imagesForEncoding/videoName/videoName.pickle \
+    -d cnn --outputs optionalFolderForFacesDetected
+```
 
 Second, we can cluster/re-cluster the faces to see how many unique people have been identified.
 
-    python3 scripts/cluster_faces.py --encodings data/imagesForEncoding/videoName/videoName.pickle --outputs data/faceClusters/videoName --epsilon epsilonFloatNumber
+```bash
+python3 scripts/cluster_faces.py \
+    --encodings data/imagesForEncoding/videoName/videoName.pickle \
+    --outputs data/faceClusters/videoName --epsilon epsilonFloatNumber
+```
 
 where `epsilonFloatNumber` is a parameter for the clustering method DBSCAN. DBSCAN clusters groups
 based on density of points
@@ -150,25 +182,33 @@ same person.
 
 The interface can only be accessed if the server is running. To start it, run
 
-    npm start
+```bash
+npm start
+```
 
 and open http://localhost:3000 (or the IP address output in the console). By default, the server
 listens on port 3000. To specify a different port, run with `-- --port=PORT` (where `PORT` is
 the port you want the server to listen on):
 
-    npm start -- --port=PORT
+```bash
+npm start -- --port=PORT
+```
 
 Once you open up the interface, you will be greeted with a login page. The default login is
 username `user` and password `pass`. Other users can be created with
 
-    python3 scripts/db_user.py USERNAME PASSWORD
+```bash
+python3 scripts/db_user.py USERNAME PASSWORD
+```
 
 where `USERNAME` is the username of the new user and `PASSWORD` is the password to give them. If
 `USERNAME` is an already existing user, then the command will instead update their password. A
 user's password can also be changed by logging in as that user and navigating to `/change-password`
 (i.e. http://localhost:3000/change-password). If you'd like to remove a user, run the following:
 
-    python3 scripts/db_user.py --delete USERNAME
+```bash
+python3 scripts/db_user.py --delete USERNAME
+```
 
 After logging in, you will be redirected to an index page containing a list of audio and video
 files. These are the files found in `data/audio` and `data/video` respectively. Your files

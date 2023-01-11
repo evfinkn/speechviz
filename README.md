@@ -54,63 +54,77 @@ The image is built from the
 [Aria Data Tools](https://github.com/facebookresearch/Aria_data_tools/)
 image, so you'll need to build that container first.
 
-    git clone https://github.com/facebookresearch/Aria_data_tools.git
-    cd Aria_data_tools
-    # replace docker with podman if you're using podman
-    docker build -t aria_data_tools .
+```bash
+git clone https://github.com/facebookresearch/Aria_data_tools.git
+cd Aria_data_tools
+# replace docker with podman if you're using podman
+docker build -t aria_data_tools .
+```
 
 After that's finished, build the Speechviz container.
 
-    git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
-    cd speechviz
-    # these next 2 make files that you'll mount into the container
-    npm run mkdir
-    python3 scripts/db_init.py
-    # if you're using docker:
-    docker build -e PYANNOTE_AUTH_TOKEN -t speechviz .
-    # if you're using podman:
-    podman build --env=PYANNOTE_AUTH_TOKEN -t speechviz .
+```bash
+git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
+cd speechviz
+# these next 2 make files that you'll mount into the container
+npm run mkdir
+python3 scripts/db_init.py
+# if you're using docker:
+docker build -e PYANNOTE_AUTH_TOKEN -t speechviz .
+# if you're using podman:
+podman build --env=PYANNOTE_AUTH_TOKEN -t speechviz .
+```
 
 Note that the above commands build the image with PyTorch CPU support only.
 If you'd like to include support for CUDA, follow the instructions for using the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html)
 and add `--build-arg cuda=true` to the `docker build` command above:
 
-    # if you're using docker:
-    docker build --build-arg cuda=true \
-        -e PYANNOTE_AUTH_TOKEN -t speechviz .
-    # if you're using podman:
-    podman build --build-arg cuda=true \
-        --env=PYANNOTE_AUTH_TOKEN -t speechviz .
+```bash
+# if you're using docker:
+docker build --build-arg cuda=true \
+    -e PYANNOTE_AUTH_TOKEN -t speechviz .
+# if you're using podman:
+podman build --build-arg cuda=true \
+    --env=PYANNOTE_AUTH_TOKEN -t speechviz .
+```
 
 You can start the container by—while you're in the cloned
 speechviz directory—running
 
-    # replace docker with podman if you're using podman
-    docker run -it \
-        -v ./data:/speechviz/data \
-        -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
-        speechviz
+```bash
+# replace docker with podman if you're using podman
+docker run -it \
+    -v ./data:/speechviz/data \
+    -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
+    speechviz
+```
 
 If you're going to use the interface in the container, use the `-p PORT:PORT` option.
 By default, the interface uses port 3000, so the command for that port is
 
-    # replace docker with podman if you're using podman
-    docker run -it -p 3000:3000 \
-        -v ./data:/speechviz/data \
-        -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
-        speechviz
+```bash
+# replace docker with podman if you're using podman
+docker run -it -p 3000:3000 \
+    -v ./data:/speechviz/data \
+    -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
+    speechviz
+```
 
 ## Manual installation
 
-    git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
-    cd speechviz
+```bash
+git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
+cd speechviz
+```
 
 ### Setup the interface
 
-    npm install
-    npm run mkdir
-    python3 scripts/db_init.py
+```bash
+npm install
+npm run mkdir
+python3 scripts/db_init.py
+```
 
 ### Install script dependencies
 
@@ -129,30 +143,40 @@ Lastly, for `create_poses.py`, you will need to install
 
 To install with PyTorch CPU support only:
 
-    pip3 install --extra-index-url \
-        "https://download.pytorch.org/whl/cpu" \
-        -r requirements.txt
+```bash
+pip3 install --extra-index-url \
+    "https://download.pytorch.org/whl/cpu" \
+    -r requirements.txt
+```
 
 To install with PyTorch CUDA support (Linux and Windows only):
 
-    pip3 install --extra-index-url \
-        "https://download.pytorch.org/whl/cu116" \
-        -r requirements.txt cuda-python nvidia-cudnn
+```bash
+pip3 install --extra-index-url \
+    "https://download.pytorch.org/whl/cu116" \
+    -r requirements.txt cuda-python nvidia-cudnn
+```
 
 #### conda
 
-    conda env create -f environment.yml
+```bash
+conda env create -f environment.yml
+```
 
 ## Usage
 
 Audio can be processed by moving the audio file to `data/audio`
 (or `data/video` for video files) and running
 
-    python3 scripts/process_audio.py data/audio/FILE
+```bash
+python3 scripts/process_audio.py data/audio/FILE
+```
 
 Then, to view the results on the interface, run
 
-    npm start
+```bash
+npm start
+```
 
 and open http://localhost:3000.  
 For a more in-depth usage guide, see [USAGE.md](USAGE.md).
@@ -164,11 +188,15 @@ For a more in-depth usage guide, see [USAGE.md](USAGE.md).
 If installing on Bigcore, you are likely to run into an error relating to a proxy URL.
 To resolve this, run the following command:
 
-    http_proxy="http://$(echo $http_proxy)" && https_proxy="http://$(echo $https_proxy)"
+```bash
+http_proxy="http://$(echo $http_proxy)" && https_proxy="http://$(echo $https_proxy)"
+```
 
 [comment]: # "subprocess.CalledProcessError: Command '['ffmpeg', ... 'output_file_here']' returned non-zero exit status 127."
 
 If you receive a `subprocess.CalledProcessError` relating to `ffmpeg`, running the
 following should resolve the issue:
 
-    conda update ffmpeg
+```bash
+conda update ffmpeg
+```
