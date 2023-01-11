@@ -126,7 +126,7 @@ making it appealing to rerun just clustering to improve results.
 
 To run encoding,
 
-    python3 scripts/encode_faces.py --dataset videoNamedFodlerWithImages --encodings data/imagesForEncoding/videoName/videoName.pickle -d cnn --outputs optionalFolderForFacesDetected
+    python3 scripts/encode_faces.py --dataset videoNamedFolderWithImages --encodings data/imagesForEncoding/videoName/videoName.pickle -d cnn --outputs optionalFolderForFacesDetected
 
 Second, we can cluster/re-cluster the faces to see how many unique people have been identified.
 
