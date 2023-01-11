@@ -23,27 +23,83 @@ Speechviz is a tool to
 
 ## Contents
 
-- [Docker / Podman image](#docker--podman-image)
-- [Manual installation](#manual-installation)
-  - [Setup the interface](#setup-the-interface)
-  - [Install script dependencies](#install-script-dependencies)
-    - [pip](#pip)
-    - [conda](#conda)
-- [Usage](#usage)
-- [Troubleshooting](#troubleshooting)
+- [Speechviz](#speechviz)
+  - [Contents](#contents)
+  - [pyannote access](#pyannote-access)
+  - [Docker / Podman image](#docker--podman-image)
+  - [Manual installation](#manual-installation)
+    - [Setup the interface](#setup-the-interface)
+    - [Install script dependencies](#install-script-dependencies)
+      - [pip](#pip)
+      - [conda](#conda)
+  - [Usage](#usage)
+  - [Troubleshooting](#troubleshooting)
+
+## pyannote access
+
+Before you can get started, you'll have to get an access token
+to use pyannote. You can do so by following these steps:
+
+1. Login to or signup for https://huggingface.co/
+2. Visit each of the following and accept the user conditions:
+   - https://huggingface.co/pyannote/segmentation
+   - https://huggingface.co/pyannote/speaker-diarization
+   - https://huggingface.co/pyannote/voice-activity-detection
+3. Go to https://huggingface.co/settings/tokens and create an access token
+4. Set your `PYANNOTE_AUTH_TOKEN` environment variable to your access token
 
 ## Docker / Podman image
 
+The image is built from the
+[Aria Data Tools](https://github.com/facebookresearch/Aria_data_tools/)
+image, so you'll need to build that container first.
+
+    git clone https://github.com/facebookresearch/Aria_data_tools.git
+    cd Aria_data_tools
+    # replace docker with podman if you're using podman
+    docker build -t aria_data_tools .
+
+After that's finished, build the Speechviz container.
+
     git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
     cd speechviz
-    docker build . -t speechviz
+    # these next 2 make files that you'll mount into the container
+    npm run mkdir
+    python3 scripts/db_init.py
+    # if you're using docker:
+    docker build -e PYANNOTE_AUTH_TOKEN -t speechviz .
+    # if you're using podman:
+    podman build --env=PYANNOTE_AUTH_TOKEN -t speechviz .
 
 Note that the above commands build the image with PyTorch CPU support only.
 If you'd like to include support for CUDA, follow the instructions for using the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html)
 and add `--build-arg cuda=true` to the `docker build` command above:
 
-    docker build --build-arg cuda=true . -t speechviz
+    # if you're using docker:
+    docker build --build-arg cuda=true \
+        -e PYANNOTE_AUTH_TOKEN -t speechviz .
+    # if you're using podman:
+    podman build --build-arg cuda=true \
+        --env=PYANNOTE_AUTH_TOKEN -t speechviz .
+
+You can start the container by—while you're in the cloned
+speechviz directory—running
+
+    # replace docker with podman if you're using podman
+    docker run -it \
+        -v ./data:/speechviz/data \
+        -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
+        speechviz
+
+If you're going to use the interface in the container, use the `-p PORT:PORT` option.
+By default, the interface uses port 3000, so the command for that port is
+
+    # replace docker with podman if you're using podman
+    docker run -it -p 3000:3000 \
+        -v ./data:/speechviz/data \
+        -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
+        speechviz
 
 ## Manual installation
 
@@ -58,19 +114,30 @@ and add `--build-arg cuda=true` to the `docker build` command above:
 
 ### Install script dependencies
 
-If you'll be using `extract-vrs-data.py`, you will need to install [VRS](https://github.com/facebookresearch/vrs).
-To use `process_audio.py`, you will need to install [audiowaveform](https://github.com/bbc/audiowaveform)
-and [ffmpeg](https://ffmpeg.org/). The remaining dependencies for `process_audio.py` can be installed using `pip` or `conda`.
+To use `process_audio.py`, you will need to install
+[audiowaveform](https://github.com/bbc/audiowaveform)
+and [ffmpeg](https://ffmpeg.org/). The remaining dependencies for `process_audio.py`
+can be installed using `pip` or `conda`.
+For `encode_faces.py` and `cluster_faces.py`, you will need to install
+[dlib](USAGE.md#face-detection-and-clustering).
+If you'll be using `extract-vrs-data.py`, you will need to install
+[VRS](https://github.com/facebookresearch/vrs).
+Lastly, for `create_poses.py`, you will need to install
+[Aria Data Tools](https://github.com/facebookresearch/Aria_data_tools/).
 
 #### pip
 
 To install with PyTorch CPU support only:
 
-    pip3 install --extra-index-url "https://download.pytorch.org/whl/cpu" -r requirements.txt
+    pip3 install --extra-index-url \
+        "https://download.pytorch.org/whl/cpu" \
+        -r requirements.txt
 
 To install with PyTorch CUDA support (Linux and Windows only):
 
-    pip3 install --extra-index-url "https://download.pytorch.org/whl/cu116" -r requirements.txt
+    pip3 install --extra-index-url \
+        "https://download.pytorch.org/whl/cu116" \
+        -r requirements.txt cuda-python nvidia-cudnn
 
 #### conda
 
