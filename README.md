@@ -66,7 +66,9 @@ After that's finished, build the Speechviz container.
 ```bash
 git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
 cd speechviz
-docker build -e PYANNOTE_AUTH_TOKEN -t speechviz .
+docker build --build-arg \
+    PYANNOTE_AUTH_TOKEN="${PYANNOTE_AUTH_TOKEN}" \
+    -t speechviz .
 ```
 
 Note that the above commands build the image with PyTorch CPU support only.
@@ -75,8 +77,9 @@ If you'd like to include support for CUDA, follow the instructions for using the
 and add `--build-arg cuda=true` to the `docker build` command above:
 
 ```bash
-docker build --build-arg cuda=true \
-    -e PYANNOTE_AUTH_TOKEN -t speechviz .
+docker build --build-arg \
+    PYANNOTE_AUTH_TOKEN="${PYANNOTE_AUTH_TOKEN}" \
+    --build-arg cuda=true -t speechviz .
 ```
 
 You'll want to mount your data into the image. To create the data folder and

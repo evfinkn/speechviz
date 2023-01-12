@@ -1,6 +1,8 @@
 FROM aria_data_tools:latest
 
 ARG cuda=false
+ARG PYANNOTE_AUTH_TOKEN
+ENV PYANNOTE_AUTH_TOKEN=${PYANNOTE_AUTH_TOKEN}
 
 # copy git repo to the image
 COPY . /speechviz/
