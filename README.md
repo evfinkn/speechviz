@@ -67,9 +67,6 @@ After that's finished, build the Speechviz container.
 ```bash
 git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
 cd speechviz
-# these next 2 make files that you'll mount into the container
-npm run mkdir
-python3 scripts/db_init.py
 # if you're using docker:
 docker build -e PYANNOTE_AUTH_TOKEN -t speechviz .
 # if you're using podman:
@@ -90,8 +87,15 @@ podman build --build-arg cuda=true \
     --env=PYANNOTE_AUTH_TOKEN -t speechviz .
 ```
 
-You can start the container by—while you're in the cloned
-speechviz directory—running
+You'll want to mount your data into the image. To create the data folder and
+database, run these 2 commands:
+
+```bash
+npm run mkdir
+python3 scripts/db_init.py
+```
+
+You can then start the container by running
 
 ```bash
 # replace docker with podman if you're using podman
