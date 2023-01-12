@@ -58,7 +58,6 @@ image, so you'll need to build that container first.
 ```bash
 git clone https://github.com/facebookresearch/Aria_data_tools.git
 cd Aria_data_tools
-# replace docker with podman if you're using podman
 docker build -t aria_data_tools .
 ```
 
@@ -67,10 +66,7 @@ After that's finished, build the Speechviz container.
 ```bash
 git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
 cd speechviz
-# if you're using docker:
 docker build -e PYANNOTE_AUTH_TOKEN -t speechviz .
-# if you're using podman:
-podman build --env=PYANNOTE_AUTH_TOKEN -t speechviz .
 ```
 
 Note that the above commands build the image with PyTorch CPU support only.
@@ -79,12 +75,8 @@ If you'd like to include support for CUDA, follow the instructions for using the
 and add `--build-arg cuda=true` to the `docker build` command above:
 
 ```bash
-# if you're using docker:
 docker build --build-arg cuda=true \
     -e PYANNOTE_AUTH_TOKEN -t speechviz .
-# if you're using podman:
-podman build --build-arg cuda=true \
-    --env=PYANNOTE_AUTH_TOKEN -t speechviz .
 ```
 
 You'll want to mount your data into the image. To create the data folder and
@@ -98,7 +90,6 @@ python3 scripts/db_init.py
 You can then start the container by running
 
 ```bash
-# replace docker with podman if you're using podman
 docker run -it \
     -v ./data:/speechviz/data \
     -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
@@ -109,7 +100,6 @@ If you're going to use the interface in the container, use the `-p PORT:PORT` op
 By default, the interface uses port 3000, so the command for that port is
 
 ```bash
-# replace docker with podman if you're using podman
 docker run -it -p 3000:3000 \
     -v ./data:/speechviz/data \
     -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
