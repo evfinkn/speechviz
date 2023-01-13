@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Speechviz Documentation globals.js</title>
+  <title>Speechviz Documentation index.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -93,7 +93,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>globals.js</h1>
+                    <h1>index.js</h1>
                 </header>
                 
 
@@ -102,97 +102,152 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import Peaks from "peaks.js";
-import createSegmentMarker from "./CustomSegmentMarker.js";
+            <pre class="prettyprint source linenums"><code>import { htmlToElement, checkResponseStatus } from "./util.js";
 
-// query parameters that appear in url, such as ?file=audio.mp3
-const urlParams = new URLSearchParams(window.location.search);
-const filename = urlParams.get("file"); // name of file with extension
-// name of the file without the extension
-const basename = filename.replace(/\.[^/.]+$/, "");
-
-// make sure user is viewing their own segments or is admin
-let user = urlParams.get("user"); // user in the url params
-// the actual logged-in user (should == user unless admin logged in)
-const sessionUser = await fetch("/user").then((response) => response.text());
-if (!user) {
-  user = sessionUser;
-} else {
-  // non-admin tried switching user url param to view other user's
-  // segments, use logged-in user's segments
-  if (sessionUser != "admin" &amp;&amp; user != sessionUser) {
-    user = sessionUser;
-  }
-  // admin is viewing other user's segments, add note in top right of viz
-  else if (user != "admin") {
-    document.getElementById("user").innerHTML = `admin (viewing ${user})`;
-  }
-}
-
-// TODO: make a typedef for undo (and redo) elements so that the types aren't {any[]}
+let user;
+// for some reason, setting variable in promise doesn't set it outside of promise,
+// so need a function to call from promise to set it. Very janky and I don't like it
+// but don't know other way
 /**
- * `Object` containing global constants shared across the javascript files.
- * @prop {string} filename - The name of the media file including its extension.
- * @prop {string} basename - The name of the media file excluding its extension
- * @prop {!Element} media - The audio / video element being visualized.
- * @prop {any[]} undoStorage - The array holding the actions that have been undone.
- * @prop {string} user - The name of the user whose segments are being viewed. Always
- *      equal to the logged-in user, unless "admin" is logged-in (since the admin can
- *      view any user's segments).
- * @prop {!Peaks.PeaksInstance} peaks - Instance of peaks
- * @type {!Object.&lt;string, any>}
+ * Set the user.
+ * @param {string} newUser - The new user's name.
  */
-const globals = {};
-// would've defined these properties in the object (in the line above this) but then
-// VSCode IntelliSense showed them but not properties added later (like globals.peaks)
-globals.filename = filename;
-globals.basename = basename;
-globals.media = document.getElementById("media");
-globals.undoStorage = [];
-// globals.redoStorage = [];
-globals.user = user;
-
-const options = {
-  // options passed to Peaks
-  zoomview: {
-    container: document.getElementById("zoomview-container"),
-    waveformColor: "rgba(0,0,0,0.2)",
-    playheadClickTolerance: 3,
-    wheelMode: "scroll",
-  },
-  overview: {
-    container: document.getElementById("overview-container"),
-    waveformColor: "rgba(0,0,0,0.2)",
-  },
-  mediaElement: globals.media,
-  dataUri: {
-    json: `waveforms/${basename}-waveform.json`,
-  },
-  keyboard: true,
-  pointMarkerColor: "#006eb0",
-  showPlayheadTime: true,
-  waveformCache: true,
-  zoomLevels: [256, 512, 1024, 2048, 4096],
-  segmentStartMarkerColor: "rgba(120, 120, 120, 1)",
-  segmentEndMarkerColor: "rgba(120, 120, 120, 1)",
-  createSegmentMarker: createSegmentMarker,
+const setUser = function (newUser) {
+  user = newUser;
 };
 
-Peaks.init(options, function (err, peaksInstance) {
-  if (err) {
-    throw err;
+/**
+ * Opens the main interface to visualize the specified file.
+ * @param {string} fileName - The name of the file to open.
+ * @param {string} type - The type of file to open. Either `"audio"` or `"video"`.
+ * @param {?string} user - The name of the user opening the file.
+ */
+const openViz = function (fileName, type, user = null) {
+  if (user !== null) {
+    window.location.replace(`/viz?user=${user}file=${fileName}&amp;type=${type}`);
+  } else {
+    window.location.replace(`/viz?file=${fileName}&amp;type=${type}`);
   }
-  globals.peaks = peaksInstance;
-});
+};
 
-// Peaks.init() uses a callback, so this will be executed directly after calling
-// Peaks.init(). However, we need to make sure globals.peaks has been set to the
-// instance, as the other js files use it. This waits for globals.peaks to be set
-// https://stackoverflow.com/a/39914235
-while (!globals.peaks) {
-  await new Promise((r) => setTimeout(r, 250));
-}
-export default globals;
+/**
+ * Creates a div containing a radio input and a label.
+ * @param {string} id - The string to use for the input's id and value attributes
+ *      and the label's text.
+ * @param {string} name - The string to use for the input's name attribute.
+ */
+const createRadioDiv = function (id, name) {
+  return htmlToElement(`&lt;div>
+        &lt;input type="radio" id="${id}" name="${name}" value="${id}">&lt;/input>
+        &lt;label for="${id}">${id}&lt;/label>
+    &lt;/div>`);
+};
+
+// Need to fetch user instead of using url param because otherwise anyone could
+// just set themselves to admin by changing url param
+fetch("/user") // fetch currently logged-in user
+  .then(checkResponseStatus)
+  .then((response) => response.text())
+  .then((user) => {
+    // admin is able to view all users' annotations
+    // so make radio buttons for selecting which user
+    if (user == "admin") {
+      fetch("/users") // fetch list of all users
+        .then(checkResponseStatus)
+        .then((res) => res.json())
+        // add radio buttons for each user
+        .then((users) => {
+          // users is array of usernames
+          setUser("admin");
+          const fieldset = document.getElementById("user-selection");
+          fieldset.hidden = false;
+          users.forEach(function (user) {
+            const div = createRadioDiv(user, "user-selection");
+            div.firstElementChild.addEventListener("change", function () {
+              setUser(this.value);
+            });
+            // default user for admin is admin, so check admin radio button
+            if (user == "admin") {
+              div.firstElementChild.checked = true;
+            }
+            fieldset.append(div);
+          });
+        })
+        // catch error if fetch unsuccessful
+        .catch((error) => {
+          console.error("Error during fetch: ", error);
+        });
+    }
+  })
+  // catch error if fetch unsuccessful
+  .catch((error) => {
+    console.error("Error during fetch: ", error);
+  });
+
+fetch("/filelist")
+  .then(checkResponseStatus)
+  .then((response) => response.json())
+  // add radio buttons for each file
+  .then((fileList) => {
+    // object with arrays for audio filenames and video filenames
+    const audiofiles = fileList.audio;
+    const videofiles = fileList.video;
+    const clusterfolders = fileList.cluster;
+    const fieldset = document.getElementById("file-selection");
+
+    if (audiofiles?.length !== 0) {
+      fieldset.append(htmlToElement("&lt;strong>Audio files&lt;/strong>")); // header
+
+      audiofiles.forEach(function (fileName) {
+        // add radio buttons for each audio file
+        const div = createRadioDiv(fileName, "file-selection");
+        div.firstElementChild.addEventListener("change", function () {
+          openViz(this.value, "audio", user);
+        });
+        fieldset.append(div);
+      });
+
+      // add separation between audio and video file sections
+      fieldset.append(document.createElement("br"));
+    }
+
+    if (videofiles?.length !== 0) {
+      // header for video files
+      fieldset.append(htmlToElement("&lt;strong>Video files&lt;/strong>"));
+
+      videofiles.forEach(function (fileName) {
+        // add radio buttons for each video file
+        const div = createRadioDiv(fileName, "file-selection");
+        div.firstElementChild.addEventListener("change", function () {
+          openViz(this.value, "video", user);
+        });
+        fieldset.append(div);
+      });
+    }
+
+    if (clusterfolders?.length !== 0) {
+      // header for cluster folders
+      fieldset.append(htmlToElement("&lt;strong>Clustered Faces&lt;/strong>"));
+      clusterfolders.forEach(function (folderName) {
+        // folderName matches corresponding video fileName, so give it a different id
+        const div = createRadioDiv(folderName + " Clusters", "file-selection");
+        div.firstElementChild.addEventListener("change", function () {
+          // when radio button clicked, show each cluster folder to choose which to view
+          // remove its different id, go to correct folder
+          window.location.replace(
+            `/clustered-faces?${user ? "user=" + user + "&amp;" : ""}` +
+              `dir=${this.value.replace(" Clusters", "")}` +
+              `&amp;inFaceFolder=false`
+          );
+        });
+        fieldset.append(div);
+      });
+    }
+  })
+  // catch err thrown by res if any
+  .catch((error) => {
+    console.error("Error during fetch: ", error);
+  });
 </code></pre>
         </article>
     </section>

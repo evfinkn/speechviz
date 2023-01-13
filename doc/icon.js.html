@@ -85,7 +85,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="GroupOfGroups.html">GroupOfGroups</a></li><li><a href="Popup.html">Popup</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#expandGroups">expandGroups</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="Face.html">Face</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="GroupOfGroups.html">GroupOfGroups</a></li><li><a href="Popup.html">Popup</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createRadioDiv">createRadioDiv</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#expandGroups">expandGroups</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#openViz">openViz</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#saveIcon">saveIcon</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#setUser">setUser</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
                 
             </nav>
         </div>
@@ -102,78 +102,140 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>const feather = require('feather-icons');
+            <pre class="prettyprint source linenums"><code>const feather = require("feather-icons");
 
 /**
- * An `Object` containing the icons for play, pause, loop, and remove buttons of a `TreeItem`.
+ * An `Object` containing the icons for play, pause, loop, remove, and
+ * image buttons of a `TreeItem`.
  * @typedef {Object.&lt;string, string>} TreeItemButtonIcons
  * @prop {string} play - SVG string for the play button icon.
  * @prop {string} pause - SVG string for the pause button icon.
  * @prop {string} loop - SVG string for the loop button icon.
  * @prop {string} remove - SVG string for the remove button icon.
+ * @prop {string} image - SVG string for the image button icon.
  */
 
-const segmentPlayIcon = feather.icons.play.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
-const segmentPauseIcon = feather.icons.pause.toSvg({ "width": 12, "height": 12, "stroke": "black", "fill": "black" });
-const segmentLoopIcon = feather.icons.repeat.toSvg({ "width": 12, "height": 12, "stroke": "black", "stroke-width": 2.5 });
-const segmentRemoveIcon = feather.icons.x.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
+// the segment and group button icons have shared properties so just
+// combine these into what's needed
+const playAndPauseOptions = { stroke: "inherit", fill: "inherit" };
+const loopRemoveImageOptions = { stroke: "inherit", "stroke-width": 2.5 };
+const widthHeight12 = { width: 12, height: 12 };
+const widthHeight15 = { width: 15, height: 15 };
+const widthHeight17 = { width: 17, height: 17 };
+
+const segmentPlayPauseOptions = Object.assign(
+  {},
+  playAndPauseOptions,
+  widthHeight12
+);
+const segmentLoopOptions = Object.assign(
+  {},
+  loopRemoveImageOptions,
+  widthHeight12
+);
+const segmentRemoveOptions = Object.assign(
+  {},
+  loopRemoveImageOptions,
+  widthHeight15
+);
+const faceImgOptions = Object.assign({}, loopRemoveImageOptions, widthHeight15);
+
+const segmentPlayIcon = feather.icons.play.toSvg(segmentPlayPauseOptions);
+const segmentPauseIcon = feather.icons.pause.toSvg(segmentPlayPauseOptions);
+const segmentLoopIcon = feather.icons.repeat.toSvg(segmentLoopOptions);
+const segmentRemoveIcon = feather.icons.x.toSvg(segmentRemoveOptions);
+const faceImgIcon = feather.icons.image.toSvg(faceImgOptions);
+
 /**
- * The button icons for `Segment`s.
+ * The button icons for `Segment`s and `Face`s.
  * @type {TreeItemButtonIcons}
  */
 const segmentIcons = {
-    "play": segmentPlayIcon,
-    "pause": segmentPauseIcon,
-    "loop": segmentLoopIcon,
-    "remove": segmentRemoveIcon
-}
+  play: segmentPlayIcon,
+  pause: segmentPauseIcon,
+  loop: segmentLoopIcon,
+  remove: segmentRemoveIcon,
+  image: faceImgIcon,
+};
 
-const groupPlayIcon = feather.icons.play.toSvg({"width": 15, "height": 15, "stroke": "black", "fill": "black" });
-const groupPauseIcon = feather.icons.pause.toSvg({ "width": 15, "height": 15, "stroke": "black", "fill": "black" });
-const groupLoopIcon = feather.icons.repeat.toSvg({ "width": 15, "height": 15, "stroke": "black", "stroke-width": 2.5 });
-const groupRemoveIcon = feather.icons.x.toSvg({ "width": 17, "height": 17, "stroke": "black", "stroke-width": 2.5 });
+const groupPlayPauseOptions = Object.assign(
+  {},
+  playAndPauseOptions,
+  widthHeight15
+);
+const groupLoopOptions = Object.assign(
+  {},
+  loopRemoveImageOptions,
+  widthHeight15
+);
+const groupRemoveOptions = Object.assign(
+  {},
+  loopRemoveImageOptions,
+  widthHeight17
+);
+
+const groupPlayIcon = feather.icons.play.toSvg(groupPlayPauseOptions);
+const groupPauseIcon = feather.icons.pause.toSvg(groupPlayPauseOptions);
+const groupLoopIcon = feather.icons.repeat.toSvg(groupLoopOptions);
+const groupRemoveIcon = feather.icons.x.toSvg(groupRemoveOptions);
+
 /**
  * The button icons for `Group`s.
  * @type {TreeItemButtonIcons}
  */
 const groupIcons = {
-    "play": groupPlayIcon,
-    "pause": groupPauseIcon,
-    "loop": groupLoopIcon,
-    "remove": groupRemoveIcon
+  play: groupPlayIcon,
+  pause: groupPauseIcon,
+  loop: groupLoopIcon,
+  remove: groupRemoveIcon,
 };
 
 /**
  * SVG string for the zoom-in button icon.
  * @type {string}
  */
-const zoomInIcon = feather.icons["zoom-in"].toSvg({ "stroke": "gray" });
+const zoomInIcon = feather.icons["zoom-in"].toSvg({ stroke: "inherit" });
 
 /**
  * SVG string for the zoom-out button icon.
  * @type {string}
  */
-const zoomOutIcon = feather.icons["zoom-out"].toSvg({ "stroke": "black" });
+const zoomOutIcon = feather.icons["zoom-out"].toSvg({ stroke: "inherit" });
 
 /**
  * SVG string for the undo button icon.
  * @type {string}
  */
-const undoIcon = feather.icons["corner-up-left"].toSvg({ "stroke": "gray" });
+const undoIcon = feather.icons["corner-up-left"].toSvg({ stroke: "inherit" });
 
 /**
  * SVG string for the redo button icon.
  * @type {string}
  */
-const redoIcon = feather.icons["corner-up-right"].toSvg({ "stroke": "gray" });
+const redoIcon = feather.icons["corner-up-right"].toSvg({ stroke: "inherit" });
+
+/**
+ * SVG string for the save button icon.
+ * @type {string}
+ */
+const saveIcon = feather.icons.save.toSvg({ stroke: "inherit" });
 
 /**
  * SVG string for the settings button icon.
  * @type {string}
  */
-const settingsIcon = feather.icons.settings.toSvg({ "stroke": "black" });
+const settingsIcon = feather.icons.settings.toSvg({ stroke: "inherit" });
 
-export { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, undoIcon, redoIcon, settingsIcon };
+export {
+  segmentIcons,
+  groupIcons,
+  zoomInIcon,
+  zoomOutIcon,
+  undoIcon,
+  redoIcon,
+  saveIcon,
+  settingsIcon,
+};
 </code></pre>
         </article>
     </section>
@@ -185,7 +247,7 @@ export { segmentIcons, groupIcons, zoomInIcon, zoomOutIcon, undoIcon, redoIcon, 
             
             <footer class="footer">
                 <div class="content has-text-centered">
-                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.0</a></p>
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.11</a></p>
                     <p class="sidebar-created-by">
                         <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
                         <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>

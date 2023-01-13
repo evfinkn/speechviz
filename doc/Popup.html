@@ -83,7 +83,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="GroupOfGroups.html">GroupOfGroups</a></li><li><a href="Popup.html">Popup</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#expandGroups">expandGroups</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="Face.html">Face</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="GroupOfGroups.html">GroupOfGroups</a></li><li><a href="Popup.html">Popup</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createRadioDiv">createRadioDiv</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#expandGroups">expandGroups</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#openViz">openViz</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#saveIcon">saveIcon</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#setUser">setUser</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
                 
             </nav>
         </div>
@@ -235,7 +235,7 @@
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line494">line 494</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line616">line 616</a>
             </span>
         </p>
     
@@ -296,15 +296,15 @@
 
     </span>
 
-<h4 class="name" id="colorDiv">
-    <a class="href-link" href="#colorDiv">#</a>
+<h4 class="name" id="assocDiv">
+    <a class="href-link" href="#assocDiv">#</a>
     
         
             <span class='tag'>nullable</span>
         
     
     <span class="code-name">
-        colorDiv
+        assocDiv
     </span>
     
 </h4>
@@ -313,7 +313,9 @@
 
 
 <div class="description">
-    <p>The div element containing <code>colorPicker</code> if <code>treeItem.colorable</code>. Otherwise, <code>null</code>.</p>
+    <p>The div element containing the radio buttons used to associate
+<code>treeItem</code> if <code>treeItem.assocWith</code>.
+Otherwise, <code>null</code>.</p>
 </div>
 
 
@@ -355,7 +357,89 @@
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line555">line 555</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line680">line 680</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Element</code>
+
+
+    </span>
+
+<h4 class="name" id="colorDiv">
+    <a class="href-link" href="#colorDiv">#</a>
+    
+        
+            <span class='tag'>nullable</span>
+        
+    
+    <span class="code-name">
+        colorDiv
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>The div element containing <code>colorPicker</code> if <code>treeItem.colorable</code>.
+Otherwise, <code>null</code>.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line687">line 687</a>
             </span>
         </p>
     
@@ -437,7 +521,7 @@ Otherwise, <code>null</code>.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line562">line 562</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line694">line 694</a>
             </span>
         </p>
     
@@ -476,8 +560,8 @@ Otherwise, <code>null</code>.</p>
 
 
 <div class="description">
-    <p>The div element containing the radio buttons used to move <code>treeItem</code> if <code>treeItem.copyTo</code>.
-Otherwise, <code>null</code>.</p>
+    <p>The div element containing the radio buttons used to copy <code>treeItem</code>
+if <code>treeItem.copyTo</code>. Otherwise, <code>null</code>.</p>
 </div>
 
 
@@ -519,7 +603,7 @@ Otherwise, <code>null</code>.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line549">line 549</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line672">line 672</a>
             </span>
         </p>
     
@@ -558,8 +642,8 @@ Otherwise, <code>null</code>.</p>
 
 
 <div class="description">
-    <p>The div element containing the radio buttons used to move <code>treeItem</code> if <code>treeItem.moveTo</code>.
-Otherwise, <code>null</code>.</p>
+    <p>The div element containing the radio buttons used to move <code>treeItem</code>
+if <code>treeItem.moveTo</code>. Otherwise, <code>null</code>.</p>
 </div>
 
 
@@ -601,7 +685,7 @@ Otherwise, <code>null</code>.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line542">line 542</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line665">line 665</a>
             </span>
         </p>
     
@@ -683,7 +767,7 @@ Displayed when <code>treeItem</code> is clicked (and this popup currently has co
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line515">line 515</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line636">line 636</a>
             </span>
         </p>
     
@@ -764,7 +848,7 @@ Displayed when <code>treeItem</code> is clicked (and this popup currently has co
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line523">line 523</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line644">line 644</a>
             </span>
         </p>
     
@@ -803,7 +887,89 @@ Displayed when <code>treeItem</code> is clicked (and this popup currently has co
 
 
 <div class="description">
-    <p>The button element used to set <code>treeItem</code> to a random color if <code>treeItem.colorable</code>.
+    <p>The button element used to set <code>treeItem</code> to a random color if
+<code>treeItem.colorable</code>. Otherwise, <code>null</code>.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line701">line 701</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Element</code>
+
+
+    </span>
+
+<h4 class="name" id="renameDiv">
+    <a class="href-link" href="#renameDiv">#</a>
+    
+        
+            <span class='tag'>nullable</span>
+        
+    
+    <span class="code-name">
+        renameDiv
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>The div element containing <code>renameInput</code> if <code>treeItem.renamable</code>.
 Otherwise, <code>null</code>.</p>
 </div>
 
@@ -846,88 +1012,7 @@ Otherwise, <code>null</code>.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line569">line 569</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-    <span class="method-parameter is-pulled-right">
-        <label>Type:</label>
-        
-<code class="param-type">Element</code>
-
-
-    </span>
-
-<h4 class="name" id="renameDiv">
-    <a class="href-link" href="#renameDiv">#</a>
-    
-        
-            <span class='tag'>nullable</span>
-        
-    
-    <span class="code-name">
-        renameDiv
-    </span>
-    
-</h4>
-
-
-
-
-<div class="description">
-    <p>The div element containing <code>renameInput</code> if <code>treeItem.renamable</code>. Otherwise, <code>null</code>.</p>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="treeClasses.js.html" class="button">View Source</a>
-            <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line529">line 529</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line651">line 651</a>
             </span>
         </p>
     
@@ -966,7 +1051,8 @@ Otherwise, <code>null</code>.</p>
 
 
 <div class="description">
-    <p>The text input element used to rename <code>treeItem</code> if <code>treeItem.renamable</code>. Otherwise, <code>null</code>.</p>
+    <p>The text input element used to rename <code>treeItem</code> if <code>treeItem.renamable</code>.
+Otherwise, <code>null</code>.</p>
 </div>
 
 
@@ -1008,7 +1094,7 @@ Otherwise, <code>null</code>.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line535">line 535</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line658">line 658</a>
             </span>
         </p>
     
@@ -1086,7 +1172,7 @@ Always equals <code>treeItem.text</code>.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line656">line 656</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line806">line 806</a>
             </span>
         </p>
     
@@ -1168,7 +1254,7 @@ Properties of <code>treeItem</code> are used to determine the contents of this p
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line501">line 501</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line622">line 622</a>
             </span>
         </p>
     
@@ -1261,8 +1347,8 @@ Properties of <code>treeItem</code> are used to determine the contents of this p
 
   
 
-  <td class="description last"><p>The id of the <code>TreeItem</code> to copy <code>treeItem</code> to when the radio
-button is clicked.</p></td>
+  <td class="description last"><p>The id of the <code>TreeItem</code> to copy <code>treeItem</code> to
+when the radio button is clicked.</p></td>
 </tr>
 
 
@@ -1310,7 +1396,7 @@ button is clicked.</p></td>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line753">line 753</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line943">line 943</a>
             </span>
         </p>
     
@@ -1410,8 +1496,8 @@ button is clicked.</p></td>
 
   
 
-  <td class="description last"><p>The id of the <code>TreeItem</code> to move <code>treeItem</code> to when the radio
-button is clicked.</p></td>
+  <td class="description last"><p>The id of the <code>TreeItem</code> to move <code>treeItem</code> to
+when the radio button is clicked.</p></td>
 </tr>
 
 
@@ -1459,7 +1545,7 @@ button is clicked.</p></td>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line729">line 729</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line915">line 915</a>
             </span>
         </p>
     
@@ -1556,7 +1642,7 @@ button is clicked.</p></td>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line686">line 686</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line854">line 854</a>
             </span>
         </p>
     
@@ -1653,7 +1739,7 @@ button is clicked.</p></td>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line674">line 674</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line829">line 829</a>
             </span>
         </p>
     
@@ -1700,8 +1786,8 @@ button is clicked.</p></td>
     
     <div class="description">
         <p>Updates the radio buttons in <code>copyDiv</code>.
-This adds buttons for new <code>TreeItem</code>s that <code>treeItem</code> can be copied to and removes buttons
-for <code>TreeItem</code>s that it can't be copied to anymore.</p>
+This adds buttons for new <code>TreeItem</code>s that <code>treeItem</code> can be copied to
+and removes buttons for <code>TreeItem</code>s that it can't be copied to anymore.</p>
     </div>
     
 
@@ -1752,7 +1838,7 @@ for <code>TreeItem</code>s that it can't be copied to anymore.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line711">line 711</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line882">line 882</a>
             </span>
         </p>
     
@@ -1799,8 +1885,8 @@ for <code>TreeItem</code>s that it can't be copied to anymore.</p>
     
     <div class="description">
         <p>Updates the radio buttons in <code>moveDiv</code>.
-This adds buttons for new <code>TreeItem</code>s that <code>treeItem</code> can be moved to and removes buttons
-for <code>TreeItem</code>s that it can't be moved to anymore.</p>
+This adds buttons for new <code>TreeItem</code>s that <code>treeItem</code> can be moved to
+and removes buttons for <code>TreeItem</code>s that it can't be moved to anymore.</p>
     </div>
     
 
@@ -1851,7 +1937,7 @@ for <code>TreeItem</code>s that it can't be moved to anymore.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line693">line 693</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line863">line 863</a>
             </span>
         </p>
     
@@ -1897,7 +1983,7 @@ for <code>TreeItem</code>s that it can't be moved to anymore.</p>
             
             <footer class="footer">
                 <div class="content has-text-centered">
-                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.0</a></p>
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.11</a></p>
                     <p class="sidebar-created-by">
                         <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
                         <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>

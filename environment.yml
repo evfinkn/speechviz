@@ -26,3 +26,4 @@ dependencies:
     - face_recognition
     - imutils
     - scikit-learn
+    - orjson

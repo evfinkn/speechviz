@@ -137,7 +137,7 @@ def create_poses(
 
     parent = imu_path.parent
     vprint = util.verbose_printer(quiet, verbose)
-    vprint(f"Processing {parent}")
+    vprint(f"Processing {parent}", 0)
     start_time = time.perf_counter()
 
     pose_path = parent / "pose.csv"
@@ -158,7 +158,6 @@ def create_poses(
 
     imu_data = np.genfromtxt(imu_path, delimiter=",", skip_header=1)
     timestamp = imu_data[:, 0]
-    timestamp -= timestamp[0]
     accelerometer = imu_data[:, 1:4]
     gyroscope = imu_data[:, 4:]
     for i in range(len(timestamp)):
@@ -262,7 +261,7 @@ def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kw
         # done in the function calls in the for loop
         return
 
-    path = paths[0]  # paths[0] is--at this point--the only argument in paths
+    path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
     if path.is_dir():
         if path.name == "data":
@@ -325,10 +324,10 @@ if __name__ == "__main__":
         help="Print various debugging information",
     )
 
-    args = parser.parse_args()
+    args = vars(parser.parse_args())
     start_time = time.perf_counter()
-    route_file(*util.namespace_pop(args, "path"), **vars(args))
-    if not args.quiet or args.verbose:
+    route_file(*args.pop("path"), **args)
+    if not args["quiet"] or args["verbose"]:
         print(
             "Pose creation took a total of"
             f" {time.perf_counter() - start_time:.4f} seconds"

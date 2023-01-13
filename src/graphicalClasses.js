@@ -170,27 +170,33 @@ var GraphIMU = class GraphIMU {
   light;
 
   /**
+   * The number of pairs of glasses being visualized.
+   * @type {number}
+   */
+  numGlasses;
+
+  /**
    * The glasses model displayed in the graph.
-   * @type {!THREE.Group}
+   * @type {!Array.<THREE.Group>}
    */
   glasses;
 
   /**
    * The timestamps of the data.
-   * @type {!Array.<number>}
+   * @type {!Array.<Array.<number>>}
    */
   timestamps;
 
   /**
    * The vectors representing the position of the glasses at a timestamp.
    * `null` if not visualizing the movement of the glasses.
-   * @type {?Array.<THREE.Vector3>}
+   * @type {?Array.<Array.<THREE.Vector3>>}
    */
   positions;
 
   /**
    * The quaternions representing the orientation of the glasses at a timestamp.
-   * @type {!Array.<THREE.Quaternion>}
+   * @type {!Array.<Array.<THREE.Quaternion>>}
    */
   quaternions;
 
@@ -218,19 +224,31 @@ var GraphIMU = class GraphIMU {
 
     this.disposer = new Disposer();
 
+    // so that
+    this.timestamps = [];
+    this.positions = [];
+    this.quaternions = [];
+    this.glasses = [];
+
     this.parseData(data);
     this.init();
   }
 
   /**
    * Parses the timestamps, quaternions, and positions (if any) from the pose data.
-   * @param {!Array.<Array.<number>>} data - The pose data to visualize. The first
-   *      entry in each array is the timestamp for the data in that row. Then, if the
-   *      rows have length 5, the rest of the numbers are qw, qx, qy, and qz for the
-   *      quaternions. If the rows have length 8, the next 3 items are x, y, and z for
-   *      the positions, and the rest of the numbers are qw, qx, qy, and qz for the
-   *      quaternions.
-   * @throws {Error} If the row's of data have a length other than 5 or 8.
+   * @param {!Array.<Array.<Array.<number>>>} data - The pose data of each pair of
+   *      glasses to visualize. Each array in the first axis represents a pair of
+   *      glasses and that array holds the rows of the pose data. For example,
+   *      if the length of `data` is 3, 3 pairs of glasses are being visualized.
+   *      If only 1 pair of glasses is being visualized, you can pass a 2D array.
+   *      The first entry in each row of pose data is the timestamp for the data in
+   *      that row. Then, if the rows have length 5, the rest of the numbers are qw,
+   *      qx, qy, and qz for the quaternions. If the rows have length 8, the next 3
+   *      items are x, y, and z for the positions, and the rest of the numbers are qw,
+   *      qx, qy, and qz for the quaternions. It is okay for some of the glasses to
+   *      have position data and others to not, but all of the rows for a single pair
+   *      must have the same length.
+   * @throws {Error} If the rows of data have a length other than 5 or 8.
    */
   parseData(data) {
     // load the pose data from the CSV file. Columns are one of the following:
@@ -238,35 +256,60 @@ var GraphIMU = class GraphIMU {
     // t qw qx qy qz
     // where (x, y, z) is the position and (qx, qy, qz, qw)
     // is the quaternion of the orientation
+    // use qy, qz, qx instead of qx, qy, qz because otherwise glasses' axes
+    // are wrong I don't actually know the reason, but I think it might have
+    // something to do with the vector of the imu-left sensor pointing unexpected
+    // directions (see
+    // https://facebookresearch.github.io/Aria_data_tools/docs/sensors-measurements/#coordinate-systems)
+    // and the glasses' model's local axes not lining up with that vector
+    // y and z for same reasons
 
-    this.timestamps = data.map((row) => row[0]);
-    if (data[0].length == 5) {
-      this.quaternions = data.map((row) => row.slice(1));
-    } else if (data[0].length == 8) {
-      this.positions = data.map((row) => row.slice(1, 4));
-      this.quaternions = data.map((row) => row.slice(4));
-    } else {
-      throw new Error(`data must have either 5 or 8 columns.`);
+    if (!Array.isArray(data?.[0]?.[0])) {
+      data = [data];
+    }
+    const numGlasses = data.length;
+    this.numGlasses = numGlasses;
+    // index of imu that is in the center of the others (at the origin)
+    // e.g. numGlasses = 9 -> centerIndex = (9 - 1) / 2 = 4, with 4 imus on each side
+    // numGlasses = 4 -> centerIndex = 1.5, meaning no imu at the origin but the imus
+    // but imu1 and imu2 are equidistant from it
+    const centerIndex = (numGlasses - 1) / 2; // - 1 because indices start at 0
+    // positions for imus without have position data (and therefore don't move in graph)
+    const static_positions = [];
+    for (let i = 0; i < numGlasses; i++) {
+      // left of center is +x, right of center is -x
+      // 3 to make each pair of glasses 3 units apart
+      const position = new THREE.Vector3(-3 * (i - centerIndex), 0.5, 0);
+      static_positions.push(position);
     }
 
-    if (this.quaternions) {
-      for (let i = 0; i < this.quaternions.length; i++) {
-        const [qw, qx, qy, qz] = this.quaternions[i];
-        // use qy, qz, qx instead of qx, qy, qz because otherwise glasses' axes
-        // are wrong I don't actually know the reason, but I think it might have
-        // something to do with the vector of the imu-left sensor pointing unexpected
-        // directions (see
-        // https://facebookresearch.github.io/Aria_data_tools/docs/sensors-measurements/#coordinate-systems)
-        // and the glasses' model's local axes not lining up with that vector
-        this.quaternions[i] = new THREE.Quaternion(qy, qz, qx, qw);
+    for (const [index, imu] of data.entries()) {
+      const imu_timestamps = [];
+      const imu_positions = [];
+      const imu_quaternions = [];
+      if (imu?.[0]?.length == 5) {
+        imu.forEach((row) => {
+          imu_timestamps.push(row[0]);
+          const [qw, qx, qy, qz] = row.slice(1);
+          imu_quaternions.push(new THREE.Quaternion(qy, qz, qx, qw));
+        });
+      } else if (imu?.[0]?.length == 8) {
+        imu.forEach((row) => {
+          imu_timestamps.push(row[0]);
+          const [, y, z] = row.slice(1, 4);
+          imu_positions.push(new THREE.Vector3(y, 1, z));
+          const [qw, qx, qy, qz] = row.slice(4);
+          imu_quaternions.push(new THREE.Quaternion(qy, qz, qx, qw));
+        });
+      } else {
+        throw new Error(`data must have either 5 or 8 columns.`);
       }
-    }
-
-    if (this.positions) {
-      for (let i = 0; i < this.positions.length; i++) {
-        const [, y, z] = this.positions[i];
-        // y and z for same reasons as above
-        this.positions[i] = new THREE.Vector3(y, 1, z);
+      this.timestamps.push(imu_timestamps);
+      this.quaternions.push(imu_quaternions);
+      if (imu_positions.length == 0) {
+        this.positions.push(static_positions[index]);
+      } else {
+        this.positions.push(imu_positions);
       }
     }
   }
@@ -321,19 +364,20 @@ var GraphIMU = class GraphIMU {
     // load the glasses' model
     // glasses' model is from https://free3d.com/3d-model/frame-glasses-314946.html
     const loader = new GLTFLoader();
-    loader.load(
-      "models/glasses.glb",
-      (gltf) => {
-        // called when the resource is loaded
-        const glasses = gltf.scene;
+    loader.load("models/glasses.glb", (gltf) => {
+      let glasses = gltf.scene;
+      // create glasses for each imu we're visualizing
+      for (let i = 0; i < this.numGlasses; i++) {
         scene.add(glasses);
         disposer.add(glasses);
-        this.glasses = glasses;
-        this.animate();
-      },
-      undefined, // called while loading is progressing
-      (error) => console.error(error) // called when loading has errors
-    );
+        if (!Array.isArray(this.positions[i])) {
+          glasses.position.copy(this.positions[i]);
+        }
+        this.glasses.push(glasses);
+        glasses = glasses.clone();
+      }
+      this.animate();
+    });
   }
 
   /**
@@ -350,38 +394,21 @@ var GraphIMU = class GraphIMU {
     const glasses = this.glasses;
     const camera = this.camera;
 
-    // index of the data's time closest to the video's current time
-    const index = Math.abs(
-      binarySearch(this.timestamps, media.currentTime, (t1, t2) => t1 - t2)
-    );
-    if (index > this.quaternions.length) {
-      return;
-    } // prevent out of bounds errors
+    for (let i = 0; i < this.numGlasses; i++) {
+      // index of the data's time closest to the video's current time
+      const index = Math.abs(
+        binarySearch(this.timestamps[i], media.currentTime, (t1, t2) => t1 - t2)
+      );
+      if (index > this.quaternions[i].length) {
+        return; // prevent out of bounds errors
+      }
+      // update glasses' orientation
+      glasses[i].quaternion.slerp(this.quaternions[i][index], factor); // rotate
+      glasses[i].rotateZ(Math.PI / 2); // rotate z 90 degrees for same reason as above
 
-    // update glasses' orientation
-    glasses.quaternion.slerp(this.quaternions[index], factor); // rotate
-    glasses.rotateZ(Math.PI / 2); // rotate z 90 degrees for same reason as above
-
-    // update glasses' position
-    if (this.positions) {
-      // might not be visualizing positions
-
-      const ogGlassesPosition = glasses.position.clone();
-      const newGlassesPosition = this.positions[index];
-      const positionChange = ogGlassesPosition
-        .negate()
-        .add(newGlassesPosition)
-        .setY(0);
-      const newCameraPosition = positionChange.add(camera.position);
-
-      // move the glasses and camera
-      glasses.position.lerp(newGlassesPosition, factor);
-      // update camera position so that distance from glasses is maintained
-      camera.position.lerp(newCameraPosition, factor);
-
-      // so that controls orbit around glasses at its new position
-      this.controls.target = newGlassesPosition;
-      this.controls.update(); // have to update controls after updating camera position
+      if (Array.isArray(this.positions[i])) {
+        glasses[i].position.lerp(this.positions[i][index], factor); // move
+      }
     }
 
     this.renderer.render(this.scene, camera);
@@ -390,6 +417,7 @@ var GraphIMU = class GraphIMU {
   /** Disposes of this graph, freeing its resources. */
   dispose() {
     this.disposer.dispose();
+    this.renderer.domElement.remove();
   }
 };
 

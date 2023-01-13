@@ -61,26 +61,6 @@ def recurse_loads(string):
         return obj
 
 
-def namespace_pop(namespace, attr_name):
-    """Pops an attribute from a argparse Namespace object.
-
-    Parameters
-    ----------
-    namespace : argparse.Namespace
-        The `Namespace` to pop the attribute from.
-    attr_name : str
-        The name of the attribute to pop.
-
-    Returns
-    -------
-    any
-        The popped attribute.
-    """
-    attr = getattr(namespace, attr_name)
-    delattr(namespace, attr_name)
-    return attr
-
-
 def random_color_generator(seed: Optional[int] = None) -> Iterator[str]:
     """Indefinitely generates random colors as hexadecimal strings.
 
@@ -218,6 +198,83 @@ def ls(dir: Path) -> list[str]:
         .stdout.decode()
         .split("\n")[:-1]
     )
+
+
+def ffmpeg(
+    input: str,
+    output: str,
+    verbose: int = 0,
+    input_options: Optional[list[str]] = None,
+    output_options: Optional[list[str]] = None,
+):
+    """Wrapper for the `ffmpeg` command.
+    Supports a single input and output.
+
+    Parameters
+    ----------
+    input : str
+        The file to input into `ffmpeg`.
+    output : str
+        The file for `ffmpeg` to output to. If a file at the path already exists,
+        it will be overwritten.
+    verbose : int, default=0
+        If greater than or equal to 2, `ffmpeg`'s output to stdout will be printed.
+    input_options : list of str, optional
+        `ffmpeg` options to apply to the input file.
+    output_options : list of str, optional
+        `ffmpeg` options to apply to the output file.
+
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The completed process containing info about the `ffmpeg` command that was run.
+    """
+    args = ["ffmpeg", "-y"]
+    if input_options:
+        args.extend(input_options)
+    args.extend(["-i", input])
+    if output_options:
+        args.extend(output_options)
+    args.append(output)
+    return subprocess.run(args, capture_output=verbose < 2, check=True)
+
+
+def audiowaveform(
+    input: str,
+    output: str,
+    verbose: int = 0,
+    split_channels: bool = False,
+    options: Optional[list[str]] = None,
+):
+    """Wrapper for the `audiowaveform` command.
+
+    Parameters
+    ----------
+    input : str
+        The file to input into `audiowaveform`.
+    output : str
+        The file for `audiowaveform` to output to. If a file at the path already
+        exists, it will be overwritten.
+    verbose : int, default=0
+        If greater than or equal to 2, `audiowaveforms`'s output to stdout will
+        be printed.
+    split_channels : boolean, default=False
+        Generate a waveform for each channel instead of merging into 1 waveform.
+    options : list of str, optional
+        Additional options to pass in.
+
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The completed process containing info about the `audiowaveform` command
+        that was run.
+    """
+    args = ["audiowaveform", f"-i{input}", f"-o{output}", "-b", "8"]
+    if split_channels:
+        args.append("--split-channels")
+    if options:
+        args.extend(options)
+    return subprocess.run(args, capture_output=verbose < 2, check=True)
 
 
 # https://stackoverflow.com/a/5389547
