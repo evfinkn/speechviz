@@ -157,6 +157,7 @@ const deleteSegments = db.prepare(
   "DELETE FROM annotations WHERE fileId=? AND userId=?"
 );
 const deleteNotes = db.prepare("DELETE FROM notes WHERE fileId=? AND userId=?");
+const deleteFaces = db.prepare("DELETE FROM faces WHERE fileId=? AND userId=?");
 
 const selectLabelId = db.prepare("SELECT id FROM labels WHERE label=?");
 const insertLabel = db.prepare("INSERT INTO labels(label) VALUES(?)");
@@ -172,8 +173,11 @@ const insertSegment = db.prepare(
 const insertNotes = db.prepare(
   "INSERT INTO notes(fileId,userId,notes) VALUES(?,?,?)"
 );
+const insertFace = db.prepare(
+  "INSERT INTO faces(fileId,userId,speaker,faceNum) VALUES(?,?,?,?)"
+);
 
-const save = db.transaction((filename, user, segments, notes) => {
+const save = db.transaction((filename, user, segments, notes, faces) => {
   let fileId = selectFileId.get([filename])?.id;
   if (!fileId) {
     fileId = insertFile.run([filename]).lastInsertRowid;
@@ -182,6 +186,7 @@ const save = db.transaction((filename, user, segments, notes) => {
 
   deleteSegments.run([fileId, userId]);
   deleteNotes.run([fileId, userId]);
+  deleteFaces.run([fileId, userId]);
 
   for (const segment of segments) {
     const label = segment.labelText;
@@ -214,13 +219,18 @@ const save = db.transaction((filename, user, segments, notes) => {
   }
 
   insertNotes.run([fileId, userId, notes]);
+  console.log(faces);
+  for (let i = 0; i < faces.length; i = i + 2) {
+    insertFace.run([fileId, userId, faces[i], faces[i + 1]]);
+  }
 });
 app.use("/save/", (req, res) => {
   save(
     req.body["filename"],
     req.body["user"],
     req.body["segments"],
-    req.body["notes"]
+    req.body["notes"],
+    req.body["faces"]
   );
   res.end();
 });
@@ -236,6 +246,10 @@ const selectPath = db.prepare("SELECT path FROM paths WHERE id=?");
 
 const selectNotes = db.prepare(
   "SELECT notes FROM notes WHERE fileId=? AND userId=?"
+);
+
+const selectFaces = db.prepare(
+  "SELECT speaker,faceNum FROM faces WHERE fileId=? AND userId=?"
 );
 
 const load = db.transaction((filename, user) => {
@@ -260,6 +274,8 @@ const load = db.transaction((filename, user) => {
   loaded.segments = segments;
 
   loaded.notes = selectNotes.get([fileId, userId])?.notes;
+
+  loaded.faces = selectFaces.all([fileId, userId]);
 
   return loaded;
 });

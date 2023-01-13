@@ -314,7 +314,21 @@ fetch("load", {
           segmentCounter++;
         }
       });
-
+    // add associated faces
+    // TODO: when this is at top, sometimes (loses a race case?) it calls this before
+    // Face.byId is initialized leading to errors with trying to access
+    // actualFace.speakerNum because actualFace wasn't found. Moving it here seemed
+    // to fix it but, I can't be sure it actually worked
+    data.faces.forEach((face) => {
+      const actualFace = Face.byId["face" + face.faceNum];
+      const actualSpeaker = Group.byId["Speaker " + face.speaker];
+      actualFace.speakerNum = "Speaker " + face.speaker;
+      actualSpeaker.faceNum = "face" + face.faceNum;
+      actualSpeaker.li.insertBefore(
+        actualFace.li.children[6].firstElementChild,
+        actualSpeaker.li.children[4]
+      );
+    });
     // after loading, toggle everything off (usually end up
     // disabling most groups right away, just do it automatically)
     analysis.children.forEach((child) => child.toggle(false));
@@ -404,8 +418,27 @@ undoButton.addEventListener("click", undo);
 // });
 
 const fileParagraph = document.getElementById("file");
-/** Saves the custom segments and labeled speakers to the database. */
+/**
+ * Saves the custom segments, labeled speakers, and associated faces to the database.
+ */
 const save = function () {
+  const faceRegex = /Speaker /;
+  const speakers = Object.values(Group.byId).filter((speaker) =>
+    speaker.id.match(faceRegex)
+  );
+  const faces = [];
+  speakers.forEach((speaker) => {
+    // strip face and Speaker so we just have numbers to store
+    if (speaker.faceNum !== null) {
+      faces.push(
+        ...[
+          parseInt(speaker.id.replace("Speaker ", "")),
+          parseInt(speaker.faceNum.replace("face", "")),
+        ]
+      );
+    }
+  });
+
   // fileParagraph.innerHTML = `${filename} - Saving`;
   const groupRegex = /Speaker |VAD|Non-VAD/;
   // only save groups that aren't from the pipeline
@@ -457,7 +490,13 @@ const save = function () {
   fetch("save", {
     method: "POST",
     headers: { "Content-Type": "application/json; charset=UTF-8" },
-    body: JSON.stringify({ user, filename, segments, notes: notes.value }),
+    body: JSON.stringify({
+      user,
+      filename,
+      segments,
+      notes: notes.value,
+      faces,
+    }),
   })
     .then(checkResponseStatus)
     .then(() => (fileParagraph.innerHTML = `${filename} - Saved`))

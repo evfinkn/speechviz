@@ -903,7 +903,12 @@ var Popup = class Popup {
       assocDiv.hidden = true;
     } else {
       assocDiv.hidden = false;
-      assocWith.forEach((dest) => this.addAssocRadio(dest));
+      assocWith.forEach((dest) => {
+        const treeItemId = TreeItem.byId[dest];
+        if (treeItemId.faceNum === null) {
+          this.addAssocRadio(dest);
+        }
+      });
     }
   }
 
@@ -983,6 +988,8 @@ var Popup = class Popup {
 
     radioButton.addEventListener("change", () => {
       // add functionality to associate with speakers here
+      dest.faceNum = this.treeItem.id;
+      this.treeItem.speakerNum = dest.id;
       dest.li.insertBefore(
         this.treeItem.li.children[6].firstElementChild,
         dest.li.children[4]
@@ -1276,6 +1283,11 @@ var Group = class Group extends TreeItem {
    * @type {!Object<string, Segment>}
    */
   visible = {};
+
+  /**
+   * Face number this face is associated with, for saving purposes
+   */
+  faceNum = null;
 
   // FIXME: in every doc comment, decide when to use things like
   //        `Group` / `GroupOfGroups` vs group and `Segment` vs segment
@@ -2073,6 +2085,16 @@ var Face = class Face extends TreeItem {
   linkButton;
 
   /**
+   * Li for the image shown for a face
+   */
+  imageLi;
+
+  /**
+   * Speaker number this face is associated with
+   */
+  speakerNum = null;
+
+  /**
    * @param {string} id - The unique identifier to give the `TreeItem`.
    * @param {?Object.<string, any>=} options - Options to customize the `TreeItem`.
    * @param {?Group=} options.parent - The `Group` that contains the item in its nested
@@ -2112,6 +2134,8 @@ var Face = class Face extends TreeItem {
       assocWith: assocWith,
     });
 
+    Face.byId[id] = this;
+
     this.render();
     this.parent = parent;
     this.playButton.style.display = "none";
@@ -2130,19 +2154,24 @@ var Face = class Face extends TreeItem {
     this.removeButton.after(linkButton);
 
     // change width and height here if you want a different sized image to show
-    const imageLi = htmlToElement(
+    this.imageLi = htmlToElement(
       `<li><img src='faceClusters/${dir}/${id}/${imagePath}'` +
         ` width = 100 height = 100` +
         ` alt="Example image of face"/></li>`
     );
     // store previous html of image to reset its position when the image is clicked
-    imageLi.addEventListener("click", () => {
+    this.imageLi.addEventListener("click", () => {
       // nested should be the 2nd to last child, where popup is the last,
       // just like happens in the next 3 lines
-      this.li.children[this.li.children.length - 2].appendChild(imageLi);
+      this.li.children[this.li.children.length - 2].appendChild(this.imageLi);
+      if (this.speakerNum !== null) {
+        Group.byId[this.speakerNum].faceNum = null;
+        // reset speaker number because it has no speaker
+        this.speakerNum = null;
+      }
     });
     var nest = this.li.lastElementChild;
-    nest.appendChild(imageLi);
+    nest.appendChild(this.imageLi);
     this.popup = new Popup(this);
   }
 
