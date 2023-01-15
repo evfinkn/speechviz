@@ -151,7 +151,7 @@ def sync_and_hstack_videos(
         filter_str += f"[{i}:v]"
     # add filter specifier. shortest=1 to use the length of the shortest video
     filter_str += f"hstack=inputs={len(video_paths)}:shortest=1[v]"
-    args.extend(["-filter_complex", filter_str, "-map", "[v]"])
+    args.extend(["-filter_complex", filter_str, "-map", "[v]", "-c:v", "libx264"])
     if audio_path is not None:
         # map the audio to the final output's audio
         # for "-map i:a" the i is the index of the input to get the audio from
