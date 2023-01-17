@@ -112,15 +112,8 @@ fetch(`/segments/${basename}-segments.json`)
   });
 
 fetch(`/clustered-files/`)
-  .then((res) => {
-    if (!res.ok) {
-      throw new Error("Network response was not OK");
-    } // Network error
-    else if (res.status != 200) {
-      throw new Error(`${res.status} ${res.statusText}`);
-    } // not 200 is error
-    return res.json();
-  })
+  .then(checkResponseStatus)
+  .then((response) => response.json())
   .then((fileList) => {
     const clusterfolders = fileList.cluster; // folder of each found cluster
     // name of the overal folder, same as the video shown in speechviz
