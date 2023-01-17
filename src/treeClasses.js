@@ -19,8 +19,6 @@ import {
   htmlToElement,
   sortByProp,
   toggleButton,
-  arrayMean,
-  objectMap,
   propertiesEqual,
   getRandomColor,
 } from "./util.js";
@@ -1182,80 +1180,6 @@ var Group = class Group extends TreeItem {
    * @static
    */
   static properties = ["snr", "color", "colorable"];
-
-  // TODO: move this method outside of this class (maybe to init.js?) since this is
-  //       only ever meant to be called once and will break if any groups don't have
-  //       snrs. Doens't really make sense to be here
-  /**
-   * Adds a circled number to the left of every `Group`s' text representing that
-   * `Group`'s rank. These ranks are determined from the `Group`'s SNR and duration.
-   * The `Group` with rank 1 is the predicted primary signal.
-   * @static
-   */
-  static rankSnrs() {
-    const groups = Object.values(Group.byId).filter(
-      (group) => group.snr !== null
-    );
-    if (groups.length == 0) {
-      return;
-    } // no groups have SNRs
-
-    const snrs = {};
-    const durations = {};
-    groups.forEach(function (group) {
-      snrs[group.id] = group.snr;
-      durations[group.id] = group.duration;
-    });
-
-    // add the numbers in the circles next to the text of the speakers in the tree
-    // decreasing order because want highest snr to be 1
-    sortByProp(groups, "snr", true);
-    for (let i = 0; i < groups.length; i++) {
-      // uses HTML symbol codes for the circled numbers
-      // (can be found at https://www.htmlsymbols.xyz/search?q=circled)
-      // numbers 1 - 20 use 9312 - 9331 (inclusive),
-      // numbers 21 - 35 use 12881 - 12895 (inclusive)
-      // should probably add case for numbers 36 - 50?
-      // Extremely unlikely ever have that many speakers but still
-      groups[i].text = `&#${(i <= 19 ? 9312 : 12861) + i} ${groups[i].text}`;
-    }
-
-    // for the next lines (snrMean to durZScores), it would be faster to loop
-    // through snrs and durations together, but it's a lot more readable this way,
-    // and this code is only executed once so it shouldn't be too big of a problem
-    const snrMean = arrayMean(Object.values(snrs));
-    const durMean = arrayMean(Object.values(durations));
-
-    // calculate standard deviations
-    const standardDeviation = (num, mean) => (num - mean) ** 2;
-    const snrStdDev = Math.sqrt(
-      arrayMean(Object.values(snrs), standardDeviation, snrMean)
-    );
-    const durStdDev = Math.sqrt(
-      arrayMean(Object.values(durations), standardDeviation, durMean)
-    );
-
-    // calculate z scores
-    const zScore = (num, mean, stdDev) => (num - mean) / stdDev;
-    const snrZScores = objectMap(snrs, zScore, snrMean, snrStdDev);
-    const durZScores = objectMap(durations, zScore, durMean, durStdDev);
-
-    const overallZScores = {};
-    for (const key in snrZScores) {
-      overallZScores[key] = snrZScores[key] + durZScores[key];
-    }
-
-    let maxSpeaker = groups[0].id;
-    let maxZ = overallZScores[maxSpeaker];
-    for (const key of Object.keys(snrZScores)) {
-      if (maxZ < overallZScores[key]) {
-        maxSpeaker = key;
-        maxZ = overallZScores[key];
-      }
-    }
-    // highlight text of speaker with highest z score
-    Group.byId[maxSpeaker].span.style.color = "violet";
-  }
 
   /**
    * The signal-to-noise ratio (SNR) of this `Group` if it has one. Otherwise, `null`.
