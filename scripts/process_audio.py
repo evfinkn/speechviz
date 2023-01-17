@@ -86,7 +86,9 @@ def snr_from_times(signal_times, samples, sr, noise_rms=None):
     return snr(signal_powers, noise_rms)
 
 
-def get_diarization(path: pathlib.Path, auth_token, samples, sr, verbose=0):
+def get_diarization(
+    path: pathlib.Path, auth_token, samples, sr, verbose=0, speaker_numbers=None
+):
     # use global diar_pipe so that it doesn't need
     # to be re-initialized (which is time-consuming)
     global diar_pipe
@@ -108,7 +110,10 @@ def get_diarization(path: pathlib.Path, auth_token, samples, sr, verbose=0):
 
     vprint("Running the diarization pipeline")
     start_time = time.perf_counter()
-    diar = diar_pipe(path)
+    if speaker_numbers is not None:
+        diar = diar_pipe(path, num_speakers=speaker_numbers)
+    else:
+        diar = diar_pipe(path)
     vprint(
         "Diarization pipeline completed in"
         f" {time.perf_counter() - start_time:.4f} seconds"
@@ -288,6 +293,7 @@ def process_audio(
     quiet=False,
     verbose=0,
     split_channels=False,
+    speaker_numbers=None,
 ):
     vprint = util.verbose_printer(quiet, verbose)
     vprint(f"Processing {path}", 0)
@@ -347,7 +353,9 @@ def process_audio(
         duration = librosa.get_duration(y=samples, sr=sr)
 
         segs = []
-        segs.append(get_diarization(path, auth_token, samples, sr, verbose))
+        segs.append(
+            get_diarization(path, auth_token, samples, sr, verbose, speaker_numbers)
+        )
         segs.extend(get_vad(path, auth_token, duration, verbose))
 
         # save the segments
@@ -404,6 +412,11 @@ if __name__ == "__main__":
             "The path to the file to process. If an audio file, processes the audio"
             " file. If a directory, processes every audio file in the directory."
         ),
+    )
+    parser.add_argument(
+        "--speaker-numbers",
+        type=int,
+        help="Number of speakers if known from face clustering",
     )
 
     args = vars(parser.parse_args())
