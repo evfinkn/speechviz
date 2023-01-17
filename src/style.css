@@ -11,6 +11,7 @@ body {
 
 #zoomview-container,
 #overview-container {
+  /* top | right | bottom | left */
   margin: 0 0 24px 0;
   line-height: 0;
   -moz-box-shadow: 3px 3px 20px #919191;
@@ -230,40 +231,4 @@ ul {
   overflow: auto;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
-}
-
-/* FIXME: I think this one's unused */
-.show {
-  display: block;
-}
-
-/* FIXME: the next 2 are definitely unused (I think they're from the Peaks.js demo) */
-#demo-controls {
-  margin: 0 auto 24px auto;
-  width: 1000px;
-  display: flex;
-  align-items: center;
-}
-
-#demo-controls button {
-  background: #fff;
-  border: 1px solid #919191;
-  cursor: pointer;
-}
-
-/* FIXME: I think this one's unused */
-.hide {
-  display: none;
-}
-
-/* FIXME: I think this one's unused */
-p code {
-  margin-left: 4em;
-}
-
-/* FIXME: I think this one's unused */
-.nolink {
-  background: none;
-  border: none;
-  text-decoration: none;
 }
