@@ -746,7 +746,6 @@ var Popup = class Popup {
       this.moveDiv = htmlToElement(
         `<div><h3>Move ${text} to another group</h3></div>`
       );
-      this.updateMoveTo();
       popupContent.append(this.moveDiv);
     }
 
@@ -755,7 +754,6 @@ var Popup = class Popup {
       this.copyDiv = htmlToElement(
         `<div><h3>Copy ${text} to another group</h3></div>`
       );
-      this.updateCopyTo();
       popupContent.append(this.copyDiv);
     }
 
@@ -862,6 +860,8 @@ var Popup = class Popup {
    */
   updateMoveTo() {
     const moveDiv = this.moveDiv;
+    // remove all of the current divs
+    // moveDiv.children[0] is the heading so don't remove that one
     while (moveDiv.children[1]) {
       moveDiv.removeChild(moveDiv.lastChild);
     }
@@ -870,7 +870,17 @@ var Popup = class Popup {
       moveDiv.hidden = true;
     } else {
       moveDiv.hidden = false;
-      moveTo.forEach((dest) => this.addMoveRadio(dest));
+      moveTo.forEach((destId) => {
+        // Sometimes the TreeItem we want to move to hasn't been initialized yet,
+        // so add a check to only add radios for initialized TreeItems.
+        // For example, the segments for the speakers can be moved between each other,
+        // so when Speaker 1's segments are being initialized they'll say they can be
+        // moved to Speaker 2 which doesn't exist yet, so it'll throw an error
+        const dest = TreeItem.byId[destId];
+        if (dest !== undefined) {
+          this.addMoveRadio(dest);
+        }
+      });
     }
   }
 
@@ -889,7 +899,12 @@ var Popup = class Popup {
       copyDiv.hidden = true;
     } else {
       copyDiv.hidden = false;
-      copyTo.forEach((dest) => this.addCopyRadio(dest));
+      copyTo.forEach((destId) => {
+        const dest = TreeItem.byId[destId];
+        if (dest !== undefined) {
+          this.addCopyRadio(dest);
+        }
+      });
     }
   }
 
@@ -903,9 +918,9 @@ var Popup = class Popup {
       assocDiv.hidden = true;
     } else {
       assocDiv.hidden = false;
-      assocWith.forEach((dest) => {
-        const treeItemId = TreeItem.byId[dest];
-        if (treeItemId.faceNum === null) {
+      assocWith.forEach((destId) => {
+        const dest = TreeItem.byId[destId];
+        if (dest !== undefined && dest.faceNum === null) {
           this.addAssocRadio(dest);
         }
       });
@@ -917,13 +932,11 @@ var Popup = class Popup {
    * @param {string} destId - The id of the `TreeItem` to move `treeItem` to
    *      when the radio button is clicked.
    */
-  addMoveRadio(destId) {
-    const dest = TreeItem.byId[destId];
-
+  addMoveRadio(dest) {
     const radioDiv = htmlToElement(
-      "<div><label>" + // eslint-disable-next-line max-len
-        `<input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}` +
-        "</label><br></div>"
+      "<div><label>" +
+        `<input type="radio" name="${this.treeItem.id}-radios"` +
+        `autocomplete="off"> ${dest.id}</label><br></div>`
     );
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
@@ -945,13 +958,11 @@ var Popup = class Popup {
    * @param {string} destId - The id of the `TreeItem` to copy `treeItem` to
    *      when the radio button is clicked.
    */
-  addCopyRadio(destId) {
-    const dest = TreeItem.byId[destId];
-
+  addCopyRadio(dest) {
     const radioDiv = htmlToElement(
-      "<div><label>" + // eslint-disable-next-line max-len
-        `<input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}` +
-        "</label><br></div>"
+      "<div><label>" +
+        `<input type="radio" name="${this.treeItem.id}-radios"` +
+        `autocomplete="off"> ${dest.id}</label><br></div>`
     );
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
@@ -974,13 +985,11 @@ var Popup = class Popup {
     });
   }
 
-  addAssocRadio(destId) {
-    const dest = TreeItem.byId[destId];
-
+  addAssocRadio(dest) {
     const radioDiv = htmlToElement(
       "<div><label>" +
         `<input type="radio" name="${this.treeItem.id}-radios"` +
-        `autocomplete="off"> ${destId}</label><br></div>`
+        `autocomplete="off"> ${dest.id}</label><br></div>`
     );
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
