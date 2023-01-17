@@ -19,8 +19,6 @@ import {
   htmlToElement,
   sortByProp,
   toggleButton,
-  arrayMean,
-  objectMap,
   propertiesEqual,
   getRandomColor,
 } from "./util.js";
@@ -746,7 +744,6 @@ var Popup = class Popup {
       this.moveDiv = htmlToElement(
         `<div><h3>Move ${text} to another group</h3></div>`
       );
-      this.updateMoveTo();
       popupContent.append(this.moveDiv);
     }
 
@@ -755,7 +752,6 @@ var Popup = class Popup {
       this.copyDiv = htmlToElement(
         `<div><h3>Copy ${text} to another group</h3></div>`
       );
-      this.updateCopyTo();
       popupContent.append(this.copyDiv);
     }
 
@@ -862,6 +858,8 @@ var Popup = class Popup {
    */
   updateMoveTo() {
     const moveDiv = this.moveDiv;
+    // remove all of the current divs
+    // moveDiv.children[0] is the heading so don't remove that one
     while (moveDiv.children[1]) {
       moveDiv.removeChild(moveDiv.lastChild);
     }
@@ -870,7 +868,17 @@ var Popup = class Popup {
       moveDiv.hidden = true;
     } else {
       moveDiv.hidden = false;
-      moveTo.forEach((dest) => this.addMoveRadio(dest));
+      moveTo.forEach((destId) => {
+        // Sometimes the TreeItem we want to move to hasn't been initialized yet,
+        // so add a check to only add radios for initialized TreeItems.
+        // For example, the segments for the speakers can be moved between each other,
+        // so when Speaker 1's segments are being initialized they'll say they can be
+        // moved to Speaker 2 which doesn't exist yet, so it'll throw an error
+        const dest = TreeItem.byId[destId];
+        if (dest !== undefined) {
+          this.addMoveRadio(dest);
+        }
+      });
     }
   }
 
@@ -889,7 +897,12 @@ var Popup = class Popup {
       copyDiv.hidden = true;
     } else {
       copyDiv.hidden = false;
-      copyTo.forEach((dest) => this.addCopyRadio(dest));
+      copyTo.forEach((destId) => {
+        const dest = TreeItem.byId[destId];
+        if (dest !== undefined) {
+          this.addCopyRadio(dest);
+        }
+      });
     }
   }
 
@@ -903,9 +916,9 @@ var Popup = class Popup {
       assocDiv.hidden = true;
     } else {
       assocDiv.hidden = false;
-      assocWith.forEach((dest) => {
-        const treeItemId = TreeItem.byId[dest];
-        if (treeItemId.faceNum === null) {
+      assocWith.forEach((destId) => {
+        const dest = TreeItem.byId[destId];
+        if (dest !== undefined && dest.faceNum === null) {
           this.addAssocRadio(dest);
         }
       });
@@ -917,13 +930,11 @@ var Popup = class Popup {
    * @param {string} destId - The id of the `TreeItem` to move `treeItem` to
    *      when the radio button is clicked.
    */
-  addMoveRadio(destId) {
-    const dest = TreeItem.byId[destId];
-
+  addMoveRadio(dest) {
     const radioDiv = htmlToElement(
-      "<div><label>" + // eslint-disable-next-line max-len
-        `<input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}` +
-        "</label><br></div>"
+      "<div><label>" +
+        `<input type="radio" name="${this.treeItem.id}-radios"` +
+        `autocomplete="off"> ${dest.id}</label><br></div>`
     );
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
@@ -945,13 +956,11 @@ var Popup = class Popup {
    * @param {string} destId - The id of the `TreeItem` to copy `treeItem` to
    *      when the radio button is clicked.
    */
-  addCopyRadio(destId) {
-    const dest = TreeItem.byId[destId];
-
+  addCopyRadio(dest) {
     const radioDiv = htmlToElement(
-      "<div><label>" + // eslint-disable-next-line max-len
-        `<input type="radio" name="${this.treeItem.id}-radios" autocomplete="off"> ${destId}` +
-        "</label><br></div>"
+      "<div><label>" +
+        `<input type="radio" name="${this.treeItem.id}-radios"` +
+        `autocomplete="off"> ${dest.id}</label><br></div>`
     );
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
@@ -974,13 +983,11 @@ var Popup = class Popup {
     });
   }
 
-  addAssocRadio(destId) {
-    const dest = TreeItem.byId[destId];
-
+  addAssocRadio(dest) {
     const radioDiv = htmlToElement(
       "<div><label>" +
         `<input type="radio" name="${this.treeItem.id}-radios"` +
-        `autocomplete="off"> ${destId}</label><br></div>`
+        `autocomplete="off"> ${dest.id}</label><br></div>`
     );
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
@@ -1173,80 +1180,6 @@ var Group = class Group extends TreeItem {
    * @static
    */
   static properties = ["snr", "color", "colorable"];
-
-  // TODO: move this method outside of this class (maybe to init.js?) since this is
-  //       only ever meant to be called once and will break if any groups don't have
-  //       snrs. Doens't really make sense to be here
-  /**
-   * Adds a circled number to the left of every `Group`s' text representing that
-   * `Group`'s rank. These ranks are determined from the `Group`'s SNR and duration.
-   * The `Group` with rank 1 is the predicted primary signal.
-   * @static
-   */
-  static rankSnrs() {
-    const groups = Object.values(Group.byId).filter(
-      (group) => group.snr !== null
-    );
-    if (groups.length == 0) {
-      return;
-    } // no groups have SNRs
-
-    const snrs = {};
-    const durations = {};
-    groups.forEach(function (group) {
-      snrs[group.id] = group.snr;
-      durations[group.id] = group.duration;
-    });
-
-    // add the numbers in the circles next to the text of the speakers in the tree
-    // decreasing order because want highest snr to be 1
-    sortByProp(groups, "snr", true);
-    for (let i = 0; i < groups.length; i++) {
-      // uses HTML symbol codes for the circled numbers
-      // (can be found at https://www.htmlsymbols.xyz/search?q=circled)
-      // numbers 1 - 20 use 9312 - 9331 (inclusive),
-      // numbers 21 - 35 use 12881 - 12895 (inclusive)
-      // should probably add case for numbers 36 - 50?
-      // Extremely unlikely ever have that many speakers but still
-      groups[i].text = `&#${(i <= 19 ? 9312 : 12861) + i} ${groups[i].text}`;
-    }
-
-    // for the next lines (snrMean to durZScores), it would be faster to loop
-    // through snrs and durations together, but it's a lot more readable this way,
-    // and this code is only executed once so it shouldn't be too big of a problem
-    const snrMean = arrayMean(Object.values(snrs));
-    const durMean = arrayMean(Object.values(durations));
-
-    // calculate standard deviations
-    const standardDeviation = (num, mean) => (num - mean) ** 2;
-    const snrStdDev = Math.sqrt(
-      arrayMean(Object.values(snrs), standardDeviation, snrMean)
-    );
-    const durStdDev = Math.sqrt(
-      arrayMean(Object.values(durations), standardDeviation, durMean)
-    );
-
-    // calculate z scores
-    const zScore = (num, mean, stdDev) => (num - mean) / stdDev;
-    const snrZScores = objectMap(snrs, zScore, snrMean, snrStdDev);
-    const durZScores = objectMap(durations, zScore, durMean, durStdDev);
-
-    const overallZScores = {};
-    for (const key in snrZScores) {
-      overallZScores[key] = snrZScores[key] + durZScores[key];
-    }
-
-    let maxSpeaker = groups[0].id;
-    let maxZ = overallZScores[maxSpeaker];
-    for (const key of Object.keys(snrZScores)) {
-      if (maxZ < overallZScores[key]) {
-        maxSpeaker = key;
-        maxZ = overallZScores[key];
-      }
-    }
-    // highlight text of speaker with highest z score
-    Group.byId[maxSpeaker].span.style.color = "violet";
-  }
 
   /**
    * The signal-to-noise ratio (SNR) of this `Group` if it has one. Otherwise, `null`.
