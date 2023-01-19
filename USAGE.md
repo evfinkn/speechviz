@@ -44,10 +44,10 @@ To process a .vrs file created by
 move the file to `data/vrs` and run
 
 ```bash
-python3 scripts/extract-vrs-data.py data/vrs/FILE
+python3 scripts/extract_vrs_data.py data/vrs/FILE
 ```
 
-Unlike `process_audio.py`, the file must be in `data/vrs` for `extract-vrs-data.py`
+Unlike `process_audio.py`, the file must be in `data/vrs` for `extract_vrs_data.py`
 to work. The files are output to `data/graphical/FILE_NAME` where `FILE_NAME` is
 `FILE` without the extension.
 
