@@ -146,7 +146,7 @@ var TreeItem = class TreeItem {
    * `null` if this item is the root of the tree.
    * @type {?TreeItem}
    */
-  #parent;
+  #parent = null;
 
   /**
    * An array of `TreeItem`s contained in this item's nested content.
@@ -191,14 +191,14 @@ var TreeItem = class TreeItem {
    * `null` if this item isn't moveable.
    * @type {?string[]}
    */
-  moveTo;
+  moveTo = null;
 
   /**
    * An array of the ids of `TreeItem`s that this item can be copied to.
    * `null` if this item isn't copyable.
    * @type {?string[]}
    */
-  copyTo;
+  copyTo = null;
   assocWith;
 
   /**
@@ -236,14 +236,14 @@ var TreeItem = class TreeItem {
    * `null` if this item isn't removable.
    * @type {?Element}
    */
-  removeButton;
+  removeButton = null;
 
   /**
    * The `Popup` that is shown when this item (specifically `span`) is clicked.
    * `null` if this item doesn't have any properties shown in a `Popup`.
    * @type {?Popup}
    */
-  popup;
+  popup = null;
 
   /**
    * The ul element containing the nested content (the children) of this item.
@@ -646,28 +646,28 @@ var Popup = class Popup {
    * Otherwise, `null`.
    * @type {?Element}
    */
-  renameDiv;
+  renameDiv = null;
 
   /**
    * The text input element used to rename `treeItem` if `treeItem.renamable`.
    * Otherwise, `null`.
    * @type {?Element}
    */
-  renameInput;
+  renameInput = null;
 
   /**
    * The div element containing the radio buttons used to move `treeItem`
    * if `treeItem.moveTo`. Otherwise, `null`.
    * @type {?Element}
    */
-  moveDiv;
+  moveDiv = null;
 
   /**
    * The div element containing the radio buttons used to copy `treeItem`
    * if `treeItem.copyTo`. Otherwise, `null`.
    * @type {?Element}
    */
-  copyDiv;
+  copyDiv = null;
 
   /**
    * The div element containing the radio buttons used to associate
@@ -675,28 +675,28 @@ var Popup = class Popup {
    * Otherwise, `null`.
    * @type {?Element}
    */
-  assocDiv;
+  assocDiv = null;
 
   /**
    * The div element containing `colorPicker` if `treeItem.colorable`.
    * Otherwise, `null`.
    * @type {?Element}
    */
-  colorDiv;
+  colorDiv = null;
 
   /**
    * The color picker used to set the color of `treeItem` if `treeItem.colorable`.
    * Otherwise, `null`.
    * @type {?Picker}
    */
-  colorPicker;
+  colorPicker = null;
 
   /**
    * The button element used to set `treeItem` to a random color if
    * `treeItem.colorable`. Otherwise, `null`.
    * @type {?Element}
    */
-  randomColorButton;
+  randomColorButton = null;
 
   /**
    * @param {!TreeItem} treeItem - The `TreeItem` to create the `Popup` for.
@@ -1185,7 +1185,7 @@ var Group = class Group extends TreeItem {
    * The signal-to-noise ratio (SNR) of this `Group` if it has one. Otherwise, `null`.
    * @type {?number}
    */
-  snr;
+  snr = null;
 
   /**
    * The color of this group's `Segment`s in the Peaks waveform.
@@ -1193,7 +1193,7 @@ var Group = class Group extends TreeItem {
    * `Segment` is added to this group.
    * @type {?Color}
    */
-  #color;
+  #color = null;
 
   /**
    * A `boolean` indicating if this item can be recolored.
