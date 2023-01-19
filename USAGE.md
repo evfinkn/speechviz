@@ -88,20 +88,16 @@ Once finished, open it in the interface (which will automatically detect the pos
 The following command will run speech recognition on a file:
 
 ```bash
-# to transcribe an audio file
-python3 scripts/transcribe.py data/audio/FILE
-# processing a video file is the same command, just a different directory
-python3 scripts/transcribe.py data/video/FILE
+# whisper.cpp requires 16-bit WAV files
+ffmpeg -i input.mp3 -ar 16000 -ac 1 -c:a pcm_s16le converted.wav
+# transcribe the audio file
+scripts/transcribe -ml 1 \
+    -m scripts/models/whisper-base.en.bin \
+    -f converted.wav
 ```
 
-Similar to `process_audio.py`, `transcribe.py` doesn't require the file to be in
-`data/audio` or `data/video`. If it is, the transcription file is output to
-`data/transcriptions`. Otherwise, the file is output to the same directory as the
-input file.
-
-Currently, the speech recognition isn't very good at correctly recognizing the words
-spoken in noisy audio files, and the transcription can't be disabled in the interface
-yet, so using this script isn't recommended.
+This requires the audio file to be `data/audio`. The transcription file is output
+to `data/transcripts`.
 
 ### Face detection and clustering
 
