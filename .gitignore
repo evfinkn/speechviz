@@ -1,5 +1,6 @@
 node_modules
-public
+public/css
+public/js
 data
 *.sqlite3
 *.sqlite3-shm
