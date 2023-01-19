@@ -210,7 +210,12 @@ fetch(`/clustered-files/`)
 fetch(`/transcriptions/${basename}-transcription.json`)
   .then(checkResponseStatus)
   .then((response) => response.json())
-  .then((words) => words.map((word) => peaks.points.add(word)))
+  .then((words) =>
+    words.map((word) => {
+      word["color"] = "#00000000";
+      peaks.points.add(word);
+    })
+  )
   .catch(() => console.log("No transcription for media."));
 
 const poseRegex = /pose.*\.csv/;
