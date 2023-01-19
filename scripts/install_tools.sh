@@ -78,6 +78,20 @@ cd ..
 python3 setup.py install
 rm -rf /tmp/dlib
 
+# install whisper to build transcribe.cpp
+print_section_header "INSTALLING WHISPER.CPP"
+cd /tmp
+git clone https://github.com/ggerganov/whisper.cpp
+cd whisper.cpp
+cp /speechviz/scripts/transcribe.cpp .
+mkdir /speechviz/scripts/models
+bash models/download-ggml-model.sh base.en
+make ggml.o whisper.o
+g++ -std=c++17 -O3 -Iexamples -fPIC -pthread \
+	transcribe.cpp ggml.o whisper.o -o /speechviz/scripts/transcribe
+mv models/ggml-base.en.bin /speechviz/scripts/models/whisper-base.en.bin
+rm -rf /tmp/whisper.cpp
+
 # install speechviz
 print_section_header "INSTALLING SPEECHVIZ"
 cd /speechviz
