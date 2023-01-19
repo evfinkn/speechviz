@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postinstall": "patch-package",
-    "mkdir": "mkdir public \"public/css\" \"public/js\" data \"data/audio\" \"data/segments\" \"data/video\" \"data/waveforms\" \"data/faceClusters\" \"data/imagesForEncoding\" \"data/vrs\"",
+    "mkdir": "mkdir public \"public/css\" \"public/js\" data \"data/audio\" \"data/segments\" \"data/video\" \"data/waveforms\" \"data/faceClusters\" \"data/imagesForEncoding\" \"data/vrs\" \"data/transcriptions\" \"scripts/models\"",
     "build": "webpack",
     "postbuild": "cp src/style.css public/css/",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
