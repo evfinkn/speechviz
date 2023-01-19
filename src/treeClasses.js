@@ -164,10 +164,17 @@ var TreeItem = class TreeItem {
   #text;
 
   /**
-   * How long this item's audio lasts in seconds.
-   * @type {number}
+   * A `boolean` indicating if this item can be played and looped.
+   * @type {boolean}
    */
-  duration = 0;
+  playable;
+
+  /**
+   * How long this item's audio lasts in seconds if this item is playable.
+   * Otherwise, `null`.
+   * @type {?number}
+   */
+  duration = null;
 
   /**
    * A `boolean` indicating if this item can be removed from the tree.
@@ -223,16 +230,16 @@ var TreeItem = class TreeItem {
   span;
 
   /**
-   * The a element of the play button.
-   * @type {!Element}
+   * The a element of the play button if this item is playable. Otherwise, `null`.
+   * @type {?Element}
    */
-  playButton;
+  playButton = null;
 
   /**
-   * The a element of the loop button.
-   * @type {!Element}
+   * The a element of the loop button if this item is playable. Otherwise, `null`.
+   * @type {?Element}
    */
-  loopButton;
+  loopButton = null;
 
   /**
    * The a element of the remove button.
@@ -263,6 +270,8 @@ var TreeItem = class TreeItem {
    *      the item's nested content.
    * @param {string=} options.text - The text to show in the item's span (and therefore
    *      in the tree). If `null`, `id` is used.
+   * @param {boolean} [options.playable=false] - Indicates if the item can be played
+   *      and looped.
    * @param {boolean} [options.removable=false] - Indicates if the item can be removed
    *      from the tree.
    * @param {boolean} [options.renamable=false] - Indicates if the item can be renamed.
@@ -283,6 +292,7 @@ var TreeItem = class TreeItem {
       parent = null,
       children = null,
       text = null,
+      playable = false,
       removable = false,
       renamable = false,
       moveTo = null,
@@ -300,6 +310,8 @@ var TreeItem = class TreeItem {
     this.id = id;
 
     this.#text = text || id;
+    this.playable = playable;
+    this.duration = playable ? 0 : null;
     this.removable = removable;
     this.renamable = renamable;
     this.moveTo = moveTo;
@@ -411,6 +423,58 @@ var TreeItem = class TreeItem {
     return obj;
   }
 
+  /**
+   * Adds play and loop buttons to this item.
+   * This also sets `this.playable` to `true` and `this.duration` to 0.
+   */
+  makePlayable() {
+    this.playable = true;
+    this.duration = 0;
+
+    this.playButton = htmlToElement(
+      `<a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>`
+    );
+    // use { once: true } because this.play() re-adds the event listener
+    this.playButton.addEventListener(
+      "click",
+      () => {
+        this.play();
+      },
+      { once: true }
+    );
+    // this puts the play button before any other buttons
+    this.span.after(this.playButton);
+
+    this.loopButton = htmlToElement(
+      `<a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>`
+    );
+    this.loopButton.addEventListener(
+      "click",
+      () => {
+        this.play(true);
+      },
+      { once: true }
+    );
+    this.playButton.after(this.loopButton);
+  }
+
+  /**
+   * Adds a remove button to this item.
+   * This also sets `this.removable` to `true`.
+   */
+  makeRemovable() {
+    this.removable = true;
+
+    this.removeButton = htmlToElement(
+      `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`
+    );
+    this.removeButton.addEventListener("click", () => {
+      this.remove();
+    });
+    // this puts the remove button after any other buttons
+    this.nested.before(this.removeButton);
+  }
+
   /** Generates the HTML for this item. */
   render() {
     if (this.li) {
@@ -422,17 +486,11 @@ var TreeItem = class TreeItem {
     const li = htmlToElement(`<li>
             <input type="checkbox" autocomplete="off" checked>
             <span>${this.#text}</span>
-            <a href="javascript:;" class="button-on">${
-              this.constructor.icons.play
-            }</a>
-            <a href="javascript:;" class="button-on">${
-              this.constructor.icons.loop
-            }</a>
             <ul class="nested active"></ul>
         </li>`);
     this.li = li;
 
-    this.checkbox = li.firstElementChild;
+    this.checkbox = li.children[0];
     // event listeners need to use `() => {}` syntax instead of `function () {}` because
     // `() => {}` doesn't rebind `this` (`this` will still refer to the TreeItem)
     this.checkbox.addEventListener("click", () => {
@@ -448,35 +506,13 @@ var TreeItem = class TreeItem {
     });
     this.updateSpanTitle();
 
-    this.playButton = li.children[2];
-    this.loopButton = li.children[3];
-    // use { once: true } because this.play() re-adds the event listener
-    this.playButton.addEventListener(
-      "click",
-      () => {
-        this.play();
-      },
-      { once: true }
-    );
-    this.loopButton.addEventListener(
-      "click",
-      () => {
-        this.play(true);
-      },
-      { once: true }
-    );
+    this.nested = li.children[2];
 
-    this.nested = li.children[4];
-
+    if (this.playable) {
+      this.makePlayable();
+    }
     if (this.removable) {
-      const remove = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`
-      );
-      this.loopButton.after(remove);
-      remove.addEventListener("click", () => {
-        this.remove();
-      });
-      this.removeButton = remove;
+      this.makeRemovable();
     }
 
     // this is here for subclasses to define a style method
@@ -490,17 +526,26 @@ var TreeItem = class TreeItem {
    *      decreases `duration`. Otherwise, increases `duration`.
    */
   updateDuration(durationChange) {
-    this.duration = this.duration + durationChange;
-    this.updateSpanTitle();
+    if (this.playable) {
+      this.duration = this.duration + durationChange;
+      this.updateSpanTitle();
 
-    if (this.#parent) {
-      this.#parent.updateDuration(durationChange);
+      if (this.#parent) {
+        this.#parent.updateDuration(durationChange);
+      }
     }
   }
 
   /** Updates the title (tooltip) of `span`. */
   updateSpanTitle() {
-    this.span.title = `Duration: ${this.duration.toFixed(2)}`;
+    if (this.playable && this.duration != 0) {
+      this.span.title = `Duration: ${this.duration.toFixed(2)}`;
+    }
+    // in case a playable group had its last playable child removed,
+    // in which case we don't want a span title anymore
+    else {
+      this.span.title = "";
+    }
   }
 
   /**
@@ -587,8 +632,10 @@ var TreeItem = class TreeItem {
 
     this.nested.classList.toggle("active", checked);
 
-    toggleButton(this.playButton, checked);
-    toggleButton(this.loopButton, checked);
+    if (this.playButton) {
+      toggleButton(this.playButton, checked);
+      toggleButton(this.loopButton, checked);
+    }
     if (this.removeButton) {
       toggleButton(this.removeButton, checked);
     }
@@ -1060,7 +1107,7 @@ var GroupOfGroups = class GroupOfGroups extends TreeItem {
     id,
     { parent = null, children = null, text = null, removable = false } = {}
   ) {
-    super(id, { parent, children, text, removable });
+    super(id, { parent, children, text, playable: true, removable });
 
     GroupOfGroups.byId[id] = this;
   }
@@ -1272,7 +1319,16 @@ var Group = class Group extends TreeItem {
     } = {}
   ) {
     // always have to call constructor for super class (TreeItem)
-    super(id, { parent, children, text, removable, renamable, moveTo, copyTo });
+    super(id, {
+      parent,
+      children,
+      text,
+      playable: true,
+      removable,
+      renamable,
+      moveTo,
+      copyTo,
+    });
 
     Group.byId[id] = this;
     this.snr = snr;
@@ -1611,6 +1667,7 @@ var Segment = class Segment extends TreeItem {
     // can't define this.segment until after)
     super(segment.id, {
       text,
+      playable: true,
       removable,
       renamable,
       moveTo,
