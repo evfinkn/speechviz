@@ -199,6 +199,9 @@ var TreeItem = class TreeItem {
    * @type {?string[]}
    */
   copyTo = null;
+
+  // FIXME: Blake write this documentation comment
+  /** */
   assocWith;
 
   /**
@@ -438,6 +441,7 @@ var TreeItem = class TreeItem {
 
     this.span = li.children[1];
     this.span.addEventListener("click", () => {
+      // TODO: move popup to TreeItem constructor?
       if (this.popup) {
         this.popup.show();
       }
@@ -499,7 +503,10 @@ var TreeItem = class TreeItem {
     this.span.title = `Duration: ${this.duration.toFixed(2)}`;
   }
 
-  /** Removes this item and all of its children from the tree. */
+  /**
+   * Removes this item and all of its children from the tree.
+   * @throws {Error} If this item cannot be removed.
+   */
   remove() {
     if (!this.removable) {
       throw new Error(`TreeItem ${this.id} is not removable.`);
@@ -513,6 +520,7 @@ var TreeItem = class TreeItem {
       child.remove();
     });
     if (this.#parent) {
+      // TODO: make children a set of item or map of id to item
       this.#parent.children = this.#parent.children.filter(
         (child) => child.id != this.id
       );
@@ -1302,6 +1310,7 @@ var Group = class Group extends TreeItem {
   /** Updates the title (tooltip) of `span`. */
   updateSpanTitle() {
     if (this.snr) {
+      // FIXME: not sure if necessary, maybe check to make sure duration != null?
       this.span.title = `SNR: ${this.snr.toFixed(
         2
       )}\nDuration: ${this.duration.toFixed(2)}`;
@@ -1317,6 +1326,9 @@ var Group = class Group extends TreeItem {
 
   /** Removes this group and all of its segments from the tree and Peaks waveform. */
   remove() {
+    if (!this.removable) {
+      throw new Error(`Group ${this.id} is not removable.`);
+    }
     // redoStorage.length = 0;  // clear redos
     for (var kid of this.children) {
       // true at end of undo signals that the "deleted segment"
