@@ -15,6 +15,7 @@ import {
   getRandomColor,
   sortByProp,
   toggleButton,
+  ResponseError,
   checkResponseStatus,
 } from "./util.js";
 import {
@@ -161,6 +162,22 @@ const custom = new Group("Custom", {
 });
 const labeled = new GroupOfGroups("Labeled", { parent: analysis });
 
+/**
+ * Outputs a helpful message to the console stating what's missing if `error` is
+ * a 404 and otherwise errors `error` to the console.
+ * @param {Error} error - The `Error` caused in a `fetch` block.
+ * @param {string} missing - The name of the thing that would be missing if
+ *      `error` were a `404 Not Found` error.
+ */
+const output404OrError = (error, missing) => {
+  if (error instanceof ResponseError && error.status == 404) {
+    console.log(`No ${missing} for media.`);
+  } else {
+    // other errors are likely caused by the code, which we want to know
+    console.error(error);
+  }
+};
+
 fetch(`/segments/${basename}-segments.json`)
   .then(checkResponseStatus)
   .then((response) => response.json())
@@ -178,8 +195,8 @@ fetch(`/segments/${basename}-segments.json`)
     // disabling most groups right away so just do it automatically)
     analysis.children.forEach((child) => child.toggle(false));
   })
-  .catch(() => {
-    console.log("No segments for media.");
+  .catch((error) => {
+    output404OrError(error, "segments");
     globals.highestId = 0;
   });
 
@@ -203,9 +220,7 @@ fetch(`/clustered-files/`)
       });
     });
   })
-  .catch(() => {
-    console.log("No clustered faces for media.");
-  });
+  .catch((error) => output404OrError(error, "clustered faces"));
 
 fetch(`/transcriptions/${basename}-transcription.json`)
   .then(checkResponseStatus)
@@ -216,7 +231,7 @@ fetch(`/transcriptions/${basename}-transcription.json`)
       peaks.points.add(word);
     })
   )
-  .catch(() => console.log("No transcription for media."));
+  .catch((error) => output404OrError(error, "transcription"));
 
 const poseRegex = /pose.*\.csv/;
 const visualContainer = document.getElementById("visual");
@@ -229,7 +244,11 @@ if (visualContainer) {
     .then((response) => response.json())
     .then((files) => {
       if (files.length == 0) {
-        throw new Error("No pose data for media.");
+        // create a fake 404 Not Found response so that
+        // outputHelpfulFetchErrorMessage on the caught error
+        // correctly outputs "No pose data for media."
+        const response = Response(null, { status: 404 });
+        throw new ResponseError(response);
       } else {
         // filter out non-pose files
         files = files.filter((file) => poseRegex.test(file));
@@ -261,7 +280,7 @@ if (visualContainer) {
       const height = media.offsetHeight;
       new GraphIMU(visualContainer, data, { width: width, height: height });
     })
-    .catch(() => console.log("No pose data for media."));
+    .catch((error) => output404OrError(error, "pose data"));
 }
 
 // code below initializes the interface
