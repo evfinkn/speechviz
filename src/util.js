@@ -179,19 +179,57 @@ const binarySearch = function (arr, val, compareFn) {
 };
 
 /**
+ * An error that can be thrown when an unexpected `Response` is received.
+ * Mostly useful for throwing an error when a response has an unsuccessful status.
+ * @extends Error
+ */
+const ResponseError = class ResponseError extends Error {
+  /**
+   * The `Response` object that caused this error.
+   * @type {Response}
+   */
+  response;
+
+  // the next 2 properties are just to make them easier to access
+  // e.g. error.response.status vs. error.status
+  /**
+   * The status code of `response`.
+   * @type {number}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Response/status|Response.status}
+   */
+  status;
+
+  /**
+   * The status message corresponding to the status code. (e.g., OK for 200).
+   * @type {string}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Response/statusText|Response.statusText}
+   */
+  statusText;
+
+  /**
+   * @param {Response} response - The `Response` object that caused this error.
+   */
+  constructor(response) {
+    const message = `${response.status} ${response.statusText}`;
+    super(message);
+    this.name = "ResponseError";
+    this.response = response;
+    this.status = response.status;
+    this.statusText = response.statusText;
+  }
+};
+
+/**
  * Checks the status of a fetch response, ensuring that the fetch was successful.
  * @param {!Object.<string, any>} res - The response from a fetch request to check.
  * @returns {!Object.<string, any>} The reference to the input response.
  * @throws {Error} If the response status status is unsuccessful. In other words, If
- *      `res.ok != true` or if `res.status != 200`.
+ *      `res.ok != true`.
  */
 const checkResponseStatus = function (res) {
+  // !res.ok when res.status isn't in the range 200 - 299 (successful statuses)
   if (!res.ok) {
-    throw new Error("Network response was not OK");
-  } // network error
-  else if (res.status != 200) {
-    // not 200 is error
-    throw new Error(`${res.status} ${res.statusText}`);
+    throw new ResponseError(res);
   }
   return res;
 };
@@ -207,5 +245,6 @@ export {
   arrayMean,
   objectMap,
   binarySearch,
+  ResponseError,
   checkResponseStatus,
 };
