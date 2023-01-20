@@ -71,14 +71,17 @@ app.get("/logout", (req, res) => {
   return;
 });
 
+// A set of files to exclude file lists.
+// ".DS_STORE" is a hidden file on mac in all folders
+const excludedFiles = new Set([".DS_Store"]);
+const readdirAndFilter = (path) =>
+  fs.readdirSync(path).filter((file) => !excludedFiles.has(file));
+
 app.get("/clustered-files", (req, res) => {
-  const exclude = new Set([".DS_Store"]);
-  const files = {};
-  const commonDir = "data/faceClusters/" + req.session.dir + "/";
   if (fs.readdirSync("data/faceClusters/").includes(req.session.dir)) {
-    files.cluster = fs
-      .readdirSync(commonDir)
-      .filter((fileName) => !exclude.has(fileName));
+    const files = {};
+    const commonDir = "data/faceClusters/" + req.session.dir + "/";
+    files.cluster = readdirAndFilter(commonDir);
     files.inFaceFolder = req.session.inFaceFolder;
     files.dir = req.session.dir;
     if (req.session.inFaceFolder == true) {
@@ -88,9 +91,7 @@ app.get("/clustered-files", (req, res) => {
       // serve an image from each cluster to viz for display
       const imageFiles = {};
       files.cluster.forEach(function (folder) {
-        const images = fs
-          .readdirSync(commonDir + folder)
-          .filter((fileName) => !exclude.has(fileName));
+        const images = readdirAndFilter(commonDir + folder);
         let noImageYet = true;
         while (noImageYet) {
           // grab first image in cluster and send to viz
@@ -105,25 +106,16 @@ app.get("/clustered-files", (req, res) => {
       files.images = imageFiles;
       files.dir = req.session.dir;
     }
+    res.send(files);
   }
-  res.send(files);
+  res.status(404).send("Not Found");
 });
 
 app.get("/filelist", (req, res) => {
-  // I just used a Set because Set.has() should be faster than Array.includes()
-  // files to exclude from the file list.
-  // ".DS_STORE" is a hidden file on mac in all folders
-  const exclude = new Set([".DS_Store"]);
   const files = {};
-  files.audio = fs
-    .readdirSync("data/audio")
-    .filter((fileName) => !exclude.has(fileName));
-  files.video = fs
-    .readdirSync("data/video")
-    .filter((fileName) => !exclude.has(fileName));
-  files.cluster = fs
-    .readdirSync("data/faceClusters")
-    .filter((fileName) => !exclude.has(fileName));
+  files.audio = readdirAndFilter("data/audio");
+  files.video = readdirAndFilter("data/video");
+  files.cluster = readdirAndFilter("data/faceClusters");
   res.send(files);
 });
 
@@ -152,7 +144,7 @@ app.get(
       .then((stat) => {
         // if it's a directory, return list of file names in that directory
         if (stat.isDirectory()) {
-          return res.send(fs.readdirSync(url));
+          return res.send(readdirAndFilter(url));
         }
         // if it's a file, return the file
         else {
