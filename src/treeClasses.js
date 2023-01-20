@@ -663,6 +663,34 @@ var TreeItem = class TreeItem {
       this.#parent.open();
     }
   }
+
+  // The following 3 methods implement the EventTarget interface
+  // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget
+  /**
+   * Sets up a function that will be called whenever the specified event is
+   * delivered to the target.
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener|EventTarget.addEventListener}
+   */
+  addEventListener(type, listener, options) {
+    this.li.addEventListener(type, listener, options);
+  }
+
+  /**
+   * Removes an event listener previously registered with `addEventListener`
+   * from the target.
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener|EventTarget.removeEventListener}
+   */
+  removeEventListener(type, listener, options) {
+    this.li.removeEventListener(type, listener, options);
+  }
+
+  /**
+   * Sends an `Event` to this item, invoking the affected `EventListeners`.
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent|EventTarget.dispatchEvent}
+   */
+  dispatchEvent(event) {
+    return this.li.dispatchEvent(event);
+  }
 };
 
 /** A popup to display when a `TreeItem` is clicked. */
