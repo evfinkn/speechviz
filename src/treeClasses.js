@@ -24,6 +24,7 @@ import {
 } from "./util.js";
 import { groupIcons, segmentIcons } from "./icon.js";
 
+const media = globals.media;
 const peaks = globals.peaks;
 const undoStorage = globals.undoStorage;
 // const redoStorage = globals.redoStorage;
@@ -242,6 +243,14 @@ var TreeItem = class TreeItem {
   loopButton = null;
 
   /**
+   * The a element of the pause button if this item is playable. Otherwise, `null`.
+   * The play and loop buttons are switched out with this when they're clicked,
+   * so it's only displayed when the item is playing.
+   * @type {?Element}
+   */
+  pauseButton = null;
+
+  /**
    * The a element of the remove button.
    * `null` if this item isn't removable.
    * @type {?Element}
@@ -434,28 +443,23 @@ var TreeItem = class TreeItem {
     this.playButton = htmlToElement(
       `<a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>`
     );
-    // use { once: true } because this.play() re-adds the event listener
-    this.playButton.addEventListener(
-      "click",
-      () => {
-        this.play();
-      },
-      { once: true }
-    );
+    // use () => this.play() instead of just this.play so that
+    // "this" refers to the TreeItem and not the button getting clicked
+    this.playButton.addEventListener("click", () => this.play());
     // this puts the play button before any other buttons
     this.span.after(this.playButton);
 
     this.loopButton = htmlToElement(
       `<a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>`
     );
-    this.loopButton.addEventListener(
-      "click",
-      () => {
-        this.play(true);
-      },
-      { once: true }
-    );
+    // need to use () => so that we can pass loop = true
+    this.loopButton.addEventListener("click", () => this.play(true));
     this.playButton.after(this.loopButton);
+
+    this.pauseButton = htmlToElement(
+      `<a href="javascript:;" class="button-on">${this.constructor.icons.pause}</a>`
+    );
+    this.pauseButton.addEventListener("click", () => this.pause());
   }
 
   /**
@@ -545,6 +549,40 @@ var TreeItem = class TreeItem {
     // in which case we don't want a span title anymore
     else {
       this.span.title = "";
+    }
+  }
+
+  /**
+   * Switches this item's play or loop button with its pause button.
+   * @param {boolean} loop - If `true`, the loop button is replaced. Otherwise,
+   *      the play button is replaced.
+   */
+  switchToPauseButton(loop) {
+    if (!this.playable) {
+      throw new Error(
+        `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`
+      );
+    }
+    if (loop) {
+      this.loopButton.replaceWith(this.pauseButton);
+    } else {
+      this.playButton.replaceWith(this.pauseButton);
+    }
+  }
+
+  /**
+   * Switches the pause button (if currently visible) with the button it replaced.
+   */
+  switchBackToPlayLoopButtons() {
+    if (!this.playable) {
+      throw new Error(
+        `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`
+      );
+    }
+    if (this.playButton.parentElement === null) {
+      this.pauseButton.replaceWith(this.playButton);
+    } else if (this.loopButton.parentElement === null) {
+      this.pauseButton.replaceWith(this.loopButton);
     }
   }
 
@@ -1167,52 +1205,123 @@ var GroupOfGroups = class GroupOfGroups extends TreeItem {
     return true;
   }
 
-  /**
-   * Plays each visible `Segment` belonging to this group in chronological order.
-   * @param {boolean} [loop=false] - If `true`, loops the segments (reaching the
-   *      end of the segments will restart playing at the beginning).
-   */
-  play(loop = false) {
-    const segments = sortByProp(
-      this.getSegments({ visible: true }),
-      "startTime"
-    );
-    if (segments.length == 0) {
-      return;
-    }
-
-    // See Segment.play() for reasoning behind event listener
-    peaks.once("player.pause", () => {
-      peaks.player.playSegments(segments, loop);
-      const button = loop ? this.loopButton : this.playButton;
-      button.innerHTML = groupIcons.pause;
-
-      // make function here so event listener can be removed
-      const pause = function () {
-        peaks.player.pause();
-      };
-      button.addEventListener("click", pause, { once: true });
-      // triggered by clicking pause button in tree, pause button on
-      // media controls, or play on other tree item
-      peaks.once("player.pause", () => {
-        button.innerHTML = loop ? groupIcons.loop : groupIcons.play;
-        button.removeEventListener("click", pause); // remove old event listener
-        button.addEventListener(
-          "click",
-          () => {
-            this.play(loop);
-          },
-          { once: true }
-        );
-      });
-    });
-    // peaks.player.pause() only emits pause event if playing
-    // when paused, so have to play audio if not already
-    if (!peaks.player.isPlaying()) {
-      peaks.player.play();
-    }
-    peaks.player.pause();
+  *checkedPlayableGenerator(loop = false) {
+    // do... while always executes the loop once and THEN evalutes the condition,
+    // meaning all of the children that are checked will be yielded once, and then
+    // if we are looping, they will continue to be yielded forever
+    //
+    // since generators only calculate values when asked for them, if a user checks
+    // a segment before it is reached by the generator, it will get included, even
+    // though it wasn't checked when checkedGenerator was initially called
+    do {
+      for (const child of sortByProp(this.children, "startTime")) {
+        if (child.checked && child.playable) {
+          yield child;
+        }
+      }
+    } while (loop);
   }
+
+  play(loop = false) {
+    if (this.visible.size == 0) {
+      return; // nothing to play
+    }
+    // pause in case anything else is playing so that
+    // their icons get switched back to play and loop
+    media.pause();
+    this.switchToPauseButton(loop);
+
+    const checkedChildren = this.checkedPlayableGenerator(loop);
+    let { value, done } = checkedChildren.next();
+    const endedHandler = (event) => {
+      // brackets are required if destructuring {} with pre-defined variables
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#syntax
+      ({ value, done } = checkedChildren.next());
+      // for the last value, done will be true, so we need to play regardless of done
+      value.play();
+      if (!done) {
+        // if it propagates, parents will think this group has ended playback
+        event.stopPropagation();
+      } else {
+        this.switchBackToPlayLoopButtons();
+        this.removeEventListener("ended", endedHandler);
+        // don't stopProgagation here because we can just let the
+        // event propagate to indicate this group has ended instead
+        // of needing to create a whole new event
+      }
+    };
+
+    if (value !== undefined) {
+      value.play();
+    }
+    if (!done) {
+      this.addEventListener("ended", endedHandler);
+
+      this.addEventListener(
+        "manualpause",
+        () => {
+          media.pause();
+          this.switchBackToPlayLoopButtons();
+          this.removeEventListener("ended", endedHandler);
+        },
+        { once: true }
+      );
+    }
+  }
+
+  pause() {
+    // dispatch manualpause to let the event listener added in play handle pausing
+    // this way, the endedHandler can be removed (we couldn't do it here because
+    // it's not defined here)
+    this.dispatchEvent(new Event("manualpause", { bubbles: true }));
+  }
+
+  // /**
+  //  * Plays each visible `Segment` belonging to this group in chronological order.
+  //  * @param {boolean} [loop=false] - If `true`, loops the segments (reaching the
+  //  *      end of the segments will restart playing at the beginning).
+  //  */
+  // play(loop = false) {
+  //   const segments = sortByProp(
+  //     this.getSegments({ visible: true }),
+  //     "startTime"
+  //   );
+  //   if (segments.length == 0) {
+  //     return;
+  //   }
+
+  //   // See Segment.play() for reasoning behind event listener
+  //   peaks.once("player.pause", () => {
+  //     peaks.player.playSegments(segments, loop);
+  //     const button = loop ? this.loopButton : this.playButton;
+  //     button.innerHTML = groupIcons.pause;
+
+  //     // make function here so event listener can be removed
+  //     const pause = function () {
+  //       peaks.player.pause();
+  //     };
+  //     button.addEventListener("click", pause, { once: true });
+  //     // triggered by clicking pause button in tree, pause button on
+  //     // media controls, or play on other tree item
+  //     peaks.once("player.pause", () => {
+  //       button.innerHTML = loop ? groupIcons.loop : groupIcons.play;
+  //       button.removeEventListener("click", pause); // remove old event listener
+  //       button.addEventListener(
+  //         "click",
+  //         () => {
+  //           this.play(loop);
+  //         },
+  //         { once: true }
+  //       );
+  //     });
+  //   });
+  //   // peaks.player.pause() only emits pause event if playing
+  //   // when paused, so have to play audio if not already
+  //   if (!peaks.player.isPlaying()) {
+  //     peaks.player.play();
+  //   }
+  //   peaks.player.pause();
+  // }
 
   /**
    * Gets this group's `Segment`s.
@@ -1285,20 +1394,16 @@ var Group = class Group extends TreeItem {
   colorable;
 
   /**
-   * An object containing the `Segment`s that are currently hidden in Peaks.
-   * Key is id, value is corresponding `Segment`:
-   * {id: `Segment`}
-   * @type {!Object.<string, Segment>}
+   * A set containing the `Segment`s that are currently hidden in Peaks.
+   * @type {!Set.<Segment>}
    */
-  hidden = {};
+  hidden = new Set();
 
   /**
-   * An object containing the `Segment`s that are currently visible in Peaks.
-   * Key is id, value is corresponding `Segment`:
-   * {id: `Segment`}
-   * @type {!Object<string, Segment>}
+   * A set containing the `Segment`s that are currently visible in Peaks.
+   * @type {!Set.<Segment>}
    */
-  visible = {};
+  visible = new Set();
 
   /**
    * Face number this face is associated with, for saving purposes
@@ -1472,24 +1577,89 @@ var Group = class Group extends TreeItem {
     });
     if (checked) {
       // add the hidden segments to peaks
-      peaks.segments.add(
-        Object.values(this.hidden).map((hidden) => hidden.segment)
-      );
-      this.visible = Object.assign({}, this.visible, this.hidden);
-      this.hidden = {};
-      Object.values(this.visible).forEach((segment) =>
-        segment.updateEditable()
-      );
+      peaks.segments.add([...this.hidden].map((hidden) => hidden.segment));
+      this.hidden.forEach((segment) => this.visible.add(segment));
+      this.hidden.clear();
+      this.visible.forEach((segment) => segment.updateEditable());
     } else {
       // remove the visible segments from peaks
-      Object.values(this.visible).forEach(function (segment) {
+      this.visible.forEach((segment) => {
         peaks.segments.removeById(segment.id);
+        this.hidden.add(segment);
       });
-      this.hidden = Object.assign({}, this.hidden, this.visible);
-      this.visible = {};
+      this.visible.clear();
     }
 
     return true;
+  }
+
+  *checkedPlayableGenerator(loop = false) {
+    // do... while always executes the loop once and THEN evalutes the condition,
+    // meaning all of the children that are checked will be yielded once, and then
+    // if we are looping, they will continue to be yielded forever
+    //
+    // since generators only calculate values when asked for them, if a user checks
+    // a segment before it is reached by the generator, it will get included, even
+    // though it wasn't checked when checkedGenerator was initially called
+    do {
+      for (const child of sortByProp(this.children, "startTime")) {
+        if (child.checked && child.playable) {
+          yield child;
+        }
+      }
+    } while (loop);
+  }
+
+  play(loop = false) {
+    if (this.visible.size == 0) {
+      return; // nothing to play
+    }
+    // pause in case anything else is playing so that
+    // their icons get switched back to play and loop
+    media.pause();
+
+    const checkedChildren = this.checkedPlayableGenerator(loop);
+    let { value, done } = checkedChildren.next();
+    const endedHandler = (event) => {
+      // brackets are required if destructuring {} with pre-defined variables
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#syntax
+      ({ value, done } = checkedChildren.next());
+      if (!done) {
+        value.play();
+        // if it propagates, parents will think this group has ended playback
+        event.stopPropagation();
+      } else {
+        this.switchBackToPlayLoopButtons();
+        this.removeEventListener("ended", endedHandler);
+        // don't stopProgagation here because we can just let the
+        // event propagate to indicate this group has ended instead
+        // of needing to create a whole new event
+      }
+    };
+
+    // done would be true if there are no playable / checked children at all
+    if (!done) {
+      this.switchToPauseButton(loop);
+      value.play();
+      this.addEventListener("ended", endedHandler);
+
+      this.addEventListener(
+        "manualpause",
+        () => {
+          media.pause();
+          this.switchBackToPlayLoopButtons();
+          this.removeEventListener("ended", endedHandler);
+        },
+        { once: true }
+      );
+    }
+  }
+
+  pause() {
+    // dispatch manualpause to let the event listener added in play handle pausing
+    // this way, the endedHandler can be removed (we couldn't do it here because
+    // it's not defined here)
+    this.dispatchEvent(new Event("manualpause", { bubbles: true }));
   }
 
   /**
@@ -1497,44 +1667,44 @@ var Group = class Group extends TreeItem {
    * @param {boolean} [loop=false] - If `true`, loops the segments (reaching the
    *      end of the segments will restart playing at the beginning).
    */
-  play(loop = false) {
-    if (this.visible.length == 0) {
-      return;
-    } // nothing to play, so don't add event listener
+  // play(loop = false) {
+  //   if (this.visible.length == 0) {
+  //     return;
+  //   } // nothing to play, so don't add event listener
 
-    const segments = sortByProp(Object.values(this.visible), "startTime");
-    // See Segment.play() for reasoning behind event listener
-    peaks.once("player.pause", () => {
-      peaks.player.playSegments(segments, loop);
-      const button = loop ? this.loopButton : this.playButton;
-      button.innerHTML = groupIcons.pause;
+  //   const segments = sortByProp(Object.values(this.visible), "startTime");
+  //   // See Segment.play() for reasoning behind event listener
+  //   peaks.once("player.pause", () => {
+  //     peaks.player.playSegments(segments, loop);
+  //     const button = loop ? this.loopButton : this.playButton;
+  //     button.innerHTML = groupIcons.pause;
 
-      // make function here so event listener can be removed
-      const pause = function () {
-        peaks.player.pause();
-      };
-      button.addEventListener("click", pause, { once: true });
-      // triggered by clicking pause button in tree, pause button on
-      // media controls, or play on other tree item
-      peaks.once("player.pause", () => {
-        button.innerHTML = loop ? groupIcons.loop : groupIcons.play;
-        button.removeEventListener("click", pause); // remove old event listener
-        button.addEventListener(
-          "click",
-          () => {
-            this.play(loop);
-          },
-          { once: true }
-        );
-      });
-    });
-    // peaks.player.pause() only emits pause event if playing
-    // when paused, so have to play audio if not already
-    if (!peaks.player.isPlaying()) {
-      peaks.player.play();
-    }
-    peaks.player.pause();
-  }
+  //     // make function here so event listener can be removed
+  //     const pause = function () {
+  //       peaks.player.pause();
+  //     };
+  //     button.addEventListener("click", pause, { once: true });
+  //     // triggered by clicking pause button in tree, pause button on
+  //     // media controls, or play on other tree item
+  //     peaks.once("player.pause", () => {
+  //       button.innerHTML = loop ? groupIcons.loop : groupIcons.play;
+  //       button.removeEventListener("click", pause); // remove old event listener
+  //       button.addEventListener(
+  //         "click",
+  //         () => {
+  //           this.play(loop);
+  //         },
+  //         { once: true }
+  //       );
+  //     });
+  //   });
+  //   // peaks.player.pause() only emits pause event if playing
+  //   // when paused, so have to play audio if not already
+  //   if (!peaks.player.isPlaying()) {
+  //     peaks.player.play();
+  //   }
+  //   peaks.player.pause();
+  // }
 
   /**
    * Copies all of the `Segment`s of this group to another.
@@ -1586,10 +1756,10 @@ var Group = class Group extends TreeItem {
   getSegments({ hidden = false, visible = false } = {}) {
     const segments = [];
     if (hidden) {
-      segments.push(...Object.values(this.hidden));
+      segments.push(...this.hidden);
     }
     if (visible) {
-      segments.push(...Object.values(this.visible));
+      segments.push(...this.visible);
     }
     return segments;
   }
@@ -1798,28 +1968,22 @@ var Segment = class Segment extends TreeItem {
     return super.parent;
   }
   set parent(newParent) {
-    const id = this.id;
-    const segment = this.segment;
-    const parent = this.parent;
-    if (parent) {
-      if (parent.hidden[id]) {
-        delete parent.hidden[id];
-      } else {
-        delete parent.visible[id];
-      }
+    if (this.parent) {
+      this.parent.hidden.delete(this);
+      this.parent.visible.delete(this);
     }
 
     if (newParent.color) {
-      segment.update({ color: newParent.color });
+      this.segment.update({ color: newParent.color });
     } else {
-      newParent.color = segment.color;
+      newParent.color = this.segment.color;
     }
 
-    segment.update({ labelText: `${newParent.id}\n${this.text}` });
+    this.segment.update({ labelText: `${newParent.id}\n${this.text}` });
     if (this.checked) {
-      newParent.visible[this.id] = this;
+      newParent.visible.add(this);
     } else {
-      newParent.hidden[this.id] = this;
+      newParent.hidden.add(this);
     }
     super.parent = newParent; // call TreeItem's setter for parent
   }
@@ -1869,17 +2033,11 @@ var Segment = class Segment extends TreeItem {
 
   /** Removes this segment from the tree and Peaks waveform. */
   remove() {
-    const id = this.id;
-    const parent = this.parent;
+    this.parent.hidden.delete(this);
+    this.parent.visible.delete(this);
 
-    if (parent.hidden[id]) {
-      delete parent.hidden[id];
-    } else {
-      delete parent.visible[id];
-    }
-
-    if (peaks.segments.getSegment(id) === this.segment) {
-      peaks.segments.removeById(id);
+    if (peaks.segments.getSegment(this.id) === this.segment) {
+      peaks.segments.removeById(this.id);
     }
 
     super.remove();
@@ -1915,21 +2073,18 @@ var Segment = class Segment extends TreeItem {
       return false;
     } // no toggling necessary
 
-    const id = this.id;
-    const parent = this.parent;
     const checked = force === null ? this.checked : force;
-
     if (checked) {
       // add segment to peaks
       peaks.segments.add(this.segment);
-      delete parent.hidden[id];
-      parent.visible[id] = this;
+      this.parent.hidden.delete(this);
+      this.parent.visible.add(this);
       this.updateEditable();
     } else {
       // remove segment from peaks
-      peaks.segments.removeById(id);
-      delete parent.visible[id];
-      parent.hidden[id] = this;
+      peaks.segments.removeById(this.id);
+      this.parent.visible.delete(this);
+      this.parent.hidden.add(this);
     }
 
     return true;
@@ -1978,49 +2133,86 @@ var Segment = class Segment extends TreeItem {
     }
   }
 
-  /**
-   * Plays this segment.
-   * @param {boolean} [loop=false] - If `true`, loops this segment (reaching
-   *      the end of the segment will restart playing at the beginning).
-   */
-  play(loop = false) {
-    // Have to put in event listener because need to call
-    // peaks.player.pause() to switch other pause buttons
-    // back to play buttons, but pausing without
-    // the event listener instantly changes the new pause
-    // button (from this function call) to change back to
-    // a play button. Very janky but I couldn't find a
-    // different way
-    peaks.once("player.pause", () => {
-      peaks.player.playSegment(this.segment, loop);
-      const button = loop ? this.loopButton : this.playButton;
-      button.innerHTML = segmentIcons.pause;
+  /*
 
-      // make function here so event listener can be removed
-      const pause = function () {
-        peaks.player.pause();
-      };
-      button.addEventListener("click", pause, { once: true });
-      // triggered by clicking pause button in tree, pause button on
-      // media controls, or play on other tree item
-      peaks.once("player.pause", () => {
-        button.innerHTML = loop ? segmentIcons.loop : segmentIcons.play;
-        button.removeEventListener("click", pause); // remove old event listener
-        button.addEventListener(
-          "click",
-          () => {
-            this.play(loop);
-          },
-          { once: true }
-        );
-      });
-    });
-    // peaks.player.pause() only emits pause event if playing
-    // when paused, so have to play audio if not already
-    if (!peaks.player.isPlaying()) {
-      peaks.player.play();
+  this.resetButtons
+    set the play / loop buttons to play / loop icons
+
+  this.pause
+    pause media
+    this.resetButtons()
+    this.dispatchEvent("manual-pause")
+      parent may have attached event listener for manually paused so that
+      the segment ending playing and user pausing the segment on their own.
+      if manually paused, the parent needs to stop playing. otherwise,
+
+  this.play
+  1. pause media (so that other playing things are paused properly)
+  2. seek to Segment start time
+  3. play media
+  4. set play / loop button to pause icon
+  5. request animation frame for this.#playCallback
+
+  this.#playCallback
+  1. check if media is playing
+    if it's not, that means the user paused it, so this.dispatch("manual-pause")
+    and return
+  2. check if current time of media is greater than this.endTime
+    if it is and not loop, this.disptachEvent("ended") and this.resetButtons()
+    if it is and loop, seek to this.startTime
+  3. request animation frame with this.#playCallback
+
+  TODO: make toggling a group off stop playing?
+  */
+
+  play(loop = false) {
+    // pause in case anything else is playing so that
+    // their icons get switched back to play and loop
+    media.pause();
+    media.currentTime = this.startTime; // seek
+    media.play();
+    this.switchToPauseButton(loop);
+    window.requestAnimationFrame(() => this.#playCallback(loop));
+  }
+
+  #playCallback(loop) {
+    // if it's paused here, then the user manually paused it by clicking
+    // pause button in the tree or on the media (instead of pausing because
+    // the end of the segment was reached)
+    if (media.paused) {
+      this.pause();
+      // we don't want to request another animation frame since we're
+      // not playing anymore so stop the function here
+      return;
     }
-    peaks.player.pause();
+
+    if (media.currentTime >= this.endTime) {
+      if (loop) {
+        media.currentTime = this.startTime; // seek
+      } else {
+        media.pause();
+        this.switchBackToPlayLoopButtons();
+        // emit an "ended" event to indicate that the segment reached its end
+        // normally, and wasn't paused by the user. This way, if a Group played
+        // this segment, it knows to start the next one
+        // bubbles: true so the Group actually receives the event
+        this.dispatchEvent(new Event("ended", { bubbles: true }));
+        return;
+      }
+    }
+
+    window.requestAnimationFrame(() => this.#playCallback(loop));
+  }
+
+  pause() {
+    media.pause();
+    this.switchBackToPlayLoopButtons();
+    // built-in events like "animationstart" don't use camel case or dashes
+    // so that's why "manualpause" is all lowercase and one word
+    // bubbles: true so that parents can catch the event, e.g. if this
+    // segment was played by a Group, the Group needs to receive the "manualpause"
+    // event as well so that it can get paused properly
+    this.dispatchEvent(new Event("manualpause", { bubbles: true }));
   }
 
   /**
