@@ -2168,8 +2168,6 @@ var Face = class Face extends TreeItem {
 
     this.render();
     this.parent = parent;
-    this.playButton.style.display = "none";
-    this.loopButton.style.display = "none";
     // rel="noopener noreferrer" is there to avoid tab nabbing
     const linkButton = htmlToElement(
       `<a href="/clustered-faces?faceFolder=` +
