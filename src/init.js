@@ -323,23 +323,36 @@ zoomOut.addEventListener("click", function () {
   }
 });
 
+/**
+ * Creates a new Labeled group using `input`'s value as the id.
+ * @param {!HTMLInputElement} input - The element used to enter a new label name.
+ */
+const addLabel = (input) => {
+  if (input.value != "") {
+    new Group(input.value, {
+      parent: labeled,
+      removable: true,
+      renamable: true,
+      color: getRandomColor(),
+      colorable: true,
+      copyTo: ["Labeled"],
+    });
+    input.value = ""; // clear text box after submitting
+    labeled.open(); // open labeled in tree to show newly added label
+  }
+};
+
 // input to add a label group
-const labelInput = document.getElementById("label");
+const labelInput = document.getElementById("add-label-input");
+labelInput.addEventListener("keypress", (event) => {
+  if (event.key === "Enter") {
+    addLabel(labelInput);
+  }
+});
 document
-  .querySelector("button[data-action='add-label']")
+  .getElementById("add-label-button")
   .addEventListener("click", function () {
-    if (labelInput.value != "") {
-      new Group(labelInput.value, {
-        parent: labeled,
-        removable: true,
-        renamable: true,
-        color: getRandomColor(),
-        colorable: true,
-        copyTo: ["Labeled"],
-      });
-      labelInput.value = ""; // clear text box after submitting
-      labeled.open(); // open labeled in tree to show newly added label
-    }
+    addLabel(labelInput);
   });
 
 // counts number of custom segments added, used for custom segment's labelText
