@@ -1080,10 +1080,7 @@ var Popup = class Popup {
       // add functionality to associate with speakers here
       dest.faceNum = this.treeItem.id;
       this.treeItem.speakerNum = dest.id;
-      dest.li.insertBefore(
-        this.treeItem.li.children[6].firstElementChild,
-        dest.li.children[4]
-      );
+      dest.nested.prepend(this.treeItem.imageLi);
       // add something to see if its clicked and delete the image if it is
       radioButton.checked = false;
       this.hide();
@@ -2081,7 +2078,7 @@ var Segment = class Segment extends TreeItem {
  */
 var Face = class Face extends TreeItem {
   /**
-   * An object containing all `Faces`s by their id.
+   * An object containing all `Face`s by their id.
    * Key is id, value is corresponding `Face`:  {id: `Face`}
    * @type {Object.<string, Face>}
    * @static
@@ -2094,13 +2091,6 @@ var Face = class Face extends TreeItem {
    * @static
    */
   static icons = segmentIcons;
-
-  /**
-   * Names of properties to get in `getProperties`.
-   * @type {!Array.<string>}
-   * @static
-   */
-  static properties = ["treeText"];
 
   /**
    * Path to image displayed for a face
@@ -2158,18 +2148,16 @@ var Face = class Face extends TreeItem {
     // so can't get rid of playButton, etc. until after super())
     super(id, {
       text,
+      parent,
       removable,
       renamable,
-      render: false,
-      assocWith: assocWith,
+      assocWith,
     });
 
     Face.byId[id] = this;
 
-    this.render();
-    this.parent = parent;
     // rel="noopener noreferrer" is there to avoid tab nabbing
-    const linkButton = htmlToElement(
+    this.linkButton = htmlToElement(
       `<a href="/clustered-faces?faceFolder=` +
         `${this.id}&inFaceFolder="true"` +
         ` style="text-decoration:none;"` +
@@ -2177,9 +2165,7 @@ var Face = class Face extends TreeItem {
         ` class="button-on">` +
         `${this.constructor.icons.image}</a>`
     );
-
-    this.linkbutton = linkButton;
-    this.removeButton.after(linkButton);
+    this.nested.before(this.linkButton);
 
     // change width and height here if you want a different sized image to show
     this.imageLi = htmlToElement(
@@ -2189,37 +2175,15 @@ var Face = class Face extends TreeItem {
     );
     // store previous html of image to reset its position when the image is clicked
     this.imageLi.addEventListener("click", () => {
-      // nested should be the 2nd to last child, where popup is the last,
-      // just like happens in the next 3 lines
-      this.li.children[this.li.children.length - 2].appendChild(this.imageLi);
+      this.nested.appendChild(this.imageLi);
       if (this.speakerNum !== null) {
         Group.byId[this.speakerNum].faceNum = null;
         // reset speaker number because it has no speaker
         this.speakerNum = null;
       }
     });
-    var nest = this.li.lastElementChild;
-    nest.appendChild(this.imageLi);
+    this.nested.appendChild(this.imageLi);
     this.popup = new Popup(this);
-  }
-
-  /**
-   * The text shown in `span` (and therefore in the tree).
-   * @type {string}
-   */
-  get treeText() {
-    return this.text;
-  } // backwards compatibility (database expects 'treeText')
-
-  /**
-   * The `Group` that contains the Face in its nested content.
-   * @type {!Group}
-   */
-  get parent() {
-    return super.parent;
-  }
-  set parent(newParent) {
-    super.parent = newParent; // call TreeItem's setter for parent
   }
 
   /** Initialize the CSS styling of the `Segment` */
