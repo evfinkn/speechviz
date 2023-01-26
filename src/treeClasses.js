@@ -24,6 +24,7 @@ import {
 } from "./util.js";
 import { groupIcons, segmentIcons } from "./icon.js";
 
+const media = globals.media;
 const peaks = globals.peaks;
 const undoStorage = globals.undoStorage;
 // const redoStorage = globals.redoStorage;
@@ -34,13 +35,16 @@ const undoStorage = globals.undoStorage;
  * @typedef {string} Color
  */
 
-/** @typedef {import("Peaks").Segment} Peaks.Segment */
 // TODO: make typedef for an options type
 
+// FIXME: completely remove this and the expand methods and instead make moveTo and
+//        copyTo arrays of TreeItems, and just update copyTo after all of the speakers
+//        have been added. To solve moving to labels, just push Labeled.children
+//        in moveTo / copyTo and then flatten moveTo / copyTo when the popup is shown
 /**
- * Expands an array consisting of `Group`s and `GroupOfGroups` by recursiving replacing
+ * Expands an array consisting of `Group`s and `GroupOfGroups` by recursively replacing
  * `GroupOfGroups` with their children until all items are `Group`s.
- * @param {!Array.<Group|GroupOfGroups>} groups - Array of `Group`s and
+ * @param {(!Array.<Group|GroupOfGroups>)} groups - Array of `Group`s and
  *      `GroupOfGroups`s to expand.
  * @param {?Array.<Group>=} exclude - Array of `Group`s to exclude from the expanded
  *      array.
@@ -49,7 +53,7 @@ const undoStorage = globals.undoStorage;
 const expandGroups = function expand(groups, exclude = []) {
   const expanded = [];
   for (const group of groups) {
-    if (group instanceof Group) {
+    if (group instanceof PeaksGroup) {
       if (!exclude.includes(group.id)) {
         expanded.push(group);
       }
@@ -240,6 +244,14 @@ var TreeItem = class TreeItem {
    * @type {?Element}
    */
   loopButton = null;
+
+  /**
+   * The a element of the pause button if this item is playable. Otherwise, `null`.
+   * The play and loop buttons are switched out with this when they're clicked,
+   * so it's only displayed when the item is playing.
+   * @type {?Element}
+   */
+  pauseButton = null;
 
   /**
    * The a element of the remove button.
@@ -434,28 +446,23 @@ var TreeItem = class TreeItem {
     this.playButton = htmlToElement(
       `<a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>`
     );
-    // use { once: true } because this.play() re-adds the event listener
-    this.playButton.addEventListener(
-      "click",
-      () => {
-        this.play();
-      },
-      { once: true }
-    );
+    // use () => this.play() instead of just this.play so that
+    // "this" refers to the TreeItem and not the button getting clicked
+    this.playButton.addEventListener("click", () => this.play());
     // this puts the play button before any other buttons
     this.span.after(this.playButton);
 
     this.loopButton = htmlToElement(
       `<a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>`
     );
-    this.loopButton.addEventListener(
-      "click",
-      () => {
-        this.play(true);
-      },
-      { once: true }
-    );
+    // need to use () => so that we can pass loop = true
+    this.loopButton.addEventListener("click", () => this.play(true));
     this.playButton.after(this.loopButton);
+
+    this.pauseButton = htmlToElement(
+      `<a href="javascript:;" class="button-on">${this.constructor.icons.pause}</a>`
+    );
+    this.pauseButton.addEventListener("click", () => this.pause());
   }
 
   /**
@@ -545,6 +552,42 @@ var TreeItem = class TreeItem {
     // in which case we don't want a span title anymore
     else {
       this.span.title = "";
+    }
+  }
+
+  /**
+   * Switches this item's play or loop button with its pause button.
+   * @param {boolean} loop - If `true`, the loop button is replaced. Otherwise,
+   *      the play button is replaced.
+   * @throws {Error} If this item is not playable.
+   */
+  switchToPauseButton(loop) {
+    if (!this.playable) {
+      throw new Error(
+        `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`
+      );
+    }
+    if (loop) {
+      this.loopButton.replaceWith(this.pauseButton);
+    } else {
+      this.playButton.replaceWith(this.pauseButton);
+    }
+  }
+
+  /**
+   * Switches the pause button (if currently visible) with the button it replaced.
+   * @throws {Error} If this item is not playable.
+   */
+  switchBackToPlayLoopButtons() {
+    if (!this.playable) {
+      throw new Error(
+        `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`
+      );
+    }
+    if (this.playButton.parentElement === null) {
+      this.pauseButton.replaceWith(this.playButton);
+    } else if (this.loopButton.parentElement === null) {
+      this.pauseButton.replaceWith(this.loopButton);
     }
   }
 
@@ -1066,6 +1109,7 @@ var Popup = class Popup {
     });
   }
 
+  // FIXME: Blake add documentation for this
   addAssocRadio(dest) {
     const radioDiv = htmlToElement(
       "<div><label>" +
@@ -1089,26 +1133,21 @@ var Popup = class Popup {
 };
 
 /**
- * A group of `Group`s.
+ * A group of `TreeItem`s.
  * @extends TreeItem
  */
-var GroupOfGroups = class GroupOfGroups extends TreeItem {
-  // Some groups are groups of groups instead of groups of segments, so the
-  // implementation of some methods are slightly different which is why need
-  // separate `GroupOfGroups` class (otherwise would need lots of if statements
-  // in `Group` to check what type of group it is)
-
+var Group = class Group extends TreeItem {
   /**
-   * An object containing all `GroupOfGroups` by their id.
-   * Key is id, value is corresponding `GroupOfGroups`:
-   * {id: `GroupOfGroups`}
-   * @type {!Object.<string, GroupOfGroups>}
+   * An object containing all `Group`s by their id.
+   * Key is id, value is corresponding `Group`:
+   * {id: `Group`}
+   * @type {!Object.<string, Group>}
    * @static
    */
   static byId = {};
 
   /**
-   * HTML strings for the play, pause, loop, and remove icons for `GroupOfGroups`
+   * HTML strings for the play, pause, loop, and remove icons for `Group`s
    * in the tree.
    * @type {!Object.<string, string>}
    * @static
@@ -1116,25 +1155,33 @@ var GroupOfGroups = class GroupOfGroups extends TreeItem {
   static icons = groupIcons;
 
   /**
-   * @param {string} id - The unique identifier to give the `GroupOfGroups`.
+   * @param {string} id - The unique identifier to give the `Group`.
    * @param {?Object.<string, any>=} options - Options to customize the group.
-   * @param {?GroupOfGroups=} options.parent - The `GroupOfGroups` that contains the
+   * @param {?TreeItem=} options.parent - The `TreeItem` that contains the
    *      group in its nested content.
-   * @param {?Array.<Group|GroupOfGroups>=} options.children - An array of `Group`s and
-   *      `GroupOfGroups`s to put in the group's nested content.
+   * @param {?Array.<TreeItem>=} options.children - An array of `TreeItem`s to put in
+   *      the group's nested content.
    * @param {string=} options.text - The text to show in the group's span (and
    *      therefore in the tree). If `null`, `id` is used.
+   * @param {boolean} [options.playable=false] - Indicates if the group can be played
+   *      and looped.
    * @param {boolean} [options.removable=false] - Indicates if the group can be removed
    *      from the tree.
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
     id,
-    { parent = null, children = null, text = null, removable = false } = {}
+    {
+      parent = null,
+      children = null,
+      text = null,
+      playable = false,
+      removable = false,
+    } = {}
   ) {
-    super(id, { parent, children, text, playable: true, removable });
+    super(id, { parent, children, text, playable, removable });
 
-    GroupOfGroups.byId[id] = this;
+    Group.byId[id] = this;
   }
 
   /** Sets the CSS styling of the group's elements. */
@@ -1143,9 +1190,7 @@ var GroupOfGroups = class GroupOfGroups extends TreeItem {
   }
 
   /**
-   * Toggles this group on / off.
-   * Specifically, toggles this group's elements on / off and shows / hides all of its
-   * `Segment`s on the Peaks waveform.
+   * Toggles this group and its children on / off.
    * @param {boolean=} force - If unspecified, this group is always toggled. Otherwise,
    *      this group is only toggled if its current state isn't equal to `force`.
    * @returns {boolean} A `boolean` indiciating if any toggling was done.
@@ -1165,474 +1210,197 @@ var GroupOfGroups = class GroupOfGroups extends TreeItem {
   }
 
   /**
-   * Plays each visible `Segment` belonging to this group in chronological order.
-   * @param {boolean} [loop=false] - If `true`, loops the segments (reaching the
-   *      end of the segments will restart playing at the beginning).
+   * Generates this group's children that are checked and playable.
+   * The children are yielded in chronological order.
+   * @param {boolean} infinite - If `true`, reaching the end of the children will
+   *      restart from the beginning.
+   * @yields {TreeItem} A `TreeItem` whose `checked` and `playable` properties are
+   *      both `true`.
    */
-  play(loop = false) {
-    const segments = sortByProp(
-      this.getSegments({ visible: true }),
-      "startTime"
-    );
-    if (segments.length == 0) {
-      return;
-    }
-
-    // See Segment.play() for reasoning behind event listener
-    peaks.once("player.pause", () => {
-      peaks.player.playSegments(segments, loop);
-      const button = loop ? this.loopButton : this.playButton;
-      button.innerHTML = groupIcons.pause;
-
-      // make function here so event listener can be removed
-      const pause = function () {
-        peaks.player.pause();
-      };
-      button.addEventListener("click", pause, { once: true });
-      // triggered by clicking pause button in tree, pause button on
-      // media controls, or play on other tree item
-      peaks.once("player.pause", () => {
-        button.innerHTML = loop ? groupIcons.loop : groupIcons.play;
-        button.removeEventListener("click", pause); // remove old event listener
-        button.addEventListener(
-          "click",
-          () => {
-            this.play(loop);
-          },
-          { once: true }
-        );
-      });
-    });
-    // peaks.player.pause() only emits pause event if playing
-    // when paused, so have to play audio if not already
-    if (!peaks.player.isPlaying()) {
-      peaks.player.play();
-    }
-    peaks.player.pause();
-  }
-
-  /**
-   * Gets this group's `Segment`s.
-   * This group's segments are the segments of all of its children.
-   * @param {?Object.<string, boolean>=} options - Options specifying which
-   *      `Segment`s to get.
-   * @param {boolean} [options.hidden=false] - Indicates to return `Segment`s
-   *      that are currently hidden on the Peaks waveform.
-   * @param {boolean} [options.visible=false] - Indicates to return `Segment`s
-   *      that are currently visible on the Peaks waveform.
-   * @returns {!Array.<Segment>} An array containing the `Segment`s specified
-   *      by `options`.
-   */
-  getSegments({ hidden = false, visible = false } = {}) {
-    const segments = [];
-    this.children.forEach(function (child) {
-      // array.push(...) is faster than array.concat()
-      segments.push(...child.getSegments({ hidden, visible }));
-    });
-    return segments;
-  }
-};
-
-/**
- * A group of `Segment`s.
- * @extends TreeItem
- */
-var Group = class Group extends TreeItem {
-  /**
-   * An object containing all `Group`s by their id.
-   * Key is id, value is corresponding `Group`:
-   * {id: `Group`}
-   * @type {!Object.<string, Group>}
-   * @static
-   */
-  static byId = {};
-
-  /**
-   * HTML strings for the play, pause, loop, and remove icons for `Group`s in the tree.
-   * @type {!Object.<string, string>}
-   * @static
-   */
-  static icons = groupIcons;
-
-  /**
-   * Names of properties to get in `getProperties`.
-   * @type {!Array.<string>}
-   * @static
-   */
-  static properties = ["snr", "color", "colorable"];
-
-  /**
-   * The signal-to-noise ratio (SNR) of this `Group` if it has one. Otherwise, `null`.
-   * @type {?number}
-   */
-  snr = null;
-
-  /**
-   * The color of this group's `Segment`s in the Peaks waveform.
-   * If no color is given in the constructor, `null` until a
-   * `Segment` is added to this group.
-   * @type {?Color}
-   */
-  #color = null;
-
-  /**
-   * A `boolean` indicating if this item can be recolored.
-   * @type {boolean}
-   */
-  colorable;
-
-  /**
-   * An object containing the `Segment`s that are currently hidden in Peaks.
-   * Key is id, value is corresponding `Segment`:
-   * {id: `Segment`}
-   * @type {!Object.<string, Segment>}
-   */
-  hidden = {};
-
-  /**
-   * An object containing the `Segment`s that are currently visible in Peaks.
-   * Key is id, value is corresponding `Segment`:
-   * {id: `Segment`}
-   * @type {!Object<string, Segment>}
-   */
-  visible = {};
-
-  /**
-   * Face number this face is associated with, for saving purposes
-   */
-  faceNum = null;
-
-  // FIXME: in every doc comment, decide when to use things like
-  //        `Group` / `GroupOfGroups` vs group and `Segment` vs segment
-  /**
-   * @param {string} id - The unique identifier to give the `Group`.
-   * @param {?Object.<string, any>=} options - Options to customize the `Group`.
-   * @param {?GroupOfGroups=} options.parent - The `GroupOfGroups` that contains
-   *      the group in its nested content.
-   * @param {?Array.<Segment>=} options.children - An array of `Segment`s to put
-   *      in the group's nested content.
-   * @param {number=} options.snr - The signal-to-noise ratio of the group.
-   * @param {string=} options.text - The text to show in the group's span (and
-   *      therefore in the tree). If `null`, `id` is used.
-   * @param {boolean} [options.removable=false] - Indicates if the group can be
-   *      removed from the tree.
-   * @param {boolean} [options.renamable=false] - Indicates if the group can be
-   *      renamed.
-   * @param {Color=} options.color - The `Color` to give the group's segments. If
-   *      `null`, the color of the first `Segment` added to the group will be used.
-   * @param {boolean} [options.colorable=false] - Indicates if the group can be
-   *       recolored.
-   * @param {?Array.<string>=} [options.moveTo] - An array of the ids of `TreeItem`s
-   *      that the group can be moved to. `null` if the group isn't moveable.
-   * @param {?Array.<string>=} [options.copyTo] - An array of the ids of `TreeItem`s
-   *      that the group can be copied to. `null` if the group isn't copyable.
-   * @throws {Error} If a `TreeItem` with `id` already exists.
-   */
-  constructor(
-    id,
-    {
-      parent = null,
-      children = null,
-      snr = null,
-      text = null,
-      removable = false,
-      renamable = false,
-      color = null,
-      colorable = false,
-      moveTo = null,
-      copyTo = null,
-    } = {}
-  ) {
-    // always have to call constructor for super class (TreeItem)
-    super(id, {
-      parent,
-      children,
-      text,
-      playable: true,
-      removable,
-      renamable,
-      moveTo,
-      copyTo,
-    });
-
-    Group.byId[id] = this;
-    this.snr = snr;
-    if (children) {
-      this.sort("startTime");
-    }
-
-    if (color) {
-      this.#color = color;
-    }
-    this.colorable = colorable;
-
-    if (renamable || moveTo || copyTo || colorable) {
-      this.popup = new Popup(this);
-    }
-  }
-
-  /**
-   * The color of this group's `Segment`s in the Peaks waveform.
-   * If no color is given in the constructor, `null` until a
-   * `Segment` is added to this group.
-   * @type {?Color}
-   */
-  get color() {
-    return this.#color;
-  }
-  set color(newColor) {
-    if (this.#color && !this.colorable) {
-      throw new Error(`TreeItem ${this.id} is not colorable.`);
-    }
-    this.#color = newColor;
-    this.children.forEach((segment) => segment.update({ color: newColor }));
-  }
-
-  /** Updates the title (tooltip) of `span`. */
-  updateSpanTitle() {
-    if (this.snr) {
-      // FIXME: not sure if necessary, maybe check to make sure duration != null?
-      this.span.title = `SNR: ${this.snr.toFixed(
-        2
-      )}\nDuration: ${this.duration.toFixed(2)}`;
-    } else {
-      super.updateSpanTitle();
-    } // if group doesn't have snr, uses default span title
-  }
-
-  /** Sets the CSS styling of the group's elements. */
-  style() {
-    this.li.style.fontSize = "18px";
-  }
-
-  /** Removes this group and all of its segments from the tree and Peaks waveform. */
-  remove() {
-    if (!this.removable) {
-      throw new Error(`Group ${this.id} is not removable.`);
-    }
-    // redoStorage.length = 0;  // clear redos
-    for (var kid of this.children) {
-      // true at end of undo signals that the "deleted segment"
-      // was deleted as part of a "deleted group"
-      undoStorage.push([
-        "deleted segment",
-        kid.segment,
-        kid.getProperties(["id", "duration", "color", "labelText"]),
-        true,
-      ]);
-    }
-    super.remove();
-    // this way it only happens when a group has removed not all removes
-    undoStorage.push([
-      "deleted group",
-      this.id,
-      this.getProperties(["id", "duration"]),
-    ]);
-  }
-
-  /**
-   * Renames this group, replacing its id, text, and the labelText of
-   * each of its segments.
-   * @param {string} newId - The new id to give this group.
-   * @returns {boolean} A `boolean` indicating if renaming was successful.
-   *      Renaming is successful if there's no `TreeItem` with `newId`.
-   */
-  rename(newId) {
-    try {
-      super.rename(newId);
-    } catch (error) {
-      return false;
-    } // unsuccessful because TreeItem with newId already exists
-    this.getSegments({ hidden: true, visible: true }).forEach((segment) =>
-      segment.update({ labelText: `${newId}\n${segment.text}` })
-    );
-    return true;
-  }
-
-  /**
-   * Toggles this group on / off.
-   * Specifically, toggles this group's elements on / off and shows / hides all of its
-   * `Segment`s on the Peaks waveform.
-   * @param {boolean=} force - If unspecified, this group is always toggled. Otherwise,
-   *      this group is only toggled if its current state isn't equal to `force`.
-   * @return {boolean} A `boolean` indiciating if any toggling was done. In other words,
-   *      when `force == null`, returns `true`. Otherwise, returns `force !== checked`.
-   * @see toggleTree
-   */
-  toggle(force = null) {
-    if (!this.toggleTree(force)) {
-      return false;
-    } // no toggling necessary
-    const checked = force === null ? this.checked : force;
-    this.children.forEach(function (child) {
-      child.toggleTree(checked);
-    });
-    if (checked) {
-      // add the hidden segments to peaks
-      peaks.segments.add(
-        Object.values(this.hidden).map((hidden) => hidden.segment)
+  *checkedPlayableGenerator(infinite = false) {
+    // do... while always executes the loop once and THEN evalutes the condition,
+    // meaning all of the children that are checked will be yielded once, and then
+    // if we are infinite, they will continue to be yielded forever
+    //
+    // since generators only calculate values when asked for them, if a user checks
+    // a segment before it is reached by the generator, it will get included, even
+    // though it wasn't checked when checkedGenerator was initially called
+    do {
+      // get children inside the loop because user may have checked more tree items
+      const children = sortByProp(
+        this.children.filter((child) => child.checked && child.playable),
+        "startTime"
       );
-      this.visible = Object.assign({}, this.visible, this.hidden);
-      this.hidden = {};
-      Object.values(this.visible).forEach((segment) =>
-        segment.updateEditable()
-      );
-    } else {
-      // remove the visible segments from peaks
-      Object.values(this.visible).forEach(function (segment) {
-        peaks.segments.removeById(segment.id);
-      });
-      this.hidden = Object.assign({}, this.hidden, this.visible);
-      this.visible = {};
-    }
-
-    return true;
-  }
-
-  /**
-   * Plays each visible `Segment` belonging to this group in chronological order.
-   * @param {boolean} [loop=false] - If `true`, loops the segments (reaching the
-   *      end of the segments will restart playing at the beginning).
-   */
-  play(loop = false) {
-    if (this.visible.length == 0) {
-      return;
-    } // nothing to play, so don't add event listener
-
-    const segments = sortByProp(Object.values(this.visible), "startTime");
-    // See Segment.play() for reasoning behind event listener
-    peaks.once("player.pause", () => {
-      peaks.player.playSegments(segments, loop);
-      const button = loop ? this.loopButton : this.playButton;
-      button.innerHTML = groupIcons.pause;
-
-      // make function here so event listener can be removed
-      const pause = function () {
-        peaks.player.pause();
-      };
-      button.addEventListener("click", pause, { once: true });
-      // triggered by clicking pause button in tree, pause button on
-      // media controls, or play on other tree item
-      peaks.once("player.pause", () => {
-        button.innerHTML = loop ? groupIcons.loop : groupIcons.play;
-        button.removeEventListener("click", pause); // remove old event listener
-        button.addEventListener(
-          "click",
-          () => {
-            this.play(loop);
-          },
-          { once: true }
-        );
-      });
-    });
-    // peaks.player.pause() only emits pause event if playing
-    // when paused, so have to play audio if not already
-    if (!peaks.player.isPlaying()) {
-      peaks.player.play();
-    }
-    peaks.player.pause();
-  }
-
-  /**
-   * Copies all of the `Segment`s of this group to another.
-   * @param {!Group} copyParent - `Group` to add the copied segments to.
-   * @returns {!Array.<Segment>} The array of copied segments.
-   */
-  copy(copyParent) {
-    const copiedSegments = [];
-    for (const child of this.children) {
-      const copiedChild = child.copy(copyParent);
-      if (copiedChild) {
-        copiedSegments.push(copiedChild);
+      if (children.length === 0) {
+        // there's nothing to play, so stop the iterator completely using return
+        // return will set the done property of generator.next() to true
+        return;
       }
-    }
-    return copiedSegments;
+      for (const child of children) {
+        // checked and playable are checked above, but they might've changed,
+        // so check again just to ensure that the child is still valid
+        if (child.checked && child.playable) {
+          yield child;
+        }
+      }
+    } while (infinite);
   }
 
   /**
-   * Converts `moveTo` to `TreeItem`s and expands the groups.
-   * @see expandGroups
+   * If this group is playable, plays each checked, playable child belonging to this
+   * group in chronological order.
+   * @param {boolean} [loop=false] - If `true`, loops the children (reaching the end
+   *      of the children will restart playing at the beginning)
+   * @throws {Error} If this group is not playable.
    */
-  expandMoveTo() {
-    const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
-    const expanded = expandGroups(moveToAsTreeItems, [this.id]);
-    return TreeItem.treeItemsToIds(expanded);
+  play(loop = false) {
+    if (!this.playable) {
+      throw new Error(`Group ${this.id} is not playable.`);
+    }
+
+    // pause in case anything else is playing so that
+    // their icons get switched back to play and loop
+    media.pause();
+
+    const checkedChildren = this.checkedPlayableGenerator(loop);
+    let { value, done } = checkedChildren.next();
+    const endedHandler = (event) => {
+      // brackets are required if destructuring {} with pre-defined variables
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#syntax
+      ({ value, done } = checkedChildren.next());
+      if (!done) {
+        value.play();
+        // if it propagates, parents will think this group has ended playback
+        event.stopPropagation();
+      } else {
+        this.switchBackToPlayLoopButtons();
+        this.removeEventListener("ended", endedHandler);
+        // don't stopProgagation here because we can just let the
+        // event propagate to indicate this group has ended instead
+        // of needing to create a whole new event
+      }
+    };
+
+    if (!done) {
+      this.switchToPauseButton(loop);
+      value.play();
+      this.addEventListener("ended", endedHandler);
+
+      this.addEventListener(
+        "manualpause",
+        () => {
+          media.pause();
+          this.switchBackToPlayLoopButtons();
+          this.removeEventListener("ended", endedHandler);
+        },
+        { once: true }
+      );
+    }
   }
 
   /**
-   * Converts `copyTo` to `TreeItem`s and expands the groups.
-   * @see expandGroups
+   * Pauses playback of this group if it is playing.
+   * @throws {Error}
    */
-  expandCopyTo() {
-    const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
-    const expanded = expandGroups(copyToAsTreeItems, [this.id]);
-    return TreeItem.treeItemsToIds(expanded);
-  }
+  pause() {
+    if (!this.playable) {
+      throw new Error(
+        `Group ${this.id} is not playable and therefore can't be paused.`
+      );
+    }
 
-  /**
-   * Gets this group's `Segment`s.
-   * @param {?Object.<string, boolean>=} options - Options specifying which `Segment`s
-   *      to get.
-   * @param {boolean} [options.hidden=false] - Indicates to return `Segment`s that are
-   *      currently hidden on the Peaks waveform.
-   * @param {boolean} [options.visible=false] - Indicates to return `Segment`s that are
-   *      currently visible on the Peaks waveform.
-   * @returns {!Array.<Segment>} An array containing the `Segment`s specified by
-   *      `options`.
-   */
-  getSegments({ hidden = false, visible = false } = {}) {
-    const segments = [];
-    if (hidden) {
-      segments.push(...Object.values(this.hidden));
-    }
-    if (visible) {
-      segments.push(...Object.values(this.visible));
-    }
-    return segments;
+    // dispatch manualpause to let the event listener added in play handle pausing
+    // this way, the endedHandler can be removed (we couldn't do it here because
+    // it's not defined here)
+    this.dispatchEvent(new Event("manualpause", { bubbles: true }));
   }
 };
 
 /**
- * A `TreeItem` for a Peaks.js segment.
+ * A `TreeItem` for a Peaks.js class (segment / point).
  * @extends TreeItem
  */
-var Segment = class Segment extends TreeItem {
+var PeaksItem = class PeaksItem extends TreeItem {
   /**
-   * An object containing all `Segment`s by their id.
-   * Key is id, value is corresponding `Segment`:
-   * {id: `Segment`}
-   * @type {!Object.<string, Segment>}
+   * An object containing all `PeaksItem`s by their id.
+   * Key is id, value is corresponding `PeaksItem`:
+   * {id: `PeaksItem`}
+   * @type {!Object.<string, PeaksItem>}
    * @static
    */
   static byId = {};
 
   /**
    * HTML strings for the play, pause, loop, and
-   * remove icons for `Segment`s in the tree.
+   * remove icons for `PeaksItem`s in the tree.
    * @type {!Object.<string, string>}
    * @static
    */
   static icons = segmentIcons;
 
   /**
-   * Names of properties to get in `getProperties`.
-   * @type {!Array.<string>}
-   * @static
+   * Gets the `PeaksSegment`s from the `PeaksItem`s that wrap `PeaksSegment`s.
+   * @param {!Array.<PeaksItem>} peaksItems - The `PeaksItem`s to filter.
+   * @returns {!Array.<PeaksSegment>} The `PeaksSegments`s in `peaksItem`s.
    */
-  static properties = [
-    "startTime",
-    "endTime",
-    "editable",
-    "color",
-    "labelText",
-    "treeText",
-  ];
+  static getSegments(peaksItems) {
+    const segments = [];
+    peaksItems.forEach((peaksItem) => {
+      if (peaksItem.type === "Segment") {
+        segments.push(peaksItem.segment);
+      }
+    });
+    return segments;
+  }
 
   /**
-   * The Peaks.js segment being represented in the tree by this `Segment`.
-   * @type {!Peaks.Segment}
+   * Gets the `PeaksPoint`s from the `PeaksItem`s that wrap `PeaksPoint`s.
+   * @param {!Array.<PeaksItem>} peaksItems - The `PeaksItem`s to filter.
+   * @returns {!Array.<PeaksPoint>} The `PeaksPoints`s in `peaksItem`s.
    */
-  segment;
+  static getPoints(peaksItems) {
+    const points = [];
+    peaksItems.forEach((peaksItem) => {
+      if (peaksItem.type === "Point") {
+        points.push(peaksItem).point;
+      }
+    });
+    return points;
+  }
+
+  /**
+   * Adds each item to Peaks.js, displaying it on the waveform.
+   * @param {!Array.<PeaksItem>} peaksItems - The `PeaksItem`s to show.
+   */
+  static showOnPeaks(peaksItems) {
+    const segments = PeaksItem.getSegments(peaksItems);
+    const points = PeaksItem.getPoints(peaksItems);
+    peaks.segments.add(segments);
+    peaks.points.add(points);
+  }
+
+  /**
+   * Removes each item from Peaks.js, hiding it from the waveform.
+   * @param {!Array.<PeaksItem>} peaksItems - The `PeaksItem`s to hide.
+   */
+  static hideFromPeaks(peaksItems) {
+    const segments = PeaksItem.getSegments(peaksItems);
+    const points = PeaksItem.getPoints(peaksItems);
+    segments.forEach((segment) => peaks.segments.removeById(segment.id));
+    points.forEach((point) => peaks.points.removeById(point.id));
+  }
+
+  /**
+   * The Peaks.js Segment or Point being represented in the tree by this `PeaksItem`.
+   * @type {(!PeaksSegment|!PeaksPoint)}
+   */
+  peaksItem;
+
+  /**
+   * Indicates if `peaksItem` is a segment or a point.
+   * @type {("Segment"|"Point")}
+   */
+  type;
 
   /**
    * A `boolean` indicating if this segment is editable.
@@ -1652,7 +1420,323 @@ var Segment = class Segment extends TreeItem {
   currentlyEditable;
 
   /**
-   * @param {!Peaks.Segment} segment - The Peaks segment being represented in the tree
+   * @param {(!PeaksSegment|!PeaksPoint)} peaksItem - The Peaks.js segment / point being
+   *      represented in the tree by the `PeaksItem`.
+   * @param {?Object.<string, any>=} options - Options to customize the item.
+   * @param {?PeaksGroup=} options.parent - The `Group` that contains the item in its
+   *      nested content.
+   * @param {string=} options.text - The text to show in the item's span (and
+   *      therefore in the tree).
+   * @param {boolean} [options.playable=false] - Indicates if the segment / point
+   *      can be played.
+   * @param {boolean} [options.removable=false] - Indicates if the segment / point
+   *      can be removed from the tree.
+   * @param {boolean} [options.renamable=false] - Indicates if the segment /point
+   *      can be renamed.
+   * @param {?Array.<string>=} options.moveTo - An array of the ids of `TreeItem`s that
+   *      the item can be moved to. `null` if the group isn't moveable.
+   * @param {?Array.<string>=} options.copyTo - An array of the ids of `TreeItem`s that
+   *      the item can be copied to. `null` if the group isn't copyable.
+   * @throws {Error} If a `TreeItem` with `segment.id` already exists.
+   */
+  constructor(
+    peaksItem,
+    {
+      parent = null,
+      text = null,
+      playable = false,
+      removable = false,
+      renamable = false,
+      moveTo = null,
+      copyTo = null,
+    } = {}
+  ) {
+    // catch options contained within the peaks item
+    text = text || peaksItem.treeText;
+    // peaksItem.removable and peaksItem.renamable are non-null if they are loaded
+    // from saved peaks items in the database
+    removable = peaksItem.removable != null ? peaksItem.removable : removable;
+    renamable = peaksItem.renamable != null ? peaksItem.renamable : renamable;
+
+    // don't render yet because some methods rely on this.segment but not defined yet
+    // (can't use 'this' until after super() call, so
+    // can't define this.segment until after)
+    super(peaksItem.id, {
+      text,
+      playable,
+      removable,
+      renamable,
+      moveTo,
+      copyTo,
+      render: false,
+    });
+    this.peaksItem = peaksItem;
+    this.type = peaksItem.constructor.name === "Segment" ? "Segment" : "Point";
+    PeaksItem.byId[peaksItem.id] = this;
+
+    this.render();
+    this.parent = parent;
+
+    this.#editable = this.peaksItem.editable;
+    this.currentlyEditable = this.peaksItem.editable;
+  }
+
+  /**
+   * The `PeaksGroup` that contains this item in its nested content.
+   * @type {!PeaksGroup}
+   */
+  get parent() {
+    return super.parent;
+  }
+  set parent(newParent) {
+    if (this.parent) {
+      this.parent.hidden.delete(this);
+      this.parent.visible.delete(this);
+    }
+
+    if (newParent.color) {
+      this.peaksItem.update({ color: newParent.color });
+    } else {
+      newParent.color = this.peaksItem.color;
+    }
+
+    // rename with the same text because renaming adds the parent's id to this
+    // peaks item's labelText, so we need to update from the old parent's id
+    // also good to use this.rename() instead of copying the code from this.rename
+    // so that subclasses can override this labelText behavior
+    this.rename(this.text);
+    if (this.checked) {
+      newParent.visible.add(this);
+    } else {
+      newParent.hidden.add(this);
+    }
+    super.parent = newParent; // call TreeItem's setter for parent
+  }
+
+  /**
+   * A `boolean` indicating if this segment can be edited. If it
+   * is editable, this segment will have handles at its start and
+   * end that allow changing its start and end times.
+   * @type {boolean}
+   */
+  get editable() {
+    return this.#editable;
+  }
+
+  /**
+   * This segment's color in the Peaks waveform.
+   * @type {!Color}
+   */
+  get color() {
+    return this.peaksItem.color;
+  }
+
+  /**
+   * The segment's text label.
+   * It is displayed when the segment is hovered over by the mouse pointer.
+   * @type {string}
+   */
+  get labelText() {
+    return this.peaksItem.labelText;
+  }
+
+  /**
+   * Updates properties of the Peaks segment.
+   * @param {!Object.<string, any>} options - Options specifying the new values of
+   *      the properties being updated.
+   * @param {number=} options.startTime - If this item is a `PeaksSegment`, the
+   *      segment's start time in seconds.
+   * @param {number=} options.endTime - If this item is a `PeaksSegment`, the
+   *      segment's end time in seconds.
+   * @param {number=} options.time - If this item is a `PeaksPoint`, the point's
+   *      time in seconds.
+   * @param {boolean=} options.editable - Indicates if the segment / point can be
+   *      edited (moved around).
+   * @param {?Color=} options.color - The segment's / point's color in the Peaks
+   *      waveform.
+   * @param {string=} options.labelText - The segment's / point's text label.
+   */
+  update(options) {
+    this.peaksItem.update(options);
+  }
+
+  /**
+   * Toggles this Peaks.js item's drag handles.
+   * This only has an effect if this item is editable as only editable
+   * `PeaksSegment`s and `PeaksPoint`s have drag handles.
+   * @param {boolean=} force - If unspecified, the drag handles are always toggled.
+   *      Otherwise, the drag handles are only toggled if their current state isn't
+   *      equal to `force`.
+   * @return {?boolean} If this item is editable, returns a `boolean` indiciating if
+   *      any toggling was done. In other words, when `force == null`, returns `true`
+   *      and returns `force !== checked` when `force != null`. If this item isn't
+   *      editable, returns `null`.
+   */
+  toggleDragHandles(force = null) {
+    if (!this.#editable) {
+      return null;
+    } // this segment isn't editable
+    if (force === this.peaksItem.editable) {
+      return false; // false indicates nothing changed (no toggling necessary)
+    }
+
+    const enabled = force === null ? !this.peaksItem.editable : force;
+    this.currentlyEditable = enabled;
+    // only update if peaksItem is visible. If not visible, it's updated when toggled on
+    // because if update peaksItem when hidden, it becomes visible
+    if (this.checked) {
+      this.peaksItem.update({ editable: enabled });
+    }
+
+    return true;
+  }
+
+  // TODO: rename this method (it doesn't feel right / fit with similar)
+  /**
+   * Updates this peaksItem's editability.
+   * Called when this peaksItem is toggled. It is used to update the Peaks peaksItem's
+   * editability in order to show / hide the drag handles.
+   */
+  updateEditable() {
+    if (this.currentlyEditable != this.peaksItem.editable) {
+      this.peaksItem.update({ editable: this.currentlyEditable });
+    }
+  }
+
+  /** Adds this segment / point to the Peaks.js waveform. */
+  #addToPeaks() {
+    // instanceof can't work because Segment can't be imported from Peaks,
+    // so this is the only way I know of to test its type
+    if (this.type === "Segment") {
+      peaks.segments.add(this.peaksItem);
+    } else {
+      peaks.points.add(this.peaksItem);
+    }
+  }
+
+  /** Removes this segment / point from the Peaks.js waveform. */
+  #removeFromPeaks() {
+    if (this.type === "Segment") {
+      peaks.segments.removeById(this.id);
+    } else {
+      peaks.points.removeById(this.id);
+    }
+  }
+
+  /** Sets the CSS styling of the peaksItem's elements. */
+  style() {
+    this.li.style.fontSize = "12px";
+    this.checkbox.style.transform = "scale(0.85)";
+  }
+
+  /** Removes this segment from the tree and Peaks waveform. */
+  remove() {
+    if (this.parent.visible.has(this)) {
+      this.#removeFromPeaks();
+    }
+    this.parent.visible.delete(this);
+    this.parent.hidden.delete(this);
+
+    super.remove();
+  }
+
+  // FIXME: make all rename methods throw error
+  /**
+   * Renames this Peaks.js item, replacing its id, text, and labelText.
+   * @param {string} newId - The new id to give this item.
+   */
+  rename(newText) {
+    super.text = newText;
+    if (this.parent) {
+      this.peaksItem.update({ labelText: `${this.parent.id}\n${newText}` });
+    } else {
+      this.peaksItem.update({ labelText: newText });
+    }
+  }
+
+  /**
+   * Toggles this `PeaksItem` on / off.
+   * Specifically, toggles this item's elements on / off and
+   * shows / hides its Peaks.js segment / point on the Peaks.js waveform.
+   * @param {boolean=} force - If unspecified, this item is always toggled.
+   *      Otherwise, it's only toggled if its current state isn't equal to `force`.
+   * @return {boolean} A `boolean` indiciating if any toggling was done. In other words,
+   *      when `force == null`, returns `true`. Otherwise, returns `force !== checked`.
+   * @see toggleTree
+   */
+  toggle(force = null) {
+    if (!this.toggleTree(force)) {
+      return false;
+    } // no toggling necessary
+
+    const checked = force === null ? this.checked : force;
+    if (checked) {
+      // add item to peaks
+      this.#addToPeaks();
+      this.parent.hidden.delete(this);
+      this.parent.visible.add(this);
+      this.updateEditable();
+    } else {
+      // remove item from peaks
+      this.#removeFromPeaks();
+      this.parent.visible.delete(this);
+      this.parent.hidden.add(this);
+    }
+
+    return true;
+  }
+
+  /**
+   * Converts `moveTo` to `TreeItem`s and expands the groups.
+   * @see expandGroups
+   */
+  expandMoveTo() {
+    const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
+    const expanded = expandGroups(moveToAsTreeItems, [this.parent.id]);
+    return TreeItem.treeItemsToIds(expanded);
+  }
+
+  /**
+   * Converts `copyTo` to `TreeItem`s and expands the groups.
+   * @see expandGroups
+   */
+  expandCopyTo() {
+    const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
+    const expanded = expandGroups(copyToAsTreeItems, [this.parent.id]);
+    return TreeItem.treeItemsToIds(expanded);
+  }
+};
+
+/**
+ * A `TreeItem` for a Peaks.js segment.
+ * @extends PeaksItem
+ */
+var Segment = class Segment extends PeaksItem {
+  /**
+   * An object containing all `Segment`s by their id.
+   * Key is id, value is corresponding `Segment`:
+   * {id: `Segment`}
+   * @type {!Object.<string, Segment>}
+   * @static
+   */
+  static byId = {};
+
+  /**
+   * Names of properties to get in `getProperties`.
+   * @type {!Array.<string>}
+   * @static
+   */
+  static properties = [
+    "startTime",
+    "endTime",
+    "editable",
+    "color",
+    "labelText",
+    "treeText",
+  ];
+
+  /**
+   * @param {!PeaksSegment} segment - The Peaks segment being represented in the tree
    *      by the `Segment`.
    * @param {?Object.<string, any>=} options - Options to customize the segment.
    * @param {?Group=} options.parent - The `Group` that contains the segment in its
@@ -1680,39 +1764,31 @@ var Segment = class Segment extends TreeItem {
       copyTo = null,
     } = {}
   ) {
-    // catch options contained within segment
-    text = text || segment.treeText;
-    // segment.removable and segment.renamable are non-null if they are loaded from
-    // saved segments in the database
-    removable = segment.removable != null ? segment.removable : removable;
-    renamable = segment.renamable != null ? segment.renamable : renamable;
-
-    // don't render yet because some methods rely on this.segment but not defined yet
-    // (can't use 'this' until after super() call, so
-    // can't define this.segment until after)
-    super(segment.id, {
+    super(segment, {
+      parent,
       text,
       playable: true,
       removable,
       renamable,
       moveTo,
       copyTo,
-      render: false,
     });
-    this.segment = segment;
     Segment.byId[segment.id] = this;
 
-    this.render();
     this.updateDuration();
-    this.parent = parent;
-
-    this.#editable = this.segment.editable;
-    this.currentlyEditable = this.segment.editable;
 
     // segment only needs a popup if it's renamable, movable, or copyable
     if (this.renamable || this.moveTo || this.copyTo) {
       this.popup = new Popup(this);
     }
+  }
+
+  /**
+   * The Peaks.js segment being represented in the tree by this `Segment`.
+   * @type {!PeaksSegment}
+   */
+  get segment() {
+    return this.peaksItem;
   }
 
   /**
@@ -1738,88 +1814,12 @@ var Segment = class Segment extends TreeItem {
   }
 
   /**
-   * A `boolean` indicating if this segment can be edited. If it
-   * is editable, this segment will have handles at its start and
-   * end that allow changing its start and end times.
-   * @type {boolean}
-   */
-  get editable() {
-    return this.#editable;
-  }
-
-  /**
-   * This segment's color in the Peaks waveform.
-   * @type {!Color}
-   */
-  get color() {
-    return this.segment.color;
-  }
-
-  /**
-   * The segment's text label.
-   * It is displayed when the segment is hovered over by the mouse pointer.
-   * @type {string}
-   */
-  get labelText() {
-    return this.segment.labelText;
-  }
-
-  /**
    * The text shown in `span` (and therefore in the tree).
    * @type {string}
    */
   get treeText() {
     return this.text;
   } // backwards compatibility (database expects 'treeText')
-
-  /**
-   * Updates properties of the Peaks segment.
-   * @param {!Object.<string, any>} options - Options specifying the new values of
-   *      the properties being updated.
-   * @param {number=} options.startTime - The segment's start time in seconds.
-   * @param {number=} options.endTime - The segment's end time in seconds.
-   * @param {boolean=} options.editable - Indicates if the segment can be
-   *      edited (moved around).
-   * @param {?Color=} options.color - The segment's color in the Peaks waveform.
-   * @param {string=} options.labelText - The segment's text label.
-   */
-  update(options) {
-    this.segment.update(options);
-  }
-
-  /**
-   * The `Group` that contains the segment in its nested content.
-   * @type {!Group}
-   */
-  get parent() {
-    return super.parent;
-  }
-  set parent(newParent) {
-    const id = this.id;
-    const segment = this.segment;
-    const parent = this.parent;
-    if (parent) {
-      if (parent.hidden[id]) {
-        delete parent.hidden[id];
-      } else {
-        delete parent.visible[id];
-      }
-    }
-
-    if (newParent.color) {
-      segment.update({ color: newParent.color });
-    } else {
-      newParent.color = segment.color;
-    }
-
-    segment.update({ labelText: `${newParent.id}\n${this.text}` });
-    if (this.checked) {
-      newParent.visible[this.id] = this;
-    } else {
-      newParent.hidden[this.id] = this;
-    }
-    super.parent = newParent; // call TreeItem's setter for parent
-  }
 
   // FIXME: move undo back to remove() and get rid of this method
   render() {
@@ -1858,171 +1858,67 @@ var Segment = class Segment extends TreeItem {
       `Duration: ${this.duration.toFixed(2)}`;
   }
 
-  /** Sets the CSS styling of the segment's elements. */
-  style() {
-    this.li.style.fontSize = "12px";
-    this.checkbox.style.transform = "scale(0.85)";
-  }
-
-  /** Removes this segment from the tree and Peaks waveform. */
-  remove() {
-    const id = this.id;
-    const parent = this.parent;
-
-    if (parent.hidden[id]) {
-      delete parent.hidden[id];
-    } else {
-      delete parent.visible[id];
-    }
-
-    if (peaks.segments.getSegment(id) === this.segment) {
-      peaks.segments.removeById(id);
-    }
-
-    super.remove();
-  }
-
-  // FIXME: make all rename methods throw error
-  /**
-   * Renames this segment, replacing its id, text, and labelText.
-   * @param {string} newId - the new id to give this segment.
-   */
-  rename(newText) {
-    super.text = newText;
-    if (this.parent) {
-      this.segment.update({ labelText: `${this.parent.id}\n${newText}` });
-    } else {
-      this.segment.update({ labelText: newText });
-    }
-  }
-
-  /**
-   * Toggles this segment on / off.
-   * Specifically, toggles this segment's elements on / off and
-   * shows / hides its Peaks segment on the Peaks waveform.
-   * @param {boolean=} force - If unspecified, this segment is always toggled.
-   *      Otherwise, this segment is only toggled if its current state isn't
-   *      equal to `force`.
-   * @return {boolean} A `boolean` indiciating if any toggling was done. In other words,
-   *      when `force == null`, returns `true`. Otherwise, returns `force !== checked`.
-   * @see toggleTree
-   */
-  toggle(force = null) {
-    if (!this.toggleTree(force)) {
-      return false;
-    } // no toggling necessary
-
-    const id = this.id;
-    const parent = this.parent;
-    const checked = force === null ? this.checked : force;
-
-    if (checked) {
-      // add segment to peaks
-      peaks.segments.add(this.segment);
-      delete parent.hidden[id];
-      parent.visible[id] = this;
-      this.updateEditable();
-    } else {
-      // remove segment from peaks
-      peaks.segments.removeById(id);
-      delete parent.visible[id];
-      parent.hidden[id] = this;
-    }
-
-    return true;
-  }
-
-  /**
-   * Toggles this segment's drag handles.
-   * This only has an effect if this segment is editable
-   * as only editable segments have drag handles.
-   * @param {boolean=} force - If unspecified, the drag handles are always toggled.
-   *      Otherwise, the drag handles are only toggled if their current state isn't
-   *      equal to `force`.
-   * @return {?boolean} If this segment is editable, returns a `boolean` indiciating if
-   *      any toggling was done. In other words, when `force == null`, returns `true`
-   *      and returns `force !== checked` when `force != null`. If this segment isn't
-   *      editable, returns `null`.
-   */
-  toggleDragHandles(force = null) {
-    if (!this.#editable) {
-      return null;
-    } // this segment isn't editable
-    if (force === this.segment.editable) {
-      return false; // false indicates nothing changed (no toggling necessary)
-    }
-
-    const enabled = force === null ? !this.segment.editable : force;
-    this.currentlyEditable = enabled;
-    // only update if segment is visible. If not visible, it's updated when toggled on
-    // because if update segment when hidden, it becomes visible
-    if (this.checked) {
-      this.segment.update({ editable: enabled });
-    }
-
-    return true;
-  }
-
-  // TODO: rename this method (it doesn't feel right / fit with similar)
-  /**
-   * Updates this segment's editability.
-   * Called when this segment is toggled. It is used to update the Peaks segment's
-   * editability in order to show / hide the drag handles.
-   */
-  updateEditable() {
-    if (this.currentlyEditable != this.segment.editable) {
-      this.segment.update({ editable: this.currentlyEditable });
-    }
-  }
-
   /**
    * Plays this segment.
    * @param {boolean} [loop=false] - If `true`, loops this segment (reaching
    *      the end of the segment will restart playing at the beginning).
    */
   play(loop = false) {
-    // Have to put in event listener because need to call
-    // peaks.player.pause() to switch other pause buttons
-    // back to play buttons, but pausing without
-    // the event listener instantly changes the new pause
-    // button (from this function call) to change back to
-    // a play button. Very janky but I couldn't find a
-    // different way
-    peaks.once("player.pause", () => {
-      peaks.player.playSegment(this.segment, loop);
-      const button = loop ? this.loopButton : this.playButton;
-      button.innerHTML = segmentIcons.pause;
+    // pause in case anything else is playing so that
+    // their icons get switched back to play and loop
+    media.pause();
+    media.currentTime = this.startTime; // seek
+    media.play();
+    this.switchToPauseButton(loop);
+    window.requestAnimationFrame(() => this.#playCallback(loop));
+  }
 
-      // make function here so event listener can be removed
-      const pause = function () {
-        peaks.player.pause();
-      };
-      button.addEventListener("click", pause, { once: true });
-      // triggered by clicking pause button in tree, pause button on
-      // media controls, or play on other tree item
-      peaks.once("player.pause", () => {
-        button.innerHTML = loop ? segmentIcons.loop : segmentIcons.play;
-        button.removeEventListener("click", pause); // remove old event listener
-        button.addEventListener(
-          "click",
-          () => {
-            this.play(loop);
-          },
-          { once: true }
-        );
-      });
-    });
-    // peaks.player.pause() only emits pause event if playing
-    // when paused, so have to play audio if not already
-    if (!peaks.player.isPlaying()) {
-      peaks.player.play();
+  // called every frame to check if media is still playing
+  // and whether the end of the segment has been reached
+  #playCallback(loop) {
+    // if it's paused here, then the user manually paused it by clicking
+    // pause button in the tree or on the media (instead of pausing because
+    // the end of the segment was reached)
+    if (media.paused) {
+      this.pause();
+      // we don't want to request another animation frame since we're
+      // not playing anymore so stop the function here
+      return;
     }
-    peaks.player.pause();
+
+    if (media.currentTime >= this.endTime) {
+      if (loop) {
+        media.currentTime = this.startTime; // seek
+      } else {
+        media.pause();
+        this.switchBackToPlayLoopButtons();
+        // emit an "ended" event to indicate that the segment reached its end
+        // normally, and wasn't paused by the user. This way, if a Group played
+        // this segment, it knows to start the next one
+        // bubbles: true so the Group actually receives the event
+        this.dispatchEvent(new Event("ended", { bubbles: true }));
+        return;
+      }
+    }
+
+    window.requestAnimationFrame(() => this.#playCallback(loop));
+  }
+
+  /** Pauses playback of this segment if it is playing. */
+  pause() {
+    media.pause();
+    this.switchBackToPlayLoopButtons();
+    // built-in events like "animationstart" don't use camel case or dashes
+    // so that's why "manualpause" is all lowercase and one word
+    // bubbles: true so that parents can catch the event, e.g. if this
+    // segment was played by a Group, the Group needs to receive the "manualpause"
+    // event as well so that it can get paused properly
+    this.dispatchEvent(new Event("manualpause", { bubbles: true }));
   }
 
   /**
    * Copies this segment to another `Group`.
-   * @param {!Group} copyParent - `Group` to add the copied segment to.
+   * @param {!PeaksGroup} copyParent - `Group` to add the copied segment to.
    * @returns {?Segment} The copied segment if `copyParent` didn't already have a
    *      copy of this segment. Otherwise, `null`.
    */
@@ -2047,8 +1943,259 @@ var Segment = class Segment extends TreeItem {
         moveTo: ["Labeled"],
       });
     }
-    console.log("copy already exists");
     return null;
+  }
+};
+
+/**
+ * A group of `PeaksItem`s.
+ * @extends Group
+ */
+var PeaksGroup = class PeaksGroup extends Group {
+  /**
+   * An object containing all `PeaksGroup`s by their id.
+   * Key is id, value is corresponding `PeaksGroup`:
+   * {id: `PeaksGroup`}
+   * @type {!Object.<string, PeaksGroup>}
+   * @static
+   */
+  static byId = {};
+
+  /**
+   * Names of properties to get in `getProperties`.
+   * @type {!Array.<string>}
+   * @static
+   */
+  static properties = ["snr", "color", "colorable"];
+
+  /**
+   * The signal-to-noise ratio (SNR) of this `PeaksGroup` if it has one.
+   * Otherwise, `null`.
+   * @type {?number}
+   */
+  snr = null;
+
+  /**
+   * The color of this group's `PeaksItem`s in the Peaks waveform.
+   * If no color is given in the constructor, `null` until a
+   * `PeaksItem` is added to this group.
+   * @type {?Color}
+   */
+  #color = null;
+
+  /**
+   * A `boolean` indicating if this item can be recolored.
+   * @type {boolean}
+   */
+  colorable;
+
+  /**
+   * A set containing the `PeaksItem`s that are currently hidden in Peaks.
+   * @type {!Set.<PeaksItem>}
+   */
+  hidden = new Set();
+
+  /**
+   * A set containing the `PeaksItem`s that are currently visible in Peaks.
+   * @type {!Set.<PeaksItem>}
+   */
+  visible = new Set();
+
+  /**
+   * Face number this face is associated with, for saving purposes
+   */
+  faceNum = null;
+
+  // FIXME: in every doc comment, decide when to use things like
+  //        `PeaksGroup` / `Group` vs group and `Segment` vs segment
+  /**
+   * @param {string} id - The unique identifier to give the `PeaksGroup`.
+   * @param {?Object.<string, any>=} options - Options to customize the `PeaksGroup`.
+   * @param {?TreeItem=} options.parent - The `TreeItem` that contains
+   *      the group in its nested content.
+   * @param {?Array.<PeaksItem>=} options.children - An array of `PeaksItem`s to put
+   *      in the group's nested content.
+   * @param {number=} options.snr - The signal-to-noise ratio of the group.
+   * @param {string=} options.text - The text to show in the group's span (and
+   *      therefore in the tree). If `null`, `id` is used.
+   * @param {boolean} [options.removable=false] - Indicates if the group can be
+   *      removed from the tree.
+   * @param {boolean} [options.renamable=false] - Indicates if the group can be
+   *      renamed.
+   * @param {Color=} options.color - The `Color` to give the group's items. If
+   *      `null`, the color of the first `PeaksItem` added to the group will be used.
+   * @param {boolean} [options.colorable=false] - Indicates if the group can be
+   *       recolored.
+   * @param {?Array.<string>=} [options.moveTo] - An array of the ids of `TreeItem`s
+   *      that the group can be moved to. `null` if the group isn't moveable.
+   * @param {?Array.<string>=} [options.copyTo] - An array of the ids of `TreeItem`s
+   *      that the group can be copied to. `null` if the group isn't copyable.
+   * @throws {Error} If a `TreeItem` with `id` already exists.
+   */
+  constructor(
+    id,
+    {
+      parent = null,
+      children = null,
+      snr = null,
+      text = null,
+      removable = false,
+      renamable = false,
+      color = null,
+      colorable = false,
+      moveTo = null,
+      copyTo = null,
+    } = {}
+  ) {
+    // always have to call constructor for super class (TreeItem)
+    super(id, {
+      parent,
+      children,
+      text,
+      playable: true,
+      removable,
+      renamable,
+      moveTo,
+      copyTo,
+    });
+
+    PeaksGroup.byId[id] = this;
+    this.snr = snr;
+    if (children) {
+      this.sort("startTime");
+    }
+
+    if (color) {
+      this.#color = color;
+    }
+    this.colorable = colorable;
+
+    if (renamable || moveTo || copyTo || colorable) {
+      this.popup = new Popup(this);
+    }
+  }
+
+  /**
+   * The color of this group's `PeaksItem`s in the Peaks waveform.
+   * If no color is given in the constructor, `null` until a
+   * `PeaksItem` is added to this group.
+   * @type {?Color}
+   */
+  get color() {
+    return this.#color;
+  }
+  set color(newColor) {
+    if (this.#color && !this.colorable) {
+      throw new Error(`TreeItem ${this.id} is not colorable.`);
+    }
+    this.#color = newColor;
+    this.children.forEach((peaksItem) => peaksItem.update({ color: newColor }));
+  }
+
+  /** Updates the title (tooltip) of `span`. */
+  updateSpanTitle() {
+    if (this.snr && this.duration != 0) {
+      this.span.title = `SNR: ${this.snr.toFixed(
+        2
+      )}\nDuration: ${this.duration.toFixed(2)}`;
+    } else {
+      super.updateSpanTitle();
+    } // if group doesn't have snr, uses default span title
+  }
+
+  /** Removes this group and all of its items from the tree and Peaks waveform. */
+  remove() {
+    if (!this.removable) {
+      throw new Error(`PeaksGroup ${this.id} is not removable.`);
+    }
+    // redoStorage.length = 0;  // clear redos
+    for (var kid of this.children) {
+      // true at end of undo signals that the "deleted segment"
+      // was deleted as part of a "deleted group"
+      undoStorage.push([
+        "deleted segment",
+        kid.peaksItem,
+        kid.getProperties(["id", "duration", "color", "labelText"]),
+        true,
+      ]);
+    }
+    super.remove();
+    // this way it only happens when a group has removed not all removes
+    undoStorage.push([
+      "deleted group",
+      this.id,
+      this.getProperties(["id", "duration"]),
+    ]);
+  }
+
+  /**
+   * Renames this group, replacing its id, text, and the labelText of
+   * each of its items.
+   * @param {string} newId - The new id to give this group.
+   * @returns {boolean} A `boolean` indicating if renaming was successful.
+   *      Renaming is successful if there's no `TreeItem` with `newId`.
+   */
+  rename(newId) {
+    try {
+      super.rename(newId);
+    } catch (error) {
+      return false;
+    } // unsuccessful because TreeItem with newId already exists
+    this.hidden.forEach((peaksItem) =>
+      // rename with the same text because renaming adds the parent's id to this
+      // peaks item's labelText, so we need to update from the old parent's id
+      peaksItem.rename(peaksItem.text)
+    );
+    this.visible.forEach((peaksItem) => peaksItem.rename(peaksItem.text));
+    return true;
+  }
+
+  /**
+   * Toggles this group on / off.
+   * Specifically, toggles this group's elements on / off and shows / hides all of its
+   * `PeaksItem`s on the Peaks waveform.
+   * @param {boolean=} force - If unspecified, this group is always toggled. Otherwise,
+   *      this group is only toggled if its current state isn't equal to `force`.
+   * @return {boolean} A `boolean` indiciating if any toggling was done. In other words,
+   *      when `force == null`, returns `true`. Otherwise, returns `force !== checked`.
+   * @see toggleTree
+   */
+  toggle(force = null) {
+    if (!this.toggleTree(force)) {
+      return false;
+    } // no toggling necessary
+    const checked = force === null ? this.checked : force;
+    this.children.forEach((child) => child.toggleTree(checked));
+    if (checked) {
+      PeaksItem.showOnPeaks(this.hidden);
+      this.hidden.forEach((peaksItem) => {
+        peaksItem.updateEditable();
+        this.visible.add(peaksItem);
+      });
+      this.hidden.clear();
+    } else {
+      PeaksItem.hideFromPeaks(this.visible);
+      this.visible.forEach((peaksItem) => this.hidden.add(peaksItem));
+      this.visible.clear();
+    }
+
+    return true;
+  }
+
+  /**
+   * Copies all of the `PeaksItem`s of this group to another.
+   * @param {!PeaksGroup} copyParent - `PeaksGroup` to add the copied items to.
+   * @returns {!Array.<PeaksItem>} The array of copied `PeaksItem`s.
+   */
+  copy(copyParent) {
+    const copiedChildren = [];
+    for (const child of this.children) {
+      const copiedChild = child.copy(copyParent);
+      if (copiedChild) {
+        copiedChildren.push(copiedChild);
+      }
+    }
+    return copiedChildren;
   }
 
   /**
@@ -2057,7 +2204,7 @@ var Segment = class Segment extends TreeItem {
    */
   expandMoveTo() {
     const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
-    const expanded = expandGroups(moveToAsTreeItems, [this.parent.id]);
+    const expanded = expandGroups(moveToAsTreeItems, [this.id]);
     return TreeItem.treeItemsToIds(expanded);
   }
 
@@ -2067,7 +2214,7 @@ var Segment = class Segment extends TreeItem {
    */
   expandCopyTo() {
     const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
-    const expanded = expandGroups(copyToAsTreeItems, [this.parent.id]);
+    const expanded = expandGroups(copyToAsTreeItems, [this.id]);
     return TreeItem.treeItemsToIds(expanded);
   }
 };
@@ -2115,10 +2262,10 @@ var Face = class Face extends TreeItem {
   speakerNum = null;
 
   /**
-   * @param {string} id - The unique identifier to give the `TreeItem`.
-   * @param {?Object.<string, any>=} options - Options to customize the `TreeItem`.
-   * @param {?Group=} options.parent - The `Group` that contains the item in its nested
-   *      content.
+   * @param {string} id - The unique identifier to give the `Face`.
+   * @param {?Object.<string, any>=} options - Options to customize the `Face`.
+   * @param {?TreeItem=} options.parent - The `TreeItem` that contains the item in its
+   *      nested content.
    * @param {string=} options.text - The text to show in the item's span (and
    *      therefore in the tree). If `null`, `id` is used.
    * @param {boolean} [options.removable=true] - Indicates if the item can be removed
@@ -2147,8 +2294,8 @@ var Face = class Face extends TreeItem {
     // (can't use 'this' until after super() call,
     // so can't get rid of playButton, etc. until after super())
     super(id, {
-      text,
       parent,
+      text,
       removable,
       renamable,
       assocWith,
@@ -2177,7 +2324,7 @@ var Face = class Face extends TreeItem {
     this.imageLi.addEventListener("click", () => {
       this.nested.appendChild(this.imageLi);
       if (this.speakerNum !== null) {
-        Group.byId[this.speakerNum].faceNum = null;
+        PeaksGroup.byId[this.speakerNum].faceNum = null;
         // reset speaker number because it has no speaker
         this.speakerNum = null;
       }
@@ -2186,7 +2333,7 @@ var Face = class Face extends TreeItem {
     this.popup = new Popup(this);
   }
 
-  /** Initialize the CSS styling of the `Segment` */
+  /** Initialize the CSS styling of the `Face` */
   style() {
     this.li.style.fontSize = "12px";
     this.checkbox.style.transform = "scale(0.85)";
@@ -2208,4 +2355,4 @@ var Face = class Face extends TreeItem {
   }
 };
 
-export { TreeItem, Popup, GroupOfGroups, Group, Segment, Face };
+export { TreeItem, Popup, Group, PeaksItem, Segment, PeaksGroup, Face };

@@ -1,12 +1,6 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import globals from "./globals.js";
-import {
-  GroupOfGroups,
-  Group,
-  Segment,
-  TreeItem,
-  Face,
-} from "./treeClasses.js";
+import { Group, Segment, PeaksGroup, TreeItem, Face } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
 import {
@@ -52,7 +46,7 @@ const createTree = function (id, parent, children, snr) {
     // group of segments
     if (id.includes("Speaker ")) {
       // group is speakers, which need popups
-      const group = new Group(id, { parent, snr, copyTo: ["Labeled"] });
+      const group = new PeaksGroup(id, { parent, snr, copyTo: ["Labeled"] });
       peaks.segments.add(children).forEach(function (segment) {
         new Segment(segment, {
           parent: group,
@@ -63,14 +57,14 @@ const createTree = function (id, parent, children, snr) {
       });
     } else {
       // group is VAD or Non-VAD, which don't need popups
-      const group = new Group(id, { parent, snr });
+      const group = new PeaksGroup(id, { parent, snr });
       peaks.segments.add(children).forEach(function (segment) {
         new Segment(segment, { parent: group });
       });
     }
   } else {
     // group of groups
-    const group = new GroupOfGroups(id, { parent });
+    const group = new Group(id, { parent, playable: true });
     for (const [child, childChildren, childSNR] of children) {
       createTree(child, group, childChildren, childSNR);
     }
@@ -78,12 +72,12 @@ const createTree = function (id, parent, children, snr) {
 };
 
 /**
- * Adds a circled number to the left of every `Group`s' text representing that
- * `Group`'s rank. These ranks are determined from the `Group`'s SNR and duration.
- * The `Group` with rank 1 is the predicted primary signal.
+ * Adds a circled number to the left of every `PeaksGroup`s' text representing that
+ * `PeaksGroup`'s rank. These ranks are determined from the `PeaksGroup`'s SNR and
+ * duration. The `PeaksGroup` with rank 1 is the predicted primary signal.
  */
 const rankSnrs = () => {
-  const groups = Object.values(Group.byId).filter(
+  const groups = Object.values(PeaksGroup.byId).filter(
     (group) => group.snr !== null
   );
   if (groups.length == 0) {
@@ -144,23 +138,22 @@ const rankSnrs = () => {
     }
   }
   // highlight text of speaker with highest z score
-  Group.byId[maxSpeaker].span.style.color = "violet";
+  PeaksGroup.byId[maxSpeaker].span.style.color = "violet";
 };
 
-const analysis = new GroupOfGroups("Analysis");
+// TODO: Accept element for parent?
+const analysis = new Group("Analysis", { playable: true });
 document.getElementById("tree").append(analysis.li);
 
 const clusters = new Group("Clusters");
-clusters.playButton.style.display = "none";
-clusters.loopButton.style.display = "none";
 document.getElementById("tree").append(clusters.li);
 
-const custom = new Group("Custom", {
+const custom = new PeaksGroup("Custom", {
   parent: analysis,
   color: getRandomColor(),
   colorable: true,
 });
-const labeled = new GroupOfGroups("Labeled", { parent: analysis });
+const labeled = new Group("Labeled", { parent: analysis, playable: true });
 
 /**
  * Outputs a helpful message to the console stating what's missing if `error` is
@@ -329,7 +322,7 @@ zoomOut.addEventListener("click", function () {
  */
 const addLabel = (input) => {
   if (input.value != "") {
-    new Group(input.value, {
+    new PeaksGroup(input.value, {
       parent: labeled,
       removable: true,
       renamable: true,
@@ -410,10 +403,10 @@ fetch("load", {
       .add(data.segments, { overwrite: true })
       .forEach(function (segment) {
         let parent = segment.path.at(-1);
-        if (!(parent in Group.byId)) {
+        if (!(parent in PeaksGroup.byId)) {
           // parent group doesn't exist yet so add it
-          parent = new Group(parent, {
-            parent: GroupOfGroups.byId[segment.path.at(-2)],
+          parent = new PeaksGroup(parent, {
+            parent: Group.byId[segment.path.at(-2)],
             removable: true,
             renamable: true,
             color: getRandomColor(),
@@ -421,7 +414,7 @@ fetch("load", {
             copyTo: ["Labeled"],
           });
         } else {
-          parent = Group.byId[parent];
+          parent = PeaksGroup.byId[parent];
         }
 
         if (segment.id in Segment.byId) {
@@ -450,7 +443,7 @@ fetch("load", {
     // to fix it but, I can't be sure it actually worked
     data.faces.forEach((face) => {
       const actualFace = Face.byId["face" + face.faceNum];
-      const actualSpeaker = Group.byId["Speaker " + face.speaker];
+      const actualSpeaker = PeaksGroup.byId["Speaker " + face.speaker];
       actualFace.speakerNum = "Speaker " + face.speaker;
       actualSpeaker.faceNum = "face" + face.faceNum;
       actualSpeaker.li.insertBefore(
@@ -495,7 +488,7 @@ const undo = function () {
       // unpack undoThing (ignoring first element)
       const [, id, options] = undoThing;
       Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
-      new Group(id, options);
+      new PeaksGroup(id, options);
       while (
         undoStorage.length != 0 &&
         undoStorage.at(-1)[0] == "deleted segment" &&
@@ -546,13 +539,26 @@ undoButton.addEventListener("click", undo);
 //     }
 // });
 
+const recurseGetSegments = (group) => {
+  if (group instanceof PeaksGroup) {
+    return [...group.visible, ...group.hidden];
+  }
+  if (group instanceof Group) {
+    const segments = [];
+    group.children.forEach((child) =>
+      segments.push(...recurseGetSegments(child))
+    );
+    return segments;
+  }
+};
+
 const fileParagraph = document.getElementById("file");
 /**
  * Saves the custom segments, labeled speakers, and associated faces to the database.
  */
 const save = function () {
   const faceRegex = /Speaker /;
-  const speakers = Object.values(Group.byId).filter((speaker) =>
+  const speakers = Object.values(PeaksGroup.byId).filter((speaker) =>
     speaker.id.match(faceRegex)
   );
   const faces = [];
@@ -571,14 +577,12 @@ const save = function () {
   // fileParagraph.innerHTML = `${filename} - Saving`;
   const groupRegex = /Speaker |VAD|Non-VAD/;
   // only save groups that aren't from the pipeline
-  const groups = Object.values(Group.byId).filter(
+  const groups = Object.values(PeaksGroup.byId).filter(
     (group) => !group.id.match(groupRegex)
   );
   let segments = [];
   // array.push(...) is faster than array.concat
-  groups.forEach((group) =>
-    segments.push(...group.getSegments({ hidden: true, visible: true }))
-  );
+  groups.forEach((group) => segments.push(...recurseGetSegments(group)));
 
   // need to copy the segment properties because
   // otherwise, sending the actual segment causes error
@@ -610,8 +614,7 @@ const save = function () {
     }
   });
 
-  const movedSegments = GroupOfGroups.byId["Speakers"]
-    .getSegments({ hidden: true, visible: true })
+  const movedSegments = recurseGetSegments(Group.byId["Speakers"])
     .filter((segment) => segment.parent.id != originalGroups[segment.id])
     .map((segment) => segment.getProperties(["text", "duration", "color"]));
   segments.push(...movedSegments);
