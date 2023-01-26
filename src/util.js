@@ -223,8 +223,8 @@ const ResponseError = class ResponseError extends Error {
  * Checks the status of a fetch response, ensuring that the fetch was successful.
  * @param {!Object.<string, any>} res - The response from a fetch request to check.
  * @returns {!Object.<string, any>} The reference to the input response.
- * @throws {Error} If the response status status is unsuccessful. In other words, If
- *      `res.ok != true`.
+ * @throws {ResponseError} If the response status status is unsuccessful. In other
+ *      words, if `res.ok != true`.
  */
 const checkResponseStatus = function (res) {
   // !res.ok when res.status isn't in the range 200 - 299 (successful statuses)
