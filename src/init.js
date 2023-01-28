@@ -1,8 +1,9 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import globals from "./globals.js";
-import { Group, Segment, PeaksGroup, TreeItem, Face } from "./treeClasses.js";
+import { Group, Segment, PeaksGroup, Face } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
+import { undoStorage } from "./UndoRedo.js";
 import {
   arrayMean,
   objectMap,
@@ -29,7 +30,6 @@ const user = globals.user;
 const filename = globals.filename;
 const basename = globals.basename;
 const media = globals.media;
-const undoStorage = globals.undoStorage;
 // const redoStorage = globals.redoStorage;
 
 // TODO: if this does what I assume it does, it can
@@ -472,55 +472,8 @@ peaks.on("segments.dragend", function (event) {
   Segment.byId[id].updateDuration();
 });
 
-// TODO: make undo use enum instead of strings
-// TODO: make undo a singleton array subclass ?
-// TODO: resort a group after re-adding segments to it
-const undo = function () {
-  if (undoStorage.length != 0) {
-    const undoThing = undoStorage.pop();
-    if (undoThing[0] == "deleted segment") {
-      // unpack undoThing (ignoring first element)
-      const [, peaksSegment, options] = undoThing;
-      Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
-      const segment = new Segment(peaks.segments.add(peaksSegment), options);
-      segment.parent.sort("startTime");
-    } else if (undoThing[0] == "deleted group") {
-      // unpack undoThing (ignoring first element)
-      const [, id, options] = undoThing;
-      Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
-      new PeaksGroup(id, options);
-      while (
-        undoStorage.length != 0 &&
-        undoStorage.at(-1)[0] == "deleted segment" &&
-        undoStorage.at(-1)[3]
-      ) {
-        undo();
-      }
-    } else if (undoThing[0] == "moved") {
-      const parent = TreeItem.byId[undoThing[2]];
-      TreeItem.byId[undoThing[1]].parent = parent;
-      parent.sort("startTime");
-    } else if (undoThing[0] == "copied") {
-      while (undoThing[1].length != 0) {
-        TreeItem.byId[undoThing[1].pop()].remove();
-      }
-    } else if (undoThing[0] == "renamed") {
-      TreeItem.byId[undoThing[1]].rename(undoThing[2]);
-    } else if (undoThing[0] == "dragged") {
-      Segment.byId[undoThing[1]].endTime = undoThing[2];
-      Segment.byId[undoThing[1]].startTime = undoThing[3];
-      Segment.byId[undoThing[1]].updateDuration();
-    } else if (undoThing[0] == "added segment") {
-      // redoStorage.push(undoThing)
-      Segment.byId[undoThing[1].id].remove();
-    } else {
-      console.log("SOME OTHER CASE FOR UNDOTHING HAS COME OUT");
-      console.log(undoThing[0]);
-    }
-  }
-};
-
-undoButton.addEventListener("click", undo);
+// arrow function so that in undo(), `this` refers to undoStorage and not undoButton
+undoButton.addEventListener("click", () => undoStorage.undo());
 // document.querySelector('button[data-action="undo"]').addEventListener('click', undo);
 
 // document.querySelector('button[data-action="redo"]')
@@ -693,7 +646,7 @@ window.addEventListener("keydown", function (event) {
         event.preventDefault();
       } else {
         // ctrl + z is undo shortcut
-        undo();
+        undoStorage.undo();
         event.preventDefault();
       }
     } else if (event.key == "y") {

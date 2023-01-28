@@ -15,6 +15,7 @@
 
 import Picker from "vanilla-picker";
 import globals from "./globals.js";
+import { undoStorage } from "./UndoRedo.js";
 import {
   htmlToElement,
   sortByProp,
@@ -26,8 +27,6 @@ import { groupIcons, segmentIcons } from "./icon.js";
 
 const media = globals.media;
 const peaks = globals.peaks;
-const undoStorage = globals.undoStorage;
-// const redoStorage = globals.redoStorage;
 
 // typedefs (used for JSDoc, can help explain types)
 /**
@@ -853,9 +852,6 @@ var Popup = class Popup {
       renameInput.addEventListener("keypress", (event) => {
         if (event.key === "Enter") {
           const oldText = treeItem.text;
-          // any time something new is done, redos reset without
-          // changing its reference from globals.redoStorage
-          // redoStorage.length = 0;  // clear redos
           treeItem.rename(renameInput.value);
           this.text = renameInput.value;
           undoStorage.push(["renamed", treeItem.id, oldText]);
@@ -1068,7 +1064,6 @@ var Popup = class Popup {
 
     radioButton.addEventListener("change", () => {
       undoStorage.push(["moved", this.treeItem.id, this.treeItem.parent.id]);
-      // redoStorage.length = 0;  // clear redos
       this.treeItem.parent = dest;
       dest.sort("startTime");
       dest.open();
@@ -1100,7 +1095,6 @@ var Popup = class Popup {
         }
         copied = copied.map((copy) => copy.id);
         undoStorage.push(["copied", copied]);
-        // redoStorage.length = 0;  // clear redos
         dest.sort("startTime");
       }
       dest.open();
@@ -1834,7 +1828,6 @@ var Segment = class Segment extends PeaksItem {
           this.getProperties(["id", "duration", "color", "labelText"]),
           false,
         ]);
-        // redoStorage.length = 0;  // clear redos
       });
     }
   }
@@ -2108,7 +2101,6 @@ var PeaksGroup = class PeaksGroup extends Group {
     if (!this.removable) {
       throw new Error(`PeaksGroup ${this.id} is not removable.`);
     }
-    // redoStorage.length = 0;  // clear redos
     for (var kid of this.children) {
       // true at end of undo signals that the "deleted segment"
       // was deleted as part of a "deleted group"
