@@ -334,14 +334,12 @@ var TreeItem = class TreeItem {
       // in if (render) because you can only assign to parent if its been rendered,
       // since this.li is appended to parent.nested but this.li is set in render
       if (parent) {
-        this.parent = parent;
+        parent.addChildren(this);
       }
     }
 
     if (children) {
-      children.forEach(function (child) {
-        child.parent = this;
-      });
+      this.addChildren(children);
     }
   }
 
@@ -353,16 +351,8 @@ var TreeItem = class TreeItem {
   get parent() {
     return this.#parent;
   }
-  set parent(newParent) {
-    if (this.#parent) {
-      this.#parent.children = this.#parent.children.filter(
-        (child) => child.id != this.id
-      );
-    }
-    this.#parent = newParent;
-    newParent.children.push(this);
-    newParent.nested.append(this.li);
-    newParent.updateDuration(this.duration);
+  set parent(parent) {
+    parent.addChildren(this);
   }
 
   /**
@@ -398,13 +388,13 @@ var TreeItem = class TreeItem {
    * @type {?Array.<TreeItem>}
    */
   get path() {
-    if (this.#parent) {
-      const parentPath = this.#parent.path;
+    if (this.parent) {
+      const parentPath = this.parent.path;
       if (parentPath) {
-        parentPath.push(this.#parent.id);
+        parentPath.push(this.parent.id);
         return parentPath; // path is parent's path + parent
       }
-      return [this.#parent.id]; // parent has no path, so path is just parent
+      return [this.parent.id]; // parent has no path, so path is just parent
     }
     return null; // no parent, so no path
   }
@@ -432,6 +422,34 @@ var TreeItem = class TreeItem {
       });
     }
     return obj;
+  }
+
+  /**
+   * Adds `TreeItem`s to this `TreeItem`'s nested content.
+   * @param  {...TreeItem} children - The children to add.
+   */
+  addChildren(...children) {
+    for (const child of children) {
+      if (child.parent) {
+        child.parent.removeChildren(child);
+      }
+      child.#parent = this;
+      this.children.push(child);
+      this.nested.append(child.li);
+      if (this.playable && child.playable) {
+        this.updateDuration(child.duration);
+      }
+    }
+  }
+
+  /**
+   * Removes `TreeItem`s from this `TreeItem`'s nested content.
+   * @param  {...TreeItem} children - The children to remove.
+   */
+  removeChildren(...children) {
+    // FIXME: make ids a Set??
+    const ids = children.map((child) => child.id);
+    this.children = this.children.filter((child) => !ids.includes(child.id));
   }
 
   /**
@@ -536,8 +554,8 @@ var TreeItem = class TreeItem {
       this.duration = this.duration + durationChange;
       this.updateSpanTitle();
 
-      if (this.#parent) {
-        this.#parent.updateDuration(durationChange);
+      if (this.parent) {
+        this.parent.updateDuration(durationChange);
       }
     }
   }
@@ -606,11 +624,9 @@ var TreeItem = class TreeItem {
     this.children.forEach(function (child) {
       child.remove();
     });
-    if (this.#parent) {
+    if (this.parent) {
       // TODO: make children a set of item or map of id to item
-      this.#parent.children = this.#parent.children.filter(
-        (child) => child.id != this.id
-      );
+      this.parent.removeChildren(this);
     }
   }
 
@@ -701,8 +717,8 @@ var TreeItem = class TreeItem {
   open() {
     this.nested.classList.add("active");
     this.checked = true;
-    if (this.#parent) {
-      this.#parent.open();
+    if (this.parent) {
+      this.parent.open();
     }
   }
 
@@ -1064,7 +1080,7 @@ var Popup = class Popup {
 
     radioButton.addEventListener("change", () => {
       undoStorage.push(["moved", this.treeItem.id, this.treeItem.parent.id]);
-      this.treeItem.parent = dest;
+      dest.addChildren(this.treeItem);
       dest.sort("startTime");
       dest.open();
       radioButton.checked = false;
@@ -1469,42 +1485,10 @@ var PeaksItem = class PeaksItem extends TreeItem {
     PeaksItem.byId[peaksItem.id] = this;
 
     this.render();
-    this.parent = parent;
+    parent.addChildren(this);
 
     this.#editable = this.peaksItem.editable;
     this.currentlyEditable = this.peaksItem.editable;
-  }
-
-  /**
-   * The `PeaksGroup` that contains this item in its nested content.
-   * @type {!PeaksGroup}
-   */
-  get parent() {
-    return super.parent;
-  }
-  set parent(newParent) {
-    if (this.parent) {
-      this.parent.hidden.delete(this);
-      this.parent.visible.delete(this);
-    }
-
-    if (newParent.color) {
-      this.peaksItem.update({ color: newParent.color });
-    } else {
-      newParent.color = this.peaksItem.color;
-    }
-
-    // rename with the same text because renaming adds the parent's id to this
-    // peaks item's labelText, so we need to update from the old parent's id
-    // also good to use this.rename() instead of copying the code from this.rename
-    // so that subclasses can override this labelText behavior
-    this.rename(this.text);
-    if (this.checked) {
-      newParent.visible.add(this);
-    } else {
-      newParent.hidden.add(this);
-    }
-    super.parent = newParent; // call TreeItem's setter for parent
   }
 
   /**
@@ -2083,6 +2067,47 @@ var PeaksGroup = class PeaksGroup extends Group {
     }
     this.#color = newColor;
     this.children.forEach((peaksItem) => peaksItem.update({ color: newColor }));
+  }
+
+  /**
+   * Adds `PeaksItem`s to this group's nested content.
+   * @param  {...PeaksItem} children - The children to add.
+   */
+  addChildren(...children) {
+    if (this.#color === null && children.length > 0) {
+      this.#color = children[0].color;
+    }
+    for (const child of children) {
+      if (child.parent) {
+        child.parent.removeChildren(child);
+      }
+      super.addChildren(child);
+
+      child.update({ color: this.#color });
+      // rename with the same text because renaming adds the parent's id to the
+      // peaks item's labelText, so we need to update from the old parent's id
+      // also good to use rename() instead of copying the code from rename
+      // so that subclasses can override this labelText behavior
+      child.rename(child.text);
+
+      if (child.checked) {
+        this.visible.add(child);
+      } else {
+        this.hidden.add(child);
+      }
+    }
+  }
+
+  /**
+   * Removes `PeaksItem`s from this group's nested content.
+   * @param  {...PeaksItem} children - The children to remove.
+   */
+  removeChildren(...children) {
+    for (const child of children) {
+      this.visible.delete(child);
+      this.hidden.delete(child);
+      super.removeChildren(children);
+    }
   }
 
   /** Updates the title (tooltip) of `span`. */

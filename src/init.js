@@ -421,7 +421,7 @@ fetch("load", {
           // segment is a moved segment
           const treeSegment = Segment.byId[segment.id];
           treeSegment.segment = segment;
-          treeSegment.parent = parent;
+          parent.addChildren(treeSegment);
         } else {
           new Segment(segment, {
             parent: parent,
