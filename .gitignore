@@ -1,8 +1,11 @@
 node_modules
-public
+public/css
+public/js
 data
 *.sqlite3
 *.sqlite3-shm
 *.sqlite3-wal
 audiowaveform.exe
 __pycache__/
+scripts/transcribe
+scripts/models

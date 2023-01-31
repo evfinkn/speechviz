@@ -1,20 +1,16 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import globals from "./globals.js";
-import {
-  GroupOfGroups,
-  Group,
-  Segment,
-  TreeItem,
-  Face,
-} from "./treeClasses.js";
+import { Group, Segment, PeaksGroup, Face } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
+import { undoStorage } from "./UndoRedo.js";
 import {
   arrayMean,
   objectMap,
   getRandomColor,
   sortByProp,
   toggleButton,
+  ResponseError,
   checkResponseStatus,
 } from "./util.js";
 import {
@@ -34,7 +30,6 @@ const user = globals.user;
 const filename = globals.filename;
 const basename = globals.basename;
 const media = globals.media;
-const undoStorage = globals.undoStorage;
 // const redoStorage = globals.redoStorage;
 
 // TODO: if this does what I assume it does, it can
@@ -51,7 +46,7 @@ const createTree = function (id, parent, children, snr) {
     // group of segments
     if (id.includes("Speaker ")) {
       // group is speakers, which need popups
-      const group = new Group(id, { parent, snr, copyTo: ["Labeled"] });
+      const group = new PeaksGroup(id, { parent, snr, copyTo: ["Labeled"] });
       peaks.segments.add(children).forEach(function (segment) {
         new Segment(segment, {
           parent: group,
@@ -62,14 +57,14 @@ const createTree = function (id, parent, children, snr) {
       });
     } else {
       // group is VAD or Non-VAD, which don't need popups
-      const group = new Group(id, { parent, snr });
+      const group = new PeaksGroup(id, { parent, snr });
       peaks.segments.add(children).forEach(function (segment) {
         new Segment(segment, { parent: group });
       });
     }
   } else {
     // group of groups
-    const group = new GroupOfGroups(id, { parent });
+    const group = new Group(id, { parent, playable: true });
     for (const [child, childChildren, childSNR] of children) {
       createTree(child, group, childChildren, childSNR);
     }
@@ -77,12 +72,12 @@ const createTree = function (id, parent, children, snr) {
 };
 
 /**
- * Adds a circled number to the left of every `Group`s' text representing that
- * `Group`'s rank. These ranks are determined from the `Group`'s SNR and duration.
- * The `Group` with rank 1 is the predicted primary signal.
+ * Adds a circled number to the left of every `PeaksGroup`s' text representing that
+ * `PeaksGroup`'s rank. These ranks are determined from the `PeaksGroup`'s SNR and
+ * duration. The `PeaksGroup` with rank 1 is the predicted primary signal.
  */
 const rankSnrs = () => {
-  const groups = Object.values(Group.byId).filter(
+  const groups = Object.values(PeaksGroup.byId).filter(
     (group) => group.snr !== null
   );
   if (groups.length == 0) {
@@ -143,23 +138,38 @@ const rankSnrs = () => {
     }
   }
   // highlight text of speaker with highest z score
-  Group.byId[maxSpeaker].span.style.color = "violet";
+  PeaksGroup.byId[maxSpeaker].span.style.color = "violet";
 };
 
-const analysis = new GroupOfGroups("Analysis");
+// TODO: Accept element for parent?
+const analysis = new Group("Analysis", { playable: true });
 document.getElementById("tree").append(analysis.li);
 
 const clusters = new Group("Clusters");
-clusters.playButton.style.display = "none";
-clusters.loopButton.style.display = "none";
 document.getElementById("tree").append(clusters.li);
 
-const custom = new Group("Custom", {
+const custom = new PeaksGroup("Custom", {
   parent: analysis,
   color: getRandomColor(),
   colorable: true,
 });
-const labeled = new GroupOfGroups("Labeled", { parent: analysis });
+const labeled = new Group("Labeled", { parent: analysis, playable: true });
+
+/**
+ * Outputs a helpful message to the console stating what's missing if `error` is
+ * a 404 and otherwise errors `error` to the console.
+ * @param {Error} error - The `Error` caused in a `fetch` block.
+ * @param {string} missing - The name of the thing that would be missing if
+ *      `error` were a `404 Not Found` error.
+ */
+const output404OrError = (error, missing) => {
+  if (error instanceof ResponseError && error.status == 404) {
+    console.log(`No ${missing} for media.`);
+  } else {
+    // other errors are likely caused by the code, which we want to know
+    console.error(error);
+  }
+};
 
 fetch(`/segments/${basename}-segments.json`)
   .then(checkResponseStatus)
@@ -178,8 +188,8 @@ fetch(`/segments/${basename}-segments.json`)
     // disabling most groups right away so just do it automatically)
     analysis.children.forEach((child) => child.toggle(false));
   })
-  .catch(() => {
-    console.log("No segments for media.");
+  .catch((error) => {
+    output404OrError(error, "segments");
     globals.highestId = 0;
   });
 
@@ -203,15 +213,18 @@ const faces = fetch(`/clustered-files/`)
       });
     });
   })
-  .catch(() => {
-    console.log("No clustered faces for media.");
-  });
+  .catch((error) => output404OrError(error, "clustered faces"));
 
 fetch(`/transcriptions/${basename}-transcription.json`)
   .then(checkResponseStatus)
   .then((response) => response.json())
-  .then((words) => words.map((word) => peaks.points.add(word)))
-  .catch(() => console.log("No transcription for media."));
+  .then((words) =>
+    words.map((word) => {
+      word["color"] = "#00000000";
+      peaks.points.add(word);
+    })
+  )
+  .catch((error) => output404OrError(error, "transcription"));
 
 const poseRegex = /pose.*\.csv/;
 const visualContainer = document.getElementById("visual");
@@ -224,7 +237,11 @@ if (visualContainer) {
     .then((response) => response.json())
     .then((files) => {
       if (files.length == 0) {
-        throw new Error("No pose data for media.");
+        // create a fake 404 Not Found response so that
+        // outputHelpfulFetchErrorMessage on the caught error
+        // correctly outputs "No pose data for media."
+        const response = Response(null, { status: 404 });
+        throw new ResponseError(response);
       } else {
         // filter out non-pose files
         files = files.filter((file) => poseRegex.test(file));
@@ -256,7 +273,7 @@ if (visualContainer) {
       const height = media.offsetHeight;
       new GraphIMU(visualContainer, data, { width: width, height: height });
     })
-    .catch(() => console.log("No pose data for media."));
+    .catch((error) => output404OrError(error, "pose data"));
 }
 
 // code below initializes the interface
@@ -299,23 +316,36 @@ zoomOut.addEventListener("click", function () {
   }
 });
 
+/**
+ * Creates a new Labeled group using `input`'s value as the id.
+ * @param {!HTMLInputElement} input - The element used to enter a new label name.
+ */
+const addLabel = (input) => {
+  if (input.value != "") {
+    new PeaksGroup(input.value, {
+      parent: labeled,
+      removable: true,
+      renamable: true,
+      color: getRandomColor(),
+      colorable: true,
+      copyTo: ["Labeled"],
+    });
+    input.value = ""; // clear text box after submitting
+    labeled.open(); // open labeled in tree to show newly added label
+  }
+};
+
 // input to add a label group
-const labelInput = document.getElementById("label");
+const labelInput = document.getElementById("add-label-input");
+labelInput.addEventListener("keypress", (event) => {
+  if (event.key === "Enter") {
+    addLabel(labelInput);
+  }
+});
 document
-  .querySelector("button[data-action='add-label']")
+  .getElementById("add-label-button")
   .addEventListener("click", function () {
-    if (labelInput.value != "") {
-      new Group(labelInput.value, {
-        parent: labeled,
-        removable: true,
-        renamable: true,
-        color: getRandomColor(),
-        colorable: true,
-        copyTo: ["Labeled"],
-      });
-      labelInput.value = ""; // clear text box after submitting
-      labeled.open(); // open labeled in tree to show newly added label
-    }
+    addLabel(labelInput);
   });
 
 // counts number of custom segments added, used for custom segment's labelText
@@ -373,10 +403,10 @@ fetch("load", {
       .add(data.segments, { overwrite: true })
       .forEach(function (segment) {
         let parent = segment.path.at(-1);
-        if (!(parent in Group.byId)) {
+        if (!(parent in PeaksGroup.byId)) {
           // parent group doesn't exist yet so add it
-          parent = new Group(parent, {
-            parent: GroupOfGroups.byId[segment.path.at(-2)],
+          parent = new PeaksGroup(parent, {
+            parent: Group.byId[segment.path.at(-2)],
             removable: true,
             renamable: true,
             color: getRandomColor(),
@@ -384,14 +414,14 @@ fetch("load", {
             copyTo: ["Labeled"],
           });
         } else {
-          parent = Group.byId[parent];
+          parent = PeaksGroup.byId[parent];
         }
 
         if (segment.id in Segment.byId) {
           // segment is a moved segment
           const treeSegment = Segment.byId[segment.id];
           treeSegment.segment = segment;
-          treeSegment.parent = parent;
+          parent.addChildren(treeSegment);
         } else {
           new Segment(segment, {
             parent: parent,
@@ -408,11 +438,12 @@ fetch("load", {
       });
 
     async function waitForFacesThenLoad() {
+      // wait for the fetching of faces from file system to finish
       await faces;
       // move faces to saved spot on tree
       data.faces.forEach((face) => {
         const actualFace = Face.byId["face" + face.faceNum];
-        const actualSpeaker = Group.byId["Speaker " + face.speaker];
+        const actualSpeaker = PeaksGroup.byId["Speaker " + face.speaker];
         actualFace.speakerNum = "Speaker " + face.speaker;
         actualSpeaker.faceNum = "face" + face.faceNum;
         actualSpeaker.li.insertBefore(
@@ -444,55 +475,8 @@ peaks.on("segments.dragend", function (event) {
   Segment.byId[id].updateDuration();
 });
 
-// TODO: make undo use enum instead of strings
-// TODO: make undo a singleton array subclass ?
-// TODO: resort a group after re-adding segments to it
-const undo = function () {
-  if (undoStorage.length != 0) {
-    const undoThing = undoStorage.pop();
-    if (undoThing[0] == "deleted segment") {
-      // unpack undoThing (ignoring first element)
-      const [, peaksSegment, options] = undoThing;
-      Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
-      const segment = new Segment(peaks.segments.add(peaksSegment), options);
-      segment.parent.sort("startTime");
-    } else if (undoThing[0] == "deleted group") {
-      // unpack undoThing (ignoring first element)
-      const [, id, options] = undoThing;
-      Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
-      new Group(id, options);
-      while (
-        undoStorage.length != 0 &&
-        undoStorage.at(-1)[0] == "deleted segment" &&
-        undoStorage.at(-1)[3]
-      ) {
-        undo();
-      }
-    } else if (undoThing[0] == "moved") {
-      const parent = TreeItem.byId[undoThing[2]];
-      TreeItem.byId[undoThing[1]].parent = parent;
-      parent.sort("startTime");
-    } else if (undoThing[0] == "copied") {
-      while (undoThing[1].length != 0) {
-        TreeItem.byId[undoThing[1].pop()].remove();
-      }
-    } else if (undoThing[0] == "renamed") {
-      TreeItem.byId[undoThing[1]].rename(undoThing[2]);
-    } else if (undoThing[0] == "dragged") {
-      Segment.byId[undoThing[1]].endTime = undoThing[2];
-      Segment.byId[undoThing[1]].startTime = undoThing[3];
-      Segment.byId[undoThing[1]].updateDuration();
-    } else if (undoThing[0] == "added segment") {
-      // redoStorage.push(undoThing)
-      Segment.byId[undoThing[1].id].remove();
-    } else {
-      console.log("SOME OTHER CASE FOR UNDOTHING HAS COME OUT");
-      console.log(undoThing[0]);
-    }
-  }
-};
-
-undoButton.addEventListener("click", undo);
+// arrow function so that in undo(), `this` refers to undoStorage and not undoButton
+undoButton.addEventListener("click", () => undoStorage.undo());
 // document.querySelector('button[data-action="undo"]').addEventListener('click', undo);
 
 // document.querySelector('button[data-action="redo"]')
@@ -511,13 +495,26 @@ undoButton.addEventListener("click", undo);
 //     }
 // });
 
+const recurseGetSegments = (group) => {
+  if (group instanceof PeaksGroup) {
+    return [...group.visible, ...group.hidden];
+  }
+  if (group instanceof Group) {
+    const segments = [];
+    group.children.forEach((child) =>
+      segments.push(...recurseGetSegments(child))
+    );
+    return segments;
+  }
+};
+
 const fileParagraph = document.getElementById("file");
 /**
  * Saves the custom segments, labeled speakers, and associated faces to the database.
  */
 const save = function () {
   const faceRegex = /Speaker /;
-  const speakers = Object.values(Group.byId).filter((speaker) =>
+  const speakers = Object.values(PeaksGroup.byId).filter((speaker) =>
     speaker.id.match(faceRegex)
   );
   const faces = [];
@@ -536,14 +533,12 @@ const save = function () {
   // fileParagraph.innerHTML = `${filename} - Saving`;
   const groupRegex = /Speaker |VAD|Non-VAD/;
   // only save groups that aren't from the pipeline
-  const groups = Object.values(Group.byId).filter(
+  const groups = Object.values(PeaksGroup.byId).filter(
     (group) => !group.id.match(groupRegex)
   );
   let segments = [];
   // array.push(...) is faster than array.concat
-  groups.forEach((group) =>
-    segments.push(...group.getSegments({ hidden: true, visible: true }))
-  );
+  groups.forEach((group) => segments.push(...recurseGetSegments(group)));
 
   // need to copy the segment properties because
   // otherwise, sending the actual segment causes error
@@ -575,8 +570,7 @@ const save = function () {
     }
   });
 
-  const movedSegments = GroupOfGroups.byId["Speakers"]
-    .getSegments({ hidden: true, visible: true })
+  const movedSegments = recurseGetSegments(Group.byId["Speakers"])
     .filter((segment) => segment.parent.id != originalGroups[segment.id])
     .map((segment) => segment.getProperties(["text", "duration", "color"]));
   segments.push(...movedSegments);
@@ -655,7 +649,7 @@ window.addEventListener("keydown", function (event) {
         event.preventDefault();
       } else {
         // ctrl + z is undo shortcut
-        undo();
+        undoStorage.undo();
         event.preventDefault();
       }
     } else if (event.key == "y") {

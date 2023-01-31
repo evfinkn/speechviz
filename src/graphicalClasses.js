@@ -387,7 +387,7 @@ var GraphIMU = class GraphIMU {
    * closest timestamp to the media's current time.
    */
   animate() {
-    window.requestAnimationFrame(this.animate.bind(this));
+    window.requestAnimationFrame(() => this.animate());
 
     const factor = GraphIMU.interpolationFactor;
 

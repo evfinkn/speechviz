@@ -25,13 +25,11 @@ if (!user) {
   }
 }
 
-// TODO: make a typedef for undo (and redo) elements so that the types aren't {any[]}
 /**
  * `Object` containing global constants shared across the javascript files.
  * @prop {string} filename - The name of the media file including its extension.
  * @prop {string} basename - The name of the media file excluding its extension
  * @prop {!Element} media - The audio / video element being visualized.
- * @prop {any[]} undoStorage - The array holding the actions that have been undone.
  * @prop {string} user - The name of the user whose segments are being viewed. Always
  *      equal to the logged-in user, unless "admin" is logged-in (since the admin can
  *      view any user's segments).
@@ -44,7 +42,6 @@ const globals = {};
 globals.filename = filename;
 globals.basename = basename;
 globals.media = document.getElementById("media");
-globals.undoStorage = [];
 // globals.redoStorage = [];
 globals.user = user;
 
