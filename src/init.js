@@ -183,7 +183,7 @@ fetch(`/segments/${basename}-segments.json`)
     globals.highestId = 0;
   });
 
-fetch(`/clustered-files/`)
+const faces = fetch(`/clustered-files/`)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((fileList) => {
@@ -406,21 +406,23 @@ fetch("load", {
           segmentCounter++;
         }
       });
-    // add associated faces
-    // TODO: when this is at top, sometimes (loses a race case?) it calls this before
-    // Face.byId is initialized leading to errors with trying to access
-    // actualFace.speakerNum because actualFace wasn't found. Moving it here seemed
-    // to fix it but, I can't be sure it actually worked
-    data.faces.forEach((face) => {
-      const actualFace = Face.byId["face" + face.faceNum];
-      const actualSpeaker = Group.byId["Speaker " + face.speaker];
-      actualFace.speakerNum = "Speaker " + face.speaker;
-      actualSpeaker.faceNum = "face" + face.faceNum;
-      actualSpeaker.li.insertBefore(
-        actualFace.li.children[6].firstElementChild,
-        actualSpeaker.li.children[4]
-      );
-    });
+
+    async function waitForFacesThenLoad() {
+      await faces;
+      // move faces to saved spot on tree
+      data.faces.forEach((face) => {
+        const actualFace = Face.byId["face" + face.faceNum];
+        const actualSpeaker = Group.byId["Speaker " + face.speaker];
+        actualFace.speakerNum = "Speaker " + face.speaker;
+        actualSpeaker.faceNum = "face" + face.faceNum;
+        actualSpeaker.li.insertBefore(
+          actualFace.li.children[6].firstElementChild,
+          actualSpeaker.li.children[4]
+        );
+      });
+    }
+    waitForFacesThenLoad();
+
     // after loading, toggle everything off (usually end up
     // disabling most groups right away, just do it automatically)
     analysis.children.forEach((child) => child.toggle(false));
