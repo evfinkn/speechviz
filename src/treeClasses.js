@@ -210,8 +210,11 @@ var TreeItem = class TreeItem {
    */
   copyTo = null;
 
-  // FIXME: Blake write this documentation comment
-  /** */
+  /**
+   * An array of the ids of `TreeItem`s that this Face can be associated with.
+   * `null` if there are no such `TreeItem`s
+   * @type {?string[]}
+   */
   assocWith;
 
   /**
@@ -1043,7 +1046,10 @@ var Popup = class Popup {
       });
     }
   }
-
+  /**
+   * Updates the radio buttons in `assocDiv`.
+   * This adds buttons for new `TreeItem`s that `Face` can be associated with.
+   */
   updateAssocWith() {
     const assocDiv = this.assocDiv;
     while (assocDiv.children[1]) {
@@ -1119,7 +1125,11 @@ var Popup = class Popup {
     });
   }
 
-  // FIXME: Blake add documentation for this
+  /**
+   * Adds a radio button used to associate the `Face` with a `TreeItem`.
+   * @param {TreeItem} dest - The `TreeItem` to associate the `Face` to
+   *      when the radio button is clicked.
+   */
   addAssocRadio(dest) {
     const radioDiv = htmlToElement(
       "<div><label>" +
@@ -1131,9 +1141,11 @@ var Popup = class Popup {
     this.assocDiv.append(radioDiv);
 
     radioButton.addEventListener("change", () => {
-      // add functionality to associate with speakers here
+      // save what is associated so speaker doesn't show in popup and
+      // note what is stored where for saving face association
       dest.faceNum = this.treeItem.id;
       this.treeItem.speakerNum = dest.id;
+      // actually move the face to the speaker
       dest.nested.prepend(this.treeItem.imageLi);
       // add something to see if its clicked and delete the image if it is
       radioButton.checked = false;
