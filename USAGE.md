@@ -70,7 +70,7 @@ these commands:
 # Rotate the video to the correct orientation
 ffmpeg -i input.mp4 -vf transpose=1 output.mp4
 # Combine the audio and video
-ffmpeg -i input.mp4 -i input.wav -c:v copy -c:a aac output.mp4
+ffmpeg -i input.mp4 -i input.wav -c:v copy -c:a aac -ac 1 output.mp4
 ```
 
 Finally, rename the video to `FILE_NAME.mp4`, move it to `data/video`, and run
