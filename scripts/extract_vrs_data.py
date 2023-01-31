@@ -163,7 +163,7 @@ def create_video(
     keep_images: bool = False,
     rotate: bool = True,
     verbose: int = 0,
-    pattern: str = r"(\d+\.\d+)\.jpg$",
+    pattern: str = r"(?i)(\d+\.\d+)\.(jpg|jpeg|png)$",
 ):
     """Creates an mp4 video file from a directory of images."""
     # this generates the video by using a concat file with ffmpeg
@@ -180,7 +180,7 @@ def create_video(
     # relative paths. ffmpeg interprets relative paths to be relative to the concat
     # file, not the working directory, so this works fine because concat file is in
     # the same directory as the images
-    images = [image.relative_to(images_dir) for image in images_dir.glob("*.jpg")]
+    images = [image.relative_to(images_dir) for image in images_dir.glob("*")]
     images = sorted(map(str, images))
     timestamps = []
     for i, image in enumerate(images):
