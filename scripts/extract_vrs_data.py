@@ -157,10 +157,6 @@ def build_dict_from_dict_list(dict_list, out_dict=None):
     return out_dict
 
 
-scripts_dir = pathlib.Path(__file__).parent
-create_video_script = scripts_dir / "create-video.sh"
-
-
 def create_video(
     output_dir: pathlib.Path,
     stream: str,
