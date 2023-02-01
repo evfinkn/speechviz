@@ -15,7 +15,7 @@
 
 import Picker from "vanilla-picker";
 import globals from "./globals.js";
-import { undoStorage } from "./UndoRedo.js";
+import { undoStorage, Actions } from "./UndoRedo.js";
 import {
   htmlToElement,
   sortByProp,
@@ -115,7 +115,8 @@ var TreeItem = class TreeItem {
    * @static
    */
   static exists(id) {
-    return id in TreeItem.byId;
+    // in a static method, `this` refers to the class, e.g. TreeItem
+    return id in this.byId;
   }
 
   /**
@@ -315,13 +316,8 @@ var TreeItem = class TreeItem {
       assocWith = null,
     } = {}
   ) {
-    if (TreeItem.exists(id)) {
-      throw new Error(`A TreeItem with the id ${id} already exists`);
-    }
-
-    TreeItem.byId[id] = this;
-
     this.id = id;
+    this.addToById();
 
     this.#text = text || id;
     this.playable = playable;
@@ -342,8 +338,24 @@ var TreeItem = class TreeItem {
     }
 
     if (children) {
-      this.addChildren(children);
+      this.addChildren(...children);
     }
+  }
+
+  // https://stackoverflow.com/a/68374307
+  /**
+   * Gets every constructor used to construct `this`.
+   * In other words, gets `this`' class and all of its superclasses.
+   * @return {!Array.<Object>} The constructors of `this`.
+   */
+  get constructors() {
+    const result = [];
+    let next = Object.getPrototypeOf(this);
+    while (next.constructor.name !== "Object") {
+      result.push(next.constructor);
+      next = Object.getPrototypeOf(next);
+    }
+    return result;
   }
 
   /**
@@ -452,6 +464,12 @@ var TreeItem = class TreeItem {
   removeChildren(...children) {
     // FIXME: make ids a Set??
     const ids = children.map((child) => child.id);
+    children.forEach((child) => {
+      child.#parent = null;
+      if (this.playable && child.playable) {
+        this.updateDuration(-child.duration);
+      }
+    });
     this.children = this.children.filter((child) => !ids.includes(child.id));
   }
 
@@ -460,6 +478,10 @@ var TreeItem = class TreeItem {
    * This also sets `this.playable` to `true` and `this.duration` to 0.
    */
   makePlayable() {
+    if (this.playButton && this.loopButton && this.pauseButton) {
+      return; // this item has already been made playable
+    }
+
     this.playable = true;
     this.duration = 0;
 
@@ -490,13 +512,17 @@ var TreeItem = class TreeItem {
    * This also sets `this.removable` to `true`.
    */
   makeRemovable() {
+    if (this.removeButton) {
+      return; // this item has already been made removable
+    }
+
     this.removable = true;
 
     this.removeButton = htmlToElement(
       `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`
     );
     this.removeButton.addEventListener("click", () => {
-      this.remove();
+      undoStorage.push(new Actions.RemoveAction(this));
     });
     // this puts the remove button after any other buttons
     this.nested.before(this.removeButton);
@@ -612,6 +638,24 @@ var TreeItem = class TreeItem {
   }
 
   /**
+   * Adds this item's id to its class' and all of its superclasses' `byId` fields.
+   * @throws {Error} If a `TreeItem` with `id` already exists in `byId`.
+   */
+  addToById() {
+    if (TreeItem.exists(this.id)) {
+      throw new Error(`A TreeItem with the id ${this.id} already exists.`);
+    }
+    this.constructors.forEach((ctor) => (ctor.byId[this.id] = this));
+  }
+
+  /**
+   * Removes this item's id from its class' and all of its superclasses' `byId` fields.
+   */
+  removeFromById() {
+    this.constructors.forEach((ctor) => delete ctor.byId[this.id]);
+  }
+
+  /**
    * Removes this item and all of its children from the tree.
    * @throws {Error} If this item cannot be removed.
    */
@@ -621,15 +665,29 @@ var TreeItem = class TreeItem {
     }
 
     this.li.remove();
-    delete TreeItem.byId[this.id];
-    // removes from subclasses byId, i.e. Group.byId
-    delete this.constructor.byId[this.id];
+    this.removeFromById();
     this.children.forEach(function (child) {
       child.remove();
     });
     if (this.parent) {
       // TODO: make children a set of item or map of id to item
       this.parent.removeChildren(this);
+    }
+  }
+
+  /**
+   * Readds this item.
+   * To be specific, adds this item to `byId` and `parent` if not `null`. If `parent`
+   * is `null` and `this.parent` isn't, `this.parent` is used instead. Otherwise, if
+   * both are `null`, this item isn't added to any parent.
+   * @param {?TreeItem} parent - The `TreeItem` to add this item to, if any.
+   */
+  readd(parent = null) {
+    this.addToById(); // will throw an error if one already exists !
+    if (parent !== null) {
+      parent.addChildren(this);
+    } else if (this.parent !== null) {
+      this.parent.addChildren(this);
     }
   }
 
@@ -643,18 +701,16 @@ var TreeItem = class TreeItem {
     if (!this.renamable) {
       throw new Error(`TreeItem ${this.id} is not renamable.`);
     }
+    // check even though it's checked in addToById because otherwise if
+    // that throws an error, removeFromById will still have already run
     if (TreeItem.exists(newId)) {
       throw new Error(`A TreeItem with the id ${newId} already exists`);
     }
     // delete the old name from the byId objects
-    delete TreeItem.byId[this.id];
-    // removes from subclasses byId, i.e. Group.byId
-    delete this.constructor.byId[this.id];
-    // add the new name to the byId objects
-    TreeItem.byId[newId] = this;
-    // adds this to subclasses byId, i.e. Group.byId
-    this.constructor.byId[newId] = this;
+    this.removeFromById();
     this.id = newId;
+    // add the new name to the byId objects
+    this.addToById();
     this.text = newId;
   }
 
@@ -870,10 +926,9 @@ var Popup = class Popup {
       renameDiv.append(renameInput);
       renameInput.addEventListener("keypress", (event) => {
         if (event.key === "Enter") {
-          const oldText = treeItem.text;
-          treeItem.rename(renameInput.value);
-          this.text = renameInput.value;
-          undoStorage.push(["renamed", treeItem.id, oldText]);
+          undoStorage.push(
+            new Actions.RenameAction(treeItem, renameInput.value)
+          );
           this.hide();
         }
       });
@@ -964,6 +1019,9 @@ var Popup = class Popup {
 
   /** Updates content and displays this popup. */
   show() {
+    if (this.text !== this.treeItem.text) {
+      this.text = this.treeItem.text;
+    }
     if (this.moveDiv) {
       this.updateMoveTo();
     }
@@ -978,9 +1036,11 @@ var Popup = class Popup {
     }
     if (
       this.renameDiv ||
-      !this?.moveDiv?.hidden ||
-      !this?.copyDiv?.hidden ||
-      !this?.assocDiv?.hidden ||
+      // can't use !this?.moveDiv?.hidden because if moveDiv is
+      // undefined, it'll evalute to true (!undefined == true)
+      (this.moveDiv && !this.moveDiv.hidden) ||
+      (this.copyDiv && !this.copyDiv.hidden) ||
+      (this.assocDiv && !this.assocDiv.hidden) ||
       this.colorDiv
     ) {
       this.popup.style.display = "block";
@@ -1085,10 +1145,7 @@ var Popup = class Popup {
     this.moveDiv.append(radioDiv);
 
     radioButton.addEventListener("change", () => {
-      undoStorage.push(["moved", this.treeItem.id, this.treeItem.parent.id]);
-      dest.addChildren(this.treeItem);
-      dest.sort("startTime");
-      dest.open();
+      undoStorage.push(new Actions.MoveAction(this.treeItem, dest));
       radioButton.checked = false;
       this.hide();
     });
@@ -1110,13 +1167,9 @@ var Popup = class Popup {
     this.copyDiv.append(radioDiv);
 
     radioButton.addEventListener("change", () => {
-      let copied = this.treeItem.copy(dest);
+      const copied = this.treeItem.copy(dest);
       if (copied) {
-        if (!Array.isArray(copied)) {
-          copied = [copied];
-        }
-        copied = copied.map((copy) => copy.id);
-        undoStorage.push(["copied", copied]);
+        undoStorage.push(new Actions.CopyAction(copied));
         dest.sort("startTime");
       }
       dest.open();
@@ -1199,11 +1252,11 @@ var Group = class Group extends TreeItem {
       text = null,
       playable = false,
       removable = false,
+      moveTo = null,
+      copyTo = null,
     } = {}
   ) {
-    super(id, { parent, children, text, playable, removable });
-
-    Group.byId[id] = this;
+    super(id, { parent, children, text, playable, removable, moveTo, copyTo });
   }
 
   /** Sets the CSS styling of the group's elements. */
@@ -1494,7 +1547,6 @@ var PeaksItem = class PeaksItem extends TreeItem {
     });
     this.peaksItem = peaksItem;
     this.type = peaksItem.constructor.name === "Segment" ? "Segment" : "Point";
-    PeaksItem.byId[peaksItem.id] = this;
 
     this.render();
     parent.addChildren(this);
@@ -1619,15 +1671,24 @@ var PeaksItem = class PeaksItem extends TreeItem {
     this.checkbox.style.transform = "scale(0.85)";
   }
 
-  /** Removes this segment from the tree and Peaks waveform. */
+  /** Removes this segment / point from the tree and Peaks waveform. */
   remove() {
     if (this.parent.visible.has(this)) {
       this.#removeFromPeaks();
     }
-    this.parent.visible.delete(this);
-    this.parent.hidden.delete(this);
-
     super.remove();
+  }
+
+  /**
+   * Readds this item.
+   * To be specific, adds this item to `byId`, to Peaks, and to `parent` if not
+   * `null`. If `parent` is `null` and `this.parent` isn't, `this.parent` is used
+   * instead. Otherwise, if both are `null`, this item isn't added to any parent.
+   * @param {?PeaksGroup} parent - The `PeaksGroup` to add this item to, if any.
+   */
+  readd(parent = null) {
+    this.#addToPeaks();
+    super.readd(parent);
   }
 
   // FIXME: make all rename methods throw error
@@ -1763,7 +1824,6 @@ var Segment = class Segment extends PeaksItem {
       moveTo,
       copyTo,
     });
-    Segment.byId[segment.id] = this;
 
     this.updateDuration();
 
@@ -1810,23 +1870,6 @@ var Segment = class Segment extends PeaksItem {
   get treeText() {
     return this.text;
   } // backwards compatibility (database expects 'treeText')
-
-  // FIXME: move undo back to remove() and get rid of this method
-  render() {
-    super.render();
-    if (this.removeButton) {
-      this.removeButton.addEventListener("click", () => {
-        // false at end of undo signals that the "deleted segment"
-        // was NOT deleted as part of a "deleted group"
-        undoStorage.push([
-          "deleted segment",
-          this.segment,
-          this.getProperties(["id", "duration", "color", "labelText"]),
-          false,
-        ]);
-      });
-    }
-  }
 
   /** Updates `duration` using this segment's start and end times. */
   updateDuration() {
@@ -2048,7 +2091,6 @@ var PeaksGroup = class PeaksGroup extends Group {
       copyTo,
     });
 
-    PeaksGroup.byId[id] = this;
     this.snr = snr;
     if (children) {
       this.sort("startTime");
@@ -2090,9 +2132,6 @@ var PeaksGroup = class PeaksGroup extends Group {
       this.#color = children[0].color;
     }
     for (const child of children) {
-      if (child.parent) {
-        child.parent.removeChildren(child);
-      }
       super.addChildren(child);
 
       child.update({ color: this.#color });
@@ -2108,6 +2147,7 @@ var PeaksGroup = class PeaksGroup extends Group {
         this.hidden.add(child);
       }
     }
+    this.sort("startTime");
   }
 
   /**
@@ -2118,7 +2158,7 @@ var PeaksGroup = class PeaksGroup extends Group {
     for (const child of children) {
       this.visible.delete(child);
       this.hidden.delete(child);
-      super.removeChildren(children);
+      super.removeChildren(child);
     }
   }
 
@@ -2131,30 +2171,6 @@ var PeaksGroup = class PeaksGroup extends Group {
     } else {
       super.updateSpanTitle();
     } // if group doesn't have snr, uses default span title
-  }
-
-  /** Removes this group and all of its items from the tree and Peaks waveform. */
-  remove() {
-    if (!this.removable) {
-      throw new Error(`PeaksGroup ${this.id} is not removable.`);
-    }
-    for (var kid of this.children) {
-      // true at end of undo signals that the "deleted segment"
-      // was deleted as part of a "deleted group"
-      undoStorage.push([
-        "deleted segment",
-        kid.peaksItem,
-        kid.getProperties(["id", "duration", "color", "labelText"]),
-        true,
-      ]);
-    }
-    super.remove();
-    // this way it only happens when a group has removed not all removes
-    undoStorage.push([
-      "deleted group",
-      this.id,
-      this.getProperties(["id", "duration"]),
-    ]);
   }
 
   /**
@@ -2329,8 +2345,6 @@ var Face = class Face extends TreeItem {
       renamable,
       assocWith,
     });
-
-    Face.byId[id] = this;
 
     // rel="noopener noreferrer" is there to avoid tab nabbing
     this.linkButton = htmlToElement(

@@ -3,7 +3,7 @@ import globals from "./globals.js";
 import { Group, Segment, PeaksGroup, Face } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
-import { undoStorage } from "./UndoRedo.js";
+import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
 import {
   arrayMean,
   objectMap,
@@ -13,14 +13,7 @@ import {
   ResponseError,
   checkResponseStatus,
 } from "./util.js";
-import {
-  zoomInIcon,
-  zoomOutIcon,
-  undoIcon,
-  redoIcon,
-  saveIcon,
-  settingsIcon,
-} from "./icon.js";
+import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
 
 // make tree and viewer columns resizable
 Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
@@ -30,7 +23,6 @@ const user = globals.user;
 const filename = globals.filename;
 const basename = globals.basename;
 const media = globals.media;
-// const redoStorage = globals.redoStorage;
 
 // TODO: if this does what I assume it does, it can
 //       probably be moved to Segment as a property
@@ -283,11 +275,6 @@ const zoomOut = document.getElementById("zoomout");
 zoomIn.innerHTML = zoomInIcon;
 zoomOut.innerHTML = zoomOutIcon;
 
-const undoButton = document.getElementById("undo");
-const redoButton = document.getElementById("redo");
-undoButton.innerHTML = undoIcon;
-redoButton.innerHTML = redoIcon;
-
 const saveButton = document.getElementById("save");
 saveButton.innerHTML = saveIcon;
 
@@ -322,7 +309,7 @@ zoomOut.addEventListener("click", function () {
  */
 const addLabel = (input) => {
   if (input.value != "") {
-    new PeaksGroup(input.value, {
+    const label = new PeaksGroup(input.value, {
       parent: labeled,
       removable: true,
       renamable: true,
@@ -330,6 +317,7 @@ const addLabel = (input) => {
       colorable: true,
       copyTo: ["Labeled"],
     });
+    undoStorage.push(new Actions.AddAction(label));
     input.value = ""; // clear text box after submitting
     labeled.open(); // open labeled in tree to show newly added label
   }
@@ -351,40 +339,31 @@ document
 // counts number of custom segments added, used for custom segment's labelText
 let segmentCounter = 1;
 const audioDuration = peaks.player.getDuration();
-document
-  .querySelector('button[data-action="add-segment"]')
-  .addEventListener("click", function () {
-    const label = "Custom Segment " + segmentCounter++;
-    const curTime = peaks.player.getCurrentTime();
-    // endTime is either 2.5 seconds after current time
-    // or the end of the audio (whichever's shortest)
-    // if endTime > audioDuration, drag handle for changing
-    // segment's endTime is off screen and unusable
-    const endTime =
-      curTime + 2.5 > audioDuration ? audioDuration : curTime + 2.5;
-    let segment = {
-      startTime: curTime,
-      endTime: endTime,
-      labelText: label,
-      editable: true,
-      treeText: label,
-    };
-    segment = peaks.segments.add(segment);
-    const seg = new Segment(segment, {
-      parent: custom,
-      removable: true,
-      renamable: true,
-      moveTo: ["Labeled"],
-    });
-    undoStorage.push([
-      "added segment",
-      segment,
-      seg.getProperties(["id", "duration", "color", "labelText"]),
-    ]);
-    // redoStorage.length = 0;  // clear redos
-    custom.sort("startTime");
-    custom.open(); // open custom in tree to show newly added segment
+document.getElementById("add-segment").addEventListener("click", function () {
+  const label = "Custom Segment " + segmentCounter++;
+  const curTime = peaks.player.getCurrentTime();
+  // endTime is either 2.5 seconds after current time
+  // or the end of the audio (whichever's shortest)
+  // if endTime > audioDuration, drag handle for changing
+  // segment's endTime is off screen and unusable
+  const endTime = curTime + 2.5 > audioDuration ? audioDuration : curTime + 2.5;
+  let segment = {
+    startTime: curTime,
+    endTime: endTime,
+    labelText: label,
+    editable: true,
+    treeText: label,
+  };
+  segment = peaks.segments.add(segment);
+  const seg = new Segment(segment, {
+    parent: custom,
+    removable: true,
+    renamable: true,
+    moveTo: ["Labeled"],
   });
+  undoStorage.push(new Actions.AddAction(seg));
+  custom.open(); // open custom in tree to show newly added segment
+});
 
 const notes = document.getElementById("notes");
 
@@ -461,39 +440,18 @@ fetch("load", {
   .catch((error) => console.error(error)); // catch err thrown by res if any
 
 peaks.on("segments.dragstart", function (event) {
-  undoStorage.push([
-    "dragged",
-    event.segment.id,
-    event.segment.endTime,
-    event.segment.startTime,
-  ]);
-  // redoStorage.length = 0;  // clear redos
+  const segment = Segment.byId[event.segment.id];
+  const oldStartTime = segment.startTime;
+  const oldEndTime = segment.endTime;
+  // add event listener each time so that we can reference the
+  // old times to create a DragSegmentAction since at dragend,
+  // the segment will have the new start and end times
+  peaks.once("segments.dragend", () =>
+    undoStorage.push(
+      new Actions.DragSegmentAction(segment, oldStartTime, oldEndTime)
+    )
+  );
 });
-
-peaks.on("segments.dragend", function (event) {
-  const id = event.segment.id;
-  Segment.byId[id].updateDuration();
-});
-
-// arrow function so that in undo(), `this` refers to undoStorage and not undoButton
-undoButton.addEventListener("click", () => undoStorage.undo());
-// document.querySelector('button[data-action="undo"]').addEventListener('click', undo);
-
-// document.querySelector('button[data-action="redo"]')
-//   .addEventListener('click', function () {
-//     if (redoStorage.length != 0){
-//         console.log(redoStorage);
-//         let redoThing = redoStorage.pop();
-//         if (redoThing[0] == "added segment") {
-//             undoStorage.push(redoThing);
-//             // unpack undoThing (ignoring first element)
-//             const [, peaksSegment, options] = redoThing;
-//             Object.assign(options, { parent: TreeItem.byId[options.path.at(-1)] });
-//             const segment = new Segment(peaks.segments.add(peaksSegment), options);
-//             segment.parent.sort("startTime");
-//         }
-//     }
-// });
 
 const recurseGetSegments = (group) => {
   if (group instanceof PeaksGroup) {
@@ -645,7 +603,7 @@ window.addEventListener("keydown", function (event) {
     } else if (event.key == "z") {
       if (event.shiftKey) {
         // ctrl + shift + z is redo shortcut
-        console.log("ctrl + shift + z");
+        redoStorage.redo();
         event.preventDefault();
       } else {
         // ctrl + z is undo shortcut
@@ -654,7 +612,7 @@ window.addEventListener("keydown", function (event) {
       }
     } else if (event.key == "y") {
       // ctrl + y is redo shortcut
-      console.log("ctrl + y");
+      redoStorage.redo();
       event.preventDefault();
     }
   }
