@@ -115,7 +115,8 @@ var TreeItem = class TreeItem {
    * @static
    */
   static exists(id) {
-    return id in TreeItem.byId;
+    // in a static method, `this` refers to the class, e.g. TreeItem
+    return id in this.byId;
   }
 
   /**
@@ -315,13 +316,8 @@ var TreeItem = class TreeItem {
       assocWith = null,
     } = {}
   ) {
-    if (TreeItem.exists(id)) {
-      throw new Error(`A TreeItem with the id ${id} already exists`);
-    }
-
-    TreeItem.byId[id] = this;
-
     this.id = id;
+    this.addToById();
 
     this.#text = text || id;
     this.playable = playable;
@@ -342,8 +338,24 @@ var TreeItem = class TreeItem {
     }
 
     if (children) {
-      this.addChildren(children);
+      this.addChildren(...children);
     }
+  }
+
+  // https://stackoverflow.com/a/68374307
+  /**
+   * Gets every constructor used to construct `this`.
+   * In other words, gets `this`' class and all of its superclasses.
+   * @return {!Array.<Object>} The constructors of `this`.
+   */
+  get constructors() {
+    const result = [];
+    let next = Object.getPrototypeOf(this);
+    while (next.constructor.name !== "Object") {
+      result.push(next.constructor);
+      next = Object.getPrototypeOf(next);
+    }
+    return result;
   }
 
   /**
@@ -452,6 +464,12 @@ var TreeItem = class TreeItem {
   removeChildren(...children) {
     // FIXME: make ids a Set??
     const ids = children.map((child) => child.id);
+    children.forEach((child) => {
+      child.#parent = null;
+      if (this.playable && child.playable) {
+        this.updateDuration(-child.duration);
+      }
+    });
     this.children = this.children.filter((child) => !ids.includes(child.id));
   }
 
@@ -460,6 +478,10 @@ var TreeItem = class TreeItem {
    * This also sets `this.playable` to `true` and `this.duration` to 0.
    */
   makePlayable() {
+    if (this.playButton && this.loopButton && this.pauseButton) {
+      return; // this item has already been made playable
+    }
+
     this.playable = true;
     this.duration = 0;
 
@@ -490,6 +512,10 @@ var TreeItem = class TreeItem {
    * This also sets `this.removable` to `true`.
    */
   makeRemovable() {
+    if (this.removeButton) {
+      return; // this item has already been made removable
+    }
+
     this.removable = true;
 
     this.removeButton = htmlToElement(
@@ -612,6 +638,24 @@ var TreeItem = class TreeItem {
   }
 
   /**
+   * Adds this item's id to its class' and all of its superclasses' `byId` fields.
+   * @throws {Error} If a `TreeItem` with `id` already exists in `byId`.
+   */
+  addToById() {
+    if (TreeItem.exists(this.id)) {
+      throw new Error(`A TreeItem with the id ${this.id} already exists.`);
+    }
+    this.constructors.forEach((ctor) => (ctor.byId[this.id] = this));
+  }
+
+  /**
+   * Removes this item's id from its class' and all of its superclasses' `byId` fields.
+   */
+  removeFromById() {
+    this.constructors.forEach((ctor) => delete ctor.byId[this.id]);
+  }
+
+  /**
    * Removes this item and all of its children from the tree.
    * @throws {Error} If this item cannot be removed.
    */
@@ -621,15 +665,29 @@ var TreeItem = class TreeItem {
     }
 
     this.li.remove();
-    delete TreeItem.byId[this.id];
-    // removes from subclasses byId, i.e. Group.byId
-    delete this.constructor.byId[this.id];
+    this.removeFromById();
     this.children.forEach(function (child) {
       child.remove();
     });
     if (this.parent) {
       // TODO: make children a set of item or map of id to item
       this.parent.removeChildren(this);
+    }
+  }
+
+  /**
+   * Readds this item.
+   * To be specific, adds this item to `byId` and `parent` if not `null`. If `parent`
+   * is `null` and `this.parent` isn't, `this.parent` is used instead. Otherwise, if
+   * both are `null`, this item isn't added to any parent.
+   * @param {?TreeItem} parent - The `TreeItem` to add this item to, if any.
+   */
+  readd(parent = null) {
+    this.addToById(); // will throw an error if one already exists !
+    if (parent !== null) {
+      parent.addChildren(this);
+    } else if (this.parent !== null) {
+      this.parent.addChildren(this);
     }
   }
 
@@ -643,18 +701,16 @@ var TreeItem = class TreeItem {
     if (!this.renamable) {
       throw new Error(`TreeItem ${this.id} is not renamable.`);
     }
+    // check even though it's checked in addToById because otherwise if
+    // that throws an error, removeFromById will still have already run
     if (TreeItem.exists(newId)) {
       throw new Error(`A TreeItem with the id ${newId} already exists`);
     }
     // delete the old name from the byId objects
-    delete TreeItem.byId[this.id];
-    // removes from subclasses byId, i.e. Group.byId
-    delete this.constructor.byId[this.id];
-    // add the new name to the byId objects
-    TreeItem.byId[newId] = this;
-    // adds this to subclasses byId, i.e. Group.byId
-    this.constructor.byId[newId] = this;
+    this.removeFromById();
     this.id = newId;
+    // add the new name to the byId objects
+    this.addToById();
     this.text = newId;
   }
 
