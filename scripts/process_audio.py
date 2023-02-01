@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import pathlib
+import subprocess
 import time
 
 import librosa
@@ -325,13 +326,19 @@ def process_audio(
     else:  # create the waveform
         # audiowaveform requires an audio file, so
         # convert to wav if the file is a video file
-        if path.suffix.casefold() in VIDEO_FILES:
-            vprint(f"Creating {new_path}")
-            util.ffmpeg(old_path, new_path, verbose)
-            path = new_path
-            made_wav = True
-        vprint(f"Creating {waveform_path}")
-        util.audiowaveform(path, waveform_path, verbose, split_channels)
+        try:
+            if path.suffix.casefold() in VIDEO_FILES:
+                vprint(f"Creating {new_path}")
+                util.ffmpeg(old_path, new_path, verbose)
+                path = new_path
+                made_wav = True
+            vprint(f"Creating {waveform_path}")
+            util.audiowaveform(path, waveform_path, verbose, split_channels)
+        # if a video file has no audio it will throw an error trying to make
+        # an audiowaveform, but we want to continue execution so other files
+        # can have their audio processed
+        except subprocess.CalledProcessError:
+            print("This file has no audio to process so no waveform was made")
 
     if segs_path.exists() and not reprocess:
         vprint(
@@ -343,25 +350,31 @@ def process_audio(
         # if we didn't need to make the waveform, the file might still not be a wav file
         # we could move this conversion to the first if statement that defines old_path
         # and new_path, but that might waste time if the file doesn't need processed
-        if path.suffix.casefold() != ".wav":
-            vprint(f"Creating {new_path}")
-            util.ffmpeg(old_path, new_path, verbose)
-            path = new_path
-            made_wav = True
+        try:
+            if path.suffix.casefold() != ".wav":
+                vprint(f"Creating {new_path}")
+                util.ffmpeg(old_path, new_path, verbose)
+                path = new_path
+                made_wav = True
 
-        samples, sr = librosa.load(path, sr=None)
-        duration = librosa.get_duration(y=samples, sr=sr)
+            samples, sr = librosa.load(path, sr=None)
+            duration = librosa.get_duration(y=samples, sr=sr)
 
-        segs = []
-        segs.append(
-            get_diarization(path, auth_token, samples, sr, verbose, speaker_numbers)
-        )
-        segs.extend(get_vad(path, auth_token, duration, verbose))
+            segs = []
+            segs.append(
+                get_diarization(path, auth_token, samples, sr, verbose, speaker_numbers)
+            )
+            segs.extend(get_vad(path, auth_token, duration, verbose))
 
-        # save the segments
-        vprint(f"Creating {segs_path}")
-        with segs_path.open("w") as segs_file:
-            json.dump(segs, segs_file)
+            # save the segments
+            vprint(f"Creating {segs_path}")
+            with segs_path.open("w") as segs_file:
+                json.dump(segs, segs_file)
+        # if a video file has no audio it will throw an error trying to make
+        # segments, but we want to continue execution so other files
+        # can have their audio processed
+        except subprocess.CalledProcessError:
+            print("This file has no audio to process so no segments were made")
 
     # if we converted to wav, remove that wav file
     # (since it was only needed for the pipelines)
