@@ -351,40 +351,29 @@ document
 // counts number of custom segments added, used for custom segment's labelText
 let segmentCounter = 1;
 const audioDuration = peaks.player.getDuration();
-document
-  .querySelector('button[data-action="add-segment"]')
-  .addEventListener("click", function () {
-    const label = "Custom Segment " + segmentCounter++;
-    const curTime = peaks.player.getCurrentTime();
-    // endTime is either 2.5 seconds after current time
-    // or the end of the audio (whichever's shortest)
-    // if endTime > audioDuration, drag handle for changing
-    // segment's endTime is off screen and unusable
-    const endTime =
-      curTime + 2.5 > audioDuration ? audioDuration : curTime + 2.5;
-    let segment = {
-      startTime: curTime,
-      endTime: endTime,
-      labelText: label,
-      editable: true,
-      treeText: label,
-    };
-    segment = peaks.segments.add(segment);
-    const seg = new Segment(segment, {
-      parent: custom,
-      removable: true,
-      renamable: true,
-      moveTo: ["Labeled"],
-    });
-    undoStorage.push([
-      "added segment",
-      segment,
-      seg.getProperties(["id", "duration", "color", "labelText"]),
-    ]);
-    // redoStorage.length = 0;  // clear redos
-    custom.sort("startTime");
-    custom.open(); // open custom in tree to show newly added segment
+document.getElementById("add-segment").addEventListener("click", function () {
+  const label = "Custom Segment " + segmentCounter++;
+  const curTime = peaks.player.getCurrentTime();
+  // endTime is either 2.5 seconds after current time
+  // or the end of the audio (whichever's shortest)
+  // if endTime > audioDuration, drag handle for changing
+  // segment's endTime is off screen and unusable
+  const endTime = curTime + 2.5 > audioDuration ? audioDuration : curTime + 2.5;
+  let segment = {
+    startTime: curTime,
+    endTime: endTime,
+    labelText: label,
+    editable: true,
+    treeText: label,
+  };
+  segment = peaks.segments.add(segment);
+  new Segment(segment, {
+    parent: custom,
+    removable: true,
+    renamable: true,
+    moveTo: ["Labeled"],
   });
+});
 
 const notes = document.getElementById("notes");
 
