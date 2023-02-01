@@ -1034,9 +1034,11 @@ var Popup = class Popup {
     }
     if (
       this.renameDiv ||
-      !this?.moveDiv?.hidden ||
-      !this?.copyDiv?.hidden ||
-      !this?.assocDiv?.hidden ||
+      // can't use !this?.moveDiv?.hidden because if moveDiv is
+      // undefined, it'll evalute to true (!undefined == true)
+      (this.moveDiv && !this.moveDiv.hidden) ||
+      (this.copyDiv && !this.copyDiv.hidden) ||
+      (this.assocDiv && !this.assocDiv.hidden) ||
       this.colorDiv
     ) {
       this.popup.style.display = "block";
