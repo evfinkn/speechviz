@@ -4,7 +4,9 @@ import os
 from cluster_faces import main as cluster
 from encode_faces import main as encode
 
-parser = argparse.ArgumentParser(description="Process audio files.")
+parser = argparse.ArgumentParser(
+    description="Encode and cluster faces with just images"
+)
 # encode face args
 parser.add_argument(
     "-i",
