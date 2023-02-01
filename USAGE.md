@@ -91,7 +91,7 @@ ffmpeg -i input.mp3 -ar 16000 -ac 1 -c:a pcm_s16le converted.wav
 # transcribe the audio file
 scripts/transcribe -ml 1 \
     -m scripts/models/whisper-base.en.bin \
-    -f converted.wav
+    -f data/audio/converted.wav
 ```
 
 This requires the audio file to be `data/audio`. The transcription file is output
