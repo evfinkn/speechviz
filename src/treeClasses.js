@@ -15,7 +15,7 @@
 
 import Picker from "vanilla-picker";
 import globals from "./globals.js";
-import { undoStorage } from "./UndoRedo.js";
+import { undoStorage, Actions } from "./UndoRedo.js";
 import {
   htmlToElement,
   sortByProp,
@@ -522,7 +522,7 @@ var TreeItem = class TreeItem {
       `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`
     );
     this.removeButton.addEventListener("click", () => {
-      this.remove();
+      undoStorage.push(new Actions.RemoveAction(this));
     });
     // this puts the remove button after any other buttons
     this.nested.before(this.removeButton);
@@ -926,10 +926,9 @@ var Popup = class Popup {
       renameDiv.append(renameInput);
       renameInput.addEventListener("keypress", (event) => {
         if (event.key === "Enter") {
-          const oldText = treeItem.text;
-          treeItem.rename(renameInput.value);
-          this.text = renameInput.value;
-          undoStorage.push(["renamed", treeItem.id, oldText]);
+          undoStorage.push(
+            new Actions.RenameAction(treeItem, renameInput.value)
+          );
           this.hide();
         }
       });
@@ -1146,10 +1145,7 @@ var Popup = class Popup {
     this.moveDiv.append(radioDiv);
 
     radioButton.addEventListener("change", () => {
-      undoStorage.push(["moved", this.treeItem.id, this.treeItem.parent.id]);
-      dest.addChildren(this.treeItem);
-      dest.sort("startTime");
-      dest.open();
+      undoStorage.push(new Actions.MoveAction(this.treeItem, dest));
       radioButton.checked = false;
       this.hide();
     });
@@ -1171,13 +1167,9 @@ var Popup = class Popup {
     this.copyDiv.append(radioDiv);
 
     radioButton.addEventListener("change", () => {
-      let copied = this.treeItem.copy(dest);
+      const copied = this.treeItem.copy(dest);
       if (copied) {
-        if (!Array.isArray(copied)) {
-          copied = [copied];
-        }
-        copied = copied.map((copy) => copy.id);
-        undoStorage.push(["copied", copied]);
+        undoStorage.push(new Actions.CopyAction(copied));
         dest.sort("startTime");
       }
       dest.open();
@@ -1555,7 +1547,6 @@ var PeaksItem = class PeaksItem extends TreeItem {
     });
     this.peaksItem = peaksItem;
     this.type = peaksItem.constructor.name === "Segment" ? "Segment" : "Point";
-    PeaksItem.byId[peaksItem.id] = this;
 
     this.render();
     parent.addChildren(this);
@@ -1685,10 +1676,19 @@ var PeaksItem = class PeaksItem extends TreeItem {
     if (this.parent.visible.has(this)) {
       this.#removeFromPeaks();
     }
-    this.parent.visible.delete(this);
-    this.parent.hidden.delete(this);
-
     super.remove();
+  }
+
+  /**
+   * Readds this item.
+   * To be specific, adds this item to `byId`, to Peaks, and to `parent` if not
+   * `null`. If `parent` is `null` and `this.parent` isn't, `this.parent` is used
+   * instead. Otherwise, if both are `null`, this item isn't added to any parent.
+   * @param {?PeaksGroup} parent - The `PeaksGroup` to add this item to, if any.
+   */
+  readd(parent = null) {
+    this.#addToPeaks();
+    super.readd(parent);
   }
 
   // FIXME: make all rename methods throw error
@@ -1870,23 +1870,6 @@ var Segment = class Segment extends PeaksItem {
   get treeText() {
     return this.text;
   } // backwards compatibility (database expects 'treeText')
-
-  // FIXME: move undo back to remove() and get rid of this method
-  render() {
-    super.render();
-    if (this.removeButton) {
-      this.removeButton.addEventListener("click", () => {
-        // false at end of undo signals that the "deleted segment"
-        // was NOT deleted as part of a "deleted group"
-        undoStorage.push([
-          "deleted segment",
-          this.segment,
-          this.getProperties(["id", "duration", "color", "labelText"]),
-          false,
-        ]);
-      });
-    }
-  }
 
   /** Updates `duration` using this segment's start and end times. */
   updateDuration() {
@@ -2188,30 +2171,6 @@ var PeaksGroup = class PeaksGroup extends Group {
     } else {
       super.updateSpanTitle();
     } // if group doesn't have snr, uses default span title
-  }
-
-  /** Removes this group and all of its items from the tree and Peaks waveform. */
-  remove() {
-    if (!this.removable) {
-      throw new Error(`PeaksGroup ${this.id} is not removable.`);
-    }
-    for (var kid of this.children) {
-      // true at end of undo signals that the "deleted segment"
-      // was deleted as part of a "deleted group"
-      undoStorage.push([
-        "deleted segment",
-        kid.peaksItem,
-        kid.getProperties(["id", "duration", "color", "labelText"]),
-        true,
-      ]);
-    }
-    super.remove();
-    // this way it only happens when a group has removed not all removes
-    undoStorage.push([
-      "deleted group",
-      this.id,
-      this.getProperties(["id", "duration"]),
-    ]);
   }
 
   /**
