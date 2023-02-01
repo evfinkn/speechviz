@@ -163,7 +163,7 @@ const output404OrError = (error, missing) => {
   }
 };
 
-fetch(`/segments/${basename}-segments.json`)
+const segmentLoading = fetch(`/segments/${basename}-segments.json`)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((segments) => {
@@ -185,7 +185,7 @@ fetch(`/segments/${basename}-segments.json`)
     globals.highestId = 0;
   });
 
-const faces = fetch(`/clustered-files/`)
+const facesLoading = fetch(`/clustered-files/`)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((fileList) => {
@@ -418,7 +418,8 @@ fetch("load", {
 
     async function waitForFacesThenLoad() {
       // wait for the fetching of faces from file system to finish
-      await faces;
+      await facesLoading;
+      await segmentLoading;
       // move faces to saved spot on tree
       data.faces.forEach((face) => {
         const actualFace = Face.byId["face" + face.faceNum];
