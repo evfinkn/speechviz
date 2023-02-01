@@ -1020,6 +1020,9 @@ var Popup = class Popup {
 
   /** Updates content and displays this popup. */
   show() {
+    if (this.text !== this.treeItem.text) {
+      this.text = this.treeItem.text;
+    }
     if (this.moveDiv) {
       this.updateMoveTo();
     }
