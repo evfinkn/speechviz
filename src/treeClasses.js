@@ -1194,13 +1194,7 @@ var Popup = class Popup {
     this.assocDiv.append(radioDiv);
 
     radioButton.addEventListener("change", () => {
-      // save what is associated so speaker doesn't show in popup and
-      // note what is stored where for saving face association
-      dest.faceNum = this.treeItem.id;
-      this.treeItem.speakerNum = dest.id;
-      // actually move the face to the speaker
-      dest.nested.prepend(this.treeItem.imageLi);
-      // add something to see if its clicked and delete the image if it is
+      this.treeItem.assoc(dest);
       radioButton.checked = false;
       this.hide();
     });
@@ -2386,6 +2380,17 @@ var Face = class Face extends TreeItem {
   remove() {
     super.remove();
     // add something to move folder out of cluster to a "recycle bin"
+  }
+
+  /**
+   * Associates this face with a `PeaksGroup`, displaying this face's image with the
+   * group.
+   * @param {PeaksGroup} speaker - The group to send this face's image to.
+   */
+  assoc(speaker) {
+    this.speakerNum = speaker.id;
+    speaker.faceNum = this.id;
+    speaker.nested.before(this.imageLi);
   }
 
   /**
