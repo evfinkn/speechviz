@@ -1260,11 +1260,11 @@ var Group = class Group extends TreeItem {
       text = null,
       playable = false,
       removable = false,
+      moveTo = null,
+      copyTo = null,
     } = {}
   ) {
-    super(id, { parent, children, text, playable, removable });
-
-    Group.byId[id] = this;
+    super(id, { parent, children, text, playable, removable, moveTo, copyTo });
   }
 
   /** Sets the CSS styling of the group's elements. */
@@ -1680,7 +1680,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
     this.checkbox.style.transform = "scale(0.85)";
   }
 
-  /** Removes this segment from the tree and Peaks waveform. */
+  /** Removes this segment / point from the tree and Peaks waveform. */
   remove() {
     if (this.parent.visible.has(this)) {
       this.#removeFromPeaks();
@@ -1824,7 +1824,6 @@ var Segment = class Segment extends PeaksItem {
       moveTo,
       copyTo,
     });
-    Segment.byId[segment.id] = this;
 
     this.updateDuration();
 
@@ -2109,7 +2108,6 @@ var PeaksGroup = class PeaksGroup extends Group {
       copyTo,
     });
 
-    PeaksGroup.byId[id] = this;
     this.snr = snr;
     if (children) {
       this.sort("startTime");
@@ -2151,9 +2149,6 @@ var PeaksGroup = class PeaksGroup extends Group {
       this.#color = children[0].color;
     }
     for (const child of children) {
-      if (child.parent) {
-        child.parent.removeChildren(child);
-      }
       super.addChildren(child);
 
       child.update({ color: this.#color });
@@ -2169,6 +2164,7 @@ var PeaksGroup = class PeaksGroup extends Group {
         this.hidden.add(child);
       }
     }
+    this.sort("startTime");
   }
 
   /**
@@ -2179,7 +2175,7 @@ var PeaksGroup = class PeaksGroup extends Group {
     for (const child of children) {
       this.visible.delete(child);
       this.hidden.delete(child);
-      super.removeChildren(children);
+      super.removeChildren(child);
     }
   }
 
@@ -2390,8 +2386,6 @@ var Face = class Face extends TreeItem {
       renamable,
       assocWith,
     });
-
-    Face.byId[id] = this;
 
     // rel="noopener noreferrer" is there to avoid tab nabbing
     this.linkButton = htmlToElement(
