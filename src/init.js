@@ -424,12 +424,7 @@ fetch("load", {
       data.faces.forEach((face) => {
         const actualFace = Face.byId["face" + face.faceNum];
         const actualSpeaker = PeaksGroup.byId["Speaker " + face.speaker];
-        actualFace.speakerNum = "Speaker " + face.speaker;
-        actualSpeaker.faceNum = "face" + face.faceNum;
-        actualSpeaker.li.insertBefore(
-          actualFace.li.children[4].firstElementChild,
-          actualSpeaker.li.children[4]
-        );
+        actualFace.assoc(actualSpeaker);
       });
     }
     waitForFacesThenLoad();

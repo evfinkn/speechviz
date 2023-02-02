@@ -165,23 +165,15 @@ const MoveAction = class MoveAction {
     this.item = item;
     this.oldParent = item.parent;
     this.newParent = newParent;
-    this.#move(this.newParent);
-  }
-
-  #move(dest) {
-    dest.addChildren(this.item);
-    if (dest.playable) {
-      dest.sort("startTime");
-    }
-    dest.open();
+    item.move(newParent);
   }
 
   undo() {
-    this.#move(this.oldParent);
+    this.item.move(this.oldParent);
   }
 
   redo() {
-    this.#move(this.newParent);
+    this.item.move(this.newParent);
   }
 };
 
@@ -262,7 +254,47 @@ const DragSegmentAction = class DraggedSegmentAction {
   }
 };
 
-// const ColorAction = class ColorAction {};
+// FIXME: this doesn't get triggered when unassociating a saved face
+//        so figure out a good way to do that
+const AssociateAction = class AssociateAction {
+  /** @type {!Face} */ face;
+  /** @type {!PeaksGroup} */ speaker;
+
+  constructor(face, speaker) {
+    this.face = face;
+    this.speaker = speaker;
+    face.assoc(speaker);
+  }
+
+  undo() {
+    this.face.unassoc();
+  }
+
+  redo() {
+    this.face.assoc(this.speaker);
+  }
+};
+
+const ColorAction = class ColorAction {
+  /** @type {!TreeItem} */ item;
+  /** @type {!Color} */ oldColor;
+  /** @type {!Color} */ newColor;
+
+  constructor(item, newColor) {
+    this.item = item;
+    this.oldColor = item.color;
+    this.newColor = newColor;
+    item.color = newColor;
+  }
+
+  undo() {
+    this.item.color = this.oldColor;
+  }
+
+  redo() {
+    this.item.color = this.newColor;
+  }
+};
 
 /**
  * An enum containing every type of `Action`.
@@ -275,6 +307,8 @@ const Actions = {
   CopyAction,
   RenameAction,
   DragSegmentAction,
+  AssociateAction,
+  ColorAction,
 };
 
 export { undoStorage, redoStorage, Actions };

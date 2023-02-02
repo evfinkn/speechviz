@@ -692,6 +692,19 @@ var TreeItem = class TreeItem {
   }
 
   /**
+   * Moves this tree item to another item's nested content.
+   * @param {!TreeItem} to - Where to move this item to.
+   * @param {boolean} [open=true] - Whether to open `to`'s nested content after moving
+   *      this item to it.
+   */
+  move(to, open = true) {
+    to.addChildren(this);
+    if (open) {
+      to.open();
+    }
+  }
+
+  /**
    * Renames this item, replacing its id and text in the tree.
    * @param {string} newId - The new id to give this item.
    * @throws {Error} If this item cannot be renamed.
@@ -971,7 +984,9 @@ var Popup = class Popup {
       });
       this.colorPicker = colorPicker;
       colorPicker.onDone = (color) => {
-        treeItem.color = color.hex.substring(0, 7);
+        undoStorage.push(
+          new Actions.ColorAction(treeItem, color.hex.substring(0, 7))
+        );
         this.hide();
       };
 
@@ -982,7 +997,7 @@ var Popup = class Popup {
       colorDiv.append(randomColorButton);
       randomColorButton.addEventListener("click", () => {
         const randomColor = getRandomColor();
-        treeItem.color = randomColor;
+        undoStorage.push(new Actions.ColorAction(treeItem, randomColor));
         this.colorPicker.setColor(randomColor, true);
       });
 
@@ -1131,8 +1146,8 @@ var Popup = class Popup {
 
   /**
    * Adds a radio button used to move `treeItem`.
-   * @param {string} destId - The id of the `TreeItem` to move `treeItem` to
-   *      when the radio button is clicked.
+   * @param {!TreeItem} dest - The `TreeItem` to move `treeItem` to when the radio
+   *      button is clicked.
    */
   addMoveRadio(dest) {
     const radioDiv = htmlToElement(
@@ -1153,8 +1168,8 @@ var Popup = class Popup {
 
   /**
    * Adds a radio button used to copy `treeItem`.
-   * @param {string} destId - The id of the `TreeItem` to copy `treeItem` to
-   *      when the radio button is clicked.
+   * @param {!TreeItem} dest - The `TreeItem` to copy `treeItem` to when the radio
+   *      button is clicked.
    */
   addCopyRadio(dest) {
     const radioDiv = htmlToElement(
@@ -1180,7 +1195,7 @@ var Popup = class Popup {
 
   /**
    * Adds a radio button used to associate the `Face` with a `TreeItem`.
-   * @param {TreeItem} dest - The `TreeItem` to associate the `Face` to
+   * @param {!TreeItem} dest - The `TreeItem` to associate the `Face` to
    *      when the radio button is clicked.
    */
   addAssocRadio(dest) {
@@ -1194,13 +1209,7 @@ var Popup = class Popup {
     this.assocDiv.append(radioDiv);
 
     radioButton.addEventListener("change", () => {
-      // save what is associated so speaker doesn't show in popup and
-      // note what is stored where for saving face association
-      dest.faceNum = this.treeItem.id;
-      this.treeItem.speakerNum = dest.id;
-      // actually move the face to the speaker
-      dest.nested.prepend(this.treeItem.imageLi);
-      // add something to see if its clicked and delete the image if it is
+      undoStorage.push(new Actions.AssociateAction(this.treeItem, dest));
       radioButton.checked = false;
       this.hide();
     });
@@ -2365,12 +2374,7 @@ var Face = class Face extends TreeItem {
     );
     // store previous html of image to reset its position when the image is clicked
     this.imageLi.addEventListener("click", () => {
-      this.nested.appendChild(this.imageLi);
-      if (this.speakerNum !== null) {
-        PeaksGroup.byId[this.speakerNum].faceNum = null;
-        // reset speaker number because it has no speaker
-        this.speakerNum = null;
-      }
+      this.unassoc();
     });
     this.nested.appendChild(this.imageLi);
     this.popup = new Popup(this);
@@ -2386,6 +2390,31 @@ var Face = class Face extends TreeItem {
   remove() {
     super.remove();
     // add something to move folder out of cluster to a "recycle bin"
+  }
+
+  /**
+   * Associates this face with a `PeaksGroup`, displaying this face's image with the
+   * group.
+   * @param {PeaksGroup} speaker - The group to send this face's image to.
+   */
+  assoc(speaker) {
+    this.speakerNum = speaker.id;
+    speaker.faceNum = this.id;
+    speaker.nested.before(this.imageLi);
+  }
+
+  /**
+   * Unassociates this face from its `PeaksGroup` (if any), moving its image back
+   * to this face's tree item.
+   */
+  unassoc() {
+    this.nested.appendChild(this.imageLi);
+    if (this.speakerNum !== null) {
+      // TODO: Blake, is setting face on the PeaksGroup necessary? Just asking
+      //       because I don't think PeaksGroup needs to know anything about Face
+      PeaksGroup.byId[this.speakerNum].faceNum = null;
+      this.speakerNum = null;
+    }
   }
 
   /**

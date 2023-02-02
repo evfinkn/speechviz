@@ -20,9 +20,9 @@ const setUser = function (newUser) {
  */
 const openViz = function (fileName, type, user = null) {
   if (user !== null) {
-    window.location.replace(`/viz?user=${user}file=${fileName}&type=${type}`);
+    window.location.assign(`/viz?user=${user}file=${fileName}&type=${type}`);
   } else {
-    window.location.replace(`/viz?file=${fileName}&type=${type}`);
+    window.location.assign(`/viz?file=${fileName}&type=${type}`);
   }
 };
 
@@ -98,6 +98,9 @@ fetch("/filelist")
         // add radio buttons for each audio file
         const div = createRadioDiv(fileName, "file-selection");
         div.firstElementChild.addEventListener("change", function () {
+          // uncheck manually because otherwise after using back button to go
+          // back to this page, the radio button will still be checked
+          this.checked = false;
           openViz(this.value, "audio", user);
         });
         fieldset.append(div);
@@ -115,10 +118,14 @@ fetch("/filelist")
         // add radio buttons for each video file
         const div = createRadioDiv(fileName, "file-selection");
         div.firstElementChild.addEventListener("change", function () {
+          this.checked = false;
           openViz(this.value, "video", user);
         });
         fieldset.append(div);
       });
+
+      // add separation between video and clustered sections
+      fieldset.append(document.createElement("br"));
     }
 
     if (clusterfolders?.length !== 0) {
@@ -128,9 +135,10 @@ fetch("/filelist")
         // folderName matches corresponding video fileName, so give it a different id
         const div = createRadioDiv(folderName + " Clusters", "file-selection");
         div.firstElementChild.addEventListener("change", function () {
+          this.checked = false;
           // when radio button clicked, show each cluster folder to choose which to view
           // remove its different id, go to correct folder
-          window.location.replace(
+          window.location.assign(
             `/clustered-faces?${user ? "user=" + user + "&" : ""}` +
               `dir=${this.value.replace(" Clusters", "")}` +
               `&inFaceFolder=false`
