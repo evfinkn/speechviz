@@ -35,7 +35,6 @@ time = []
 
 with open(args["input"]) as csvfile:
     reader = csv.reader(csvfile, delimiter=",")
-    writer = csv.writer(csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL)
     i = 0
     for row in reader:
         if i != 0:
