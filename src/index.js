@@ -20,9 +20,9 @@ const setUser = function (newUser) {
  */
 const openViz = function (fileName, type, user = null) {
   if (user !== null) {
-    window.location.replace(`/viz?user=${user}file=${fileName}&type=${type}`);
+    window.location.assign(`/viz?user=${user}file=${fileName}&type=${type}`);
   } else {
-    window.location.replace(`/viz?file=${fileName}&type=${type}`);
+    window.location.assign(`/viz?file=${fileName}&type=${type}`);
   }
 };
 
@@ -130,7 +130,7 @@ fetch("/filelist")
         div.firstElementChild.addEventListener("change", function () {
           // when radio button clicked, show each cluster folder to choose which to view
           // remove its different id, go to correct folder
-          window.location.replace(
+          window.location.assign(
             `/clustered-faces?${user ? "user=" + user + "&" : ""}` +
               `dir=${this.value.replace(" Clusters", "")}` +
               `&inFaceFolder=false`
