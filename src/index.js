@@ -98,6 +98,9 @@ fetch("/filelist")
         // add radio buttons for each audio file
         const div = createRadioDiv(fileName, "file-selection");
         div.firstElementChild.addEventListener("change", function () {
+          // uncheck manually because otherwise after using back button to go
+          // back to this page, the radio button will still be checked
+          this.checked = false;
           openViz(this.value, "audio", user);
         });
         fieldset.append(div);
@@ -115,6 +118,7 @@ fetch("/filelist")
         // add radio buttons for each video file
         const div = createRadioDiv(fileName, "file-selection");
         div.firstElementChild.addEventListener("change", function () {
+          this.checked = false;
           openViz(this.value, "video", user);
         });
         fieldset.append(div);
@@ -128,6 +132,7 @@ fetch("/filelist")
         // folderName matches corresponding video fileName, so give it a different id
         const div = createRadioDiv(folderName + " Clusters", "file-selection");
         div.firstElementChild.addEventListener("change", function () {
+          this.checked = false;
           // when radio button clicked, show each cluster folder to choose which to view
           // remove its different id, go to correct folder
           window.location.assign(
