@@ -123,6 +123,9 @@ fetch("/filelist")
         });
         fieldset.append(div);
       });
+
+      // add separation between video and clustered sections
+      fieldset.append(document.createElement("br"));
     }
 
     if (clusterfolders?.length !== 0) {
