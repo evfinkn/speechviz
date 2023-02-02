@@ -1144,8 +1144,8 @@ var Popup = class Popup {
 
   /**
    * Adds a radio button used to move `treeItem`.
-   * @param {string} destId - The id of the `TreeItem` to move `treeItem` to
-   *      when the radio button is clicked.
+   * @param {!TreeItem} dest - The `TreeItem` to move `treeItem` to when the radio
+   *      button is clicked.
    */
   addMoveRadio(dest) {
     const radioDiv = htmlToElement(
@@ -1166,8 +1166,8 @@ var Popup = class Popup {
 
   /**
    * Adds a radio button used to copy `treeItem`.
-   * @param {string} destId - The id of the `TreeItem` to copy `treeItem` to
-   *      when the radio button is clicked.
+   * @param {!TreeItem} dest - The `TreeItem` to copy `treeItem` to when the radio
+   *      button is clicked.
    */
   addCopyRadio(dest) {
     const radioDiv = htmlToElement(
@@ -1193,7 +1193,7 @@ var Popup = class Popup {
 
   /**
    * Adds a radio button used to associate the `Face` with a `TreeItem`.
-   * @param {TreeItem} dest - The `TreeItem` to associate the `Face` to
+   * @param {!TreeItem} dest - The `TreeItem` to associate the `Face` to
    *      when the radio button is clicked.
    */
   addAssocRadio(dest) {
