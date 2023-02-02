@@ -257,8 +257,8 @@ const DragSegmentAction = class DraggedSegmentAction {
 // FIXME: this doesn't get triggered when unassociating a saved face
 //        so figure out a good way to do that
 const AssociateAction = class AssociateAction {
-  /** @type {Face} */ face;
-  /** @type {PeaksGroup} */ speaker;
+  /** @type {!Face} */ face;
+  /** @type {!PeaksGroup} */ speaker;
 
   constructor(face, speaker) {
     this.face = face;
