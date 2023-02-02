@@ -984,7 +984,9 @@ var Popup = class Popup {
       });
       this.colorPicker = colorPicker;
       colorPicker.onDone = (color) => {
-        treeItem.color = color.hex.substring(0, 7);
+        undoStorage.push(
+          new Actions.ColorAction(treeItem, color.hex.substring(0, 7))
+        );
         this.hide();
       };
 
@@ -995,7 +997,7 @@ var Popup = class Popup {
       colorDiv.append(randomColorButton);
       randomColorButton.addEventListener("click", () => {
         const randomColor = getRandomColor();
-        treeItem.color = randomColor;
+        undoStorage.push(new Actions.ColorAction(treeItem, randomColor));
         this.colorPicker.setColor(randomColor, true);
       });
 

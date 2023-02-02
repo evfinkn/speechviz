@@ -275,7 +275,26 @@ const AssociateAction = class AssociateAction {
   }
 };
 
-// const ColorAction = class ColorAction {};
+const ColorAction = class ColorAction {
+  /** @type {!TreeItem} */ item;
+  /** @type {!Color} */ oldColor;
+  /** @type {!Color} */ newColor;
+
+  constructor(item, newColor) {
+    this.item = item;
+    this.oldColor = item.color;
+    this.newColor = newColor;
+    item.color = newColor;
+  }
+
+  undo() {
+    this.item.color = this.oldColor;
+  }
+
+  redo() {
+    this.item.color = this.newColor;
+  }
+};
 
 /**
  * An enum containing every type of `Action`.
@@ -289,6 +308,7 @@ const Actions = {
   RenameAction,
   DragSegmentAction,
   AssociateAction,
+  ColorAction,
 };
 
 export { undoStorage, redoStorage, Actions };
