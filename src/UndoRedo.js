@@ -165,23 +165,15 @@ const MoveAction = class MoveAction {
     this.item = item;
     this.oldParent = item.parent;
     this.newParent = newParent;
-    this.#move(this.newParent);
-  }
-
-  #move(dest) {
-    dest.addChildren(this.item);
-    if (dest.playable) {
-      dest.sort("startTime");
-    }
-    dest.open();
+    item.move(newParent);
   }
 
   undo() {
-    this.#move(this.oldParent);
+    this.item.move(this.oldParent);
   }
 
   redo() {
-    this.#move(this.newParent);
+    this.item.move(this.newParent);
   }
 };
 

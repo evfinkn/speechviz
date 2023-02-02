@@ -692,6 +692,19 @@ var TreeItem = class TreeItem {
   }
 
   /**
+   * Moves this tree item to another item's nested content.
+   * @param {!TreeItem} to - Where to move this item to.
+   * @param {boolean} [open=true] - Whether to open `to`'s nested content after moving
+   *      this item to it.
+   */
+  move(to, open = true) {
+    to.addChildren(this);
+    if (open) {
+      to.open();
+    }
+  }
+
+  /**
    * Renames this item, replacing its id and text in the tree.
    * @param {string} newId - The new id to give this item.
    * @throws {Error} If this item cannot be renamed.
