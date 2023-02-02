@@ -1194,7 +1194,7 @@ var Popup = class Popup {
     this.assocDiv.append(radioDiv);
 
     radioButton.addEventListener("change", () => {
-      this.treeItem.assoc(dest);
+      undoStorage.push(new Actions.AssociateAction(this.treeItem, dest));
       radioButton.checked = false;
       this.hide();
     });
@@ -2359,12 +2359,7 @@ var Face = class Face extends TreeItem {
     );
     // store previous html of image to reset its position when the image is clicked
     this.imageLi.addEventListener("click", () => {
-      this.nested.appendChild(this.imageLi);
-      if (this.speakerNum !== null) {
-        PeaksGroup.byId[this.speakerNum].faceNum = null;
-        // reset speaker number because it has no speaker
-        this.speakerNum = null;
-      }
+      this.unassoc();
     });
     this.nested.appendChild(this.imageLi);
     this.popup = new Popup(this);
@@ -2391,6 +2386,20 @@ var Face = class Face extends TreeItem {
     this.speakerNum = speaker.id;
     speaker.faceNum = this.id;
     speaker.nested.before(this.imageLi);
+  }
+
+  /**
+   * Unassociates this face from its `PeaksGroup` (if any), moving its image back
+   * to this face's tree item.
+   */
+  unassoc() {
+    this.nested.appendChild(this.imageLi);
+    if (this.speakerNum !== null) {
+      // TODO: Blake, is setting face on the PeaksGroup necessary? Just asking
+      //       because I don't think PeaksGroup needs to know anything about Face
+      PeaksGroup.byId[this.speakerNum].faceNum = null;
+      this.speakerNum = null;
+    }
   }
 
   /**
