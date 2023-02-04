@@ -35,7 +35,16 @@ def main(raw_args=None):
             " will be grouped as 1 face."
         ),
     )
-    ap.add_argument("-o", "--outputs", required=True)
+    ap.add_argument(
+        "-o",
+        "--outputs",
+        required=True,
+        help=(
+            "Folder the clustered faces will be output to. Should match the video name"
+            " without its extension, and be of the format data/faceClusters/videoName"
+            " or you will have to manually move it to match this"
+        ),
+    )
     args = vars(ap.parse_args(raw_args))
 
     # load the serialized face encodings + bounding box locations from
