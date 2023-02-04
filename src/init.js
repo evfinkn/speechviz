@@ -190,7 +190,7 @@ const facesLoading = fetch(`/clustered-files/`)
   .then((response) => response.json())
   .then((fileList) => {
     const clusterfolders = fileList.cluster; // folder of each found cluster
-    // name of the overal folder, same as the video shown in speechviz
+    // name of the overall folder, same as video in speechviz w/out extension
     const dir = fileList.dir;
     // default image for each of the faces to show in speechviz
     const images = fileList.images;
