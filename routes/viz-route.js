@@ -6,7 +6,8 @@ const mime = require("mime/lite");
 /* GET home page. */
 router.get("/", (req, res) => {
   const file = req.query.file;
-  req.session.dir = req.query.file; // for displaying clustered faces
+  // for displaying clustered faces
+  req.session.dir = req.query.file.replace(/\.[^/.]+$/, "");
   req.session.inFaceFolder = false;
 
   if (req.query.type === "video") {
