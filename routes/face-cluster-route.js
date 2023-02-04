@@ -5,13 +5,13 @@ const fs = require("fs");
 /* GET home page. */
 router.get("/", (req, res) => {
   var inFace = req.query.inFaceFolder == "false" ? false : true;
-  req.session.inFaceFolder = inFace; // for app.js
+  req.session.inFaceFolder = inFace; // for app.js to know what we request
 
   var faceFolder;
   if (req.query.faceFolder !== undefined) {
     // face folder changed
     faceFolder = req.query.faceFolder;
-    // for app.js get images for face folder we are in
+    // for app.js to get images, it needs to know what face folder we are in
     req.session.faceFolder = faceFolder;
   } else if (req.session.faceFolder !== undefined) {
     // keep face folder the same
@@ -20,7 +20,7 @@ router.get("/", (req, res) => {
 
   var folder;
   if (req.query.dir !== undefined) {
-    // video changed
+    // video we are looking at changed
     folder = req.query.dir;
     req.session.dir = folder;
   } else {
