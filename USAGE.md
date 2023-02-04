@@ -134,9 +134,10 @@ python3 scripts/encode_and_cluster.py \
 ```
 
 Note: It is very important that the name of the folder with images from the video
-matches the name of the video that it corresponds to. For example, if your video is
-called `video1.mp4`, the `nameOfFolderWithImages` should also be called `video1.mp4`
-before you use encode_and_cluster.py.
+matches the name of the video that it corresponds to without its extension. For example,
+if your video is called `video1.mp4`, the `nameOfFolderWithImages` should also be called
+`video1`before you use encode_and_cluster.py. If it does not match, you will have to
+manually rename the folder created to be the extensionless video name.
 
 If you want to manually just encode or just re-cluster, you can use the appropriate
 script between scripts/encode_faces.py and scripts/cluster_faces.py.
