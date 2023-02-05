@@ -3,7 +3,6 @@ body {
   font-family: "Helvetica neue", Helvetica, Arial, sans-serif;
 }
 
-#titles,
 #waveform-container {
   margin: 0px 12px;
   width: auto;
@@ -43,27 +42,10 @@ audio {
   /* margin-left: 1em; */
 }
 
-#seek-time {
-  width: 4em;
-}
-
 ul {
   margin-left: 0px;
   padding-left: 25px;
   list-style-type: none;
-}
-
-#Segments {
-  margin: 0;
-  padding: 0;
-}
-
-.nested {
-  display: none;
-}
-
-.active {
-  display: block;
 }
 
 .icon {
@@ -217,18 +199,11 @@ ul {
   width: 100%;
 }
 
-/* FIXME: I think this one's unused */
-#audio {
-  flex: 0 0 30%;
+.show,
+.active {
+  display: block;
 }
 
-/* FIXME: I think this one's unused */
-.settings-content {
-  padding-left: 8px;
+.nested {
   display: none;
-  position: absolute;
-  background-color: #f1f1f1;
-  overflow: auto;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 1;
 }
