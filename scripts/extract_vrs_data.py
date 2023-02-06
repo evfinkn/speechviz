@@ -550,7 +550,8 @@ def extract_sensor_data(
     with path.open(encoding="utf-8") as metadata_file:
         # main metadata of the file containing info about the different streams
         # the rest of the file contains data from non-audial and non-visual streams
-        metadata = load_json_with_nan(metadata_file.readline())
+        metadata_json = metadata_file.readline()
+        metadata = load_json_with_nan(metadata_json)
         # save the calibration string to use it in create_poses.py
         calib = metadata["tags"]["calib_json"]
         metadata = util.recurse_loads(metadata)
@@ -616,6 +617,8 @@ def extract_sensor_data(
     vprint("Writing files")
     write_start_time = time.perf_counter()
 
+    with open(output_dir / "vrs_info.json", "w") as info_file:
+        info_file.write(metadata_json)
     if save_calib:
         with open(output_dir / "calib.txt", "w") as calib_file:
             calib_file.write(calib)
