@@ -583,18 +583,19 @@ def extract_sensor_data(
     )
     vprint("Converting to unix timestamps")
 
-    first_device_timestamp, first_unix_timestamp = arrays["285-1"][0]
-    if not nanoseconds:
-        first_device_timestamp *= 1e-9
-        first_unix_timestamp *= 1e-9
+    if arrays.get("285-1") is not None:
+        first_device_timestamp, first_unix_timestamp = arrays["285-1"][0]
+        if not nanoseconds:
+            first_device_timestamp *= 1e-9
+            first_unix_timestamp *= 1e-9
 
-    for stream, data in arrays.items():
-        # exclude 285-1 because it's the only stream without "capture_timestamp_ns"
-        if stream != "285-1":
-            if not nanoseconds:
-                data["capture_timestamp_ns"] *= 1e-9
-            data["capture_timestamp_ns"] -= first_device_timestamp
-            data["capture_timestamp_ns"] += first_unix_timestamp
+        for stream, data in arrays.items():
+            # exclude 285-1 because it's the only stream without "capture_timestamp_ns"
+            if stream != "285-1":
+                if not nanoseconds:
+                    data["capture_timestamp_ns"] *= 1e-9
+                data["capture_timestamp_ns"] -= first_device_timestamp
+                data["capture_timestamp_ns"] += first_unix_timestamp
 
     # convert the timestamps extracted from the image filenames to unix timestamps
     for stream in VIDEO_STREAMS:
