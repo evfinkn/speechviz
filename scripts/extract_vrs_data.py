@@ -617,7 +617,7 @@ def extract_sensor_data(
     vprint("Writing files")
     write_start_time = time.perf_counter()
 
-    with open(output_dir / "vrs_info.json", "w") as info_file:
+    with open(output_dir / "vrs-info.json", "w") as info_file:
         info_file.write(metadata_json)
     if save_calib:
         with open(output_dir / "calib.txt", "w") as calib_file:
