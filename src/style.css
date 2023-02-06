@@ -199,11 +199,12 @@ ul {
   width: 100%;
 }
 
+/* .nested needs to be before .active so that .active has priority */
+.nested {
+  display: none;
+}
+
 .show,
 .active {
   display: block;
-}
-
-.nested {
-  display: none;
 }
