@@ -40,6 +40,7 @@ const UndoStorage = class UndoStorage extends Array {
     // something was taken, which means that the user now has unsaved changes
     // Therefore, remove the save indicator from the file name on the interface
     fileParagraph.innerHTML = filename;
+    globals.dirty = true;
   }
 
   // TODO: make Action / Change classes for each undo that handles that specific undo

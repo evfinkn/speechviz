@@ -34,6 +34,7 @@ if (!user) {
  *      equal to the logged-in user, unless "admin" is logged-in (since the admin can
  *      view any user's segments).
  * @prop {!Peaks.PeaksInstance} peaks - Instance of peaks
+ * @prop {boolean} dirty - Whether there are unsaved changes.
  * @type {!Object.<string, any>}
  */
 const globals = {};
@@ -42,8 +43,8 @@ const globals = {};
 globals.filename = filename;
 globals.basename = basename;
 globals.media = document.getElementById("media");
-// globals.redoStorage = [];
 globals.user = user;
+globals.dirty = false;
 
 const options = {
   // options passed to Peaks

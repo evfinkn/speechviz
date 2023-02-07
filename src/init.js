@@ -550,7 +550,10 @@ const save = () => {
     }),
   })
     .then(checkResponseStatus)
-    .then(() => (fileParagraph.innerHTML = `${filename} - Saved`))
+    .then(() => {
+      fileParagraph.innerHTML = `${filename} - Saved`;
+      globals.dirty = false;
+    })
     .catch((error) => {
       fileParagraph.innerHTML = `${filename} - Error while saving`;
       console.error(error);
@@ -623,16 +626,16 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
-// // https://stackoverflow.com/a/7317311
-// // warns user when they try to close page that they have unsaved changes
-// window.onload = function () {
-//     window.addEventListener("beforeunload", function (event) {
-//         if (!newChanges) { return undefined; }
+// https://stackoverflow.com/a/7317311
+// warns user when they try to close page that they have unsaved changes
+window.addEventListener("beforeunload", function (event) {
+  if (!globals.dirty) {
+    return undefined;
+  }
 
-//         var confirmationMessage = "You have unsaved changes. "
-//              + "If you leave before saving, these changes will be lost.";
-//         // returnValue and return for cross compatibility
-//         (event || window.event).returnValue = confirmationMessage;
-//         return confirmationMessage;
-//     });
-// };
+  const confirmationMessage =
+    "You have unsaved changes. If you leave before saving, these changes will be lost.";
+  // returnValue and return for cross compatibility
+  (event || window.event).returnValue = confirmationMessage;
+  return confirmationMessage;
+});
