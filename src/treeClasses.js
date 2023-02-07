@@ -438,7 +438,6 @@ var TreeItem = class TreeItem {
    * @param  {...TreeItem} children - The children to remove.
    */
   removeChildren(...children) {
-    // FIXME: make ids a Set??
     const ids = children.map((child) => child.id);
     children.forEach((child) => {
       child.#parent = null;
@@ -646,7 +645,6 @@ var TreeItem = class TreeItem {
       child.remove();
     });
     if (this.parent) {
-      // TODO: make children a set of item or map of id to item
       this.parent.removeChildren(this);
     }
   }
@@ -1647,9 +1645,9 @@ var PeaksItem = class PeaksItem extends TreeItem {
     super.readd(parent);
   }
 
-  // FIXME: make all rename methods throw error
   /**
-   * Renames this Peaks.js item, replacing its id, text, and labelText.
+   * Renames this Peaks.js item, replacing its text and labelText. Its id is
+   * unchanged.
    * @param {string} newId - The new id to give this item.
    */
   rename(newText) {
