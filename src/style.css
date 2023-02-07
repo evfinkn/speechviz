@@ -1,46 +1,108 @@
 /* TODO: remove unused styles */
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
 body {
   font-family: "Helvetica neue", Helvetica, Arial, sans-serif;
 }
 
-#waveform-container {
+/* #waveform-container {
   margin: 0px 12px;
   width: auto;
-}
+} */
 
 #zoomview-container,
 #overview-container {
   /* top | right | bottom | left */
-  margin: 0 0 24px 0;
+  padding-bottom: 24px;
   line-height: 0;
   -moz-box-shadow: 3px 3px 20px #919191;
   -webkit-box-shadow: 3px 3px 20px #919191;
   box-shadow: 3px 3px 20px #919191;
 }
 
-#zoomview-container {
-  height: 200px;
-}
-
-#overview-container {
-  height: 85px;
-}
-
 .navbar {
+  grid-area: nav;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 25px;
+  /* height: 25px; */
 }
+
+#tree-col {
+  grid-area: tree;
+  white-space: nowrap;
+  overflow-x: scroll;
+  overflow-y: auto;
+}
+
+#gutter-col-1 {
+  grid-area: gut1;
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==");
+}
+
+#media-row {
+  grid-area: media;
+}
+
+#zoomview-container {
+  /* height: 200px; */
+  grid-area: zv;
+}
+
+#overview-container {
+  /* height: 85px; */
+  grid-area: ov;
+}
+
+#controls {
+  grid-area: ctrl;
+  overflow-y: auto;
+  padding-left: 1em;
+}
+
+#notes-col {
+  grid-area: notes;
+  overflow-y: auto;
+}
+
+#main-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr 3fr;
+  grid-template-rows: 25px auto 200px 85px 1fr;
+  grid-template-areas:
+    "nav nav nav"
+    "tree media media"
+    "tree zv zv"
+    "tree ov ov"
+    "tree ctrl notes";
+}
+
+/* #main-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  /* grid-template-columns: 1fr 1fr 10px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; *\/
+  grid-template-rows: 25px auto 200px 85px 1fr;
+  grid-template-areas:
+    "nav   nav   nav  nav   nav   nav   nav   nav   nav   nav"
+    "tree  tree  media media media media media media media media"
+    "tree  tree  zv    zv    zv    zv    zv    zv    zv    zv"
+    "tree  tree  ov    ov    ov    ov    ov    ov    ov    ov"
+    "tree  tree  ctrl  ctrl  ctrl  ctrl  notes notes notes notes";
+} */
 
 audio {
   width: inherit;
 }
 
-#controls {
+/* #controls {
   flex: 1;
-  /* margin-left: 1em; */
-}
+  /* margin-left: 1em; *\/
+} */
 
 ul {
   margin-left: 0px;
@@ -65,7 +127,7 @@ ul {
   pointer-events: none;
 }
 
-.column,
+/* .column,
 .column2,
 .column3,
 .column4 {
@@ -122,7 +184,7 @@ ul {
 .gutter.gutter-horizontal {
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==");
   cursor: col-resize;
-}
+} */
 
 .popup {
   display: none;

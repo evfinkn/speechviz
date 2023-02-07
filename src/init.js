@@ -1,4 +1,4 @@
-import Split from "split.js"; // library for resizing columns by dragging
+// import Split from "split-grid";
 import globals from "./globals.js";
 import { Group, Segment, PeaksGroup, Face } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
@@ -16,7 +16,13 @@ import {
 import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
 
 // make tree and viewer columns resizable
-Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
+// Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
+// Split({
+//   columnGutters: [{
+//     track: 1,
+//     element: document.getElementById("gutter-col-1")
+//   }]
+// });
 
 const peaks = globals.peaks;
 const user = globals.user;
