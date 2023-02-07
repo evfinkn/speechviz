@@ -598,21 +598,21 @@ def extract_sensor_data(
                 data["capture_timestamp_ns"] -= first_device_timestamp
                 data["capture_timestamp_ns"] += first_unix_timestamp
 
-    # convert the timestamps extracted from the image filenames to unix timestamps
-    for stream in VIDEO_STREAMS:
-        # f"{stream}.csv" because if it's f"{STREAM_NAMES[stream]}.csv"
-        # then it's already been converted
-        video_timestamps_path = output_dir / f"{stream}.csv"
-        if video_timestamps_path.exists():
-            video_timestamps = np.genfromtxt(video_timestamps_path)
-            video_timestamps -= first_device_timestamp
-            video_timestamps += first_unix_timestamp
-            np.savetxt(
-                str(output_dir / f"{STREAM_NAMES[stream]}.csv"),
-                video_timestamps,
-                "%.7f",
-            )
-            util.rm(video_timestamps_path)
+        # convert the timestamps extracted from the image filenames to unix timestamps
+        for stream in VIDEO_STREAMS:
+            # f"{stream}.csv" because if it's f"{STREAM_NAMES[stream]}.csv"
+            # then it's already been converted
+            video_timestamps_path = output_dir / f"{stream}.csv"
+            if video_timestamps_path.exists():
+                video_timestamps = np.genfromtxt(video_timestamps_path)
+                video_timestamps -= first_device_timestamp
+                video_timestamps += first_unix_timestamp
+                np.savetxt(
+                    str(output_dir / f"{STREAM_NAMES[stream]}.csv"),
+                    video_timestamps,
+                    "%.7f",
+                )
+                util.rm(video_timestamps_path)
 
     vprint("Writing files")
     write_start_time = time.perf_counter()
