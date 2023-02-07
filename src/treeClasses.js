@@ -1766,6 +1766,9 @@ var Segment = class Segment extends PeaksItem {
       copyTo = null,
     } = {}
   ) {
+    if (segment.constructor.name !== "Segment") {
+      segment = peaks.segments.add(segment);
+    }
     super(segment, {
       parent,
       text,

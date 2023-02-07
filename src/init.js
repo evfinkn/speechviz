@@ -355,21 +355,20 @@ document.getElementById("add-segment").addEventListener("click", function () {
   // if endTime > audioDuration, drag handle for changing
   // segment's endTime is off screen and unusable
   const endTime = curTime + 2.5 > audioDuration ? audioDuration : curTime + 2.5;
-  let segment = {
+  const segmentOptions = {
     startTime: curTime,
     endTime: endTime,
     labelText: label,
     editable: true,
     treeText: label,
   };
-  segment = peaks.segments.add(segment);
-  const seg = new Segment(segment, {
+  const segment = new Segment(segmentOptions, {
     parent: custom,
     removable: true,
     renamable: true,
     moveTo: [labeled.children],
   });
-  undoStorage.push(new Actions.AddAction(seg));
+  undoStorage.push(new Actions.AddAction(segment));
   custom.open(); // open custom in tree to show newly added segment
 });
 
