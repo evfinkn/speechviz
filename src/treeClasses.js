@@ -1055,11 +1055,9 @@ var Popup = class Popup {
     while (moveDiv.children[1]) {
       moveDiv.removeChild(moveDiv.lastChild);
     }
-    console.log(this.treeItem.moveTo);
     // flatten until all subarrays have been flattened
     // see TreeItem.moveTo for why this is useful
     const moveTo = this.treeItem.moveTo.flat(Infinity);
-    console.log(moveTo);
     if (moveTo.length == 0) {
       moveDiv.hidden = true;
     } else {
