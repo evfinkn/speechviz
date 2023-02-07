@@ -1058,12 +1058,8 @@ var Popup = class Popup {
     // flatten until all subarrays have been flattened
     // see TreeItem.moveTo for why this is useful
     const moveTo = this.treeItem.moveTo.flat(Infinity);
-    if (moveTo.length == 0) {
-      moveDiv.hidden = true;
-    } else {
-      moveDiv.hidden = false;
-      moveTo.forEach((dest) => this.addMoveRadio(dest));
-    }
+    moveDiv.hidden = moveTo.length === 0;
+    moveTo.forEach((dest) => this.addMoveRadio(dest));
   }
 
   /**
@@ -1077,12 +1073,8 @@ var Popup = class Popup {
       copyDiv.removeChild(copyDiv.lastChild);
     }
     const copyTo = this.treeItem.copyTo.flat(Infinity);
-    if (copyTo.length == 0) {
-      copyDiv.hidden = true;
-    } else {
-      copyDiv.hidden = false;
-      copyTo.forEach((dest) => this.addCopyRadio(dest));
-    }
+    copyDiv.hidden = copyTo.length === 0;
+    copyTo.forEach((dest) => this.addCopyRadio(dest));
   }
   /**
    * Updates the radio buttons in `assocDiv`.
@@ -1094,16 +1086,12 @@ var Popup = class Popup {
       assocDiv.removeChild(assocDiv.lastChild);
     }
     const assocWith = this.treeItem.assocWith.flat(Infinity);
-    if (assocWith.length == 0) {
-      assocDiv.hidden = true;
-    } else {
-      assocDiv.hidden = false;
-      assocWith.forEach((dest) => {
-        if (dest.faceNum === null) {
-          this.addAssocRadio(dest);
-        }
-      });
-    }
+    assocDiv.hidden = assocWith.length === 0;
+    assocWith.forEach((dest) => {
+      if (dest.faceNum === null) {
+        this.addAssocRadio(dest);
+      }
+    });
   }
 
   /**
