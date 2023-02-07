@@ -39,7 +39,7 @@ const createTree = function (id, parent, children, snr) {
     if (id.includes("Speaker ")) {
       // group is speakers, which need popups
       const group = new PeaksGroup(id, { parent, snr, copyTo: [] });
-      peaks.segments.add(children).forEach(function (segment) {
+      peaks.segments.add(children).forEach((segment) => {
         new Segment(segment, {
           parent: group,
           moveTo: [],
@@ -50,7 +50,7 @@ const createTree = function (id, parent, children, snr) {
     } else {
       // group is VAD or Non-VAD, which don't need popups
       const group = new PeaksGroup(id, { parent, snr });
-      peaks.segments.add(children).forEach(function (segment) {
+      peaks.segments.add(children).forEach((segment) => {
         new Segment(segment, { parent: group });
       });
     }
@@ -78,7 +78,7 @@ const rankSnrs = () => {
 
   const snrs = {};
   const durations = {};
-  groups.forEach(function (group) {
+  groups.forEach((group) => {
     snrs[group.id] = group.snr;
     durations[group.id] = group.duration;
   });
@@ -203,7 +203,7 @@ const facesLoading = fetch(`/clustered-files/`)
     // default image for each of the faces to show in speechviz
     const images = fileList.images;
 
-    clusterfolders.forEach(function (folderName) {
+    clusterfolders.forEach((folderName) => {
       var imagePath = images[folderName];
       new Face(folderName, {
         parent: clusters,
@@ -286,6 +286,8 @@ zoomOut.innerHTML = zoomOutIcon;
 const saveButton = document.getElementById("save");
 saveButton.innerHTML = saveIcon;
 
+// function () instead of () => because usually event listeners use function
+// so that "this" is bound to the element that emit the event
 zoomIn.addEventListener("click", function () {
   peaks.zoom.zoomIn();
   const zoomLevel = peaks.zoom.getZoom();
@@ -387,7 +389,7 @@ fetch("load", {
     const regex = /Custom Segment /;
     peaks.segments
       .add(data.segments, { overwrite: true })
-      .forEach(function (segment) {
+      .forEach((segment) => {
         let parent = segment.path.at(-1);
         if (!(parent in PeaksGroup.byId)) {
           // parent group doesn't exist yet so add it
@@ -473,7 +475,7 @@ const fileParagraph = document.getElementById("file");
 /**
  * Saves the custom segments, labeled speakers, and associated faces to the database.
  */
-const save = function () {
+const save = () => {
   const faceRegex = /Speaker /;
   const speakers = Object.values(PeaksGroup.byId).filter((speaker) =>
     speaker.id.match(faceRegex)

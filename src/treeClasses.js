@@ -34,8 +34,6 @@ const peaks = globals.peaks;
  * @typedef {string} Color
  */
 
-// TODO: make typedef for an options type
-
 // instead of const use var so the classes hoist and
 // can reference each other before definition
 /**
@@ -641,9 +639,7 @@ var TreeItem = class TreeItem {
 
     this.li.remove();
     this.removeFromById();
-    this.children.forEach(function (child) {
-      child.remove();
-    });
+    this.children.forEach((child) => child.remove());
     if (this.parent) {
       this.parent.removeChildren(this);
     }
@@ -1232,9 +1228,7 @@ var Group = class Group extends TreeItem {
       return false;
     } // no toggling necessary
     const checked = force === null ? this.checked : force;
-    this.children.forEach(function (child) {
-      child.toggle(checked);
-    });
+    this.children.forEach((child) => child.toggle(checked));
     return true;
   }
 
