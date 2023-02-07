@@ -1587,7 +1587,6 @@ var PeaksItem = class PeaksItem extends TreeItem {
     return true;
   }
 
-  // TODO: rename this method (it doesn't feel right / fit with similar)
   /**
    * Updates this peaksItem's editability.
    * Called when this peaksItem is toggled. It is used to update the Peaks peaksItem's
@@ -1975,8 +1974,6 @@ var PeaksGroup = class PeaksGroup extends Group {
    */
   faceNum = null;
 
-  // FIXME: in every doc comment, decide when to use things like
-  //        `PeaksGroup` / `Group` vs group and `Segment` vs segment
   /**
    * @param {string} id - The unique identifier to give the `PeaksGroup`.
    * @param {?Object.<string, any>=} options - Options to customize the `PeaksGroup`.
