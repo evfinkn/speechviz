@@ -2273,10 +2273,14 @@ var Face = class Face extends TreeItem {
     );
     // store previous html of image to reset its position when the image is clicked
     this.imageLi.addEventListener("click", () => {
-      this.unassoc();
+      undoStorage.push(new Actions.UnassociateAction(this));
     });
     this.nested.appendChild(this.imageLi);
     this.popup = new Popup(this);
+  }
+
+  get speaker() {
+    return this.speakerNum ? PeaksGroup.byId[this.speakerNum] : null;
   }
 
   /** Initialize the CSS styling of the `Face` */
