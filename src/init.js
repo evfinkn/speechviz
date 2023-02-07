@@ -38,12 +38,12 @@ const createTree = function (id, parent, children, snr) {
     // group of segments
     if (id.includes("Speaker ")) {
       // group is speakers, which need popups
-      const group = new PeaksGroup(id, { parent, snr, copyTo: ["Labeled"] });
+      const group = new PeaksGroup(id, { parent, snr, copyTo: [] });
       peaks.segments.add(children).forEach(function (segment) {
         new Segment(segment, {
           parent: group,
-          moveTo: ["Speakers"],
-          copyTo: ["Labeled"],
+          moveTo: [],
+          copyTo: [],
         });
         originalGroups[segment.id] = id;
       });
@@ -170,6 +170,14 @@ const segmentLoading = fetch(`/segments/${basename}-segments.json`)
     for (const [group, children, snr] of segments) {
       createTree(group, analysis, children, snr);
     }
+    const speakers = Group.byId["Speakers"];
+    speakers.children.forEach((speaker) => {
+      speaker.copyTo.push(labeled.children);
+      speaker.children.forEach((segment) => {
+        segment.moveTo.push(speakers.children);
+        segment.copyTo.push(labeled.children);
+      });
+    });
     rankSnrs();
     const ids = Object.keys(Segment.byId);
     // since ids are of the form 'peaks.segment.#', parse the # from all of the ids
@@ -199,7 +207,7 @@ const facesLoading = fetch(`/clustered-files/`)
       var imagePath = images[folderName];
       new Face(folderName, {
         parent: clusters,
-        assocWith: ["Speakers"],
+        assocWith: [Group.byId["Speakers"].children],
         dir: dir,
         imagePath: imagePath,
       });
@@ -315,7 +323,7 @@ const addLabel = (input) => {
       renamable: true,
       color: getRandomColor(),
       colorable: true,
-      copyTo: ["Labeled"],
+      copyTo: [labeled.children],
     });
     undoStorage.push(new Actions.AddAction(label));
     input.value = ""; // clear text box after submitting
@@ -359,7 +367,7 @@ document.getElementById("add-segment").addEventListener("click", function () {
     parent: custom,
     removable: true,
     renamable: true,
-    moveTo: ["Labeled"],
+    moveTo: [labeled.children],
   });
   undoStorage.push(new Actions.AddAction(seg));
   custom.open(); // open custom in tree to show newly added segment
@@ -390,7 +398,7 @@ fetch("load", {
             renamable: true,
             color: getRandomColor(),
             colorable: true,
-            copyTo: ["Labeled"],
+            copyTo: [labeled.children],
           });
         } else {
           parent = PeaksGroup.byId[parent];
@@ -406,7 +414,7 @@ fetch("load", {
             parent: parent,
             removable: true,
             renamable: true,
-            moveTo: ["Labeled"],
+            moveTo: [labeled.children],
           });
         }
         parent.sort("startTime");

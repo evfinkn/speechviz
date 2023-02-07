@@ -36,35 +36,6 @@ const peaks = globals.peaks;
 
 // TODO: make typedef for an options type
 
-// FIXME: completely remove this and the expand methods and instead make moveTo and
-//        copyTo arrays of TreeItems, and just update copyTo after all of the speakers
-//        have been added. To solve moving to labels, just push Labeled.children
-//        in moveTo / copyTo and then flatten moveTo / copyTo when the popup is shown
-/**
- * Expands an array consisting of `Group`s and `GroupOfGroups` by recursively replacing
- * `GroupOfGroups` with their children until all items are `Group`s.
- * @param {(!Array.<Group|GroupOfGroups>)} groups - Array of `Group`s and
- *      `GroupOfGroups`s to expand.
- * @param {?Array.<Group>=} exclude - Array of `Group`s to exclude from the expanded
- *      array.
- * @returns {!Array.<Group>} The expanded array of `Group`s.
- */
-const expandGroups = function expand(groups, exclude = []) {
-  const expanded = [];
-  for (const group of groups) {
-    if (group instanceof PeaksGroup) {
-      if (!exclude.includes(group.id)) {
-        expanded.push(group);
-      }
-    }
-    // array.push(...) is faster than array.concat()
-    else {
-      expanded.push(...expandGroups(group.children, exclude));
-    }
-  }
-  return expanded;
-};
-
 // instead of const use var so the classes hoist and
 // can reference each other before definition
 /**
@@ -192,29 +163,34 @@ var TreeItem = class TreeItem {
    */
   renamable;
 
-  // array of ids instead of TreeItems because some might be expanded
-  // e.g. Segments and Groups aren't movable to GroupOfGroups, but can be movable
-  // any child of a GroupOfGroups. Therefore, need to store id so that GroupOfGroups
-  // can be expanded into Groups (the expansion of which will depend on when it's
-  // being expanded e.g. labels are added)
   /**
-   * An array of the ids of `TreeItem`s that this item can be moved to.
+   * An array of containing the `TreeItem`s that this item can be moved to.
    * `null` if this item isn't moveable.
-   * @type {?string[]}
+   * Elements can also be arrays of `TreeItem`s. Then, when this item's `Popup` (if
+   * it has one) is adding radio buttons for moving this item, it flattens `moveTo`
+   * recursively. This is useful for situations like allowing an item to move
+   * to any child of another `TreeItem` since the children of the `TreeItem` may
+   * change.
+   * For example, to make a `TreeItem` movable to any child of a `TreeItem` stored
+   * in the variable `labeled`, you can add `labeled.children` to `moveTo`.
+   * @type {?Array.<(TreeItem|TreeItem[])>}
    */
   moveTo = null;
 
   /**
    * An array of the ids of `TreeItem`s that this item can be copied to.
    * `null` if this item isn't copyable.
-   * @type {?string[]}
+   * Elements can also be arrays of `TreeItem`s.
+   * @type {?Array.<(TreeItem|TreeItem[])>}
+   * @see moveTo
    */
   copyTo = null;
 
   /**
    * An array of the ids of `TreeItem`s that this Face can be associated with.
    * `null` if there are no such `TreeItem`s
-   * @type {?string[]}
+   * @type {?Array.<(TreeItem|TreeItem[])>}
+   * @see moveTo
    */
   assocWith;
 
@@ -1079,22 +1055,16 @@ var Popup = class Popup {
     while (moveDiv.children[1]) {
       moveDiv.removeChild(moveDiv.lastChild);
     }
-    const moveTo = this.treeItem.expandMoveTo();
+    console.log(this.treeItem.moveTo);
+    // flatten until all subarrays have been flattened
+    // see TreeItem.moveTo for why this is useful
+    const moveTo = this.treeItem.moveTo.flat(Infinity);
+    console.log(moveTo);
     if (moveTo.length == 0) {
       moveDiv.hidden = true;
     } else {
       moveDiv.hidden = false;
-      moveTo.forEach((destId) => {
-        // Sometimes the TreeItem we want to move to hasn't been initialized yet,
-        // so add a check to only add radios for initialized TreeItems.
-        // For example, the segments for the speakers can be moved between each other,
-        // so when Speaker 1's segments are being initialized they'll say they can be
-        // moved to Speaker 2 which doesn't exist yet, so it'll throw an error
-        const dest = TreeItem.byId[destId];
-        if (dest !== undefined) {
-          this.addMoveRadio(dest);
-        }
-      });
+      moveTo.forEach((dest) => this.addMoveRadio(dest));
     }
   }
 
@@ -1108,17 +1078,12 @@ var Popup = class Popup {
     while (copyDiv.children[1]) {
       copyDiv.removeChild(copyDiv.lastChild);
     }
-    const copyTo = this.treeItem.expandCopyTo();
+    const copyTo = this.treeItem.copyTo.flat(Infinity);
     if (copyTo.length == 0) {
       copyDiv.hidden = true;
     } else {
       copyDiv.hidden = false;
-      copyTo.forEach((destId) => {
-        const dest = TreeItem.byId[destId];
-        if (dest !== undefined) {
-          this.addCopyRadio(dest);
-        }
-      });
+      copyTo.forEach((dest) => this.addCopyRadio(dest));
     }
   }
   /**
@@ -1130,14 +1095,13 @@ var Popup = class Popup {
     while (assocDiv.children[1]) {
       assocDiv.removeChild(assocDiv.lastChild);
     }
-    const assocWith = this.treeItem.expandAssocWith();
+    const assocWith = this.treeItem.assocWith.flat(Infinity);
     if (assocWith.length == 0) {
       assocDiv.hidden = true;
     } else {
       assocDiv.hidden = false;
-      assocWith.forEach((destId) => {
-        const dest = TreeItem.byId[destId];
-        if (dest !== undefined && dest.faceNum === null) {
+      assocWith.forEach((dest) => {
+        if (dest.faceNum === null) {
           this.addAssocRadio(dest);
         }
       });
@@ -1745,26 +1709,6 @@ var PeaksItem = class PeaksItem extends TreeItem {
 
     return true;
   }
-
-  /**
-   * Converts `moveTo` to `TreeItem`s and expands the groups.
-   * @see expandGroups
-   */
-  expandMoveTo() {
-    const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
-    const expanded = expandGroups(moveToAsTreeItems, [this.parent.id]);
-    return TreeItem.treeItemsToIds(expanded);
-  }
-
-  /**
-   * Converts `copyTo` to `TreeItem`s and expands the groups.
-   * @see expandGroups
-   */
-  expandCopyTo() {
-    const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
-    const expanded = expandGroups(copyToAsTreeItems, [this.parent.id]);
-    return TreeItem.treeItemsToIds(expanded);
-  }
 };
 
 /**
@@ -1981,7 +1925,8 @@ var Segment = class Segment extends PeaksItem {
         text: this.text,
         removable: true,
         renamable: true,
-        moveTo: ["Labeled"],
+        // TODO: unhardcode this
+        moveTo: [Group.byId["Labeled"].children],
       });
     }
     return null;
@@ -2251,26 +2196,6 @@ var PeaksGroup = class PeaksGroup extends Group {
     }
     return copiedChildren;
   }
-
-  /**
-   * Converts `moveTo` to `TreeItem`s and expands the groups.
-   * @see expandGroups
-   */
-  expandMoveTo() {
-    const moveToAsTreeItems = TreeItem.idsToTreeItems(this.moveTo);
-    const expanded = expandGroups(moveToAsTreeItems, [this.id]);
-    return TreeItem.treeItemsToIds(expanded);
-  }
-
-  /**
-   * Converts `copyTo` to `TreeItem`s and expands the groups.
-   * @see expandGroups
-   */
-  expandCopyTo() {
-    const copyToAsTreeItems = TreeItem.idsToTreeItems(this.copyTo);
-    const expanded = expandGroups(copyToAsTreeItems, [this.id]);
-    return TreeItem.treeItemsToIds(expanded);
-  }
 };
 
 /**
@@ -2415,15 +2340,6 @@ var Face = class Face extends TreeItem {
       PeaksGroup.byId[this.speakerNum].faceNum = null;
       this.speakerNum = null;
     }
-  }
-
-  /**
-   * Converts `assocWith` to `TreeItem`s and expands the groups.
-   */
-  expandAssocWith() {
-    const assocWithAsTreeItems = TreeItem.idsToTreeItems(this.assocWith);
-    const expanded = expandGroups(assocWithAsTreeItems, [this.id]);
-    return TreeItem.treeItemsToIds(expanded);
   }
 };
 
