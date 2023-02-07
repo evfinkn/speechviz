@@ -1,4 +1,61 @@
-/* TODO: remove unused styles */
+/*
+The names for most of the color-related variables are taken from
+https://publish.obsidian.md/hub/04+-+Guides%2C+Workflows%2C+%26+Courses/Guides/Default+Obsidian+Theme+Colors
+*/
+:root {
+  --background-primary: #ffffff;
+  --background-primary-alt: #f1f1f1;
+  --background-secondary: #919191;
+  --background-seconday-alt: ;
+  --text-normal: #000000;
+  --text-muted: #808080;
+  --text-faint: #aaaaaa;
+  --text-accent: ;
+  --text-accent-hover: ;
+  --interactive-accent: rgb(52, 120, 246);
+  --interactive-accent-hover: rgb(42, 100, 214);
+  /* probably need more, these were the more obvious ones */
+
+  /*
+  variables for specific classes
+  these just use the other variables, but they're here just
+  for extra customizability
+  */
+  --button-on-fill: var(--text-normal);
+  --button-on-stroke: var(--text-normal);
+  --button-off-fill: var(--text-muted);
+  --button-off-stroke: var(--text-muted);
+
+  /* there probably should be some form of a shadow color variable */
+  --shadow: ;
+
+  /* maybe something for https://developer.mozilla.org/en-US/docs/Web/CSS/caret-color */
+}
+
+/*
+To do dark mode, create variables for the above under something like
+
+html[data-theme="dark"] {
+  --background-primary: #000000;
+  ...
+}
+
+and then set dark-theme attribute of the html element to "dark"
+*/
+
+input[type="checkbox"]:checked {
+  accent-color: var(--interactive-accent);
+}
+
+input[type="checkbox"]:checked:hover {
+  accent-color: var(--interactive-accent-hover);
+}
+
+html,
+body {
+  margin: 0;
+}
+
 body {
   font-family: "Helvetica neue", Helvetica, Arial, sans-serif;
 }
@@ -13,9 +70,9 @@ body {
   /* top | right | bottom | left */
   margin: 0 0 24px 0;
   line-height: 0;
-  -moz-box-shadow: 3px 3px 20px #919191;
-  -webkit-box-shadow: 3px 3px 20px #919191;
-  box-shadow: 3px 3px 20px #919191;
+  -moz-box-shadow: 3px 3px 20px var(--background-secondary);
+  -webkit-box-shadow: 3px 3px 20px var(--background-secondary);
+  box-shadow: 3px 3px 20px var(--background-secondary);
 }
 
 #zoomview-container {
@@ -54,14 +111,14 @@ ul {
 }
 
 .button-on {
-  fill: black;
-  stroke: black;
+  fill: var(--button-on-fill);
+  stroke: var(--button-on-stroke);
   pointer-events: auto;
 }
 
 .button-off {
-  fill: gray;
-  stroke: gray;
+  fill: var(--button-off-fill);
+  stroke: var(--button-off-stroke);
   pointer-events: none;
 }
 
@@ -70,7 +127,8 @@ ul {
 .column3,
 .column4 {
   box-sizing: border-box;
-  margin: 10px;
+  margin: 0px;
+  padding: 10px;
 }
 
 .column {
@@ -133,21 +191,19 @@ ul {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgb(0, 0, 0);
   background-color: rgba(0, 0, 0, 0.4);
   font-size: 14px;
 }
 
 .popup-content {
   margin: 100px auto;
-  border: 1px solid #fff;
   width: 30%;
   padding: 100px;
-  background: #fff;
+  background-color: var(--background-primary);
 }
 
 .close {
-  color: #aaa;
+  color: var(--text-faint);
   float: right;
   font-size: 28px;
   font-weight: bold;
@@ -155,7 +211,7 @@ ul {
 
 .close:hover,
 .close:focus {
-  color: black;
+  color: var(--text-muted);
   text-decoration: none;
   cursor: pointer;
 }
@@ -168,15 +224,15 @@ ul {
 .dropdown-content {
   display: none;
   position: absolute;
-  background-color: #f1f1f1;
+  background-color: var(--background-primary-alt);
   overflow: auto;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
 }
 
 #speed-button {
-  background-color: #3478f6;
-  color: white;
+  background-color: var(--interactive-accent);
+  color: var(--background-primary);
   padding: 10px;
   font-size: 16px;
   border: none;
@@ -185,7 +241,7 @@ ul {
 
 #speed-button:hover,
 #speed-button:focus {
-  background-color: rgb(42, 100, 214);
+  background-color: var(--interactive-accent-hover);
 }
 
 .speed-content {
