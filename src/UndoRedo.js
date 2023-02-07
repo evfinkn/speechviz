@@ -13,7 +13,6 @@ redoButton.innerHTML = redoIcon;
 toggleButton(undoButton, false);
 toggleButton(redoButton, false);
 
-// FIXME: redo this description
 /**
  * An action that the user takes that causes a change in the program state.
  * @interface Action
@@ -43,8 +42,6 @@ const UndoStorage = class UndoStorage extends Array {
     globals.dirty = true;
   }
 
-  // TODO: make Action / Change classes for each undo that handles that specific undo
-  // TODO: resort a group after re-adding segments to it
   /** Undoes the most recently made change. */
   undo() {
     // even though undoButton should be unclickable
@@ -117,8 +114,6 @@ const AddAction = class AddAction {
   }
 
   redo() {
-    // FIXME: this only readds it to byId for TreeItem and the last subclass,
-    // e.g. TreeItem.byId and Segment.byId but not PeaksItem.byId
     this.item.readd(this.parent);
     this.children.forEach((child) => child.redo());
   }
