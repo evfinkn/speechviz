@@ -708,11 +708,8 @@ var TreeItem = class TreeItem {
    * @param {string} by - The name of the property to sort by.
    */
   sort(by) {
-    const nested = this.nested;
     const children = sortByProp(this.children, by);
-    children.forEach(function (segment) {
-      nested.append(segment.li);
-    });
+    children.forEach((segment) => this.nested.append(segment.li));
   }
 
   /**
@@ -1903,10 +1900,9 @@ var Segment = class Segment extends PeaksItem {
         propertiesEqual(this.segment, child.segment, ["startTime", "endTime"])
       )
     ) {
-      const segment = this.segment;
       const newSegment = peaks.segments.add({
-        startTime: segment.startTime,
-        endTime: segment.endTime,
+        startTime: this.startTime,
+        endTime: this.endTime,
         editable: true,
       });
       return new Segment(newSegment, {
