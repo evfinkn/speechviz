@@ -326,6 +326,13 @@ var GraphIMU = class GraphIMU {
     renderer.domElement.style.float = "right"; // TODO: unhardcode this
     this.container.appendChild(renderer.domElement);
 
+    new ResizeObserver(() =>
+      renderer.setSize(
+        this.container.clientWidth - 10,
+        this.container.clientHeight - 10
+      )
+    ).observe(this.container);
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf0f0f0);
 
