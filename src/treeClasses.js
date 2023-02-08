@@ -1985,6 +1985,8 @@ var PeaksGroup = class PeaksGroup extends Group {
    * @param {number=} options.snr - The signal-to-noise ratio of the group.
    * @param {string=} options.text - The text to show in the group's span (and
    *      therefore in the tree). If `null`, `id` is used.
+   * @param {boolean} [options.playable=true] - Indicates if the group can be played
+   *      and looped.
    * @param {boolean} [options.removable=false] - Indicates if the group can be
    *      removed from the tree.
    * @param {boolean} [options.renamable=false] - Indicates if the group can be
@@ -2006,6 +2008,7 @@ var PeaksGroup = class PeaksGroup extends Group {
       children = null,
       snr = null,
       text = null,
+      playable = true,
       removable = false,
       renamable = false,
       color = null,
@@ -2019,7 +2022,7 @@ var PeaksGroup = class PeaksGroup extends Group {
       parent,
       children,
       text,
-      playable: true,
+      playable,
       removable,
       renamable,
       moveTo,
