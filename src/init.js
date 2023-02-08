@@ -203,8 +203,9 @@ const facesLoading = fetch(`/clustered-files/`)
     // default image for each of the faces to show in speechviz
     const images = fileList.images;
 
-    clusterfolders.forEach((folderName) => {
+    clusterfolders.forEach(async function (folderName) {
       var imagePath = images[folderName];
+      await segmentLoading; // the segments must be loaded to get speakers
       new Face(folderName, {
         parent: clusters,
         assocWith: [Group.byId["Speakers"].children],
