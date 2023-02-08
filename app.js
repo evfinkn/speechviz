@@ -107,6 +107,7 @@ app.get("/clustered-files", (req, res) => {
       files.dir = req.session.dir;
     }
     res.send(files);
+    return;
   }
   res.status(404).send("Not Found");
 });
