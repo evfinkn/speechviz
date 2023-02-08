@@ -228,8 +228,8 @@ fetch(`/transcriptions/${basename}-transcription.json`)
   .catch((error) => output404OrError(error, "transcription"));
 
 const poseRegex = /pose.*\.csv/;
-const visualContainer = document.getElementById("visual");
-if (visualContainer) {
+const poseContainer = document.getElementById("poses");
+if (poseContainer) {
   // get the list of files in the graphical dir for the file being visualized
   const dir = `/graphical/${basename}`;
   fetch(dir)
@@ -262,17 +262,8 @@ if (visualContainer) {
       })
     )
     .then((data) => {
-      let width;
-      if (media.offsetWidth > visualContainer.offsetWidth) {
-        // video is wider than the column so resize it to fit
-        media.width = visualContainer.offsetWidth;
-        width = media.width;
-      } else {
-        // size the GraphIMU so that it fills the rest of the column
-        width = visualContainer.offsetWidth - media.offsetWidth;
-      }
-      const height = media.offsetHeight;
-      new GraphIMU(visualContainer, data, { width: width, height: height });
+      poseContainer.style.display = "";
+      new GraphIMU(poseContainer, data, { width: 400, height: 400 });
     })
     .catch((error) => output404OrError(error, "pose data"));
 }
