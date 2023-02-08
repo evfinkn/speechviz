@@ -162,7 +162,7 @@ var TreeItem = class TreeItem {
   renamable;
 
   /**
-   * An array of containing the `TreeItem`s that this item can be moved to.
+   * An array of the `TreeItem`s that this item can be moved to.
    * `null` if this item isn't moveable.
    * Elements can also be arrays of `TreeItem`s. Then, when this item's `Popup` (if
    * it has one) is adding radio buttons for moving this item, it flattens `moveTo`
@@ -176,7 +176,7 @@ var TreeItem = class TreeItem {
   moveTo = null;
 
   /**
-   * An array of the ids of `TreeItem`s that this item can be copied to.
+   * An array of the `TreeItem`s that this item can be copied to.
    * `null` if this item isn't copyable.
    * Elements can also be arrays of `TreeItem`s.
    * @type {?Array.<(TreeItem|TreeItem[])>}
@@ -185,8 +185,10 @@ var TreeItem = class TreeItem {
   copyTo = null;
 
   /**
-   * An array of the ids of `TreeItem`s that this Face can be associated with.
-   * `null` if there are no such `TreeItem`s
+   * An array of the `TreeItem`s that this item can be associated with.
+   * `null` if this item isn't able to be associated.
+   * The meaning of "associating" an item is up to subclasses if they decide to
+   * use `assocWith`.
    * @type {?Array.<(TreeItem|TreeItem[])>}
    * @see moveTo
    */
@@ -264,15 +266,16 @@ var TreeItem = class TreeItem {
    * @param {boolean} [options.removable=false] - Indicates if the item can be removed
    *      from the tree.
    * @param {boolean} [options.renamable=false] - Indicates if the item can be renamed.
-   * @param {?Array.<string>=} [options.moveTo] - An array of the ids of `TreeItem`s
+   * @param {?Array.<TreeItem>=} [options.moveTo] - An array of the `TreeItem`s
    *      that the item can be moved to. `null` if the item isn't moveable.
-   * @param {?Array.<string>=} [options.copyTo] - An array of the ids of `TreeItem`s
+   * @param {?Array.<TreeItem>=} [options.copyTo] - An array of the `TreeItem`s
    *      that the item can be copied to. `null` if the item isn't copyable.
+   * @param {?Array.<TreeItem>=} [options.assocWith] - An array of the `TreeItem`s
+   *      that item can be associated with. `null` if the item isn't able to be
+   *      associated.
    * @param {boolean} [options.render=true] - If `true`, `render()` is called in
    *      the constructor. Otherwise, `render()` is not called and is left to the
    *      user to call.
-   * @param {?Array.<string>=} [options.assocWith] - An array of the ids of `TreeItem`s
-   *      that the item can be associated with. `null` if the item isn't moveable.
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
@@ -1192,6 +1195,10 @@ var Group = class Group extends TreeItem {
    *      and looped.
    * @param {boolean} [options.removable=false] - Indicates if the group can be removed
    *      from the tree.
+   * @param {?Array.<TreeItem>=} [options.moveTo] - An array of the `TreeItem`s
+   *      that the group can be moved to. `null` if the group isn't moveable.
+   * @param {?Array.<TreeItem>=} [options.copyTo] - An array of the `TreeItem`s
+   *      that the group can be copied to. `null` if the group isn't copyable.
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
@@ -1446,21 +1453,21 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * @param {(!PeaksSegment|!PeaksPoint)} peaksItem - The Peaks.js segment / point being
    *      represented in the tree by the `PeaksItem`.
    * @param {?Object.<string, any>=} options - Options to customize the item.
-   * @param {?PeaksGroup=} options.parent - The `Group` that contains the item in its
-   *      nested content.
+   * @param {?PeaksGroup=} options.parent - The `PeaksGroup` that contains the item
+   *      in its nested content.
    * @param {string=} options.text - The text to show in the item's span (and
    *      therefore in the tree).
    * @param {boolean} [options.playable=false] - Indicates if the segment / point
    *      can be played.
    * @param {boolean} [options.removable=false] - Indicates if the segment / point
    *      can be removed from the tree.
-   * @param {boolean} [options.renamable=false] - Indicates if the segment /point
+   * @param {boolean} [options.renamable=false] - Indicates if the segment / point
    *      can be renamed.
-   * @param {?Array.<string>=} options.moveTo - An array of the ids of `TreeItem`s that
-   *      the item can be moved to. `null` if the group isn't moveable.
-   * @param {?Array.<string>=} options.copyTo - An array of the ids of `TreeItem`s that
-   *      the item can be copied to. `null` if the group isn't copyable.
-   * @throws {Error} If a `TreeItem` with `segment.id` already exists.
+   * @param {?Array.<PeaksGroup>=} options.moveTo - An array of the `PeaksGroup`s that
+   *      the item can be moved to. `null` if the item isn't moveable.
+   * @param {?Array.<PeaksGroup>=} options.copyTo - An array of the `PeaksGroup`s that
+   *      the item can be copied to. `null` if the item isn't copyable.
+   * @throws {Error} If a `TreeItem` with `peaksItem.id` already exists.
    */
   constructor(
     peaksItem,
@@ -1717,18 +1724,18 @@ var Segment = class Segment extends PeaksItem {
    * @param {!PeaksSegment} segment - The Peaks segment being represented in the tree
    *      by the `Segment`.
    * @param {?Object.<string, any>=} options - Options to customize the segment.
-   * @param {?Group=} options.parent - The `Group` that contains the segment in its
-   *      nested content.
+   * @param {?PeaksGroup=} options.parent - The `PeaksGroup` that contains the segment
+   *      in its nested content.
    * @param {string=} options.text - The text to show in the segment's span (and
    *      therefore in the tree).
    * @param {boolean} [options.removable=false] - Indicates if the segment can be
    *      removed from the tree.
    * @param {boolean} [options.renamable=false] - Indicates if the segment can be
    *      renamed.
-   * @param {?Array.<string>=} options.moveTo - An array of the ids of `TreeItem`s that
-   *      the segment can be moved to. `null` if the group isn't moveable.
-   * @param {?Array.<string>=} options.copyTo - An array of the ids of `TreeItem`s that
-   *      the segment can be copied to. `null` if the group isn't copyable.
+   * @param {?Array.<PeaksGroup>=} options.moveTo - An array of the `PeaksGroups`s that
+   *      the segment can be moved to. `null` if the segment isn't moveable.
+   * @param {?Array.<PeaksGroup>=} options.copyTo - An array of the `PeaksGroups`s that
+   *      the segment can be copied to. `null` if the segment isn't copyable.
    * @throws {Error} If a `TreeItem` with `segment.id` already exists.
    */
   constructor(
@@ -1978,6 +1985,8 @@ var PeaksGroup = class PeaksGroup extends Group {
    * @param {number=} options.snr - The signal-to-noise ratio of the group.
    * @param {string=} options.text - The text to show in the group's span (and
    *      therefore in the tree). If `null`, `id` is used.
+   * @param {boolean} [options.playable=true] - Indicates if the group can be played
+   *      and looped.
    * @param {boolean} [options.removable=false] - Indicates if the group can be
    *      removed from the tree.
    * @param {boolean} [options.renamable=false] - Indicates if the group can be
@@ -1999,6 +2008,7 @@ var PeaksGroup = class PeaksGroup extends Group {
       children = null,
       snr = null,
       text = null,
+      playable = true,
       removable = false,
       renamable = false,
       color = null,
@@ -2012,7 +2022,7 @@ var PeaksGroup = class PeaksGroup extends Group {
       parent,
       children,
       text,
-      playable: true,
+      playable,
       removable,
       renamable,
       moveTo,
@@ -2233,9 +2243,9 @@ var Face = class Face extends TreeItem {
    * @param {boolean} [options.removable=true] - Indicates if the item can be removed
    *      from the tree.
    * @param {boolean} [options.renamable=false] - Indicates if the item can be renamed.
-   * @param {?Array.<string>=} [options.assocWith] - An array of the ids of
-   *      `TreeItem`s that Face can be associated with. `null` if the Face isn't able
-   *      to be associated.
+   * @param {?Array.<TreeItem>=} [options.assocWith] - An array of the `TreeItem`s
+   *      that Face can be associated with. `null` if the Face isn't able to be
+   *      associated.
    * @param {string=} options.dir - The folder representing the clusters of faces for
    *      this video
    * @param {string=} options.imagePath - The name of the image shown for this face
