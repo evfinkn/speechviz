@@ -208,19 +208,13 @@ var GraphIMU = class GraphIMU {
    *      `container` is used.
    * @param {number=} options.height - The height of the graph. If `null`, the
    *      height of `container` is used.
-   * @param {number=} options.aspect - The aspect ratio of the graph. If `null`,
-   *      `options.width / options.height` is used.
    */
-  constructor(
-    container,
-    data,
-    { width = undefined, height = undefined, aspect = undefined } = {}
-  ) {
+  constructor(container, data, { width = undefined, height = undefined } = {}) {
     this.container = container;
 
     this.width = width != undefined ? width : container.offsetWidth;
     this.height = height != undefined ? height : container.offsetHeight;
-    this.aspect = aspect != undefined ? aspect : width / height;
+    this.aspect = width / height;
 
     this.disposer = new Disposer();
 
@@ -326,26 +320,29 @@ var GraphIMU = class GraphIMU {
     renderer.domElement.style.float = "right"; // TODO: unhardcode this
     this.container.appendChild(renderer.domElement);
 
-    new ResizeObserver(() =>
-      renderer.setSize(
-        this.container.clientWidth - 10,
-        this.container.clientHeight - 10
-      )
-    ).observe(this.container);
-
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf0f0f0);
 
     // 1 to not render stuff too close to the camera,
-    // 50 to not render stuff far away from camera
-    const camera = new THREE.PerspectiveCamera(45, this.aspect, 1, 50);
+    // 75 to not render stuff far away from camera
+    const camera = new THREE.PerspectiveCamera(50, this.aspect, 1, 75);
     camera.position.set(2, 4, 8);
-    camera.zoom = 3;
+    camera.zoom = 1.5;
 
     // allows rotating (left mouse), moving (right click),
     // and zooming (scroll) the camera
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.maxPolarAngle = Math.PI / 2;
+
+    new ResizeObserver(() => {
+      // - 10 because container has 5px margins on top and bottom
+      this.width = this.container.clientWidth - 10;
+      this.height = this.container.clientHeight - 10;
+      this.aspect = this.width / this.height;
+      renderer.setSize(this.width, this.height);
+      camera.aspect = this.aspect;
+      camera.updateProjectionMatrix();
+      controls.update();
+    }).observe(this.container);
 
     // red (x), green (y), blue (z) lines of the axes
     const axes = new THREE.AxesHelper(500);
