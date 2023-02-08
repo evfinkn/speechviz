@@ -15,7 +15,7 @@ html(lang="en")
       #column2.column2
         #waveform-container
           if isVideo
-            #visual(style="overflow: auto")
+            #visual(style="overflow: hidden")
               video#media(style="object-fit: cover", controls="controls")
                 source(src=`video/${file}`, type=mimetype)
                 | Your browser does not support the video element.
