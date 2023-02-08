@@ -185,14 +185,10 @@ const SettingsPopup = class SettingsPopup {
     this.maintainVideoAspectRatio =
       aspectRatioDiv.firstElementChild.firstElementChild;
     this.maintainVideoAspectRatio.addEventListener("change", function () {
-      try {
-        if (this.checked) {
-          document.getElementById("media").style = "object-fit: cover";
-        } else {
-          document.getElementById("media").style = "object-fit: fill";
-        }
-      } catch {
-        console.error("No video, can't change video behavior");
+      if (this.checked) {
+        document.getElementById("media").style = "object-fit: cover";
+      } else {
+        document.getElementById("media").style = "object-fit: fill";
       }
     });
 
