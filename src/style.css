@@ -52,6 +52,15 @@ audio {
   object-fit: cover;
 }
 
+#poses {
+  border: 2px solid;
+  padding: 5px;
+  display: inline-block;
+  vertical-align: middle;
+  overflow: hidden;
+  resize: both;
+}
+
 #controls {
   flex: 1;
   /* margin-left: 1em; */
