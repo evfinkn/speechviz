@@ -16,11 +16,10 @@ fetch("/clustered-files")
 
     if (clusterfolders?.length !== 0 && !fileList.inFaceFolder) {
       clusterfolders.forEach(function (folderName) {
-        const div = htmlToElement(
-          `<div><input type="radio" id="${folderName}cluster` +
-            ` name="file-selection" value="${folderName}cluster"></input><label for="` +
-            `${folderName}cluster">${folderName}</label></div>`
-        );
+        const div = htmlToElement(`<div>
+            <input type="radio" id="${folderName}cluster" name="file-selection"
+            value="${folderName}cluster"></input>
+            <label for="${folderName}cluster">${folderName}</label></div>`);
         div.firstElementChild.addEventListener("change", function () {
           // when radio button clicked, open that video file in viz
           window.location.replace(
