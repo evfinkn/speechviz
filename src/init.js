@@ -423,9 +423,17 @@ fetch("load", {
       await segmentLoading;
       // move faces to saved spot on tree
       data.faces.forEach((face) => {
-        const actualFace = Face.byId["face" + face.faceNum];
-        const actualSpeaker = PeaksGroup.byId["Speaker " + face.speaker];
-        actualFace.assoc(actualSpeaker);
+        if (face.speaker !== -1) {
+          const actualFace = Face.byId["face" + face.faceNum];
+          const actualSpeaker = PeaksGroup.byId["Speaker " + face.speaker];
+          actualFace.assoc(actualSpeaker);
+        } else {
+          const removingFace = Face.byId["face" + face.faceNum];
+          Object.values(Face.byId).forEach((face) =>
+            face.removed.push(parseInt(face.faceNum))
+          );
+          removingFace.remove();
+        }
       });
     }
     waitForFacesThenLoad();
@@ -484,6 +492,13 @@ const save = () => {
       );
     }
   });
+
+  const removedFaces = Object.values(Face.byId)[0].removed;
+
+  removedFaces.forEach((faceNum) =>
+    // Speaker -1 represents removed face, because it is impossible to have -1 speaker
+    faces.push(...[-1, faceNum])
+  );
 
   // fileParagraph.innerHTML = `${filename} - Saving`;
   const groupRegex = /Speaker |VAD|Non-VAD/;
