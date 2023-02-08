@@ -322,6 +322,7 @@ const reset = db.transaction((filename, user) => {
 
   deleteSegments.run([fileId, userId]);
   deleteNotes.run([fileId, userId]);
+  deleteFaces.run([fileId, userId]);
 });
 app.use("/reset/", (req, res) => {
   reset(req.body["filename"], req.body["user"]);

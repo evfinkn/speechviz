@@ -198,7 +198,7 @@ const SettingsPopup = class SettingsPopup {
     this.resetAllButton.addEventListener("click", function () {
       if (
         confirm(
-          "This will delete ALL saved segments.\n" +
+          "This will delete ALL saved segments, notes, and faces for this file.\n" +
             "Are you sure you want to continue?"
         )
       ) {

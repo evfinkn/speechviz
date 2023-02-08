@@ -271,6 +271,25 @@ const AssociateAction = class AssociateAction {
   }
 };
 
+const UnassociateAction = class UnassociateAction {
+  /** @type {!Face} */ face;
+  /** @type {!TreeItem} */ speaker;
+
+  constructor(face) {
+    this.face = face;
+    this.speaker = face.speaker;
+    face.unassoc();
+  }
+
+  undo() {
+    this.face.assoc(this.speaker);
+  }
+
+  redo() {
+    this.face.unassoc();
+  }
+};
+
 const ColorAction = class ColorAction {
   /** @type {!TreeItem} */ item;
   /** @type {!Color} */ oldColor;
@@ -304,6 +323,7 @@ const Actions = {
   RenameAction,
   DragSegmentAction,
   AssociateAction,
+  UnassociateAction,
   ColorAction,
 };
 
