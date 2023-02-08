@@ -27,6 +27,11 @@ const SettingsPopup = class SettingsPopup {
     { name: "autoScrollInput", event: "change", props: { checked: true } },
     { name: "enableSeekInput", event: "change", props: { checked: true } },
     { name: "showDragHandlesInput", event: "change", props: { checked: true } },
+    {
+      name: "maintainVideoAspectRatio",
+      event: "change",
+      props: { checked: true },
+    },
   ];
 
   /**
@@ -68,6 +73,13 @@ const SettingsPopup = class SettingsPopup {
    * @type {!Element}
    */
   showDragHandlesInput;
+
+  /**
+   * The input element of the checkbox that keeps/disables
+   * maintaining video aspect ratio on resizing.
+   * @type {!Element}
+   */
+  maintainVideoAspectRatio;
 
   /**
    * The button element that resets all moved segments.
@@ -160,6 +172,28 @@ const SettingsPopup = class SettingsPopup {
       Object.values(Segment.byId).forEach((segment) =>
         segment.toggleDragHandles(this.checked)
       );
+    });
+
+    // setting to enable seeking (clicking peaks to jump to a time)
+    const aspectRatioDiv = htmlToElement(`<div>
+            <label>
+              <input type='checkbox' checked> Keep video aspect ratio on resize
+            </label>
+        </div>`);
+    popupContent.append(aspectRatioDiv);
+
+    this.maintainVideoAspectRatio =
+      aspectRatioDiv.firstElementChild.firstElementChild;
+    this.maintainVideoAspectRatio.addEventListener("change", function () {
+      try {
+        if (this.checked) {
+          document.getElementById("media").style = "object-fit: cover";
+        } else {
+          document.getElementById("media").style = "object-fit: fill";
+        }
+      } catch {
+        console.error("No video, can't change video behavior");
+      }
     });
 
     // fine to use same body for both requests
