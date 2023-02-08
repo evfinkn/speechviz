@@ -2215,6 +2215,15 @@ var Face = class Face extends TreeItem {
   speakerNum = null;
 
   /**
+   * An Array containing all removed `Face`s by their id.
+   * Key is id, value is corresponding `Face`:  {id: `Face`}
+   * For saving purposes
+   * @type {[number]}
+   * @static
+   */
+  removed = [];
+
+  /**
    * @param {string} id - The unique identifier to give the `Face`.
    * @param {?Object.<string, any>=} options - Options to customize the `Face`.
    * @param {?TreeItem=} options.parent - The `TreeItem` that contains the item in its
@@ -2291,8 +2300,27 @@ var Face = class Face extends TreeItem {
 
   /** Removes this `Face` from the tree and from Peaks */
   remove() {
+    Object.values(Face.byId).forEach((face) =>
+      face.removed.push(parseInt(this.id.replace("face", "")))
+    );
     super.remove();
-    // add something to move folder out of cluster to a "recycle bin"
+  }
+
+  /**
+   * Override of readding the item for Faces.
+   * To be specific, adds this item to `byId` and `parent` if not `null`. If `parent`
+   * is `null` and `this.parent` isn't, `this.parent` is used instead. Otherwise, if
+   * both are `null`, this item isn't added to any parent.
+   * @param {?TreeItem} parent - The `TreeItem` to add this item to, if any.
+   */
+  readd(parent = null) {
+    Object.values(Face.byId).forEach(
+      (face) =>
+        (face.removed = face.removed.filter(
+          (faceNum) => faceNum === parseInt(this.id.replace("face", ""))
+        ))
+    );
+    super.readd(parent);
   }
 
   /**
