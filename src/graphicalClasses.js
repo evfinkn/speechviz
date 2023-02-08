@@ -150,6 +150,13 @@ var GraphIMU = class GraphIMU {
   controls;
 
   /**
+   * Observes changes in the size of `container` and updates the visualization
+   * to maintain the correct size and aspect ratio.
+   * @type {ResizeObserver}
+   */
+  resizeObserver;
+
+  /**
    * The 3 lines highlighting the directions.
    * The red line is the x axis, the green line is the y axis, and the blue line is
    * the z axis.
@@ -333,7 +340,7 @@ var GraphIMU = class GraphIMU {
     // and zooming (scroll) the camera
     const controls = new OrbitControls(camera, renderer.domElement);
 
-    new ResizeObserver(() => {
+    const resizeObserver = new ResizeObserver(() => {
       // - 10 because container has 5px margins on top and bottom
       this.width = this.container.clientWidth - 10;
       this.height = this.container.clientHeight - 10;
@@ -361,6 +368,7 @@ var GraphIMU = class GraphIMU {
     this.scene = scene;
     this.camera = camera;
     this.controls = controls;
+    this.resizeObserver = resizeObserver;
     this.axes = axes;
     this.grid = grid;
     this.light = light;
@@ -422,6 +430,7 @@ var GraphIMU = class GraphIMU {
   dispose() {
     this.disposer.dispose();
     this.renderer.domElement.remove();
+    this.resizeObserver.unobserve();
   }
 };
 
