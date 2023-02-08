@@ -137,9 +137,6 @@ const rankSnrs = () => {
 const analysis = new Group("Analysis", { playable: true });
 document.getElementById("tree").append(analysis.li);
 
-const clusters = new Group("Clusters");
-document.getElementById("tree").append(clusters.li);
-
 const custom = new PeaksGroup("Custom", {
   parent: analysis,
   color: getRandomColor(),
@@ -197,6 +194,8 @@ const facesLoading = fetch(`/clustered-files/`)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((fileList) => {
+    const clusters = new Group("Clusters");
+    document.getElementById("tree").append(clusters.li);
     const clusterfolders = fileList.cluster; // folder of each found cluster
     // name of the overall folder, same as video in speechviz w/out extension
     const dir = fileList.dir;
