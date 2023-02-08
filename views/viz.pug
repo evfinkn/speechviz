@@ -16,7 +16,7 @@ html(lang="en")
         #waveform-container
           if isVideo
             #visual(style="overflow: auto")
-              video#media(controls="controls")
+              video#media(style="object-fit: cover", controls="controls")
                 source(src=`video/${file}`, type=mimetype)
                 | Your browser does not support the video element.
             div
