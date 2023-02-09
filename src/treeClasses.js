@@ -2203,6 +2203,15 @@ var Face = class Face extends TreeItem {
   static icons = segmentIcons;
 
   /**
+   * An Array containing all removed `Face`s by their id.
+   * Key is id, value is corresponding `Face`:  {id: `Face`}
+   * For saving purposes
+   * @type {[number]}
+   * @static
+   */
+  static removed = [];
+
+  /**
    * Path to image displayed for a face
    * @type {string}
    */
@@ -2223,15 +2232,6 @@ var Face = class Face extends TreeItem {
    * Speaker number this face is associated with
    */
   speakerNum = null;
-
-  /**
-   * An Array containing all removed `Face`s by their id.
-   * Key is id, value is corresponding `Face`:  {id: `Face`}
-   * For saving purposes
-   * @type {[number]}
-   * @static
-   */
-  removed = [];
 
   /**
    * @param {string} id - The unique identifier to give the `Face`.
@@ -2310,9 +2310,7 @@ var Face = class Face extends TreeItem {
 
   /** Removes this `Face` from the tree and from Peaks */
   remove() {
-    Object.values(Face.byId).forEach((face) =>
-      face.removed.push(parseInt(this.id.replace("face", "")))
-    );
+    Face.removed.push(parseInt(this.id.replace("face", "")));
     super.remove();
   }
 
@@ -2324,11 +2322,8 @@ var Face = class Face extends TreeItem {
    * @param {?TreeItem} parent - The `TreeItem` to add this item to, if any.
    */
   readd(parent = null) {
-    Object.values(Face.byId).forEach(
-      (face) =>
-        (face.removed = face.removed.filter(
-          (faceNum) => faceNum === parseInt(this.id.replace("face", ""))
-        ))
+    Face.removed = Face.removed.filter(
+      (faceNum) => faceNum === parseInt(this.id.replace("face", ""))
     );
     super.readd(parent);
   }
