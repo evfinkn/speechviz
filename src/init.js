@@ -428,9 +428,7 @@ fetch("load", {
           actualFace.assoc(actualSpeaker);
         } else {
           const removingFace = Face.byId["face" + face.faceNum];
-          Object.values(Face.byId).forEach((face) =>
-            face.removed.push(parseInt(face.faceNum))
-          );
+          Face.removed.push(parseInt(face.faceNum));
           removingFace.remove();
         }
       });
@@ -492,7 +490,7 @@ const save = () => {
     }
   });
 
-  const removedFaces = Object.values(Face.byId)[0].removed;
+  const removedFaces = Face.removed;
 
   removedFaces.forEach((faceNum) =>
     // Speaker -1 represents removed face, because it is impossible to have -1 speaker
