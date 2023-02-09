@@ -401,18 +401,13 @@ var TreeItem = class TreeItem {
   getProperties(exclude = null) {
     exclude = exclude == null ? [] : exclude;
     const obj = {};
-    TreeItem.properties.forEach((property) => {
-      if (!exclude.includes(property)) {
-        obj[property] = this[property];
-      }
-    });
-    if (!(this.constructor == TreeItem)) {
-      this.constructor.properties.forEach((property) => {
+    this.constructors.forEach((ctor) =>
+      ctor.properties.forEach((property) => {
         if (!exclude.includes(property)) {
           obj[property] = this[property];
         }
-      });
-    }
+      })
+    );
     return obj;
   }
 
