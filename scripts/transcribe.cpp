@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <sstream>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -159,6 +160,14 @@ void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params & para
     fprintf(stderr, "\n");
 }
 
+std::string format_as_point(std::pair<std::string, double> word) {
+    std::stringstream ss;
+    ss << "{\"labelText\": "
+       << "\"" << word.first << "\", "
+       << "\"time\": " << word.second << "}";
+    return ss.str();
+}
+
 bool output_transcription(struct whisper_context * ctx, const char * fname) {
     std::ofstream fout(fname);
     if (!fout.is_open()) {
@@ -191,15 +200,15 @@ bool output_transcription(struct whisper_context * ctx, const char * fname) {
         }
     }
 
+    if (words.size() == 0) {
+        fout << "[]";
+        return true;
+    }
+
     fout << "[";
-    for (auto &word : words) {
-        // fout << word.second << ", \"" << word.first << "\"\n";
-        fout << "{\"labelText\": "
-             << "\"" << word.first << "\", "
-             << "\"time\": " << word.second << "}";
-        if (word != words[n_segments - 1]) {
-            fout << ", ";
-        }
+    fout << format_as_point(words.at(0));
+    for (int i = 1; i < words.size(); ++i) {
+        fout << ", " << format_as_point(words.at(i));
     }
     fout << "]";
 
