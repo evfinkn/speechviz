@@ -596,7 +596,7 @@ def extract_sensor_data(
                 if not nanoseconds:
                     data["capture_timestamp_ns"] *= 1e-9
                 data["capture_timestamp_ns"] -= first_device_timestamp
-                data["capture_timestamp_ns"] += first_unix_timestamp
+                # data["capture_timestamp_ns"] += first_unix_timestamp
 
         # convert the timestamps extracted from the image filenames to unix timestamps
         for stream in VIDEO_STREAMS:
