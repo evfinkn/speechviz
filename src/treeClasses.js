@@ -531,6 +531,12 @@ var TreeItem = class TreeItem {
     this.checkbox.addEventListener("click", () => {
       this.toggle();
     });
+    // on right click
+    this.checkbox.addEventListener("contextmenu", (event) => {
+      // prevent default so that the right click context menu doesn't show
+      event.preventDefault();
+      this.nested.classList.toggle("active");
+    });
 
     this.span = li.children[1];
     this.span.addEventListener("click", () => {
