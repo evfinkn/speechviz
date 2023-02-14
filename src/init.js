@@ -1,6 +1,6 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import globals from "./globals.js";
-import { Group, Segment, PeaksGroup, Face } from "./treeClasses.js";
+import { Group, Segment, PeaksGroup, Face, Word } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
@@ -218,12 +218,20 @@ const facesLoading = fetch(`/clustered-files/`)
 fetch(`/transcriptions/${basename}-transcription.json`)
   .then(checkResponseStatus)
   .then((response) => response.json())
-  .then((words) =>
-    words.map((word) => {
-      word["color"] = "#00000000";
-      peaks.points.add(word);
-    })
-  )
+  .then((words) => {
+    const wordsGroup = new PeaksGroup("Words", {
+      parent: analysis,
+      playable: false,
+      color: "#00000000",
+    });
+    // words.map((word) => {
+    //   word["color"] = "#00000000";
+    //   peaks.points.add(word);
+    // })
+    peaks.points.add(words).forEach((word) => {
+      new Word(word, { parent: wordsGroup });
+    });
+  })
   .catch((error) => output404OrError(error, "transcription"));
 
 const poseRegex = /pose.*\.csv/;
@@ -498,7 +506,7 @@ const save = () => {
   );
 
   // fileParagraph.innerHTML = `${filename} - Saving`;
-  const groupRegex = /Speaker |VAD|Non-VAD/;
+  const groupRegex = /Speaker |VAD|Non-VAD|Words/;
   // only save groups that aren't from the pipeline
   const groups = Object.values(PeaksGroup.byId).filter(
     (group) => !group.id.match(groupRegex)

@@ -129,12 +129,19 @@ var TreeItem = class TreeItem {
 
   /**
    * The text shown in `span` (and therefore in the tree).
+   * This will still have a value if this item hasn't been rendered.
    * This is hidden to differentiate between the getter and setter for `text`.
    * Can probably be removed by just changing getter and setter for `text` to only use
    * `span.innerHTML`.
    * @type {string}
    */
   #text;
+
+  /**
+   * A `boolean` indicating if this item is checked / enabled.
+   * @type {boolean}
+   */
+  #checked = true;
 
   /**
    * A `boolean` indicating if this item can be played and looped.
@@ -192,25 +199,28 @@ var TreeItem = class TreeItem {
    * @type {?Array.<(TreeItem|TreeItem[])>}
    * @see moveTo
    */
-  assocWith;
+  assocWith = null;
 
   /**
-   * The li element that is displayed and that contains all other elements.
-   * @type {!Element}
+   * The li element that is displayed and that contains all other elements if this
+   * item is rendered. `null` otherwise.
+   * @type {?Element}
    */
-  li;
+  li = null;
 
   /**
-   * The input element of the checkbox used to toggle this item.
-   * @type {!Element}
+   * The input element of the checkbox used to toggle this item if this item is
+   * rendered. `null` otherwise.
+   * @type {?Element}
    */
-  checkbox;
+  checkbox = null;
 
   /**
-   * The span element containing the text shown in `li`.
-   * @type {!Element}
+   * The span element containing the text shown in `li` if this item is rendered.
+   * `null` otherwise.
+   * @type {?Element}
    */
-  span;
+  span = null;
 
   /**
    * The a element of the play button if this item is playable. Otherwise, `null`.
@@ -247,10 +257,11 @@ var TreeItem = class TreeItem {
   popup = null;
 
   /**
-   * The ul element containing the nested content (the children) of this item.
-   * @type {!Element}
+   * The ul element containing the nested content (the children) of this item if
+   * this item is rendered. `null` otherwise.
+   * @type {?Element}
    */
-  nested;
+  nested = null;
 
   /**
    * @param {string} id - The unique identifier to give the `TreeItem`.
@@ -307,11 +318,10 @@ var TreeItem = class TreeItem {
 
     if (render) {
       this.render();
-      // in if (render) because you can only assign to parent if its been rendered,
-      // since this.li is appended to parent.nested but this.li is set in render
-      if (parent) {
-        parent.addChildren(this);
-      }
+    }
+
+    if (parent) {
+      parent.addChildren(this);
     }
 
     if (children) {
@@ -348,7 +358,7 @@ var TreeItem = class TreeItem {
   }
 
   /**
-   * The text shown in `span` (and therefore in the tree).
+   * The text shown in (or would be) `span` (and therefore in the tree).
    * @type {string}
    */
   get text() {
@@ -357,19 +367,34 @@ var TreeItem = class TreeItem {
   set text(newText) {
     // setter for text so `this.text = newText` updates text in tree
     this.#text = newText;
-    this.span.innerHTML = newText;
+    if (this.rendered) {
+      this.span.innerHTML = newText;
+    }
   }
 
+  // we have to have a separate property for checked instead of just using
+  // checkbox.checked because checkbox is null if !this.rendered
   /**
-   * A `boolean` indicating if this item's checkbox is checked.
-   * Equivalent to `checkbox.checked`.
+   * A `boolean` indicating if this item is checked / enabled.
    * @type {boolean}
    */
   get checked() {
-    return this.checkbox.checked;
+    return this.#checked;
   }
   set checked(bool) {
-    this.checkbox.checked = bool;
+    this.#checked = bool;
+    if (this.rendered) {
+      this.checkbox.checked = bool;
+    }
+  }
+
+  /**
+   * A `boolean` indicating if this item is rendered, i.e. if `this.render()` has
+   * been called.
+   * @type {boolean}
+   */
+  get rendered() {
+    return this.li !== null;
   }
 
   /**
@@ -422,7 +447,9 @@ var TreeItem = class TreeItem {
       }
       child.#parent = this;
       this.children.push(child);
-      this.nested.append(child.li);
+      if (this.rendered && child.rendered) {
+        this.nested.append(child.li);
+      }
       if (this.playable && child.playable) {
         this.updateDuration(child.duration);
       }
@@ -456,26 +483,28 @@ var TreeItem = class TreeItem {
     this.playable = true;
     this.duration = 0;
 
-    this.playButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>`
-    );
-    // use () => this.play() instead of just this.play so that
-    // "this" refers to the TreeItem and not the button getting clicked
-    this.playButton.addEventListener("click", () => this.play());
-    // this puts the play button before any other buttons
-    this.span.after(this.playButton);
+    if (this.rendered) {
+      this.playButton = htmlToElement(
+        `<a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>`
+      );
+      // use () => this.play() instead of just this.play so that
+      // "this" refers to the TreeItem and not the button getting clicked
+      this.playButton.addEventListener("click", () => this.play());
+      // this puts the play button before any other buttons
+      this.span.after(this.playButton);
 
-    this.loopButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>`
-    );
-    // need to use () => so that we can pass loop = true
-    this.loopButton.addEventListener("click", () => this.play(true));
-    this.playButton.after(this.loopButton);
+      this.loopButton = htmlToElement(
+        `<a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>`
+      );
+      // need to use () => so that we can pass loop = true
+      this.loopButton.addEventListener("click", () => this.play(true));
+      this.playButton.after(this.loopButton);
 
-    this.pauseButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${this.constructor.icons.pause}</a>`
-    );
-    this.pauseButton.addEventListener("click", () => this.pause());
+      this.pauseButton = htmlToElement(
+        `<a href="javascript:;" class="button-on">${this.constructor.icons.pause}</a>`
+      );
+      this.pauseButton.addEventListener("click", () => this.pause());
+    }
   }
 
   /**
@@ -489,14 +518,16 @@ var TreeItem = class TreeItem {
 
     this.removable = true;
 
-    this.removeButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`
-    );
-    this.removeButton.addEventListener("click", () => {
-      undoStorage.push(new Actions.RemoveAction(this));
-    });
-    // this puts the remove button after any other buttons
-    this.nested.before(this.removeButton);
+    if (this.rendered) {
+      this.removeButton = htmlToElement(
+        `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`
+      );
+      this.removeButton.addEventListener("click", () => {
+        undoStorage.push(new Actions.RemoveAction(this));
+      });
+      // this puts the remove button after any other buttons
+      this.nested.before(this.removeButton);
+    }
   }
 
   /** Generates the HTML for this item. */
@@ -552,7 +583,9 @@ var TreeItem = class TreeItem {
   updateDuration(durationChange) {
     if (this.playable) {
       this.duration = this.duration + durationChange;
-      this.updateSpanTitle();
+      if (this.rendered) {
+        this.updateSpanTitle();
+      }
 
       if (this.parent) {
         this.parent.updateDuration(durationChange);
@@ -562,6 +595,10 @@ var TreeItem = class TreeItem {
 
   /** Updates the title (tooltip) of `span`. */
   updateSpanTitle() {
+    if (!this.rendered) {
+      // maybe this should throw an error instead?
+      return; // there's no span if this item hasn't been rendered
+    }
     if (this.playable && this.duration != 0) {
       this.span.title = `Duration: ${this.duration.toFixed(2)}`;
     }
@@ -579,6 +616,11 @@ var TreeItem = class TreeItem {
    * @throws {Error} If this item is not playable.
    */
   switchToPauseButton(loop) {
+    if (!this.rendered) {
+      throw new Error(
+        `TreeItem ${this.id} is not rendered and therefore has no buttons to switch.`
+      );
+    }
     if (!this.playable) {
       throw new Error(
         `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`
@@ -596,6 +638,11 @@ var TreeItem = class TreeItem {
    * @throws {Error} If this item is not playable.
    */
   switchBackToPlayLoopButtons() {
+    if (!this.rendered) {
+      throw new Error(
+        `TreeItem ${this.id} is not rendered and therefore has no buttons to switch.`
+      );
+    }
     if (!this.playable) {
       throw new Error(
         `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`
@@ -634,8 +681,10 @@ var TreeItem = class TreeItem {
     if (!this.removable) {
       throw new Error(`TreeItem ${this.id} is not removable.`);
     }
-
-    this.li.remove();
+    if (this.rendered) {
+      this.li.remove();
+      this.li = null;
+    }
     this.removeFromById();
     this.children.forEach((child) => child.remove());
     if (this.parent) {
@@ -701,7 +750,11 @@ var TreeItem = class TreeItem {
    */
   sort(by) {
     const children = sortByProp(this.children, by);
-    children.forEach((segment) => this.nested.append(segment.li));
+    if (this.rendered) {
+      children
+        .filter((child) => child.rendered)
+        .forEach((child) => this.nested.append(child.li));
+    }
   }
 
   /**
@@ -722,17 +775,19 @@ var TreeItem = class TreeItem {
       return false;
     }
 
-    const checked = force === null ? this.checked : force;
-    this.checked = checked;
+    // force must equal !this.checked at this point so just use !this.checked
+    this.checked = !this.checked;
 
-    this.nested.classList.toggle("active", checked);
+    if (this.rendered) {
+      this.nested.classList.toggle("active", this.checked);
 
-    if (this.playButton) {
-      toggleButton(this.playButton, checked);
-      toggleButton(this.loopButton, checked);
-    }
-    if (this.removeButton) {
-      toggleButton(this.removeButton, checked);
+      if (this.playButton) {
+        toggleButton(this.playButton, this.checked);
+        toggleButton(this.loopButton, this.checked);
+      }
+      if (this.removeButton) {
+        toggleButton(this.removeButton, this.checked);
+      }
     }
 
     return true;
@@ -752,13 +807,16 @@ var TreeItem = class TreeItem {
    * `path`. This doesn't toggle any of the items; it only opens the tree along `path`.
    */
   open() {
-    this.nested.classList.add("active");
-    this.checked = true;
-    if (this.parent) {
-      this.parent.open();
+    if (this.rendered) {
+      this.nested.classList.add("active");
+      this.checked = true;
+      if (this.parent) {
+        this.parent.open();
+      }
     }
   }
 
+  // FIXME: make events work even if this item hasn't been rendered
   // The following 3 methods implement the EventTarget interface
   // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget
   /**
@@ -1213,7 +1271,9 @@ var Group = class Group extends TreeItem {
 
   /** Sets the CSS styling of the group's elements. */
   style() {
-    this.li.style.fontSize = "18px";
+    if (this.rendered) {
+      this.li.style.fontSize = "18px";
+    }
   }
 
   /**
@@ -1229,8 +1289,8 @@ var Group = class Group extends TreeItem {
     if (!this.toggleTree(force)) {
       return false;
     } // no toggling necessary
-    const checked = force === null ? this.checked : force;
-    this.children.forEach((child) => child.toggle(checked));
+    // this.checked will be changed by toggleTree
+    this.children.forEach((child) => child.toggle(this.checked));
     return true;
   }
 
@@ -1387,7 +1447,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
     const points = [];
     peaksItems.forEach((peaksItem) => {
       if (peaksItem.type === "Point") {
-        points.push(peaksItem).point;
+        points.push(peaksItem.point);
       }
     });
     return points;
@@ -1462,6 +1522,9 @@ var PeaksItem = class PeaksItem extends TreeItem {
    *      the item can be moved to. `null` if the item isn't moveable.
    * @param {?Array.<PeaksGroup>=} options.copyTo - An array of the `PeaksGroup`s that
    *      the item can be copied to. `null` if the item isn't copyable.
+   * @param {boolean} [options.render=true] - If `true`, `render()` is called in
+   *      the constructor. Otherwise, `render()` is not called and is left to the
+   *      user to call.
    * @throws {Error} If a `TreeItem` with `peaksItem.id` already exists.
    */
   constructor(
@@ -1474,6 +1537,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
       renamable = false,
       moveTo = null,
       copyTo = null,
+      render = true,
     } = {}
   ) {
     // catch options contained within the peaks item
@@ -1498,7 +1562,9 @@ var PeaksItem = class PeaksItem extends TreeItem {
     this.peaksItem = peaksItem;
     this.type = peaksItem.constructor.name === "Segment" ? "Segment" : "Point";
 
-    this.render();
+    if (render) {
+      this.render();
+    }
     parent.addChildren(this);
 
     this.#editable = this.peaksItem.editable;
@@ -1616,8 +1682,10 @@ var PeaksItem = class PeaksItem extends TreeItem {
 
   /** Sets the CSS styling of the peaksItem's elements. */
   style() {
-    this.li.style.fontSize = "12px";
-    this.checkbox.style.transform = "scale(0.85)";
+    if (this.rendered) {
+      this.li.style.fontSize = "12px";
+      this.checkbox.style.transform = "scale(0.85)";
+    }
   }
 
   /** Removes this segment / point from the tree and Peaks waveform. */
@@ -1669,8 +1737,8 @@ var PeaksItem = class PeaksItem extends TreeItem {
       return false;
     } // no toggling necessary
 
-    const checked = force === null ? this.checked : force;
-    if (checked) {
+    // this.checked will be changed by toggleTree
+    if (this.checked) {
       // add item to peaks
       this.#addToPeaks();
       this.parent.hidden.delete(this);
@@ -1881,8 +1949,8 @@ var Segment = class Segment extends PeaksItem {
   }
 
   /**
-   * Copies this segment to another `Group`.
-   * @param {!PeaksGroup} copyParent - `Group` to add the copied segment to.
+   * Copies this segment to another `PeaksGroup`.
+   * @param {!PeaksGroup} copyParent - `PeaksGroup` to add the copied segment to.
    * @returns {?Segment} The copied segment if `copyParent` didn't already have a
    *      copy of this segment. Otherwise, `null`.
    */
@@ -1908,6 +1976,122 @@ var Segment = class Segment extends PeaksItem {
       });
     }
     return null;
+  }
+};
+
+/**
+ * A `TreeItem` for a Peaks.js point.
+ * @extends PeaksItem
+ */
+var Point = class Point extends PeaksItem {
+  /**
+   * An object containing all `Point`s by their id.
+   * Key is id, value is corresponding `Point`:
+   * {id: `Point`}
+   * @type {!Object.<string, Point>}
+   * @static
+   */
+  static byId = {};
+
+  /**
+   * @param {!PeaksPoint} point - The Peaks point being represented in the tree by
+   *       the `Point`.
+   * @param {?Object.<string, any>=} options - Options to customize the point.
+   * @param {?Peaksgroup=} options.parent - The `PeaksGroup` that contains the point
+   *       in its nested content.
+   * @param {string=} options.text - The text to show in the point's span (and
+   *       therefore in the tree).
+   * @param {boolean} [options.removable=false] - Indicates if the point can be
+   *       removed from the tree.
+   * @param {boolean} [options.renamable=false] - Indicates if the point can be
+   *       renamed.
+   * @param {?Array.<PeaksGroup>=} options.moveTo - An array of the `PeaksGroups`s that
+   *      the point can be moved to. `null` if the point isn't moveable.
+   * @param {?Array.<PeaksGroup>=} options.copyTo - An array of the `PeaksGroups`s that
+   *      the point can be copied to. `null` if the point isn't copyable.
+   * @param {boolean} [options.render=true] - If `true`, `render()` is called in
+   *      the constructor. Otherwise, `render()` is not called and is left to the
+   *      user to call.
+   * @throws {Error} If a `TreeItem` with `point.id` already exists.
+   */
+  constructor(
+    point,
+    {
+      parent = null,
+      text = null,
+      removable = false,
+      renamable = false,
+      moveTo = null,
+      copyTo = null,
+      render = true,
+    } = {}
+  ) {
+    if (point.constructor.name !== "Point") {
+      point = peaks.points.add(point);
+    }
+    super(point, {
+      parent,
+      text,
+      removable,
+      renamable,
+      moveTo,
+      copyTo,
+      render,
+    });
+
+    if (this.renamable || this.moveTo || this.copyTo) {
+      this.popup = new Popup(this);
+    }
+  }
+
+  /**
+   * The Peaks.js point being represented in the tree by this `Point`.
+   * @type {!PeaksPoint}
+   */
+  get point() {
+    return this.peaksItem;
+  }
+
+  /**
+   * This point's timestamp in seconds.
+   * @type {number}
+   */
+  get time() {
+    return this.point.time;
+  }
+  set time(newTime) {
+    this.point.update({ time: newTime });
+  }
+};
+
+var Word = class Word extends Point {
+  /**
+   * An object containing all `Word`s by their id.
+   * Key is id, value is corresponding `Word`:
+   * {id: `Word`}
+   * @type {!Object.<string, Word>}
+   * @static
+   */
+  static byId = {};
+
+  /**
+   * @param {!PeaksPoint} point - The Peaks point being represented in the tree by
+   *       the `Word`.
+   * @param {?Object.<string, any>=} options - Options to customize the word.
+   * @param {?Peaksgroup=} options.parent - The `PeaksGroup` that contains the word
+   *       in its nested content.
+   * @throws {Error} If a `TreeItem` with `point.id` already exists.
+   */
+  constructor(point, { parent = null } = {}) {
+    super(point, { parent, text: point.labelText, render: false });
+  }
+
+  /**
+   * Renames this Word, replacing its labelText. Its id is unchanged.
+   * @param {string} newId - The new id to give this item.
+   */
+  rename(newText) {
+    this.peaksItem.update({ labelText: newText });
   }
 };
 
@@ -2142,9 +2326,10 @@ var PeaksGroup = class PeaksGroup extends Group {
     if (!this.toggleTree(force)) {
       return false;
     } // no toggling necessary
-    const checked = force === null ? this.checked : force;
-    this.children.forEach((child) => child.toggleTree(checked));
-    if (checked) {
+
+    // this.checked will be changed by toggleTree
+    this.children.forEach((child) => child.toggleTree(this.checked));
+    if (this.checked) {
       PeaksItem.showOnPeaks(this.hidden);
       this.hidden.forEach((peaksItem) => {
         peaksItem.updateEditable();
@@ -2349,4 +2534,14 @@ var Face = class Face extends TreeItem {
   }
 };
 
-export { TreeItem, Popup, Group, PeaksItem, Segment, PeaksGroup, Face };
+export {
+  TreeItem,
+  Popup,
+  Group,
+  PeaksItem,
+  Segment,
+  Point,
+  Word,
+  PeaksGroup,
+  Face,
+};
