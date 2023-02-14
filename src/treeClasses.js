@@ -89,26 +89,6 @@ var TreeItem = class TreeItem {
   }
 
   /**
-   * Returns an array of `TreeItem`s with the given ids.
-   * @param {!string[]} ids - Array of the ids of the `TreeItem`s to get.
-   * @returns {!TreeItem[]} The `TreeItem`s corresponding to the ids.
-   * @static
-   */
-  static idsToTreeItems(ids) {
-    return ids.map((id) => TreeItem.byId[id]);
-  }
-
-  /**
-   * Returns an array of the ids of the given `TreeItem`s.
-   * @param {!TreeItem[]} treeItems - Array of the `TreeItem`s whose ids to get.
-   * @returns {!string[]} The ids corresponding to the given `TreeItem`s.
-   * @static
-   */
-  static treeItemsToIds(treeItems) {
-    return treeItems.map((treeItem) => treeItem.id);
-  }
-
-  /**
    * The unique identifier of this item.
    * @type {string}
    */
