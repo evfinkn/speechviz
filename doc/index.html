@@ -83,7 +83,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="Face.html">Face</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="GroupOfGroups.html">GroupOfGroups</a></li><li><a href="Popup.html">Popup</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li></ul><h3>Global</h3><ul><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createRadioDiv">createRadioDiv</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#expandGroups">expandGroups</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#openViz">openViz</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#saveIcon">saveIcon</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#setUser">setUser</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="AddAction.html">AddAction</a></li><li><a href="CopyAction.html">CopyAction</a></li><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="Face.html">Face</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="MoveAction.html">MoveAction</a></li><li><a href="PeaksGroup.html">PeaksGroup</a></li><li><a href="PeaksItem.html">PeaksItem</a></li><li><a href="Point.html">Point</a></li><li><a href="Popup.html">Popup</a></li><li><a href="RemoveAction.html">RemoveAction</a></li><li><a href="RenameAction.html">RenameAction</a></li><li><a href="ResponseError.html">ResponseError</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li><li><a href="UndoStorage.html">UndoStorage</a></li><li><a href="Word.html">Word</a></li></ul><h3>Interfaces</h3><ul><li><a href="Action.html">Action</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Actions">Actions</a></li><li><a href="global.html#addLabel">addLabel</a></li><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createRadioDiv">createRadioDiv</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#openViz">openViz</a></li><li><a href="global.html#output404OrError">output404OrError</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#rankSnrs">rankSnrs</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#redoStorage">redoStorage</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#saveIcon">saveIcon</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#setUser">setUser</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#undoStorage">undoStorage</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
                 
             </nav>
         </div>
@@ -182,43 +182,37 @@ to use pyannote. You can do so by following these steps:</p>
 image, so you'll need to build that container first.</p>
 <pre class="prettyprint source lang-bash"><code>git clone https://github.com/facebookresearch/Aria_data_tools.git
 cd Aria_data_tools
-# replace docker with podman if you're using podman
 docker build -t aria_data_tools .
 </code></pre>
 <p>After that's finished, build the Speechviz container.</p>
 <pre class="prettyprint source lang-bash"><code>git clone https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz.git
 cd speechviz
-# these next 2 make files that you'll mount into the container
-npm run mkdir
-python3 scripts/db_init.py
-# if you're using docker:
-docker build -e PYANNOTE_AUTH_TOKEN -t speechviz .
-# if you're using podman:
-podman build --env=PYANNOTE_AUTH_TOKEN -t speechviz .
+docker build --build-arg \
+    PYANNOTE_AUTH_TOKEN=&quot;${PYANNOTE_AUTH_TOKEN}&quot; \
+    -t speechviz .
 </code></pre>
 <p>Note that the above commands build the image with PyTorch CPU support only.
 If you'd like to include support for CUDA, follow the instructions for using the
 <a href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html">NVIDIA Container Toolkit</a>
 and add <code>--build-arg cuda=true</code> to the <code>docker build</code> command above:</p>
-<pre class="prettyprint source lang-bash"><code># if you're using docker:
-docker build --build-arg cuda=true \
-    -e PYANNOTE_AUTH_TOKEN -t speechviz .
-# if you're using podman:
-podman build --build-arg cuda=true \
-    --env=PYANNOTE_AUTH_TOKEN -t speechviz .
+<pre class="prettyprint source lang-bash"><code>docker build --build-arg \
+    PYANNOTE_AUTH_TOKEN=&quot;${PYANNOTE_AUTH_TOKEN}&quot; \
+    --build-arg cuda=true -t speechviz .
 </code></pre>
-<p>You can start the container by—while you're in the cloned
-speechviz directory—running</p>
-<pre class="prettyprint source lang-bash"><code># replace docker with podman if you're using podman
-docker run -it \
+<p>You'll want to mount your data into the image. To create the data folder and
+database, run these 2 commands:</p>
+<pre class="prettyprint source lang-bash"><code>npm run mkdir
+python3 scripts/db_init.py
+</code></pre>
+<p>You can then start the container by running</p>
+<pre class="prettyprint source lang-bash"><code>docker run -it \
     -v ./data:/speechviz/data \
     -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
     speechviz
 </code></pre>
 <p>If you're going to use the interface in the container, use the <code>-p PORT:PORT</code> option.
 By default, the interface uses port 3000, so the command for that port is</p>
-<pre class="prettyprint source lang-bash"><code># replace docker with podman if you're using podman
-docker run -it -p 3000:3000 \
+<pre class="prettyprint source lang-bash"><code>docker run -it -p 3000:3000 \
     -v ./data:/speechviz/data \
     -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
     speechviz

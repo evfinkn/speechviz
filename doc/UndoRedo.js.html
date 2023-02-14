@@ -1,0 +1,464 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Speechviz Documentation UndoRedo.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">Speechviz Documentation</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    Documentation
+                </a>
+                
+                 
+                    
+                        <a
+                            class="link user-link "
+                            href="https://research-git.uiowa.edu/uiowa-audiology-reu-2022/speechviz"
+                        >
+                            GitLab
+                        </a>
+                    
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="AddAction.html">AddAction</a></li><li><a href="CopyAction.html">CopyAction</a></li><li><a href="CustomSegmentMarker.html">CustomSegmentMarker</a></li><li><a href="Disposer.html">Disposer</a></li><li><a href="Face.html">Face</a></li><li><a href="GraphIMU.html">GraphIMU</a></li><li><a href="Group.html">Group</a></li><li><a href="MoveAction.html">MoveAction</a></li><li><a href="PeaksGroup.html">PeaksGroup</a></li><li><a href="PeaksItem.html">PeaksItem</a></li><li><a href="Point.html">Point</a></li><li><a href="Popup.html">Popup</a></li><li><a href="RemoveAction.html">RemoveAction</a></li><li><a href="RenameAction.html">RenameAction</a></li><li><a href="ResponseError.html">ResponseError</a></li><li><a href="Segment.html">Segment</a></li><li><a href="SettingsPopup.html">SettingsPopup</a></li><li><a href="TreeItem.html">TreeItem</a></li><li><a href="UndoStorage.html">UndoStorage</a></li><li><a href="Word.html">Word</a></li></ul><h3>Interfaces</h3><ul><li><a href="Action.html">Action</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Actions">Actions</a></li><li><a href="global.html#addLabel">addLabel</a></li><li><a href="global.html#arrayMean">arrayMean</a></li><li><a href="global.html#arraySum">arraySum</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#checkResponseStatus">checkResponseStatus</a></li><li><a href="global.html#compareProperty">compareProperty</a></li><li><a href="global.html#createRadioDiv">createRadioDiv</a></li><li><a href="global.html#createSegmentMarker">createSegmentMarker</a></li><li><a href="global.html#getRandomColor">getRandomColor</a></li><li><a href="global.html#globals">globals</a></li><li><a href="global.html#groupIcons">groupIcons</a></li><li><a href="global.html#htmlToElement">htmlToElement</a></li><li><a href="global.html#objectMap">objectMap</a></li><li><a href="global.html#openViz">openViz</a></li><li><a href="global.html#output404OrError">output404OrError</a></li><li><a href="global.html#propertiesEqual">propertiesEqual</a></li><li><a href="global.html#rankSnrs">rankSnrs</a></li><li><a href="global.html#redoIcon">redoIcon</a></li><li><a href="global.html#redoStorage">redoStorage</a></li><li><a href="global.html#save">save</a></li><li><a href="global.html#saveIcon">saveIcon</a></li><li><a href="global.html#segmentIcons">segmentIcons</a></li><li><a href="global.html#settingsIcon">settingsIcon</a></li><li><a href="global.html#setUser">setUser</a></li><li><a href="global.html#sortByProp">sortByProp</a></li><li><a href="global.html#toggleButton">toggleButton</a></li><li><a href="global.html#undoIcon">undoIcon</a></li><li><a href="global.html#undoStorage">undoStorage</a></li><li><a href="global.html#zoomInIcon">zoomInIcon</a></li><li><a href="global.html#zoomOutIcon">zoomOutIcon</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>UndoRedo.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import globals from "./globals";
+import { toggleButton } from "./util";
+import { undoIcon, redoIcon } from "./icon";
+
+const filename = globals.filename;
+const fileParagraph = document.getElementById("file");
+
+const undoButton = document.getElementById("undo");
+const redoButton = document.getElementById("redo");
+undoButton.innerHTML = undoIcon;
+redoButton.innerHTML = redoIcon;
+// when first initializing, there are no undos or redos so toggle buttons off
+toggleButton(undoButton, false);
+toggleButton(redoButton, false);
+
+/**
+ * An action that the user takes that causes a change in the program state.
+ * @interface Action
+ */
+/**
+ * Undoes this action.
+ * @function
+ * @name Action#undo
+ */
+
+/**
+ * An `Array` subclass that stores changes so that they can be undone.
+ * @extends Array
+ */
+const UndoStorage = class UndoStorage extends Array {
+  push(...items) {
+    super.push(...items);
+    if (this.length !== 0) {
+      toggleButton(undoButton, true);
+    }
+    redoStorage.length = 0;
+    toggleButton(redoButton, false);
+    // If something was pushed to undo, that means an action that altered
+    // something was taken, which means that the user now has unsaved changes
+    // Therefore, remove the save indicator from the file name on the interface
+    fileParagraph.innerHTML = filename;
+    globals.dirty = true;
+  }
+
+  /** Undoes the most recently made change. */
+  undo() {
+    // even though undoButton should be unclickable
+    // if the length is 0, make sure just in case
+    if (this.length === 0) {
+      return;
+    }
+    const action = this.pop();
+    action.undo();
+    redoStorage.push(action);
+    if (this.length === 0) {
+      toggleButton(undoButton, false);
+    }
+  }
+};
+
+/** The array holding the actions that have been taken and can be undone. */
+const undoStorage = new UndoStorage();
+
+// arrow function so that in undo(), `this` refers to undoStorage and not undoButton
+undoButton.addEventListener("click", () => undoStorage.undo());
+
+const RedoStorage = class RedoStorage extends Array {
+  push(...items) {
+    super.push(...items);
+    if (this.length !== 0) {
+      toggleButton(redoButton, true);
+    }
+  }
+
+  redo() {
+    // even though undoButton should be unclickable
+    // if the length is 0, make sure just in case
+    if (this.length === 0) {
+      return;
+    }
+    const action = this.pop();
+    action.redo();
+    undoStorage.push(action);
+    if (this.length === 0) {
+      toggleButton(redoButton, false);
+    }
+  }
+};
+
+// use var for hoisting (so it can be referenced in UndoStorage push and undo)
+/** The array holding the actions that have */
+var redoStorage = new RedoStorage();
+
+// arrow function so that in redo(), `this` refers to redoStorage and not redoButton
+redoButton.addEventListener("click", () => redoStorage.redo());
+
+const AddAction = class AddAction {
+  /** @type {!TreeItem} */ item;
+  /** @type {!TreeItem} */ parent;
+  /** @type {!Array.&lt;AddAction>} */ children;
+
+  /**
+   * @param {!TreeItem} item -
+   */
+  constructor(item) {
+    this.item = item;
+    this.parent = item.parent;
+    this.children = item.children.map((child) => new AddAction(child));
+  }
+
+  undo() {
+    this.children.forEach((child) => child.undo());
+    this.item.remove();
+  }
+
+  redo() {
+    this.item.readd(this.parent);
+    this.children.forEach((child) => child.redo());
+  }
+};
+
+// TODO: this code is 99% the same as AddAction, so refactor
+//       maybe some actions use an inverse Action (only some because
+//       some are their own inverses though)
+const RemoveAction = class RemoveAction {
+  /** @type {!TreeItem} */ item;
+  /** @type {!TreeItem} */ parent;
+  /** @type {!Array.&lt;RemoveAction>} */ children;
+
+  /**
+   * @param {!TreeItem} item -
+   */
+  constructor(item) {
+    this.item = item;
+    this.parent = item.parent;
+    this.children = item.children.map((child) => new RemoveAction(child));
+    item.remove();
+  }
+
+  undo() {
+    this.item.readd(this.parent);
+    this.children.forEach((child) => child.undo());
+  }
+
+  redo() {
+    this.children.forEach((child) => child.redo());
+    this.item.remove();
+  }
+};
+
+const MoveAction = class MoveAction {
+  /** @type {!TreeItem} */ item;
+  /** @type {!TreeItem} */ oldParent;
+  /** @type {!TreeItem} */ newParent;
+
+  /**
+   * @param {!TreeItem} item -
+   * @param {!TreeItem} newParent -
+   */
+  constructor(item, newParent) {
+    this.item = item;
+    this.oldParent = item.parent;
+    this.newParent = newParent;
+    item.move(newParent);
+  }
+
+  undo() {
+    this.item.move(this.oldParent);
+  }
+
+  redo() {
+    this.item.move(this.newParent);
+  }
+};
+
+const CopyAction = class CopyAction {
+  /** @type {!Array.&lt;AddAction>} */ copied;
+
+  /**
+   * @param {(!TreeItem|!Array.&lt;TreeItem>)} copied -
+   */
+  constructor(copied) {
+    if (!Array.isArray(copied)) {
+      copied = [copied];
+    }
+    this.copied = copied.map((copy) => new AddAction(copy));
+  }
+
+  undo() {
+    this.copied.forEach((copy) => copy.undo());
+  }
+
+  redo() {
+    this.copied.forEach((copy) => copy.redo());
+  }
+};
+
+const RenameAction = class RenameAction {
+  /** @type {!TreeItem} */ item;
+  /** @type {string} */ oldText;
+  /** @type {string} */ newText;
+
+  /**
+   * @param {!TreeItem} item -
+   * @param {string} newText -
+   */
+  constructor(item, newText) {
+    this.item = item;
+    this.oldText = item.text;
+    this.newText = newText;
+    this.item.rename(this.newText);
+  }
+
+  undo() {
+    this.item.rename(this.oldText);
+  }
+
+  redo() {
+    this.item.rename(this.newText);
+  }
+};
+
+const DragSegmentAction = class DraggedSegmentAction {
+  /** @type {!Segment} */ segment;
+  /** @type {number} */ oldStartTime;
+  /** @type {number} */ oldEndTime;
+  /** @type {number} */ newStartTime;
+  /** @type {number} */ newEndTime;
+
+  constructor(segment, oldStartTime, oldEndTime) {
+    this.segment = segment;
+    this.oldStartTime = oldStartTime;
+    this.oldEndTime = oldEndTime;
+    this.newStartTime = segment.startTime;
+    this.newEndTime = segment.endTime;
+    segment.updateDuration();
+  }
+
+  #updateTimes(startTime, endTime) {
+    this.segment.update({ startTime, endTime });
+    this.segment.updateDuration();
+  }
+
+  undo() {
+    this.#updateTimes(this.oldStartTime, this.oldEndTime);
+  }
+
+  redo() {
+    this.#updateTimes(this.newStartTime, this.newEndTime);
+  }
+};
+
+const AssociateAction = class AssociateAction {
+  /** @type {!Face} */ face;
+  /** @type {!PeaksGroup} */ speaker;
+
+  constructor(face, speaker) {
+    this.face = face;
+    this.speaker = speaker;
+    face.assoc(speaker);
+  }
+
+  undo() {
+    this.face.unassoc();
+  }
+
+  redo() {
+    this.face.assoc(this.speaker);
+  }
+};
+
+const UnassociateAction = class UnassociateAction {
+  /** @type {!Face} */ face;
+  /** @type {!TreeItem} */ speaker;
+
+  constructor(face) {
+    this.face = face;
+    this.speaker = face.speaker;
+    face.unassoc();
+  }
+
+  undo() {
+    this.face.assoc(this.speaker);
+  }
+
+  redo() {
+    this.face.unassoc();
+  }
+};
+
+const ColorAction = class ColorAction {
+  /** @type {!TreeItem} */ item;
+  /** @type {!Color} */ oldColor;
+  /** @type {!Color} */ newColor;
+
+  constructor(item, newColor) {
+    this.item = item;
+    this.oldColor = item.color;
+    this.newColor = newColor;
+    item.color = newColor;
+  }
+
+  undo() {
+    this.item.color = this.oldColor;
+  }
+
+  redo() {
+    this.item.color = this.newColor;
+  }
+};
+
+/**
+ * An enum containing every type of `Action`.
+ * @type {!Object.&lt;string, Action>}
+ */
+const Actions = {
+  AddAction,
+  RemoveAction,
+  MoveAction,
+  CopyAction,
+  RenameAction,
+  DragSegmentAction,
+  AssociateAction,
+  UnassociateAction,
+  ColorAction,
+};
+
+export { undoStorage, redoStorage, Actions };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.11</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+
+</body>
+</html>

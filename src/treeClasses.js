@@ -2064,6 +2064,11 @@ var Point = class Point extends PeaksItem {
   }
 };
 
+/**
+ * A `Point` used to show a word on the Peaks.js waveform.
+ * This item isn't rendered in the tree.
+ * @extends Point
+ */
 var Word = class Word extends Point {
   /**
    * An object containing all `Word`s by their id.
@@ -2087,7 +2092,7 @@ var Word = class Word extends Point {
   }
 
   /**
-   * Renames this Word, replacing its labelText. Its id is unchanged.
+   * Renames this word, replacing its labelText. Its id is unchanged.
    * @param {string} newId - The new id to give this item.
    */
   rename(newText) {
@@ -2386,7 +2391,7 @@ var Face = class Face extends TreeItem {
    * An Array containing all removed `Face`s by their id.
    * Key is id, value is corresponding `Face`:  {id: `Face`}
    * For saving purposes
-   * @type {[number]}
+   * @type {number[]}
    * @static
    */
   static removed = [];

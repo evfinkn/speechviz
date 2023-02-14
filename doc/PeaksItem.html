@@ -5,7 +5,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Speechviz Documentation Group</title>
+  <title>Speechviz Documentation PeaksItem</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -91,7 +91,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Class</p>
-                    <h1>Group</h1>
+                    <h1>PeaksItem</h1>
                 </header>
                 
 
@@ -102,9 +102,9 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>Group<span class="signature">(id, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>PeaksItem<span class="signature">(peaksItem, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span></h2>
         
-            <div class="class-description"><p>A group of <code>TreeItem</code>s.</p></div>
+            <div class="class-description"><p>A <code>TreeItem</code> for a Peaks.js class (segment / point).</p></div>
         
     
 </header>
@@ -123,12 +123,12 @@
 
 
     
-    <h4 class="name" id="Group">
-        <a class="href-link" href="#Group">#</a>
+    <h4 class="name" id="PeaksItem">
+        <a class="href-link" href="#PeaksItem">#</a>
         
         <span class="code-name">
             
-                new Group<span class="signature">(id, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span>
+                new PeaksItem<span class="signature">(peaksItem, options<span class="signature-attributes">opt, nullable</span>)</span><span class="type-signature"></span>
             
         </span>
     </h4>
@@ -175,13 +175,16 @@
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>id</code></td>
+      <td class="name"><code>peaksItem</code></td>
   
 
   <td class="type">
   
       
-<code class="param-type">string</code>
+<code class="param-type">PeaksSegment</code>
+|
+
+<code class="param-type">PeaksPoint</code>
 
 
   
@@ -203,7 +206,8 @@
       </td>
   
 
-  <td class="description last"><p>The unique identifier to give the <code>Group</code>.</p></td>
+  <td class="description last"><p>The Peaks.js segment / point being
+represented in the tree by the <code>PeaksItem</code>.</p></td>
 </tr>
 
 
@@ -244,7 +248,7 @@
       </td>
   
 
-  <td class="description last"><p>Options to customize the group.</p></td>
+  <td class="description last"><p>Options to customize the item.</p></td>
 </tr>
 
   
@@ -258,7 +262,7 @@
   <td class="type">
   
       
-<code class="param-type"><a href="TreeItem.html">TreeItem</a></code>
+<code class="param-type"><a href="PeaksGroup.html">PeaksGroup</a></code>
 
 
   
@@ -284,48 +288,8 @@
       </td>
   
 
-  <td class="description last"><p>The <code>TreeItem</code> that contains the
-group in its nested content.</p></td>
-</tr>
-
-  
-    
-<tr class="deep-level-1">
-  
-      <td class="name"><code>children</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></code>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-          &lt;optional><br>
-      
-
-      
-          &lt;nullable><br>
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-      </td>
-  
-
-  <td class="description last"><p>An array of <code>TreeItem</code>s to put in
-the group's nested content.</p></td>
+  <td class="description last"><p>The <code>PeaksGroup</code> that contains the item
+in its nested content.</p></td>
 </tr>
 
   
@@ -362,8 +326,8 @@ the group's nested content.</p></td>
       </td>
   
 
-  <td class="description last"><p>The text to show in the group's span (and
-therefore in the tree). If <code>null</code>, <code>id</code> is used.</p></td>
+  <td class="description last"><p>The text to show in the item's span (and
+therefore in the tree).</p></td>
 </tr>
 
   
@@ -402,8 +366,8 @@ therefore in the tree). If <code>null</code>, <code>id</code> is used.</p></td>
       </td>
   
 
-  <td class="description last"><p>Indicates if the group can be played
-and looped.</p></td>
+  <td class="description last"><p>Indicates if the segment / point
+can be played.</p></td>
 </tr>
 
   
@@ -442,8 +406,48 @@ and looped.</p></td>
       </td>
   
 
-  <td class="description last"><p>Indicates if the group can be removed
-from the tree.</p></td>
+  <td class="description last"><p>Indicates if the segment / point
+can be removed from the tree.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>renamable</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          false
+      
+      </td>
+  
+
+  <td class="description last"><p>Indicates if the segment / point
+can be renamed.</p></td>
 </tr>
 
   
@@ -456,7 +460,7 @@ from the tree.</p></td>
   <td class="type">
   
       
-<code class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></code>
+<code class="param-type">Array.&lt;<a href="PeaksGroup.html">PeaksGroup</a>></code>
 
 
   
@@ -482,8 +486,8 @@ from the tree.</p></td>
       </td>
   
 
-  <td class="description last"><p>An array of the <code>TreeItem</code>s
-that the group can be moved to. <code>null</code> if the group isn't moveable.</p></td>
+  <td class="description last"><p>An array of the <code>PeaksGroup</code>s that
+the item can be moved to. <code>null</code> if the item isn't moveable.</p></td>
 </tr>
 
   
@@ -496,7 +500,7 @@ that the group can be moved to. <code>null</code> if the group isn't moveable.</
   <td class="type">
   
       
-<code class="param-type">Array.&lt;<a href="TreeItem.html">TreeItem</a>></code>
+<code class="param-type">Array.&lt;<a href="PeaksGroup.html">PeaksGroup</a>></code>
 
 
   
@@ -522,8 +526,49 @@ that the group can be moved to. <code>null</code> if the group isn't moveable.</
       </td>
   
 
-  <td class="description last"><p>An array of the <code>TreeItem</code>s
-that the group can be copied to. <code>null</code> if the group isn't copyable.</p></td>
+  <td class="description last"><p>An array of the <code>PeaksGroup</code>s that
+the item can be copied to. <code>null</code> if the item isn't copyable.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>render</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          true
+      
+      </td>
+  
+
+  <td class="description last"><p>If <code>true</code>, <code>render()</code> is called in
+the constructor. Otherwise, <code>render()</code> is not called and is left to the
+user to call.</p></td>
 </tr>
 
   
@@ -573,7 +618,7 @@ that the group can be copied to. <code>null</code> if the group isn't copyable.<
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1220">line 1220</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1408">line 1408</a>
             </span>
         </p>
     
@@ -601,7 +646,7 @@ that the group can be copied to. <code>null</code> if the group isn't copyable.<
                     
 <div class="columns">
     
-    <div class='param-desc column is-7'><p>If a <code>TreeItem</code> with <code>id</code> already exists.</p></div>
+    <div class='param-desc column is-7'><p>If a <code>TreeItem</code> with <code>peaksItem.id</code> already exists.</p></div>
     <div class='column is-5 has-text-left'>
         <label>Type: </label>
 <code class="param-type">Error</code>
@@ -757,7 +802,7 @@ use <code>assocWith</code>.</p>
     <span class="method-parameter is-pulled-right">
         <label>Type:</label>
         
-<code class="param-type">Object.&lt;string, <a href="Group.html">Group</a>></code>
+<code class="param-type">Object.&lt;string, <a href="PeaksItem.html">PeaksItem</a>></code>
 
 
     </span>
@@ -779,9 +824,9 @@ use <code>assocWith</code>.</p>
 
 
 <div class="description">
-    <p>An object containing all <code>Group</code>s by their id.
-Key is id, value is corresponding <code>Group</code>:
-{id: <code>Group</code>}</p>
+    <p>An object containing all <code>PeaksItem</code>s by their id.
+Key is id, value is corresponding <code>PeaksItem</code>:
+{id: <code>PeaksItem</code>}</p>
 </div>
 
 
@@ -828,7 +873,7 @@ Key is id, value is corresponding <code>Group</code>:
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1228">line 1228</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1416">line 1416</a>
             </span>
         </p>
     
@@ -1015,6 +1060,87 @@ rendered. <code>null</code> otherwise.</p>
             
                 <div class="member">
 
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type"><a href="global.html#Color">Color</a></code>
+
+
+    </span>
+
+<h4 class="name" id="color">
+    <a class="href-link" href="#color">#</a>
+    
+        
+            <span class='tag'>non-null</span>
+        
+    
+    <span class="code-name">
+        color
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>This segment's color in the Peaks waveform.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1588">line 1588</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
 <h4 class="name" id="constructors">
     <a class="href-link" href="#constructors">#</a>
     
@@ -1188,6 +1314,85 @@ Elements can also be arrays of <code>TreeItem</code>s.</p>
     <span class="method-parameter is-pulled-right">
         <label>Type:</label>
         
+<code class="param-type">boolean</code>
+
+
+    </span>
+
+<h4 class="name" id="currentlyEditable">
+    <a class="href-link" href="#currentlyEditable">#</a>
+    
+    <span class="code-name">
+        currentlyEditable
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>A <code>boolean</code> indicating if this segment is currently editable.
+If the segment isn't editable, this is always <code>false</code>. Otherwise, this is <code>true</code>
+if this segment's drag handles are shown and <code>false</code> if they're hidden.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1505">line 1505</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
 <code class="param-type">number</code>
 
 
@@ -1275,6 +1480,85 @@ Otherwise, <code>null</code>.</p>
     <span class="method-parameter is-pulled-right">
         <label>Type:</label>
         
+<code class="param-type">boolean</code>
+
+
+    </span>
+
+<h4 class="name" id="editable">
+    <a class="href-link" href="#editable">#</a>
+    
+    <span class="code-name">
+        editable
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>A <code>boolean</code> indicating if this segment can be edited. If it
+is editable, this segment will have handles at its start and
+end that allow changing its start and end times.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1580">line 1580</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
 <code class="param-type">Object.&lt;string, string></code>
 
 
@@ -1297,8 +1581,8 @@ Otherwise, <code>null</code>.</p>
 
 
 <div class="description">
-    <p>HTML strings for the play, pause, loop, and remove icons for <code>Group</code>s
-in the tree.</p>
+    <p>HTML strings for the play, pause, loop, and
+remove icons for <code>PeaksItem</code>s in the tree.</p>
 </div>
 
 
@@ -1345,7 +1629,7 @@ in the tree.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1236">line 1236</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1424">line 1424</a>
             </span>
         </p>
     
@@ -1428,6 +1712,84 @@ in the tree.</p>
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
                 <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line115">line 115</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">string</code>
+
+
+    </span>
+
+<h4 class="name" id="labelText">
+    <a class="href-link" href="#labelText">#</a>
+    
+    <span class="code-name">
+        labelText
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>The segment's text label.
+It is displayed when the segment is hovered over by the mouse pointer.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1597">line 1597</a>
             </span>
         </p>
     
@@ -1959,6 +2321,86 @@ so it's only displayed when the item is playing.</p>
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
                 <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line243">line 243</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">PeaksSegment</code>
+|
+
+<code class="param-type">PeaksPoint</code>
+
+
+    </span>
+
+<h4 class="name" id="peaksItem">
+    <a class="href-link" href="#peaksItem">#</a>
+    
+    <span class="code-name">
+        peaksItem
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>The Peaks.js Segment or Point being represented in the tree by this <code>PeaksItem</code>.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1482">line 1482</a>
             </span>
         </p>
     
@@ -2739,6 +3181,86 @@ been called.</p>
 
 </div>
             
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">"Segment"</code>
+|
+
+<code class="param-type">"Point"</code>
+
+
+    </span>
+
+<h4 class="name" id="type">
+    <a class="href-link" href="#type">#</a>
+    
+    <span class="code-name">
+        type
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Indicates if <code>peaksItem</code> is a segment or a point.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1488">line 1488</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
             </div>
         </div>
     
@@ -2747,6 +3269,664 @@ been called.</p>
         <div class='vertical-section'>
             <h1>Methods</h1>
             <div class="members">
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id=".getPoints">
+        <a class="href-link" href="#.getPoints">#</a>
+        
+            
+                <span class='tag'>static</span>
+            
+        
+        <span class="code-name">
+            
+                getPoints<span class="signature">(peaksItems<span class="signature-attributes">non-null</span>)</span><span class="type-signature"> &rarr; (non-null) {Array.&lt;PeaksPoint>}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets the <code>PeaksPoint</code>s from the <code>PeaksItem</code>s that wrap <code>PeaksPoint</code>s.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>peaksItems</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;<a href="PeaksItem.html">PeaksItem</a>></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>The <code>PeaksItem</code>s to filter.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1446">line 1446</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>The <code>PeaksPoints</code>s in <code>peaksItem</code>s.</p></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">Array.&lt;PeaksPoint></code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id=".getSegments">
+        <a class="href-link" href="#.getSegments">#</a>
+        
+            
+                <span class='tag'>static</span>
+            
+        
+        <span class="code-name">
+            
+                getSegments<span class="signature">(peaksItems<span class="signature-attributes">non-null</span>)</span><span class="type-signature"> &rarr; (non-null) {Array.&lt;PeaksSegment>}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets the <code>PeaksSegment</code>s from the <code>PeaksItem</code>s that wrap <code>PeaksSegment</code>s.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>peaksItems</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;<a href="PeaksItem.html">PeaksItem</a>></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>The <code>PeaksItem</code>s to filter.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1431">line 1431</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>The <code>PeaksSegments</code>s in <code>peaksItem</code>s.</p></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">Array.&lt;PeaksSegment></code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id=".hideFromPeaks">
+        <a class="href-link" href="#.hideFromPeaks">#</a>
+        
+            
+                <span class='tag'>static</span>
+            
+        
+        <span class="code-name">
+            
+                hideFromPeaks<span class="signature">(peaksItems<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Removes each item from Peaks.js, hiding it from the waveform.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>peaksItems</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;<a href="PeaksItem.html">PeaksItem</a>></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>The <code>PeaksItem</code>s to hide.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1471">line 1471</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id=".showOnPeaks">
+        <a class="href-link" href="#.showOnPeaks">#</a>
+        
+            
+                <span class='tag'>static</span>
+            
+        
+        <span class="code-name">
+            
+                showOnPeaks<span class="signature">(peaksItems<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Adds each item to Peaks.js, displaying it on the waveform.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>peaksItems</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Array.&lt;<a href="PeaksItem.html">PeaksItem</a>></code>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>The <code>PeaksItem</code>s to show.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1460">line 1460</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
             
                 <div class="member">
 
@@ -3141,194 +4321,6 @@ delivered to the target.</p>
 
 
 
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="checkedPlayableGenerator">
-        <a class="href-link" href="#checkedPlayableGenerator">#</a>
-        
-            
-                <span class='tag'>generator</span>
-            
-        
-        <span class="code-name">
-            
-                checkedPlayableGenerator<span class="signature">(infinite)</span><span class="type-signature"> &rarr; {<a href="TreeItem.html">TreeItem</a>}</span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Generates this group's children that are checked and playable.
-The children are yielded in chronological order.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-            <th>Default</th>
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>infinite</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">boolean</code>
-
-
-  
-  </td>
-
-  
-
-  
-      <td class="default">
-      
-          false
-      
-      </td>
-  
-
-  <td class="description last"><p>If <code>true</code>, reaching the end of the children will
-restart from the beginning.</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="treeClasses.js.html" class="button">View Source</a>
-            <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1305">line 1305</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Yields:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'>A `TreeItem` whose `checked` and `playable` properties are
-     both `true`.</div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<code class="param-type"><a href="TreeItem.html">TreeItem</a></code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
 
 
 
@@ -4175,316 +5167,6 @@ this item to it.</p></td>
 
 
     
-    <h4 class="name" id="pause">
-        <a class="href-link" href="#pause">#</a>
-        
-        <span class="code-name">
-            
-                pause<span class="signature">()</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Pauses playback of this group if it is playing.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="treeClasses.js.html" class="button">View Source</a>
-            <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1390">line 1390</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Throws:</label></div>
-        <div class="column is-10">
-            
-                    
-<div class="columns">
-    
-        
-            <div class='column is-12 has-text-left'>
-            <label>Type: </label>
-<code class="param-type">Error</code>
-
-
-            </div>
-        
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="play">
-        <a class="href-link" href="#play">#</a>
-        
-        <span class="code-name">
-            
-                play<span class="signature">(loop<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>If this group is playable, plays each checked, playable child belonging to this
-group in chronological order.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-            <th>Attributes</th>
-            
-
-            
-            <th>Default</th>
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>loop</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">boolean</code>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-          &lt;optional><br>
-      
-
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-          false
-      
-      </td>
-  
-
-  <td class="description last"><p>If <code>true</code>, loops the children (reaching the end
-of the children will restart playing at the beginning)</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="treeClasses.js.html" class="button">View Source</a>
-            <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1341">line 1341</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Throws:</label></div>
-        <div class="column is-10">
-            
-                    
-<div class="columns">
-    
-    <div class='param-desc column is-7'><p>If this group is not playable.</p></div>
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-<code class="param-type">Error</code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
     <h4 class="name" id="readd">
         <a class="href-link" href="#readd">#</a>
         
@@ -4500,9 +5182,9 @@ of the children will restart playing at the beginning)</p></td>
     
     <div class="description">
         <p>Readds this item.
-To be specific, adds this item to <code>byId</code> and <code>parent</code> if not <code>null</code>. If <code>parent</code>
-is <code>null</code> and <code>this.parent</code> isn't, <code>this.parent</code> is used instead. Otherwise, if
-both are <code>null</code>, this item isn't added to any parent.</p>
+To be specific, adds this item to <code>byId</code>, to Peaks, and to <code>parent</code> if not
+<code>null</code>. If <code>parent</code> is <code>null</code> and <code>this.parent</code> isn't, <code>this.parent</code> is used
+instead. Otherwise, if both are <code>null</code>, this item isn't added to any parent.</p>
     </div>
     
 
@@ -4550,7 +5232,7 @@ both are <code>null</code>, this item isn't added to any parent.</p>
   <td class="type">
   
       
-<code class="param-type"><a href="TreeItem.html">TreeItem</a></code>
+<code class="param-type"><a href="PeaksGroup.html">PeaksGroup</a></code>
 
 
   
@@ -4576,7 +5258,7 @@ both are <code>null</code>, this item isn't added to any parent.</p>
       </td>
   
 
-  <td class="description last"><p>The <code>TreeItem</code> to add this item to, if any.</p></td>
+  <td class="description last"><p>The <code>PeaksGroup</code> to add this item to, if any.</p></td>
 </tr>
 
 
@@ -4629,7 +5311,7 @@ both are <code>null</code>, this item isn't added to any parent.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line702">line 702</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1706">line 1706</a>
             </span>
         </p>
     
@@ -4675,7 +5357,7 @@ both are <code>null</code>, this item isn't added to any parent.</p>
     
     
     <div class="description">
-        <p>Removes this item and all of its children from the tree.</p>
+        <p>Removes this segment / point from the tree and Peaks waveform.</p>
     </div>
     
 
@@ -4731,7 +5413,7 @@ both are <code>null</code>, this item isn't added to any parent.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line680">line 680</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1692">line 1692</a>
             </span>
         </p>
     
@@ -4751,27 +5433,6 @@ both are <code>null</code>, this item isn't added to any parent.</p>
 
 
 
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Throws:</label></div>
-        <div class="column is-10">
-            
-                    
-<div class="columns">
-    
-    <div class='param-desc column is-7'><p>If this item cannot be removed.</p></div>
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-<code class="param-type">Error</code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
 
 
 
@@ -5175,7 +5836,8 @@ from the target.</p>
     
     
     <div class="description">
-        <p>Renames this item, replacing its id and text in the tree.</p>
+        <p>Renames this Peaks.js item, replacing its text and labelText. Its id is
+unchanged.</p>
     </div>
     
 
@@ -5282,7 +5944,7 @@ from the target.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line730">line 730</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1716">line 1716</a>
             </span>
         </p>
     
@@ -5302,41 +5964,6 @@ from the target.</p>
 
 
 
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Throws:</label></div>
-        <div class="column is-10">
-            
-                    
-<div class="columns">
-    
-    <div class='param-desc column is-7'><p>If this item cannot be renamed.</p></div>
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-<code class="param-type">Error</code>
-
-
-    </div>
-    
-</div>
-
-                
-                    
-<div class="columns">
-    
-    <div class='param-desc column is-7'><p>If a <code>TreeItem</code> with <code>newId</code> already exists.</p></div>
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-<code class="param-type">Error</code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
 
 
 
@@ -5618,7 +6245,7 @@ from the target.</p>
     
     
     <div class="description">
-        <p>Sets the CSS styling of the group's elements.</p>
+        <p>Sets the CSS styling of the peaksItem's elements.</p>
     </div>
     
 
@@ -5669,7 +6296,7 @@ from the target.</p>
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1273">line 1273</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1684">line 1684</a>
             </span>
         </p>
     
@@ -6013,7 +6640,9 @@ the play button is replaced.</p></td>
     
     
     <div class="description">
-        <p>Toggles this group and its children on / off.</p>
+        <p>Toggles this <code>PeaksItem</code> on / off.
+Specifically, toggles this item's elements on / off and
+shows / hides its Peaks.js segment / point on the Peaks.js waveform.</p>
     </div>
     
 
@@ -6087,8 +6716,8 @@ the play button is replaced.</p></td>
       </td>
   
 
-  <td class="description last"><p>If unspecified, this group is always toggled. Otherwise,
-this group is only toggled if its current state isn't equal to <code>force</code>.</p></td>
+  <td class="description last"><p>If unspecified, this item is always toggled.
+Otherwise, it's only toggled if its current state isn't equal to <code>force</code>.</p></td>
 </tr>
 
 
@@ -6148,7 +6777,7 @@ this group is only toggled if its current state isn't equal to <code>force</code
         <p class="tag-source">
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
-                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1288">line 1288</a>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1735">line 1735</a>
             </span>
         </p>
     
@@ -6179,9 +6808,208 @@ this group is only toggled if its current state isn't equal to <code>force</code
 
 <div class="columns">
     
-    <div class='param-desc column is-7'><p>A <code>boolean</code> indiciating if any toggling was done.
-In other words, when <code>force == null</code>, returns <code>true</code>. Otherwise,
-returns <code>force !== checked</code>.</p></div>
+    <div class='param-desc column is-7'><p>A <code>boolean</code> indiciating if any toggling was done. In other words,
+when <code>force == null</code>, returns <code>true</code>. Otherwise, returns <code>force !== checked</code>.</p></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<code class="param-type">boolean</code>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="toggleDragHandles">
+        <a class="href-link" href="#toggleDragHandles">#</a>
+        
+        <span class="code-name">
+            
+                toggleDragHandles<span class="signature">(force<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; (nullable) {boolean}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Toggles this Peaks.js item's drag handles.
+This only has an effect if this item is editable as only editable
+<code>PeaksSegment</code>s and <code>PeaksPoint</code>s have drag handles.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>force</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          null
+      
+      </td>
+  
+
+  <td class="description last"><p>If unspecified, the drag handles are always toggled.
+Otherwise, the drag handles are only toggled if their current state isn't
+equal to <code>force</code>.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1633">line 1633</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>If this item is editable, returns a <code>boolean</code> indiciating if
+any toggling was done. In other words, when <code>force == null</code>, returns <code>true</code>
+and returns <code>force !== checked</code> when <code>force != null</code>. If this item isn't
+editable, returns <code>null</code>.</p></div>
     
     
     <div class='column is-5 has-text-left'>
@@ -6415,6 +7243,373 @@ returns <code>force !== checked</code>.</p></div>
 
 
     
+    <h4 class="name" id="update">
+        <a class="href-link" href="#update">#</a>
+        
+        <span class="code-name">
+            
+                update<span class="signature">(options<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Updates properties of the Peaks segment.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>options</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">Object.&lt;string, any></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>Options specifying the new values of
+the properties being updated.</p></td>
+</tr>
+
+  
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>startTime</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">number</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>If this item is a <code>PeaksSegment</code>, the
+segment's start time in seconds.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>endTime</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">number</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>If this item is a <code>PeaksSegment</code>, the
+segment's end time in seconds.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>time</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">number</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>If this item is a <code>PeaksPoint</code>, the point's
+time in seconds.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>editable</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">boolean</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>Indicates if the segment / point can be
+edited (moved around).</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>color</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type"><a href="global.html#Color">Color</a></code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+          &lt;nullable><br>
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>The segment's / point's color in the Peaks
+waveform.</p></td>
+</tr>
+
+  
+    
+<tr class="deep-level-1">
+  
+      <td class="name"><code>labelText</code></td>
+  
+
+  <td class="type">
+  
+      
+<code class="param-type">string</code>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>The segment's / point's text label.</p></td>
+</tr>
+
+  
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1617">line 1617</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
     <h4 class="name" id="updateDuration">
         <a class="href-link" href="#updateDuration">#</a>
         
@@ -6538,6 +7733,105 @@ decreases <code>duration</code>. Otherwise, increases <code>duration</code>.</p>
             <a href="treeClasses.js.html" class="button">View Source</a>
             <span>
                 <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line583">line 583</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="updateEditable">
+        <a class="href-link" href="#updateEditable">#</a>
+        
+        <span class="code-name">
+            
+                updateEditable<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Updates this peaksItem's editability.
+Called when this peaksItem is toggled. It is used to update the Peaks peaksItem's
+editability in order to show / hide the drag handles.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="treeClasses.js.html" class="button">View Source</a>
+            <span>
+                <a href="treeClasses.js.html">treeClasses.js</a>, <a href="treeClasses.js.html#line1657">line 1657</a>
             </span>
         </p>
     
