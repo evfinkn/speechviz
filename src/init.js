@@ -133,7 +133,6 @@ const rankSnrs = () => {
   PeaksGroup.byId[maxSpeaker].span.style.color = "violet";
 };
 
-// TODO: Accept element for parent?
 const analysis = new Group("Analysis", { playable: true });
 document.getElementById("tree").append(analysis.li);
 
