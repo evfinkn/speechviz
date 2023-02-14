@@ -47,6 +47,14 @@ var TreeItem = class TreeItem {
   // and is more of an abstract class
 
   /**
+   * An object containing `TreeItem` and its subclasses by their name.
+   * The name of the class is the id, and the value is that class. For example,
+   * `{ "TreeItem": TreeItem, "Group": Group, "Segment": Segment }`. When subclassing
+   * `TreeItem`, be sure to add the subclass to this object.
+   */
+  static types = { TreeItem: TreeItem };
+
+  /**
    * An object containing all `TreeItem`s by their id.
    * Key is id, value is corresponding `TreeItem`:
    * {id: `TreeItem`}
@@ -1386,6 +1394,7 @@ var Group = class Group extends TreeItem {
     this.dispatchEvent(new Event("manualpause", { bubbles: true }));
   }
 };
+TreeItem.types.Group = Group;
 
 /**
  * A `TreeItem` for a Peaks.js class (segment / point).
@@ -1740,6 +1749,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
     return true;
   }
 };
+TreeItem.types.PeaksItem = PeaksItem;
 
 /**
  * A `TreeItem` for a Peaks.js segment.
@@ -1964,6 +1974,7 @@ var Segment = class Segment extends PeaksItem {
     return null;
   }
 };
+TreeItem.types.Segment = Segment;
 
 /**
  * A `TreeItem` for a Peaks.js point.
@@ -2049,6 +2060,7 @@ var Point = class Point extends PeaksItem {
     this.point.update({ time: newTime });
   }
 };
+TreeItem.types.Point = Point;
 
 /**
  * A `Point` used to show a word on the Peaks.js waveform.
@@ -2085,6 +2097,7 @@ var Word = class Word extends Point {
     this.peaksItem.update({ labelText: newText });
   }
 };
+TreeItem.types.Word = Word;
 
 /**
  * A group of `PeaksItem`s.
@@ -2352,6 +2365,7 @@ var PeaksGroup = class PeaksGroup extends Group {
     return copiedChildren;
   }
 };
+TreeItem.types.PeaksGroup = PeaksGroup;
 
 /**
  * A `TreeItem` for a face from clustering face detection on the video
@@ -2524,6 +2538,7 @@ var Face = class Face extends TreeItem {
     }
   }
 };
+TreeItem.types.Face = Face;
 
 export {
   TreeItem,

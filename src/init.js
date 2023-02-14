@@ -1,6 +1,13 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import globals from "./globals.js";
-import { Group, Segment, PeaksGroup, Face, Word } from "./treeClasses.js";
+import {
+  Group,
+  Segment,
+  PeaksGroup,
+  Face,
+  Word,
+  // TreeItem,
+} from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
@@ -23,6 +30,7 @@ const user = globals.user;
 const filename = globals.filename;
 const basename = globals.basename;
 const media = globals.media;
+const tree = document.getElementById("tree");
 
 // TODO: if this does what I assume it does, it can
 //       probably be moved to Segment as a property
@@ -33,7 +41,7 @@ const originalGroups = {};
 //       specifying if it's a Group or GroupOfGroups or Segment and also use property
 //       names e.g. "children" instead of an array
 //       After rewriting, add documentation if left as a function
-const createTree = function (id, parent, children, snr) {
+const oldCreateTree = function (id, parent, children, snr) {
   if (!Array.isArray(children[0])) {
     // group of segments
     if (id.includes("Speaker ")) {
@@ -58,10 +66,35 @@ const createTree = function (id, parent, children, snr) {
     // group of groups
     const group = new Group(id, { parent, playable: true });
     for (const [child, childChildren, childSNR] of children) {
-      createTree(child, group, childChildren, childSNR);
+      oldCreateTree(child, group, childChildren, childSNR);
     }
   }
 };
+
+// const createTreeItemFromObj = (obj, parent = null) => {
+//   const type = TreeItem.types[obj.type];
+//   if (type === undefined) {
+//     throw new Error('obj must have a "type" property.');
+//   }
+
+//   const args = obj.arguments;
+//   if (args === undefined || args.length === 0) {
+//     return new type();
+//   }
+
+//   if (typeof args.at(-1) !== "object" || Array.isArray(args.at(-1))) {
+//     return new type(...args);
+//   }
+
+//   // extra options should be last in args if there are any options so
+//   // extract those options and take "children" property out of them
+//   let { children, ...options } = args.at(-1);
+//   if (parent === null) {
+//     if (typeof options.parent === "string" && options.parent !== "") {
+//       parent = TreeItem.byId[options.parent];
+//     }
+//   }
+// };
 
 /**
  * Adds a circled number to the left of every `PeaksGroup`s' text representing that
@@ -135,7 +168,7 @@ const rankSnrs = () => {
 
 // TODO: Accept element for parent?
 const analysis = new Group("Analysis", { playable: true });
-document.getElementById("tree").append(analysis.li);
+tree.append(analysis.li);
 
 const custom = new PeaksGroup("Custom", {
   parent: analysis,
@@ -165,7 +198,7 @@ const segmentLoading = fetch(`/segments/${basename}-segments.json`)
   .then((response) => response.json())
   .then((segments) => {
     for (const [group, children, snr] of segments) {
-      createTree(group, analysis, children, snr);
+      oldCreateTree(group, analysis, children, snr);
     }
     const speakers = Group.byId["Speakers"];
     speakers.children.forEach((speaker) => {
@@ -195,7 +228,7 @@ const facesLoading = fetch(`/clustered-files/`)
   .then((response) => response.json())
   .then((fileList) => {
     const clusters = new Group("Clusters");
-    document.getElementById("tree").append(clusters.li);
+    tree.append(clusters.li);
     const clusterfolders = fileList.cluster; // folder of each found cluster
     // name of the overall folder, same as video in speechviz w/out extension
     const dir = fileList.dir;
