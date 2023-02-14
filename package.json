@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "patch-package",
     "mkdir": "mkdir public \"public/css\" \"public/js\" data \"data/audio\" \"data/segments\" \"data/video\" \"data/waveforms\" \"data/faceClusters\" \"data/imagesForEncoding\" \"data/vrs\" \"data/transcriptions\" \"scripts/models\"",
     "build": "webpack",
     "postbuild": "cp src/style.css public/css/",
@@ -32,8 +31,7 @@
     "feather-icons": "^4.29.0",
     "mime": "^3.0.0",
     "morgan": "^1.10.0",
-    "patch-package": "^6.4.7",
-    "peaks.js": "^2.0.2",
+    "peaks.js": "git+https://research-git.uiowa.edu/uiowa-audiology-reu-2022/peaks.js#v2.1.0",
     "pug": "^3.0.2",
     "split.js": "^1.6.5",
     "three": "^0.146.0",
