@@ -303,7 +303,7 @@ var GraphIMU = class GraphIMU {
           imu_quaternions.push(new THREE.Quaternion(qy, qz, qx, qw));
         });
       } else {
-        throw new Error(`data must have either 5 or 8 columns.`);
+        throw new Error("data must have either 5 or 8 columns.");
       }
       this.timestamps.push(imu_timestamps);
       this.quaternions.push(imu_quaternions);
