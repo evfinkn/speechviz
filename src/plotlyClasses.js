@@ -9,6 +9,9 @@ import { getRandomColor } from "./util";
 
 const media = globals.media;
 
+/**
+ * A 2D line plot.
+ */
 var TimeSeries = class TimeSeries {
   /**
    * The div element containing the plot.
@@ -28,6 +31,12 @@ var TimeSeries = class TimeSeries {
    */
   ys;
 
+  /**
+   * @param {!Element} container - The div element to put the plot in.
+   * @param {!Array.<Array.<number>>} data - The rows of data to plot. The first
+   *      entry of every row is the x, and each entry after that is a y for that x.
+   *      There must be at least 2 entries per row.
+   */
   constructor(container, data) {
     this.container = container;
     this.x = [];
@@ -36,6 +45,14 @@ var TimeSeries = class TimeSeries {
     this.init();
   }
 
+  /**
+   * Parses each row of data for the x and ys to plot.
+   * @param {!Array.<Array.<number>>} data - The rows of data. The first entry
+   *      of every row is the x, and each entry after that is a y for that x.
+   *      There must be at least 2 entries per row. For example, if a row is
+   *      `[2, 9, 1, 0]` then the points that will be plotted are (2, 9), (2,1),
+   *      and (2, 0).
+   */
   parseData(data) {
     if (!data.length >= 2) {
       throw new Error("data must have at least 2 columns");
@@ -58,6 +75,11 @@ var TimeSeries = class TimeSeries {
     this.ys = ys;
   }
 
+  /**
+   * Initializes this plot.
+   * Formats the data into objects that Plotly.js accepts, sets up the layout,
+   * creates the plot, and adds the time indicator.
+   */
   init() {
     this.timelineX = [0, 0];
     this.timelineY = [0, 0];
@@ -97,6 +119,10 @@ var TimeSeries = class TimeSeries {
     this.animate();
   }
 
+  /**
+   * Updates the plot on every frame.
+   * Moves the time indicator to the current time of the media.
+   */
   animate() {
     const time = media.currentTime;
     Plotly.restyle(
