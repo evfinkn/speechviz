@@ -268,6 +268,20 @@ if (poseContainer) {
     .catch((error) => output404OrError(error, "pose data"));
 }
 
+// This is commented out until we need to use something like this
+// const plotContainer = document.getElementById("plot");
+// if (plotContainer) {
+//   fetch(`/graphical/${basename}/magnetometer.csv`)
+//     .then(checkResponseStatus)
+//     .then((response) => response.text())
+//     .then((text) => parseNumericalCsv(text))
+//     .then((data) => {
+//       const firstTime = data[0][0];
+//       data.forEach((row) => row[0] -= firstTime);
+//       plotContainer.style.display = "";
+//       new TimeSeries(plotContainer, data);
+//     })
+//     .catch((error) => output404OrError(error, "magnetometer data"));
 // }
 
 // code below initializes the interface
