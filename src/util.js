@@ -234,6 +234,17 @@ const checkResponseStatus = function (res) {
   return res;
 };
 
+const parseNumericalCsv = function (text) {
+  return (
+    text
+      .split("\n")
+      // slice starting at 1 to exclude header row
+      // to -1 so that last row is excluded, which is just "" (NaN)
+      .slice(1, -1) // exclude header row
+      .map((row) => row.split(",").map(parseFloat))
+  );
+};
+
 export {
   getRandomColor,
   htmlToElement,
@@ -247,4 +258,5 @@ export {
   binarySearch,
   ResponseError,
   checkResponseStatus,
+  parseNumericalCsv,
 };

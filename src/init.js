@@ -12,6 +12,7 @@ import {
   toggleButton,
   ResponseError,
   checkResponseStatus,
+  parseNumericalCsv,
 } from "./util.js";
 import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
 
@@ -259,20 +260,15 @@ if (poseContainer) {
     .then((responses) =>
       Promise.all(responses.map((response) => response.text()))
     )
-    .then((texts) =>
-      texts.map((text) => {
-        return text
-          .split("\n")
-          .slice(1) // exclude header row
-          .map((row) => row.split(",").map(parseFloat));
-      })
-    )
+    .then((texts) => texts.map((text) => parseNumericalCsv(text)))
     .then((data) => {
       poseContainer.style.display = "";
       new GraphIMU(poseContainer, data, { width: 400, height: 400 });
     })
     .catch((error) => output404OrError(error, "pose data"));
 }
+
+// }
 
 // code below initializes the interface
 
