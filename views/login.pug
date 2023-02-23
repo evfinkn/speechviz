@@ -1,24 +1,37 @@
 doctype html
 html(lang="en")
-body
-  h2 Speechviz
-  if retry
-    p= "Invalid user/password combination. Please try again"
-
-  form(action="/login/credentials", method="post")
-    table
-      tr
-        td= "User:"
-        td
-          input(type="text", name="user")
-      tr
-        td= "Password:"
-        td
-          input(type="password", name="password")
-      if referer
-        tr
-          td
-            input(type="hidden", name="referer", value=referer)
-      tr
-        td
-          input(type="submit", name="login", value="login")
+  head
+    meta(charset="UTF-8")
+    title Speechviz
+    link(rel="stylesheet", type="text/css", href="css/style.css")
+  body#loginBody
+    .loginFormBG
+      #speechvizHeader
+        h1#loginHeader Speechviz
+      form.loginForm(action="/login/credentials", method="post")
+        if retry
+          p.loginRetry= "Invalid user/password combination. Please try again"
+        else
+          p.spaceHolder= "Invalid user/password combination. Please try again"
+        table#loginTable
+          tr
+            td.loginText.tableRow= "User:"
+          tr.loginTextbox
+            td.tableRow
+              input.loginInput(type="text", name="user")
+          tr
+            td.loginText.tableRow= "Password:"
+          tr.loginTextbox
+            td.tableRow
+              input.loginInput(type="password", name="password")
+          if referer
+            tr
+              td.tableRow
+                input.loginInput(type="hidden", name="referer", value=referer)
+          tr
+            td.tableRow
+              input#loginButton(
+                type="submit",
+                name="login",
+                value="    LOGIN    "
+              )

@@ -20,7 +20,7 @@ const setUser = function (newUser) {
  */
 const openViz = function (fileName, type, user = null) {
   if (user !== null) {
-    window.location.assign(`/viz?user=${user}file=${fileName}&type=${type}`);
+    window.location.assign(`/viz?user=${user}&file=${fileName}&type=${type}`);
   } else {
     window.location.assign(`/viz?file=${fileName}&type=${type}`);
   }
@@ -55,8 +55,9 @@ fetch("/user") // fetch currently logged-in user
         .then((users) => {
           // users is array of usernames
           setUser("admin");
+          const usersAccordion = document.getElementById("user-selection-acc");
           const fieldset = document.getElementById("user-selection");
-          fieldset.hidden = false;
+          usersAccordion.hidden = false;
           users.forEach(function (user) {
             const div = createRadioDiv(user, "user-selection");
             div.firstElementChild.addEventListener("change", function () {
@@ -89,51 +90,49 @@ fetch("/filelist")
     const audiofiles = fileList.audio;
     const videofiles = fileList.video;
     const clusterfolders = fileList.cluster;
-    const fieldset = document.getElementById("file-selection");
+    const audioFieldset = document.getElementById("audio-selection");
+    const videoFieldset = document.getElementById("video-selection");
+    const faceFieldset = document.getElementById("face-selection");
 
     if (audiofiles?.length !== 0) {
-      fieldset.append(htmlToElement("<strong>Audio files</strong>")); // header
-
       audiofiles.forEach(function (fileName) {
         // add radio buttons for each audio file
-        const div = createRadioDiv(fileName, "file-selection");
+        const div = createRadioDiv(fileName, "audio-selection");
         div.firstElementChild.addEventListener("change", function () {
           // uncheck manually because otherwise after using back button to go
           // back to this page, the radio button will still be checked
           this.checked = false;
           openViz(this.value, "audio", user);
         });
-        fieldset.append(div);
+        audioFieldset.append(div);
       });
 
       // add separation between audio and video file sections
-      fieldset.append(document.createElement("br"));
     }
 
     if (videofiles?.length !== 0) {
       // header for video files
-      fieldset.append(htmlToElement("<strong>Video files</strong>"));
-
       videofiles.forEach(function (fileName) {
         // add radio buttons for each video file
-        const div = createRadioDiv(fileName, "file-selection");
+        const div = createRadioDiv(fileName, "video-selection");
         div.firstElementChild.addEventListener("change", function () {
           this.checked = false;
           openViz(this.value, "video", user);
         });
-        fieldset.append(div);
+        videoFieldset.append(div);
       });
 
       // add separation between video and clustered sections
-      fieldset.append(document.createElement("br"));
     }
 
     if (clusterfolders?.length !== 0) {
       // header for cluster folders
-      fieldset.append(htmlToElement("<strong>Clustered Faces</strong>"));
       clusterfolders.forEach(function (folderName) {
         // folderName matches corresponding video fileName, so give it a different id
-        const div = createRadioDiv(folderName + " Clusters", "file-selection");
+        const div = createRadioDiv(
+          folderName + " Clusters",
+          "cluster-selection"
+        );
         div.firstElementChild.addEventListener("change", function () {
           this.checked = false;
           // when radio button clicked, show each cluster folder to choose which to view
@@ -144,7 +143,21 @@ fetch("/filelist")
               `&inFaceFolder=false`
           );
         });
-        fieldset.append(div);
+        faceFieldset.append(div);
+      });
+    }
+    var acc = document.getElementsByClassName("accordion");
+    var i;
+
+    for (i = 0; i < acc.length; i++) {
+      acc[i].addEventListener("click", function () {
+        this.classList.toggle("accordionactive");
+        var panel = this.nextElementSibling;
+        if (panel.style.display === "grid") {
+          panel.style.display = "none";
+        } else {
+          panel.style.display = "grid";
+        }
       });
     }
   })

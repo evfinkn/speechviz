@@ -1,7 +1,175 @@
 /* TODO: remove unused styles */
+
 body {
   font-family: "Helvetica neue", Helvetica, Arial, sans-serif;
 }
+
+/* Login Stuff */
+.loginForm {
+  position: relative;
+}
+
+.loginRetry {
+  margin: auto;
+  overflow: visible;
+  text-align: center;
+  font-size: 3vh;
+}
+
+/* janky fix so that everything below the login retry message
+ * isn't shifted down when it appears after failing a login */
+.spaceHolder {
+  margin: auto;
+  overflow: visible;
+  text-align: center;
+  color: transparent;
+  font-size: 3vh;
+}
+
+.loginFormBG {
+  position: absolute;
+  top: 5%;
+  right: 25%;
+  bottom: 5%;
+  left: 25%;
+  height: 85%;
+  width: 50%;
+  display: block;
+  background-color: #ffffff;
+  z-index: auto;
+  border-style: solid;
+  border-width: thin;
+  border-radius: 20px;
+  border-color: #3a111c;
+  box-shadow: 5px 10px 8px #888888;
+}
+
+#speechvizHeader {
+  text-align: center;
+  letter-spacing: 3px;
+}
+
+#loginTable {
+  table-layout: fixed;
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%;
+  height: 65vh;
+}
+
+#loginButton {
+  background-color: #bcdea5;
+  cursor: pointer;
+  margin: auto;
+  display: block;
+  padding: 3.5vh 10vh;
+  font-weight: bold;
+  border-style: solid;
+  border-width: thin;
+  border-radius: 20px;
+  border-color: #3a111c;
+  margin-bottom: 10vh;
+}
+
+#loginBody {
+  background-color: #d3d3d3;
+}
+
+.loginInput {
+  margin: auto;
+  display: block;
+  width: 50%;
+  height: 100%;
+  font-size: 4vh;
+  /*line-height: 100%;
+  position: relative;
+  display: inline-block;
+  border-style: solid;
+  border-width: thick;
+  border-color: #3A111C;
+  */
+}
+
+.loginText {
+  padding-left: 25%;
+  font-size: 5vh;
+  letter-spacing: 1px;
+}
+
+.loginTextbox {
+  height: 15%;
+  line-height: 100%;
+  padding-top: 25px;
+  padding-bottom: 25px;
+}
+
+#loginHeader {
+  font-size: 12vh;
+  margin-bottom: 2vh;
+  position: relative;
+}
+
+.tableRow {
+  padding-bottom: 1vh;
+}
+
+/* File Selection Stuff */
+
+.centerThem {
+  position: absolute;
+  top: 5%;
+  right: 25%;
+  bottom: 5%;
+  left: 25%;
+  height: 85%;
+  width: 50%;
+  display: inline-block;
+  z-index: auto;
+}
+
+#indexBody {
+  background-color: #d3d3d3;
+}
+/* https://www.w3schools.com/howto/howto_js_accordion.asp */
+.accordion {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+  transition: 0.8s;
+}
+
+.accordionactive,
+.accordion:hover {
+  background-color: #bcdea5;
+}
+
+.panel {
+  padding: 0 18px;
+  display: none;
+  background-color: white;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+.accordion:after {
+  content: "\02795"; /* Unicode character for "plus" sign (+) */
+  font-size: 13px;
+  color: #bcdea5;
+  float: right;
+  margin-left: 5px;
+}
+
+.accordionactive:after {
+  content: "\2796"; /* Unicode character for "minus" sign (-) */
+}
+
+/* Viz Stuff */
 
 #waveform-container {
   margin: 0px 12px;

@@ -1,11 +1,18 @@
 doctype html
 html(lang="en")
   head
+    meta(charset="UTF-8")
     title Speechviz
-  body
-    fieldset#user-selection(hidden)
-      legend(style="font-size: 20px") Select a user:
-    fieldset#file-selection
-      legend(style="font-size: 20px") Select an audio file, a video file, or clustered faces:
+    link(rel="stylesheet", type="text/css", href="css/style.css")
+  body#indexBody
+    .centerThem
+      button#user-selection-acc.accordion(hidden) Users
+      fieldset#user-selection.panel
+      button#audio-selection-acc.accordion Audios
+      fieldset#audio-selection.panel
+      button#video-selection-acc.accordion Videos
+      fieldset#video-selection.panel
+      button#face-selection-acc.accordion Face Clusters
+      fieldset#face-selection.panel
 
     script(type="application/javascript", src="js/index.js")
