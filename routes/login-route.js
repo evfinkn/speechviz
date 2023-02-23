@@ -31,6 +31,8 @@ router.post("/credentials", (req, res) => {
       req.session.authenticated = true;
       req.session.user = user;
       redirectToReferer(req.body.referer, res);
+    } else {
+      res.redirect("/login?retry");
     }
   } else {
     res.redirect("/login?retry");
