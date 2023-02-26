@@ -10,85 +10,8 @@ import librosa
 import numpy as np
 import scipy.io.wavfile
 import scipy.signal
+import sync_audios
 import util
-
-
-def sync_audios(audios, return_lags=False, verbose=0):
-    """Synchronizes audios so that each starts and stops at the same real-world time.
-
-    Parameters
-    ----------
-    audios : array_like
-        2D array containing the data of each audio to sync. Must have at least
-        2 elements.
-    return_lags : bool, default=False
-        Whether to return the lags of `audios`.
-
-    Returns
-    -------
-    synced : list of array_likes
-        The synchronized audio data.
-    lags : list of ints
-        The indices used to slice `audios` so that each audio starts together. Only
-        returned if `return_lags` is `True`.
-
-    Raises
-    ------
-    Exception
-        If `audios` has less than 2 elements.
-    """
-    start_time = time.perf_counter()
-    if len(audios) < 2:
-        # can't synchronize less than 2 audios
-        raise Exception("audios must have at least 2 elements")
-    base_audio = audios[0]
-    # lags[i] is the lag between base_audio and audios[i + 1]
-    # a lag is the offset index to make the audios line up
-    lags = []
-    for other_audio in audios[1:]:
-        correlation = scipy.signal.correlate(base_audio, other_audio)
-        clags = scipy.signal.correlation_lags(len(base_audio), len(other_audio))
-        lags.append(clags[np.argmax(correlation)])
-    # if lags[i] is negative, audios[i] needs to be trimmed to start at -lag to
-    # line up with base_audio. if lags[i] is positive, that means base_audio needs
-    # to be trimmed to start at lag to line up with audios[i]. since we're lining
-    # up all of the audio, we want to offset base_audio by the max lag of the
-    # positive lags--base_lag. If there aren't any positive lags, base_lag = 0
-    # since in that case base_audio doesn't need to be offset. Because the negative
-    # lags are relative to base_audio, they also need to be offset by base_lag
-    # base_lag (i.e. the offset after negating is -lag + base_lag). For the positive
-    # lags, the respective audio needs to be offset by lag - base_lag, since for
-    # positive lags < base_lag, the original matching index has been cut off
-    try:
-        base_lag = max([lag for lag in lags if lag > 0])
-    except ValueError:  # max throws an error if the positive lags list is empty
-        base_lag = 0
-    # change lags so that lags[i] is the start index to slice audios[i]
-    lags = [-lag + base_lag if lag <= 0 else base_lag - lag for lag in lags]
-    lags.insert(0, base_lag)
-    trimmed = [audio[lag:] for audio, lag in zip(audios, lags)]
-    min_len = min([len(audio) for audio in trimmed])
-    # trim the end of the audios so they all have the same length and can be mixed
-    trimmed = [audio[:min_len] for audio in trimmed]
-    if verbose:
-        print(f"sync_audios took {time.perf_counter() - start_time:.4f} seconds")
-    return (trimmed, lags) if return_lags else trimmed
-
-
-def mix_audios(audios):
-    """Mixes audios into one audio.
-
-    Parameters
-    ----------
-    audios : array_like
-        2D array containing the data of each audio to mix. Sample rates should be equal.
-
-    Returns
-    -------
-    mixed : array_like
-        The mixed audio.
-    """
-    return np.add.reduce(audios) / len(audios)
 
 
 # don't have separate functions for sync and hstack because doing them together
@@ -270,8 +193,9 @@ def sync_aria_data(
         raise Exception(f"Audios must all have the same sample rate, but srs = {srs}")
     sr = srs[0]
 
-    synced_audios, lags = sync_audios(audios, return_lags=True, verbose=verbose)
-    mixed_audio = mix_audios(synced_audios)
+    lags = sync_audios.get_audios_lags(audios, verbose=verbose)
+    synced_audios = sync_audios.sync_audios(audios, lags, mode="trim", verbose=verbose)
+    mixed_audio = sync_audios.mix_audios(synced_audios)
     mixed_audio_path = output_dir / "microphones-mono.wav"
     scipy.io.wavfile.write(mixed_audio_path, sr, mixed_audio)
 
