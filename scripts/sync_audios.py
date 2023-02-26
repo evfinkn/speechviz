@@ -184,6 +184,16 @@ def main(
     scipy.io.wavfile.write(output_path, sr, synced_audio.T)
 
 
+def route_file(paths, output_path: pathlib.Path, **kwargs):
+    paths = [path.absolute() for path in paths]
+    main(paths, output_path, **kwargs)
+
+
+def run_from_pipeline(args):
+    paths = util.expand_files(args.pop("path"), to_paths=True)
+    route_file(list(paths), args.pop("output"), **args)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Synchronize audio files.")
     parser.add_argument(

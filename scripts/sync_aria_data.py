@@ -245,6 +245,13 @@ def route_file(
     sync_aria_data(paths, output_dir, verbose=verbose, **kwargs)
 
 
+def run_from_pipeline(args):
+    # path should be a str or list of str so convert to list of Paths
+    paths = util.expand_files(args.pop("path"), to_paths=True)
+    output_dir = args.pop("output_dir", None) or args.pop("output-dir", None)
+    route_file(list(paths), output_dir, **args)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Synchronize data from Aria glasses.")
     parser.add_argument(

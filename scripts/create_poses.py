@@ -134,7 +134,6 @@ def create_poses(
     quiet=False,
     verbose=0,
 ):
-
     parent = imu_path.parent
     vprint = util.verbose_printer(quiet, verbose)
     vprint(f"Processing {parent}", 0)
@@ -278,6 +277,12 @@ def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kw
                 " directory",
                 0,
             )
+
+
+def run_from_pipeline(args):
+    # path should be a str or list of str so convert to list of Paths
+    paths = util.expand_files(args.pop("path"), to_paths=True)
+    route_file(*paths, **args)
 
 
 if __name__ == "__main__":

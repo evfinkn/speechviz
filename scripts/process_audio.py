@@ -249,6 +249,22 @@ def get_vad(path: pathlib.Path, auth_token, duration, verbose=0):
     return (("VAD", vad_segs), ("Non-VAD", non_vad_segs))
 
 
+def get_auth_token(auth_token: str):
+    """Returns the pyannote authentication token.
+    If `auth_token` is not `None`, it is returned. Otherwise, it is gotten from the
+    `PPYANNOTE_AUTH_TOKEN` environment variable. If it is also `None`, and `Exception`
+    is raised. Otherwise, it is returned.
+    """
+    auth_token = os.environ.get("PYANNOTE_AUTH_TOKEN", auth_token)
+    if auth_token is None:
+        raise Exception(
+            "To run the diarization and VAD pipelines, you need a PyAnnotate"
+            " authentication token. Pass it in with the --auth-token option or set the"
+            " PYANNOTE_AUTH_TOKEN environment variable."
+        )
+    return auth_token
+
+
 def route_dir(dir, verbose=0, scan_dir=True, **kwargs):
     if verbose:
         print(f"Running process_audio on each file in {dir}")
@@ -285,6 +301,21 @@ def route_file(*paths: pathlib.Path, verbose=0, scan_dir=True, **kwargs):
             route_dir(path / "video", verbose=verbose, scan_dir=scan_dir, **kwargs)
         else:
             route_dir(path, verbose=verbose, scan_dir=False, **kwargs)
+
+
+def run_from_pipeline(args):
+    # args might be passed using - instead of _ since the command line arguments
+    # use -. Normally, argparse changes them to _, so the other functions expect
+    # _. Therefore, replace any dashes with underscores.
+    if "split-channels" in args:
+        args["split_channels"] = args.pop("split-channels")
+    if "auth-token" in args:
+        args["auth_token"] = args.pop("auth-token")
+    args["auth_token"] = get_auth_token(args.get("auth_token"))
+
+    # path should be a str or list of str so convert to list of Paths
+    paths = util.expand_files(args.pop("path"), to_paths=True)
+    route_file(*paths, **args)
 
 
 def process_audio(
@@ -433,13 +464,7 @@ if __name__ == "__main__":
     )
 
     args = vars(parser.parse_args())
-    args["auth_token"] = os.environ.get("PYANNOTE_AUTH_TOKEN", args["auth_token"])
-    if args["auth_token"] is None:
-        raise Exception(
-            "To run the diarization and VAD pipelines, you need a PyAnnotate"
-            " authentication token. Pass it in with the --auth-token option or set the"
-            " PYANNOTE_AUTH_TOKEN environment variable."
-        )
+    args["auth_token"] = get_auth_token(args["auth_token"])
     start_time = time.perf_counter()
     route_file(*args.pop("path"), **args)
     if not args["quiet"] or args["verbose"]:
