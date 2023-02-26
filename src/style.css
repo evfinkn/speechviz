@@ -154,7 +154,6 @@ body {
   display: none;
   background-color: white;
   overflow: hidden;
-  align-items: stretch;
 }
 
 .accordion:after {
