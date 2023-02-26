@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import argparse
 import csv
-import pathlib
 import re
 import subprocess
 import time
+from pathlib import Path
 
 import numpy as np
 import orjson
@@ -158,8 +158,7 @@ def build_dict_from_dict_list(dict_list, out_dict=None):
 
 
 def create_video(
-    output_dir: pathlib.Path,
-    stream: str,
+    images_dir: Path,
     keep_images: bool = False,
     rotate: bool = True,
     verbose: int = 0,
@@ -171,9 +170,10 @@ def create_video(
 
     start_time = time.perf_counter()
 
-    images_dir = output_dir / stream
+    stem = images_dir.stem
+    output_dir = images_dir.parent
     concat_path = images_dir / "concat.txt"
-    video_path = output_dir / f"{stream}.mp4"
+    video_path = output_dir / f"{stem}.mp4"
     timestamps_path = video_path.with_suffix(".csv")
 
     # using absolute paths with ffmpeg concat causes issues sometimes so just use
@@ -238,7 +238,7 @@ def create_video(
     )
 
     if rotate:
-        rotated_video_path = output_dir / f"{stream}-rotated.mp4"
+        rotated_video_path = output_dir / f"{stem}-rotated.mp4"
         # aria glasses output slam and rgb video sideways since that's how it's filmed
         # this rotates a video 90 degrees clockwise to correct the orientation
         util.ffmpeg(
@@ -255,7 +255,7 @@ def create_video(
 
     if verbose:
         print(
-            f"Created the video for {stream} in"
+            f"Created the video for {stem} in"
             f" {time.perf_counter() - start_time:.4f} seconds"
         )
 
@@ -286,11 +286,11 @@ def route_dir(dir, verbose=0, scan_dir=True, **kwargs):
         route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
 
 
-def route_file(*paths: pathlib.Path, verbose: int = 0, scan_dir: bool = True, **kwargs):
+def route_file(*paths: Path, verbose: int = 0, scan_dir: bool = True, **kwargs):
     """Handles the different types of files that can be input into this script."""
     if len(paths) == 0:
         paths = [
-            pathlib.Path.cwd()
+            Path.cwd()
         ]  # if no file or directory given, use directory script was called from
     elif (
         len(paths) > 1
@@ -317,26 +317,22 @@ def route_file(*paths: pathlib.Path, verbose: int = 0, scan_dir: bool = True, **
             route_dir(path, verbose=verbose, scan_dir=False, **kwargs)
 
 
-expected_images_from_vrs = {
-    pathlib.Path(path) for path in ("211-1", "214-1", "1201-1", "1201-2")
-}
-expected_videos_from_vrs = {
-    path.with_suffix(".mp4") for path in expected_images_from_vrs
-}
-expected_renamed_videos_from_vrs = {
-    pathlib.Path(path)
+# cam slam left is excluded to check for it separately since it might be moved
+expected_images = {
+    Path(path)
     for path in (
-        "camera-eye-tracking.mp4",
-        "camera-rgb.mp4",
-        "camera-slam-left.mp4",
-        "camera-slam-right.mp4",
+        "camera-eye-tracking",
+        "camera-slam-left",
+        "camera-slam-right",
     )
 }
+expected_videos = {path.with_suffix(".mp4") for path in expected_images}
 
 
 def vrs_needs_reprocessed(
-    output_dir: pathlib.Path,
+    output_dir: Path,
     reprocess=False,
+    move=False,
     images=False,
     metadata=False,
     reprocess_metadata=True,
@@ -353,54 +349,63 @@ def vrs_needs_reprocessed(
     needs_extracted = not output_dir.exists() or reprocess
     needs_videos = not output_dir.exists() or reprocess
     if not needs_extracted:
+        data_dir = output_dir.parents[1]
+        file_stem = output_dir.stem
         files = {path.relative_to(output_dir) for path in output_dir.iterdir()}
         # if we want to keep the images but they don't exist
-        if images and not expected_images_from_vrs.issubset(files):
+        if images:
+            if not expected_images.issubset(files):
+                needs_extracted = True
+            elif not (move or Path("camera-rgb") in files):
+                needs_extracted = True
+            elif move and not (data_dir / f"imagesForEncoding/{file_stem}").exists():
+                needs_extracted = True
+        elif (metadata or reprocess_metadata) and Path("metadata.jsons") not in files:
             needs_extracted = True
-        if (metadata or reprocess_metadata) and pathlib.Path(
-            "metadata.jsons"
-        ) not in files:
+        elif not (move or Path("microphones.wav") in files):
             needs_extracted = True
-        if (
-            pathlib.Path("231-1.wav") not in files
-            and pathlib.Path("microphones.wav") not in files
-        ):
+        elif move and not (data_dir / f"audio/{file_stem}.wav").exists():
             needs_extracted = True
         # missing the videos
-        if not (
-            expected_videos_from_vrs.issubset(files)
-            or expected_renamed_videos_from_vrs.issubset(files)
-        ):
+        if not expected_videos.issubset(files):
             needs_videos = True
             # if we don't have videos then we need images to create them
             # if there aren't images, we need to reextract
-            if not expected_images_from_vrs.issubset(files):
+            if not expected_images.issubset(files):
+                needs_extracted = True
+        elif not (move or Path("camera-slam-left.mp4") in files):
+            needs_videos = True
+            if not Path("camera-slam-left") in files:
+                needs_extracted = True
+        elif move and not (data_dir / f"video/{file_stem}.mp4").exists():
+            needs_videos = True
+            if not Path("camera-slam-left") in files:
                 needs_extracted = True
     return needs_extracted, needs_videos
 
 
-expected_files_from_metadata = {
-    pathlib.Path(path)
+expected_sensors = {
+    Path(path)
     for path in ("barometer.csv", "imu-left.csv", "imu-right.csv", "magnetometer.csv")
 }
 
 
-def metadata_needs_reprocessed(output_dir: pathlib.Path, reprocess=False, calib=True):
+def metadata_needs_reprocessed(output_dir: Path, reprocess=False, calib=True):
     needs_processed = not output_dir.exists() or reprocess
     if not needs_processed:
         files = {path.relative_to(output_dir) for path in output_dir.iterdir()}
-        if calib and pathlib.Path("calib.txt") not in files:
+        if calib and Path("calib.txt") not in files:
             needs_processed = True
-        if not expected_files_from_metadata.issubset(files):
+        if not expected_sensors.issubset(files):
             needs_processed = True
     return needs_processed
 
 
 def extract_vrs_data(
-    path: pathlib.Path,
+    path: Path,
     reprocess=False,
     calib=True,
-    rename=True,
+    move=False,
     images=False,
     metadata=False,
     quiet=False,
@@ -429,7 +434,7 @@ def extract_vrs_data(
 
     reprocess_metadata = metadata_needs_reprocessed(output_dir, reprocess, save_calib)
     needs_extracted, needs_videos = vrs_needs_reprocessed(
-        output_dir, reprocess, keep_images, keep_metadata, reprocess_metadata
+        output_dir, reprocess, move, keep_images, keep_metadata, reprocess_metadata
     )
 
     if needs_extracted:
@@ -448,6 +453,14 @@ def extract_vrs_data(
         # move the audio file out of its directory and remove the directory
         util.mv(output_dir / "231-1/*", output_dir / "231-1.wav", True)
         util.rm(output_dir / "231-1")
+        vprint("Renaming the audio and video files")
+        # old_path = output_dir / "231-1.wav"
+        # new_path = output_dir / f"{STREAM_NAMES['231-1']}.wav"
+        # util.mv(old_path, new_path)
+        for stream in VIDEO_STREAMS:
+            old_path = output_dir / f"{stream}.mp4"
+            new_path = output_dir / f"{STREAM_NAMES[stream]}.mp4"
+            util.mv(old_path, new_path)
     else:
         vprint(
             f"{path} has already been processed. To reprocess it, use the -r agrument",
@@ -461,8 +474,7 @@ def extract_vrs_data(
             # rotate=stream != "211-1" to not rotate the eye tracking camera
             # because its orientation is already correct
             create_video(
-                output_dir,
-                stream,
+                output_dir / STREAM_NAMES[stream],
                 keep_images,
                 rotate=stream != "211-1",
                 verbose=verbose,
@@ -476,15 +488,21 @@ def extract_vrs_data(
             "Videos have already been created. To recreate them, use the -r argument"
         )
 
-    if rename:
-        vprint("Renaming the audio and video files")
-        old_path = output_dir / "231-1.wav"
-        new_path = output_dir / f"{STREAM_NAMES['231-1']}.wav"
-        util.mv(old_path, new_path)
-        for stream in VIDEO_STREAMS:
-            old_path = output_dir / f"{stream}.mp4"
-            new_path = output_dir / f"{STREAM_NAMES[stream]}.mp4"
-            util.mv(old_path, new_path)
+    if move:
+        old_audio_path = output_dir / "microphones.wav"
+        if old_audio_path.exists():
+            new_audio_path = data_dir / "audio" / f"{path.stem}.wav"
+            old_audio_path.replace(new_audio_path)
+
+        old_video_path = output_dir / "camera-slam-left.mp4"
+        if old_video_path.exists():
+            new_video_path = data_dir / "video" / f"{path.stem}.mp4"
+            old_video_path.replace(new_video_path)
+
+        old_images_path = output_dir / "camera-rgb"
+        if old_images_path.exists():
+            new_images_path = data_dir / "imagesForEncoding" / f"{path.stem}"
+            old_images_path.replace(new_images_path)
 
     vprint(f"Processed {path} in {time.perf_counter() - start_time:.4f} seconds", 0)
 
@@ -500,14 +518,14 @@ def extract_vrs_data(
         )
     else:
         vprint(
-            f"{output_dir / 'metadata.jsons'} has already been processed. To reprocess"
-            " it, use the '-r' argument",
+            f"{output_dir / 'metadata.jsons'} has already been processed. To"
+            " reprocess it, use the '-r' argument",
             0,
         )
 
 
 def extract_sensor_data(
-    path: pathlib.Path,
+    path: Path,
     reprocess=False,
     calib=True,
     headers=True,
@@ -682,7 +700,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "path",
         nargs="*",
-        type=pathlib.Path,
+        type=Path,
         help=(
             "The path to the file to process. If a VRS file, "
             "processes the VRS file. If a directory, processes "
@@ -705,13 +723,25 @@ if __name__ == "__main__":
     # parser.add_argument("--no-headers",
     #                     action="store_true",
     #                     help="Don't add the headers to the CSV files")
+    # parser.add_argument(
+    #     "--rename",
+    #     action=util.BooleanOptionalAction,
+    #     default=True,
+    #     help=(
+    #         "Rename the audio and video files from the stream's id to the stream's "
+    #         "device name. Default is True."
+    #     ),
+    # )
     parser.add_argument(
-        "--rename",
+        "--move",
         action=util.BooleanOptionalAction,
-        default=True,
+        default=False,
         help=(
-            "Rename the audio and video files from the stream's id to the stream's "
-            "device name. Default is True."
+            "Moves the extracted files to their respective data folders, i.e. the audio"
+            " file is moved to data/audio, the video file is moved to data/video,"
+            " and--if --images is passed--the directory of images from the RGB camera"
+            " are moved to data/imagesForEncoding. The moved files' names are all set"
+            " to the stem of the input file. Default is False."
         ),
     )
     # parser.add_argument("--nanoseconds",
