@@ -24,6 +24,5 @@ dependencies:
     - opencv-contrib-python
     - cmake
     - face_recognition
-    - imutils
     - scikit-learn
     - orjson

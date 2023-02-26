@@ -1,6 +1,6 @@
 # import the neccessary packages
 import argparse
-import os
+import pathlib
 import pickle
 import shutil
 
@@ -9,56 +9,27 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 
 
-def main(raw_args=None):
-    # construct the argument parser and parse the arguments
-    ap = argparse.ArgumentParser()
-    ap.add_argument(
-        "-e",
-        "--encodings",
-        required=True,
-        help="path to serialized db of facial encodings",
-    )
-    ap.add_argument(
-        "-j",
-        "--jobs",
-        type=int,
-        default=-1,
-        help="# of parallel jobs to run (-1 will use all CPUs)",
-    )
-    ap.add_argument(
-        "-eps",
-        "--epsilon",
-        default=0.4,
-        help=(
-            "Controls how far away points can be from one antoher to still be a"
-            " cluster. Too small and all will be considered noise, too large and all"
-            " will be grouped as 1 face."
-        ),
-    )
-    ap.add_argument(
-        "-o",
-        "--outputs",
-        required=True,
-        help=(
-            "Folder the clustered faces will be output to. Should match the video name"
-            " without its extension, and be of the format data/faceClusters/videoName"
-            " or you will have to manually move it to match this"
-        ),
-    )
-    args = vars(ap.parse_args(raw_args))
+def run_from_pipeline(args):
+    encodings = pathlib.Path(args.pop("encodings"))
+    outputs = pathlib.Path(args.pop("outputs"))
+    main(encodings, outputs, **args)
 
+
+def main(
+    encodings: pathlib.Path, outputs: pathlib.Path, jobs: int = 1, epsilon: float = 0.4
+):
     # load the serialized face encodings + bounding box locations from
     # disk, then extract the set of encodings to so we can cluster on
     # them
     print("[INFO] loading encodings...")
-    data = pickle.loads(open(args["encodings"], "rb").read())
+    data = pickle.loads(encodings.read_bytes())
     data = np.array(data)
     encodings = [d["encoding"] for d in data]
 
     # cluster the embeddings
     print("[INFO] clustering...")
     # dbscan
-    clt = DBSCAN(float(args["epsilon"]), metric="euclidean", n_jobs=args["jobs"])
+    clt = DBSCAN(float(epsilon), metric="euclidean", n_jobs=jobs)
 
     # uncomment this and recomment clt above, OPTICS is like dbscan but sweeps through
     # different epsilon values, and picks which one it thinks is right. I haven't had
@@ -69,17 +40,17 @@ def main(raw_args=None):
     # determine the total number of unique faces found in the dataset
     labelIDs = np.unique(clt.labels_)
     numUniqueFaces = len(np.where(labelIDs > -1)[0])
-    print("[INFO] # unique faces: {}".format(numUniqueFaces))
+    print(f"[INFO] # unique faces: {numUniqueFaces}")
 
-    if os.path.isdir(args["outputs"]):
+    if outputs.exists():
         # overwrite old clusters so they don't build
         # upon an old version and mix together
-        shutil.rmtree(args["outputs"])
-    os.makedirs(args["outputs"])
+        shutil.rmtree(outputs)
+    outputs.mkdir(parents=True, exist_ok=True)
 
     # loop over the unique face integers
     for labelID in labelIDs:
-        print("[INFO] faces for face ID: {}".format(labelID))
+        print(f"[INFO] faces for face ID: {labelID}")
         idxs = np.where(clt.labels_ == labelID)[0]
         faces = []
         # loop over the sampled indexes
@@ -100,20 +71,53 @@ def main(raw_args=None):
             faces.append(resized)
         counter = 0
 
-        def baseFilePath(faceNum):
-            return args["outputs"] + "/face" + str(faceNum)
-
         for face in faces:
             counter += 1
-            if not os.path.isdir(baseFilePath(labelID)):
-                os.makedirs(baseFilePath(labelID))
-            cv2.imwrite(baseFilePath(labelID) + "/Num" + str(counter) + ".jpg", face)
+            faceFolder = outputs / f"face{labelID}"
+            faceFolder.mkdir(parents=True, exist_ok=True)
+            cv2.imwrite(str(faceFolder / f"Num{counter}.jpg"), face)
 
     # built off of https://pyimagesearch.com/2018/07/09/face-clustering-with-python/
 
 
-# Run with command line arguments precisely when called directly
-# (rather than when imported)
-# https://stackoverflow.com/questions/44734858/python-calling-a-module-that-uses-argparser
 if __name__ == "__main__":
-    main()
+    # construct the argument parser and parse the arguments
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "-e",
+        "--encodings",
+        required=True,
+        type=pathlib.Path,
+        help="path to serialized db of facial encodings",
+    )
+    ap.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
+        default=-1,
+        help="# of parallel jobs to run (-1 will use all CPUs)",
+    )
+    ap.add_argument(
+        "-eps",
+        "--epsilon",
+        type=float,
+        default=0.4,
+        help=(
+            "Controls how far away points can be from one antoher to still be a"
+            " cluster. Too small and all will be considered noise, too large and all"
+            " will be grouped as 1 face."
+        ),
+    )
+    ap.add_argument(
+        "-o",
+        "--outputs",
+        required=True,
+        type=pathlib.Path,
+        help=(
+            "Folder the clustered faces will be output to. Should match the video name"
+            " without its extension, and be of the format data/faceClusters/videoName"
+            " or you will have to manually move it to match this"
+        ),
+    )
+    args = vars(ap.parse_args())
+    main(**args)
