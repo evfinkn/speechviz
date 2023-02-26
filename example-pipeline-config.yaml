@@ -1,0 +1,58 @@
+# If pipeline.py is run with this config file and a list of files, then it'll ignore
+# the files below and instead use this config on the input files. Otherwise, if it's
+# just passed this config, it'll use this config on the files below.
+# If a file path isn't absolute, it must be relative to the directory you are running
+# pipeline.py from. Since the file paths in files and directories in this example start
+# with the data directory, the pipeline script must be run from the base speechviz
+# directory when running with this config. This doesn't apply to scripts (see below).
+files:
+  - data/vrs/ccf5a3cc.vrs
+  - data/vrs/045add9b.vrs
+  # etc.
+# You can also specify directories. Each file in the directory will get processed.
+directories:
+  - data/vrs
+steps:
+  # When specifying scripts, they must be relative to the scripts directory. If you'd
+  # like to use custom scripts in the pipeline, the script must have a function named
+  # "run_from_pipeline(args)" that takes the dict of arguments.
+  - script: extract_vrs_data.py
+    # Arguments to the script are specified using a mapping of the argument
+    # name to the value. Flags aren't supported (e.g. using `r: true` instead
+    # of `reprocess: true`). Along with this, prefixing an argument with "no-"
+    # will not work. For arguments dependent on the current file being processed,
+    # such as the input to the script, use placeholders with file (see below).
+    # To use the default arguments, use an empty mapping ({}).
+    arguments:
+      # For the following examples, take the current file to be data/vrs/ccf5a3cc.vrs.
+      # {file} is the full file path (e.g. data/vrs/ccf5a3cc.vrs)
+      # {file.parent} is the path excluding the actual file (e.g. data/vrs)
+      #     (note there's no trailing backslash)
+      # {file.name} is the name of the file, including extension (e.g. ccf5a3cc.vrs)
+      # {file.suffix} is the extension of the file (e.g. .vrs) (note the leading period)
+      # {file.stem} is the name of the file without its extension (e.g. ccf5a3cc)
+      # For other attributes you can access, see
+      # https://docs.python.org/3/library/pathlib.html#accessing-individual-parts
+      # and for the format / placeholder specification, see
+      # https://docs.python.org/3/library/string.html#formatstrings
+      path: "{file}"
+      # Note that, like stated above, using `no-reprocess: true` will not work.
+      # It must be specified using `reprocess`.
+      reprocess: false
+      move: true
+      images: true
+      # Both of the following work for setting the verbosity level to 1:
+      verbose: 1
+      # verbose: true
+  - script: process_audio.py
+    arguments:
+      path: data/audio/{file.stem}.wav
+  - script: transcribe.py
+    arguments:
+      path: data/audio/{file.stem}.wav
+  - script: encode_and_cluster.py
+    arguments:
+      dataset: data/imagesForEncoding/{file.stem}
+  - script: create_poses.py
+    arguments:
+      path: data/graphical/{file.stem}
