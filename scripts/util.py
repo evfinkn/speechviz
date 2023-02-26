@@ -82,7 +82,7 @@ def random_color_generator(seed: Optional[int] = None) -> Iterator[str]:
         yield f"#{r:02x}{g:02x}{b:02x}"
 
 
-def expand_files(files: Paths, wildcard=False) -> Iterator[Path]:
+def expand_files(files: Paths, wildcard=False, to_paths=False) -> Iterator[Path]:
     """Generates an expanded list of files.
 
     Parameters
@@ -91,20 +91,24 @@ def expand_files(files: Paths, wildcard=False) -> Iterator[Path]:
     wildcard : bool, default=False
         Whether any of the file paths contain a wildcard ("*")
         that needs to be expanded.
+    to_paths : bool, default=False
+        Whether each file in the expanded files should be converted to `pathlib.Path`.
 
     Yields
     ------
-    str
+    str or pathlib.Path
         If `wildcard` is `False`, this function simply yields the files. Otherwise, this
         function yields the files expanded from the wildcards in the files.
     """
     if isinstance(files, (str, pathlib.Path)):
         files = [files]
-    if not wildcard:
-        yield from files
-    else:
+    if wildcard:
         # convert to str because glob doesn't work on pathlib.Path
-        yield from flatten([glob.glob(str(file)) for file in files])
+        files = flatten([glob.glob(str(file)) for file in files])
+    if to_paths:
+        # map is an iterator so no need to do `yield from`
+        files = map(pathlib.Path, files)
+    yield from files
 
 
 def mv(
@@ -315,7 +319,6 @@ class BooleanOptionalAction(argparse.Action):
         help=None,
         metavar=None,
     ):
-
         _option_strings = []
         for option_string in option_strings:
             _option_strings.append(option_string)
