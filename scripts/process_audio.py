@@ -335,8 +335,8 @@ def process_audio(
         raise Exception("Input file must be in either data/audio or data/video")
     data_dir = path.parents[1]
     # ensure that waveforms and segments directories exist
-    util.mkdir(data_dir / "waveforms")
-    util.mkdir(data_dir / "segments")
+    (data_dir / "waveforms").mkdir(parents=True, exist_ok=True)
+    (data_dir / "segments").mkdir(parents=True, exist_ok=True)
 
     # filepaths for the waveform, and segments files
     waveform_path = data_dir / "waveforms" / f"{path.stem}-waveform.json"
@@ -411,10 +411,9 @@ def process_audio(
     # (since it was only needed for the pipelines)
     if made_wav:
         vprint(f"Deleting {path}")
-        util.rm(path)
+        path.unlink()
+        path = old_path
 
-    # if wav file was made, switch file.path back to original file
-    path = old_path if "old_path" in locals() else path
     vprint(f"Processed {path} in {time.perf_counter() - start_time:.4f} seconds", 0)
 
 

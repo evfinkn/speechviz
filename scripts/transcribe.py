@@ -97,7 +97,7 @@ def transcribe(
         transcriptions_dir / f"{path.stem}-pcm_s16le-transcription.json"
     )
     converted_transcriptions_path.replace(transcription_path)
-    util.rm(converted_path)
+    converted_path.unlink()
 
     vprint(f"Transcribing took {time.perf_counter() - start_time:.4f} seconds", 1)
 
