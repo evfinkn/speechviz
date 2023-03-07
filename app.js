@@ -139,7 +139,7 @@ app.get("/users", (req, res) => {
 const dataSubdirs = readdirAndFilter("data");
 // matches any request that start with "/subdir" where subdir is
 // a subdirectory of the data directory
-// "\/" is there because regex interprets string as is and doesn't escape for you
+// escape is there because regex interprets string as is and doesn't escape for you
 // eslint-disable-next-line no-useless-escape
 const dataSubdirRegex = new RegExp(`\/(${dataSubdirs.join("|")})`);
 app.get(dataSubdirRegex, (req, res) => {
