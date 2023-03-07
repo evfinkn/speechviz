@@ -136,26 +136,29 @@ app.get("/users", (req, res) => {
   }
 });
 
-app.get(
-  /\/(audio|segments|video|waveforms|transcriptions|graphical|faceClusters)/,
-  (req, res) => {
-    const url = "data" + req.url;
-    fs.promises
-      .stat(url)
-      .then((stat) => {
-        // if it's a directory, return list of file names in that directory
-        if (stat.isDirectory()) {
-          return res.send(readdirAndFilter(url));
-        }
-        // if it's a file, return the file
-        else {
-          return res.sendFile(url, { root: __dirname });
-        }
-      })
-      // catch error from stat when file doesn't exist
-      .catch(() => res.status(404).send("Not Found"));
-  }
-);
+const dataSubdirs = readdirAndFilter("data");
+// matches any request that start with "/subdir" where subdir is
+// a subdirectory of the data directory
+// "\/" is there because regex interprets string as is and doesn't escape for you
+// eslint-disable-next-line no-useless-escape
+const dataSubdirRegex = new RegExp(`\/(${dataSubdirs.join("|")})`);
+app.get(dataSubdirRegex, (req, res) => {
+  const url = "data" + req.url;
+  fs.promises
+    .stat(url)
+    .then((stat) => {
+      // if it's a directory, return list of file names in that directory
+      if (stat.isDirectory()) {
+        return res.send(readdirAndFilter(url));
+      }
+      // if it's a file, return the file
+      else {
+        return res.sendFile(url, { root: __dirname });
+      }
+    })
+    // catch error from stat when file doesn't exist
+    .catch(() => res.status(404).send("Not Found"));
+});
 
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
 const insertFile = db.prepare("INSERT INTO audiofiles(audiofile) VALUES(?)");
