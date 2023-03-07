@@ -234,6 +234,13 @@ const checkResponseStatus = function (res) {
   return res;
 };
 
+/**
+ * Parses floats from the text of a CSV file. The first row of the file is assumed
+ * to be a header row and is therefore ignored.
+ * @param {string} text - The text of the CSV file.
+ * @returns {number[][]} An array of arrays of numbers. Each inner array corresponds
+ *      to a row in the original file.
+ */
 const parseNumericalCsv = function (text) {
   return (
     text
@@ -243,6 +250,21 @@ const parseNumericalCsv = function (text) {
       .slice(1, -1) // exclude header row
       .map((row) => row.split(",").map(parseFloat))
   );
+};
+
+/**
+ * Removes the last extension from the file name.
+ * @example
+ * removeExtension("dir") // returns "dir"
+ * @example
+ * removeExtension("./file.txt") // returns "./file"
+ * @example
+ * removeExtension("file.tar.gz") // returns "file.tar"
+ * @param {string} filename - The name of the file.
+ * @returns {string} The name of the file excluding the extension.
+ */
+const removeExtension = function (filename) {
+  return filename.replace(/\.[^/.]+$/, "");
 };
 
 export {
@@ -259,4 +281,5 @@ export {
   ResponseError,
   checkResponseStatus,
   parseNumericalCsv,
+  removeExtension,
 };

@@ -13,6 +13,7 @@ import {
   ResponseError,
   checkResponseStatus,
   parseNumericalCsv,
+  removeExtension,
 } from "./util.js";
 import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
 
@@ -169,7 +170,7 @@ if (folder !== undefined && folder !== null) {
       });
       runs.children.forEach((child) => {
         runs.nested.append(child.li);
-        const childBasename = child.id.replace(/\.[^/.]+$/, "");
+        const childBasename = removeExtension(child.id);
         if (childBasename === basename) {
           // make radio button of audio selected
           child.toggle();

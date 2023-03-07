@@ -1,13 +1,14 @@
 import Peaks from "peaks.js";
 import createSegmentMarker from "./CustomSegmentMarker.js";
+import { removeExtension } from "./util.js";
 
 // query parameters that appear in url, such as ?file=audio.mp3
 const urlParams = new URLSearchParams(window.location.search);
 const filename = urlParams.get("file"); // name of file with extension
-const folder = urlParams.get("folder"); // name of file with extension
+const folder = urlParams.get("folder");
 
 // name of the file without the extension
-const basename = filename.replace(/\.[^/.]+$/, "");
+const basename = removeExtension(filename);
 
 // make sure user is viewing their own segments or is admin
 let user = urlParams.get("user"); // user in the url params
