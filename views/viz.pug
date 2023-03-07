@@ -14,7 +14,13 @@ html(lang="en")
         ul#tree(style="padding-left: 0px")
       #column2.column2
         #waveform-container
-          if isVideo
+          if isFolder
+            #zoomview-container
+            #overview-container
+            audio#media(controls="controls")
+              source(src=`audio/${folder}/${file}`, type=mimetype)
+              | This is a folder, no audio is shown yet
+          else if isVideo
             #visual(style="overflow: hidden")
               video#media(style="object-fit: cover", controls="controls")
                 source(src=`video/${file}`, type=mimetype)

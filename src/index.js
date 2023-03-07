@@ -20,8 +20,10 @@ const setUser = function (newUser) {
  */
 const openViz = function (fileName, type, user = null) {
   if (user !== null) {
+    console.log(`/viz?user=${user}&file=${fileName}&type=${type}`);
     window.location.assign(`/viz?user=${user}&file=${fileName}&type=${type}`);
   } else {
+    console.log(`/viz?file=${fileName}&type=${type}`);
     window.location.assign(`/viz?file=${fileName}&type=${type}`);
   }
 };
@@ -102,7 +104,13 @@ fetch("/filelist")
           // uncheck manually because otherwise after using back button to go
           // back to this page, the radio button will still be checked
           this.checked = false;
-          openViz(this.value, "audio", user);
+          if (!this.id.includes(".")) {
+            // no extension means this is a folder
+            // TODO: if they don't have a run0 this breaks
+            openViz("run0.wav", `audio&folder=${this.value}`, user);
+          } else {
+            openViz(this.value, "audio", user);
+          }
         });
         audioFieldset.append(div);
       });

@@ -4,6 +4,8 @@ import createSegmentMarker from "./CustomSegmentMarker.js";
 // query parameters that appear in url, such as ?file=audio.mp3
 const urlParams = new URLSearchParams(window.location.search);
 const filename = urlParams.get("file"); // name of file with extension
+const folder = urlParams.get("folder"); // name of file with extension
+
 // name of the file without the extension
 const basename = filename.replace(/\.[^/.]+$/, "");
 
@@ -45,7 +47,12 @@ globals.basename = basename;
 globals.media = document.getElementById("media");
 globals.user = user;
 globals.dirty = false;
+globals.folder = folder;
 
+let waveformJson = `waveforms/${basename}-waveform.json`;
+if (folder !== undefined && folder !== null) {
+  waveformJson = `waveforms/${folder}/${basename}-waveform.json`;
+}
 const options = {
   // options passed to Peaks
   zoomview: {
@@ -60,7 +67,7 @@ const options = {
   },
   mediaElement: globals.media,
   dataUri: {
-    json: `waveforms/${basename}-waveform.json`,
+    json: waveformJson,
   },
   keyboard: true,
   pointMarkerColor: "#006eb0",

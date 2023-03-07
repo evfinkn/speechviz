@@ -2525,6 +2525,55 @@ var Face = class Face extends TreeItem {
   }
 };
 
+var Run = class Run extends TreeItem {
+  /**
+   * An object containing all `Run`s by their id.
+   * Key is id, value is corresponding `Run`:  {id: `Run`}
+   * @type {Object.<string, Run>}
+   * @static
+   */
+  static byId = {};
+
+  /**
+   * Names of properties to get in `getProperties`.
+   * @type {!string[]}
+   * @see getProperties
+   * @static
+   */
+  static properties = ["treeText"];
+
+  /**
+   * @param {string} id - The unique identifier to give the `Face`.
+   * @param {?Object.<string, any>=} options - Options to customize the `Face`.
+   * @param {?TreeItem=} options.parent - The `TreeItem` that contains the item in its
+   *      nested content.
+   * @param {string=} options.text - The text to show in the item's span (and
+   *      therefore in the tree). If `null`, `id` is used.
+   * @param {boolean} [options.removable=true] - Indicates if the item can be removed
+   *      from the tree.
+   * @param {boolean} [options.renamable=false] - Indicates if the item can be renamed.
+   * @param {?Array.<TreeItem>=} [options.assocWith] - An array of the `TreeItem`s
+   *      that Face can be associated with. `null` if the Face isn't able to be
+   *      associated.
+   * @param {string=} options.dir - The folder representing the clusters of faces for
+   *      this video
+   * @param {string=} options.imagePath - The name of the image shown for this face
+   * @throws {Error} If a `TreeItem` with `id` already exists.
+   */
+  constructor(id, { parent = null, text = null, renamable = false } = {}) {
+    // (can't use 'this' until after super() call,
+    // so can't get rid of playButton, etc. until after super())
+    super(id, {
+      parent,
+      text,
+      renamable,
+    });
+    this.toggle();
+    this.checkbox.type = "radio";
+    this.checkbox.name = "radioRuns";
+  }
+};
+
 export {
   TreeItem,
   Popup,
@@ -2535,4 +2584,5 @@ export {
   Word,
   PeaksGroup,
   Face,
+  Run,
 };

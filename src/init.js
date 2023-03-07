@@ -1,6 +1,6 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import globals from "./globals.js";
-import { Group, Segment, PeaksGroup, Face, Word } from "./treeClasses.js";
+import { Group, Segment, PeaksGroup, Face, Word, Run } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
@@ -24,6 +24,7 @@ const user = globals.user;
 const filename = globals.filename;
 const basename = globals.basename;
 const media = globals.media;
+const folder = globals.folder;
 
 // TODO: if this does what I assume it does, it can
 //       probably be moved to Segment as a property
@@ -144,6 +145,47 @@ const custom = new PeaksGroup("Custom", {
 });
 const labeled = new Group("Labeled", { parent: analysis, playable: true });
 
+if (folder !== undefined && folder !== null) {
+  // in a folder
+  console.log("the file was a folder");
+  const runs = new Group("Runs", { playable: false });
+  document.getElementById("tree").append(runs.li);
+  console.log(`audio/${folder}`);
+  fetch(`audio/${folder}`)
+    .then(checkResponseStatus)
+    .then((response) => response.json())
+    .then((fileList) => {
+      fileList.forEach((run) => {
+        new Run(run, { parent: runs });
+      });
+      runs.children.sort(function (a, b) {
+        function getRunNum(aOrB) {
+          const fileAndExt = aOrB.id.split(".");
+          const file = fileAndExt[0];
+          const number = file.replace("run", "");
+          return parseInt(number);
+        }
+        return getRunNum(a) - getRunNum(b);
+      });
+      runs.children.forEach((child) => {
+        runs.nested.append(child.li);
+        const childBasename = child.id.replace(/\.[^/.]+$/, "");
+        if (childBasename === basename) {
+          // make radio button of audio selected
+          child.toggle();
+        }
+        console.log(child);
+        child.addEventListener("click", function () {
+          window.location.href = window.location.href.replace(
+            `file=${basename}`,
+            `file=${childBasename}`
+          );
+        });
+      });
+    })
+    .catch((error) => output404OrError(error, "folder grabbing runs"));
+}
+
 /**
  * Outputs a helpful message to the console stating what's missing if `error` is
  * a 404 and otherwise errors `error` to the console.
@@ -160,7 +202,11 @@ const output404OrError = (error, missing) => {
   }
 };
 
-const segmentLoading = fetch(`/segments/${basename}-segments.json`)
+let segmentsFetch = `/segments/${basename}-segments.json`;
+if (folder !== undefined && folder !== null) {
+  segmentsFetch = `/segments/${folder}/${basename}-segments.json`;
+}
+const segmentLoading = fetch(segmentsFetch)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((segments) => {
@@ -194,7 +240,7 @@ const facesLoading = fetch(`/clustered-files/`)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((fileList) => {
-    const clusters = new Group("Clusters");
+    const clusters = new Group("Clusters", { playable: false });
     document.getElementById("tree").append(clusters.li);
     const clusterfolders = fileList.cluster; // folder of each found cluster
     // name of the overall folder, same as video in speechviz w/out extension
@@ -215,7 +261,11 @@ const facesLoading = fetch(`/clustered-files/`)
   })
   .catch((error) => output404OrError(error, "clustered faces"));
 
-fetch(`/transcriptions/${basename}-transcription.json`)
+let transcripFetch = `/transcriptions/${basename}-transcription.json`;
+if (folder !== undefined && folder !== null) {
+  transcripFetch = `/transcriptions/${folder}/${basename}-transcription.json`;
+}
+fetch(transcripFetch)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((words) => {

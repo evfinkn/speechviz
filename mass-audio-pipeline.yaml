@@ -1,0 +1,20 @@
+# If pipeline.py is run with this config file and a list of files, then it'll ignore
+# the files below and instead use this config on the input files. Otherwise, if it's
+# just passed this config, it'll use this config on the files below.
+# If a file path isn't absolute, it must be relative to the directory you are running
+# pipeline.py from. Since the file paths in files and directories in this example start
+# with the data directory, the pipeline script must be run from the base speechviz
+# directory when running with this config. This doesn't apply to scripts (see below).
+directories:
+  - data/audio
+steps:
+  # When specifying scripts, they must be relative to the scripts directory. If you'd
+  # like to use custom scripts in the pipeline, the script must have a function named
+  # "run_from_pipeline(args)" that takes the dict of arguments.
+  - script: process_audio.py
+    arguments:
+      path: data/audio/{file.stem}.wav
+      split-channels: true
+  - script: transcribe.py
+    arguments:
+      path: data/audio/{file.stem}.wav

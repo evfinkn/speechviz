@@ -9,3 +9,5 @@ audiowaveform.exe
 __pycache__/
 scripts/transcribe
 scripts/models
+src/index.js
+scripts/combineAndPadAudio.py
