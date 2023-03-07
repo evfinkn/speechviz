@@ -18,6 +18,8 @@
 #include <thread>
 #include <vector>
 
+#include <iostream>
+
 // Terminal color map. 10 colors grouped in ranges [0.0, 0.1, ..., 0.9]
 // Lowest is red, middle is yellow, highest is green.
 const std::vector<std::string> k_colors = {
@@ -162,9 +164,19 @@ void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params & para
 
 std::string format_as_point(std::pair<std::string, double> word) {
     std::stringstream ss;
+    std::string labelText = word.first;
+    double time = word.second;
+
+    if (!labelText.empty() && labelText.front() == '"') {
+        labelText.insert(0, "\\");
+    }
+    if (!labelText.empty() && labelText.back() == '"') {
+        labelText.insert(labelText.size() - 1, "\\");
+    }
+
     ss << "{\"labelText\": "
-       << "\"" << word.first << "\", "
-       << "\"time\": " << word.second << "}";
+       << "\"" << labelText << "\", "
+       << "\"time\": " << time << "}";
     return ss.str();
 }
 

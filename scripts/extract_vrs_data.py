@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import re
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -174,7 +175,7 @@ def create_video(
     output_dir = images_dir.parent
     concat_path = images_dir / "concat.txt"
     video_path = output_dir / f"{stem}.mp4"
-    timestamps_path = video_path.with_suffix(".csv")
+    timestamps_path = output_dir / f"{stem}-original.csv"
 
     # using absolute paths with ffmpeg concat causes issues sometimes so just use
     # relative paths. ffmpeg interprets relative paths to be relative to the concat
@@ -247,11 +248,10 @@ def create_video(
             verbose,
             output_options=["-vf", "transpose=1"],
         )
-        util.rm(video_path)
-        util.mv(rotated_video_path, video_path)  # rename rotated video
+        rotated_video_path.replace(video_path)  # rename rotated video
 
     if not keep_images:
-        util.rm(images_dir)
+        shutil.rmtree(images_dir, ignore_errors=True)
 
     if verbose:
         print(
@@ -438,7 +438,7 @@ def extract_vrs_data(
     )
 
     if needs_extracted:
-        util.mkdir(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
         vprint('Running "vrs extract-all"')
         vrs_start_time = time.perf_counter()
         subprocess.run(
@@ -451,8 +451,10 @@ def extract_vrs_data(
             f" {time.perf_counter() - vrs_start_time:.4f} seconds"
         )
         # move the audio file out of its directory and remove the directory
-        util.mv(output_dir / "231-1/*", output_dir / "231-1.wav", True)
-        util.rm(output_dir / "231-1")
+        # there should only be one audio file, so [0] is getting the only one
+        old_audio_path = list((output_dir / "231-1").glob("*.wav"))[0]
+        old_audio_path.replace(output_dir / "231-1.wav")
+        shutil.rmtree(output_dir / "231-1", ignore_errors=True)
         vprint("Renaming the audio and video files")
         # old_path = output_dir / "231-1.wav"
         # new_path = output_dir / f"{STREAM_NAMES['231-1']}.wav"
@@ -460,7 +462,7 @@ def extract_vrs_data(
         for stream in VIDEO_STREAMS:
             old_path = output_dir / f"{stream}.mp4"
             new_path = output_dir / f"{STREAM_NAMES[stream]}.mp4"
-            util.mv(old_path, new_path)
+            old_path.replace(new_path)
     else:
         vprint(
             f"{path} has already been processed. To reprocess it, use the -r agrument",
@@ -561,7 +563,6 @@ def extract_sensor_data(
             0,
         )
         return
-    util.mkdir(output_dir)
 
     vprint("Extracting sensor data from metadata.jsons")
     metadata_start_time = time.perf_counter()
@@ -618,9 +619,7 @@ def extract_sensor_data(
 
         # convert the timestamps extracted from the image filenames to unix timestamps
         for stream in VIDEO_STREAMS:
-            # f"{stream}.csv" because if it's f"{STREAM_NAMES[stream]}.csv"
-            # then it's already been converted
-            video_timestamps_path = output_dir / f"{stream}.csv"
+            video_timestamps_path = output_dir / f"{STREAM_NAMES[stream]}-original.csv"
             if video_timestamps_path.exists():
                 video_timestamps = np.genfromtxt(video_timestamps_path)
                 video_timestamps -= first_device_timestamp
@@ -630,7 +629,7 @@ def extract_sensor_data(
                     video_timestamps,
                     "%.7f",
                 )
-                util.rm(video_timestamps_path)
+                video_timestamps_path.unlink()
 
     vprint("Writing files")
     write_start_time = time.perf_counter()
@@ -689,8 +688,8 @@ def extract_sensor_data(
 
     if not keep_metadata:
         vprint("Removing metadata.jsons")
-        util.rm(output_dir / "metadata.jsons")
-    util.rm(output_dir / "ReadMe.md")
+        (output_dir / "metadata.jsons").unlink()
+    (output_dir / "ReadMe.md").unlink()
 
     vprint(f"Processed {path} in {time.perf_counter() - start_time:.4f} seconds", 0)
 

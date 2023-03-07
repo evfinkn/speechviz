@@ -164,7 +164,7 @@ def sync_aria_data(
     # no matter what (because it's used for syncing videos and poses)
     _, resync_videos, resync_poses = needs_resynced
 
-    util.mkdir(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     audio_paths = [path / "microphones-mono.wav" for path in paths]
     if not all([audio_path.exists() for audio_path in audio_paths]):
