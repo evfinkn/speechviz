@@ -4,6 +4,7 @@ import argparse
 import csv
 import glob
 import json
+import operator
 import pathlib
 import random
 import subprocess
@@ -243,6 +244,27 @@ def add_to_csv(path: pathlib.Path, data: dict, remove_keys: Optional[list] = Non
         writer = csv.DictWriter(file, fieldnames)
         writer.writeheader()
         writer.writerow(data)
+
+
+def min_key_item(d: dict):
+    """Returns the item from `d` with the minimum key."""
+    # itemgetter is faster than `lambda item: item[0]`
+    return min(d.items(), key=operator.itemgetter(0))
+
+
+def max_key_item(d: dict):
+    """Returns the item from `d` with the maximum key."""
+    return max(d.items(), key=operator.itemgetter(0))
+
+
+def min_value_item(d: dict):
+    """Returns the item from `d` with the minimum value."""
+    return min(d.items(), key=operator.itemgetter(1))
+
+
+def max_value_item(d: dict):
+    """Returns the item from `d` with the maximum value."""
+    return max(d.items(), key=operator.itemgetter(1))
 
 
 # I really hate to include this class here, but argparse didn't add it until

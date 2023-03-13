@@ -62,6 +62,10 @@ def flatten_times(times, num_samples, sr):
     return times
 
 
+def get_times_duration(times):
+    return np.sum(np.diff(times))
+
+
 def get_complement_segments(segments, duration, color, label, times=None):
     times = (
         [(seg["startTime"], seg["endTime"]) for seg in segments]
@@ -347,8 +351,16 @@ def process_audio(
                 path, auth_token, verbose=verbose, num_speakers=num_speakers
             )
             spkrs = sorted(spkrs_segs)
+            spkrs_durations = {
+                spkr: get_times_duration(spkr_times)
+                for spkr, spkr_times in spkrs_times.items()
+            }
+            spkrs_num_segs = {
+                spkr: len(spkr_segs) for spkr, spkr_segs in spkrs_segs.items()
+            }
             diar_times = [time for spkr in spkrs_times.values() for time in spkr]
             diar_times = flatten_times(diar_times, len(samples), sr)
+            diar_duration = get_times_duration(diar_times)
 
             noise_times = get_complement_times(diar_times, len(samples) / sr)
             noise_samps = samples_from_times(noise_times, samples, sr)
@@ -361,6 +373,7 @@ def process_audio(
             }
 
             vad_segs, vad_times = get_vad(path, auth_token, verbose)
+            vad_duration = get_times_duration(vad_times)
             non_vad_segs = get_complement_segments(
                 vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
             )
@@ -378,7 +391,24 @@ def process_audio(
             with segs_path.open("w") as segs_file:
                 json.dump(segs, segs_file)
 
-            stats = {"num_speakers": len(spkrs), "overall_snr": overall_snr}
+            stats = {
+                "sampling_rate": sr,
+                "duration": duration,
+                "overall_snr": overall_snr,
+                "num_speakers": len(spkrs),
+                "diar_duration": diar_duration,
+                "non_diar_duration": duration - diar_duration,
+                "num_diar_segments": sum(spkrs_num_segs.values()),
+                "least_segments": util.min_value_item(spkrs_num_segs),
+                "most_segments": util.max_value_item(spkrs_num_segs),
+                "shortest_speaker": util.min_value_item(spkrs_durations),
+                "longest_speaker": util.max_value_item(spkrs_durations),
+                "lowest_snr": util.min_value_item(spkrs_snrs),
+                "highest_snr": util.max_value_item(spkrs_snrs),
+                "vad_duration": vad_duration,
+                "num_vad_segments": len(vad_segs),
+                "non_vad_duration": duration - vad_duration,
+            }
             util.add_to_csv(stats_path, stats)
 
         # if a video file has no audio it will throw an error trying to make
