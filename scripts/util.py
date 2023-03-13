@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import glob
 import json
 import pathlib
@@ -208,6 +209,40 @@ def grouped(iterable: Iterable, n: int) -> zip:
     [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
     """
     return zip(*([iter(iterable)] * n))
+
+
+def add_to_csv(path: pathlib.Path, data: dict, remove_keys: Optional[list] = None):
+    """Updates the data in the specified CSV file.
+    If the file doesn't exist, it is created. The first row of the CSV file is
+    assumed to be the fieldnames and the second row is assumed to be the only
+    other row. Fields in `data` are added to the end of the fields in the CSV.
+
+    Parameters
+    ----------
+    path: pathlib.Path
+        The path to the CSV file.
+    data: dict
+        The data to update the CSV file with. Fields in `data` that are already in
+        the CSV are updated with the corresponding value, and fields that aren't are
+        added.
+    remove_keys: list of str, optional
+        Keys to remove from the CSV, if present. The keys are removed after `data`
+        is combined with the CSV data.
+    """
+    if path.exists():
+        with path.open(newline="") as file:
+            reader = csv.DictReader(file)
+            read_data = next(reader)
+        read_data.update(data)
+        data = read_data
+    if remove_keys is not None:
+        for key in remove_keys:
+            data.pop(key, None)
+    fieldnames = list(data.keys())
+    with path.open("w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames)
+        writer.writeheader()
+        writer.writerow(data)
 
 
 # I really hate to include this class here, but argparse didn't add it until
