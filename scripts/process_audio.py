@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import os
 import pathlib
@@ -39,6 +40,26 @@ def get_complement_times(times, duration):
         if times[-1][1] != duration:
             comp_times.append((times[-1][1], duration))
     return comp_times
+
+
+def flatten_times(times, num_samples, sr):
+    is_in_times = np.full(num_samples, False)
+    times = times[:]  # copy times
+    for srange in librosa.time_to_samples(times, sr=sr):
+        is_in_times[srange[0] : srange[1]] = True
+    indices = np.where(is_in_times)[0]
+    if len(indices) != 0:
+        times = [indices[0]]
+    for i in range(1, len(indices) - 1):
+        if indices[i] + 1 != indices[i + 1]:
+            times.append(indices[i])
+        if indices[i] != indices[i - 1] + 1:
+            times.append(indices[i])
+    if len(indices) != 0:
+        times.append(indices[-1])
+        times = librosa.samples_to_time(times, sr=sr)
+        times = [(times[i], times[i + 1]) for i in range(0, len(times), 2)]
+    return times
 
 
 def get_complement_segments(segments, duration, color, label, times=None):
@@ -87,9 +108,7 @@ def snr_from_times(signal_times, samples, sr, noise_rms=None):
     return snr(signal_powers, noise_rms)
 
 
-def get_diarization(
-    path: pathlib.Path, auth_token, samples, sr, verbose=0, speaker_numbers=None
-):
+def get_diarization(path: pathlib.Path, auth_token, verbose=0, num_speakers=None):
     # use global diar_pipe so that it doesn't need
     # to be re-initialized (which is time-consuming)
     global diar_pipe
@@ -111,26 +130,22 @@ def get_diarization(
 
     vprint("Running the diarization pipeline")
     start_time = time.perf_counter()
-    if speaker_numbers is not None:
-        diar = diar_pipe(path, num_speakers=speaker_numbers)
+    if num_speakers is not None:
+        diar = diar_pipe(path, num_speakers=num_speakers)
     else:
         diar = diar_pipe(path)
     vprint(
         "Diarization pipeline completed in"
         f" {time.perf_counter() - start_time:.4f} seconds"
     )
-    vprint("Looping through the annotations to create the speaker segments")
-    loop_start_time = time.perf_counter()
 
     # format the speakers segments for peaks
     colors = util.random_color_generator(2)
     spkrs_colors = (
         {}
     )  # dictionary to store speaker's colors. key = speaker, value = color
-    spkrs_segs = {}
-    spkrs_times = {}
-    diar_times = []
-    is_speech = np.full(len(samples), False)
+    spkrs_segs = collections.defaultdict(list)
+    spkrs_times = collections.defaultdict(list)
     for turn, _, spkr in diar.itertracks(yield_label=True):
         start = turn.start
         end = turn.end
@@ -140,64 +155,17 @@ def get_diarization(
             spkrs_colors[spkr] = next(
                 colors
             )  # each speaker has a color used for all of their segments
-            spkrs_segs[spkr] = []
-            spkrs_times[spkr] = []
 
         spkrs_segs[spkr].append(format_segment(start, end, spkrs_colors[spkr], spkr))
         spkrs_times[spkr].append((start, end))
-        diar_times.append((start, end))
-    spkrs = sorted(spkrs_segs)
-    for srange in librosa.time_to_samples(diar_times, sr=sr):
-        is_speech[srange[0] : srange[1]] = True
-    diar_indices = np.where(is_speech)[0]
-    if len(diar_indices) != 0:
-        diar_times = [diar_indices[0]]
-    for i in range(1, len(diar_indices) - 1):
-        if diar_indices[i] + 1 != diar_indices[i + 1]:
-            diar_times.append(diar_indices[i])
-        if diar_indices[i] != diar_indices[i - 1] + 1:
-            diar_times.append(diar_indices[i])
-    if len(diar_indices) != 0:
-        diar_times.append(diar_indices[-1])
-        diar_times = librosa.samples_to_time(diar_times, sr=sr)
-        diar_times = [
-            (diar_times[i], diar_times[i + 1]) for i in range(0, len(diar_times), 2)
-        ]
 
-    vprint(
-        "Speaker segments created in"
-        f" {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds"
-    )
-    vprint("Calculating SNRs")
-    snr_start_time = time.perf_counter()
-
-    noise_times = get_complement_times(diar_times, len(samples) / sr)
-    noise_samps = samples_from_times(noise_times, samples, sr)
-    noise_powers = np.square(noise_samps)
-    noise_rms = rms(noise_powers)
-    spkrs_snrs = {
-        spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms)
-        for spkr in spkrs
-    }
-
-    vprint(
-        "SNRs calculated in"
-        f" {(time.perf_counter() - snr_start_time) * 1000:.4f} milliseconds"
-    )
     vprint(
         f"get_diarization completed in {time.perf_counter() - start_time:.4f} seconds"
     )
-
-    # TODO: Change this to return a dict and then change viz.js to take a dict
-    # because this is confusing. It could be something like:
-    # {"type": "GroupOfGroups", name="Speakers", children=[{"type": "Group", ...}, ...]}
-    # arrange spkrs_segs so that it's an array of tuples containing a speaker,
-    # that speaker's segments, and that speaker's snr i.e.
-    # spkrs_segs = [ ("Speaker 1", [...], spkr_1_snr), ... ]
-    return ("Speakers", [(spkr, spkrs_segs[spkr], spkrs_snrs[spkr]) for spkr in spkrs])
+    return (spkrs_segs, spkrs_times)
 
 
-def get_vad(path: pathlib.Path, auth_token, duration, verbose=0):
+def get_vad(path: pathlib.Path, auth_token, verbose=0):
     # use global vad_pipe so that it doesn't need
     # to be re-initialized (which is time-consuming)
     global vad_pipe
@@ -216,8 +184,6 @@ def get_vad(path: pathlib.Path, auth_token, duration, verbose=0):
     start_time = time.perf_counter()
     vad = vad_pipe(path)
     vprint(f"VAD pipeline completed in {time.perf_counter() - start_time:.4f} seconds")
-    vprint("Looping through the annotations to create the VAD segments")
-    loop_start_time = time.perf_counter()
 
     # format the vad segments for peaks
     vad_segs = []
@@ -228,25 +194,8 @@ def get_vad(path: pathlib.Path, auth_token, duration, verbose=0):
         vad_segs.append(format_segment(start, end, "#5786c9", "VAD"))
         vad_times.append((start, end))
 
-    vprint(
-        "VAD segments created in"
-        f" {(time.perf_counter() - loop_start_time) * 1000:.4f} milliseconds"
-    )
-    vprint("Creating the non-VAD segments")
-    non_vad_start_time = time.perf_counter()
-
-    non_vad_segs = get_complement_segments(
-        vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
-    )
-
-    vprint(
-        "Non-VAD segments created in"
-        f" {(time.perf_counter() - non_vad_start_time) * 1000:.4f} milliseconds"
-    )
     vprint(f"get_vad completed in {time.perf_counter() - start_time:.4f} seconds")
-
-    # TODO: See TODO at end of get_diarization
-    return (("VAD", vad_segs), ("Non-VAD", non_vad_segs))
+    return (vad_segs, vad_times)
 
 
 def get_auth_token(auth_token: str):
@@ -325,7 +274,7 @@ def process_audio(
     quiet=False,
     verbose=0,
     split_channels=False,
-    speaker_numbers=None,
+    num_speakers=None,
 ):
     vprint = util.verbose_printer(quiet, verbose)
     vprint(f"Processing {path}", 0)
@@ -337,10 +286,12 @@ def process_audio(
     # ensure that waveforms and segments directories exist
     (data_dir / "waveforms").mkdir(parents=True, exist_ok=True)
     (data_dir / "segments").mkdir(parents=True, exist_ok=True)
+    (data_dir / "stats").mkdir(parents=True, exist_ok=True)
 
     # filepaths for the waveform, and segments files
     waveform_path = data_dir / "waveforms" / f"{path.stem}-waveform.json"
     segs_path = data_dir / "segments" / f"{path.stem}-segments.json"
+    stats_path = data_dir / "stats" / f"{path.stem}-stats.csv"
 
     # if the audio isn't in wav format, it'll need to be
     # converted to wav (because the pipelines requires wav)
@@ -392,15 +343,44 @@ def process_audio(
             duration = librosa.get_duration(y=samples, sr=sr)
 
             segs = []
-            segs.append(
-                get_diarization(path, auth_token, samples, sr, verbose, speaker_numbers)
+            spkrs_segs, spkrs_times = get_diarization(
+                path, auth_token, verbose=verbose, num_speakers=num_speakers
             )
-            segs.extend(get_vad(path, auth_token, duration, verbose))
+            spkrs = sorted(spkrs_segs)
+            diar_times = [time for spkr in spkrs_times.values() for time in spkr]
+            diar_times = flatten_times(diar_times, len(samples), sr)
+
+            noise_times = get_complement_times(diar_times, len(samples) / sr)
+            noise_samps = samples_from_times(noise_times, samples, sr)
+            noise_powers = np.square(noise_samps)
+            noise_rms = rms(noise_powers)
+            overall_snr = snr_from_times(diar_times, samples, sr, noise_rms)
+            spkrs_snrs = {
+                spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms)
+                for spkr in spkrs
+            }
+
+            vad_segs, vad_times = get_vad(path, auth_token, verbose)
+            non_vad_segs = get_complement_segments(
+                vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
+            )
+            segs.append(
+                (
+                    "Speakers",
+                    [(spkr, spkrs_segs[spkr], spkrs_snrs[spkr]) for spkr in spkrs],
+                )
+            )
+            segs.append(("VAD", vad_segs))
+            segs.append(("Non-VAD", non_vad_segs))
 
             # save the segments
             vprint(f"Creating {segs_path}")
             with segs_path.open("w") as segs_file:
                 json.dump(segs, segs_file)
+
+            stats = {"num_speakers": len(spkrs), "overall_snr": overall_snr}
+            util.add_to_csv(stats_path, stats)
+
         # if a video file has no audio it will throw an error trying to make
         # segments, but we want to continue execution so other files
         # can have their audio processed
@@ -457,7 +437,7 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
-        "--speaker-numbers",
+        "--num-speakers",
         type=int,
         help="Number of speakers if known from face clustering",
     )
