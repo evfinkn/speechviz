@@ -267,6 +267,24 @@ def max_value_item(d: dict):
     return max(d.items(), key=operator.itemgetter(1))
 
 
+class AggregateData:
+    def __init__(self, data, ignore_nan: bool = True):
+        self.data = data
+
+        if ignore_nan:
+            self.mean = np.nanmean(data, dtype=np.float64)
+            self.median = np.nanmedian(data)
+            self.std = np.nanstd(data, dtype=np.float64)
+            self.max = np.nanmax(data)
+            self.min = np.nanmin(data)
+        else:
+            self.mean = np.mean(data, dtype=np.float64)
+            self.median = np.median(data)
+            self.std = np.std(data, dtype=np.float64)
+            self.max = np.amax(data)
+            self.min = np.amin(data)
+
+
 # I really hate to include this class here, but argparse didn't add it until
 # Python 3.9, and aria-data-tools uses Python 3.8. This action is really useful
 # though, so I just copied this from the official implementation at

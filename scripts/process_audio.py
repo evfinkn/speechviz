@@ -8,6 +8,7 @@ import pathlib
 import subprocess
 import time
 
+import entropy
 import librosa
 import numpy as np
 import util
@@ -360,23 +361,21 @@ def process_audio(
             }
             diar_times = [time for spkr in spkrs_times.values() for time in spkr]
             diar_times = flatten_times(diar_times, len(samples), sr)
-            diar_duration = get_times_duration(diar_times)
 
             noise_times = get_complement_times(diar_times, len(samples) / sr)
             noise_samps = samples_from_times(noise_times, samples, sr)
             noise_powers = np.square(noise_samps)
             noise_rms = rms(noise_powers)
-            overall_snr = snr_from_times(diar_times, samples, sr, noise_rms)
             spkrs_snrs = {
                 spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms)
                 for spkr in spkrs
             }
 
             vad_segs, vad_times = get_vad(path, auth_token, verbose)
-            vad_duration = get_times_duration(vad_times)
             non_vad_segs = get_complement_segments(
                 vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
             )
+
             segs.append(
                 (
                     "Speakers",
@@ -391,11 +390,27 @@ def process_audio(
             with segs_path.open("w") as segs_file:
                 json.dump(segs, segs_file)
 
+            overall_snr = snr_from_times(diar_times, samples, sr, noise_rms)
+            e_entropy = util.AggregateData(entropy.energy_entropy(samples, sr))
+            s_entropy = util.AggregateData(entropy.spectral_entropy(samples, sr))
+            diar_duration = get_times_duration(diar_times)
+            vad_duration = get_times_duration(vad_times)
+
             stats = {
                 "sampling_rate": sr,
                 "duration": duration,
-                "overall_snr": overall_snr,
                 "num_speakers": len(spkrs),
+                "overall_snr": overall_snr,
+                "e_entropy_mean": e_entropy.mean,
+                "e_entropy_median": e_entropy.median,
+                "e_entropy_std": e_entropy.std,
+                "e_entropy_max": e_entropy.max,
+                "e_entropy_min": e_entropy.min,
+                "s_entropy_mean": s_entropy.mean,
+                "s_entropy_median": s_entropy.median,
+                "s_entropy_std": s_entropy.std,
+                "s_entropy_max": s_entropy.max,
+                "s_entropy_min": s_entropy.min,
                 "diar_duration": diar_duration,
                 "non_diar_duration": duration - diar_duration,
                 "num_diar_segments": sum(spkrs_num_segs.values()),
