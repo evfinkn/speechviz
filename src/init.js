@@ -167,21 +167,10 @@ if (folder !== undefined && folder !== null) {
       fileList.forEach((file) => {
         new File(file, { parent: files });
       });
-      try {
-        // try the specific sort for run0, run1, etc.
-        files.children.sort(function (a, b) {
-          function getRunNum(aOrB) {
-            const fileAndExt = aOrB.id.split(".");
-            const file = fileAndExt[0];
-            const number = file.replace("run", "");
-            return parseInt(number);
-          }
-          return getRunNum(a) - getRunNum(b);
-        });
-      } catch {
-        // just sort alphabetically
-        files.sort();
-      }
+      // sort in natural sort order
+      files.children.sort(function (a, b) {
+        return a.id.localeCompare(b.id, undefined, { numeric: true });
+      });
       files.children.forEach((child) => {
         files.nested.append(child.li);
         const childBasename = removeExtension(child.id);
