@@ -308,18 +308,25 @@ def process_audio(
     vprint(f"Processing {path}", 0)
     start_time = time.perf_counter()
 
-    if len(path.parents) < 2 or path.parents[1].name != "data":
-        raise Exception("Input file must be in either data/audio or data/video")
-    data_dir = path.parents[1]
-    # ensure that waveforms and segments directories exist
-    (data_dir / "waveforms").mkdir(parents=True, exist_ok=True)
-    (data_dir / "segments").mkdir(parents=True, exist_ok=True)
-    (data_dir / "stats").mkdir(parents=True, exist_ok=True)
+    for ancestor in path.parents:
+        if ancestor.name == "audio" or ancestor.name == "video":
+            if ancestor.parent.name == "data":
+                data_dir = ancestor.parent
+                parent_dir = path.parent.relative_to(ancestor)
+                break
+    # an `else` for a `for` loop is executed if `break` is never reached
+    else:
+        raise Exception("Input file must be a descendant of data/audio or data/video.")
 
     # filepaths for the waveform, and segments files
-    waveform_path = data_dir / "waveforms" / f"{path.stem}-waveform.json"
-    segs_path = data_dir / "segments" / f"{path.stem}-segments.json"
-    stats_path = data_dir / "stats" / f"{path.stem}-stats.csv"
+    waveform_path = data_dir / "waveforms" / parent_dir / f"{path.stem}-waveform.json"
+    segs_path = data_dir / "segments" / parent_dir / f"{path.stem}-segments.json"
+    stats_path = data_dir / "stats" / parent_dir / f"{path.stem}-stats.csv"
+
+    # make the directories needed for all of the files
+    waveform_path.parent.mkdir(parents=True, exist_ok=True)
+    segs_path.parent.mkdir(parents=True, exist_ok=True)
+    stats_path.parent.mkdir(parents=True, exist_ok=True)
 
     # if the audio isn't in wav format, it'll need to be
     # converted to wav (because the pipelines requires wav)
