@@ -125,6 +125,8 @@ def samples_from_times(times, samples, sr):
 
 
 def snr_from_times(signal_times, samples, sr, noise_rms=None):
+    if len(signal_times) == 0:
+        return 0
     signal_samps = samples_from_times(signal_times, samples, sr)
     signal_powers = np.square(signal_samps)
     if noise_rms is None:
@@ -445,12 +447,12 @@ def process_audio(
                 "diar_duration": diar_duration,
                 "non_diar_duration": duration - diar_duration,
                 "num_diar_segments": sum(spkrs_num_segs.values()),
-                "least_segments": util.min_value_item(spkrs_num_segs),
-                "most_segments": util.max_value_item(spkrs_num_segs),
-                "shortest_speaker": util.min_value_item(spkrs_durations),
-                "longest_speaker": util.max_value_item(spkrs_durations),
-                "lowest_snr": util.min_value_item(spkrs_snrs),
-                "highest_snr": util.max_value_item(spkrs_snrs),
+                "least_segments": util.min_value_item(spkrs_num_segs, default="N/A"),
+                "most_segments": util.max_value_item(spkrs_num_segs, default="N/A"),
+                "shortest_speaker": util.min_value_item(spkrs_durations, default="N/A"),
+                "longest_speaker": util.max_value_item(spkrs_durations, default="N/A"),
+                "lowest_snr": util.min_value_item(spkrs_snrs, default="N/A"),
+                "highest_snr": util.max_value_item(spkrs_snrs, default="N/A"),
                 "vad_duration": vad_duration,
                 "num_vad_segments": len(vad_segs),
                 "non_vad_duration": duration - vad_duration,
