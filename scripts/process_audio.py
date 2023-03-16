@@ -67,6 +67,29 @@ def get_times_duration(times):
     return np.sum(np.diff(times))
 
 
+def remove_overlapped(grouped, in_place=False):
+    if not in_place:
+        grouped = [group[:] for group in grouped]
+    i = 1
+    n = len(grouped)
+    while i < n:
+        if len(grouped[i]) == 0:
+            grouped.pop(i)
+            n -= 1
+            continue
+
+        if grouped[i][0][1] < grouped[i - 1][-1][1]:
+            grouped[i].pop(0)
+        else:
+            i += 1
+    return grouped
+
+
+def get_num_convo_turns(times):
+    grouped = util.sort_and_regroup(times)
+    return len(remove_overlapped(grouped))
+
+
 def get_complement_segments(segments, duration, color, label, times=None):
     times = (
         [(seg["startTime"], seg["endTime"]) for seg in segments]
@@ -400,6 +423,7 @@ def process_audio(
                 "sampling_rate": sr,
                 "duration": duration,
                 "num_speakers": len(spkrs),
+                "num_convo_turns": get_num_convo_turns(list(spkrs_times.values())),
                 "overall_snr": overall_snr,
                 "e_entropy_mean": e_entropy.mean,
                 "e_entropy_median": e_entropy.median,
