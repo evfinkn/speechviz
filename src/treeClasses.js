@@ -2525,10 +2525,10 @@ var Face = class Face extends TreeItem {
   }
 };
 
-var Run = class Run extends TreeItem {
+var File = class File extends TreeItem {
   /**
-   * An object containing all `Run`s by their id.
-   * Key is id, value is corresponding `Run`:  {id: `Run`}
+   * An object containing all `File`s by their id.
+   * Key is id, value is corresponding `File`:  {id: `File`}
    * @type {Object.<string, Run>}
    * @static
    */
@@ -2543,26 +2543,15 @@ var Run = class Run extends TreeItem {
   static properties = ["treeText"];
 
   /**
-   * @param {string} id - The unique identifier to give the `Face`.
-   * @param {?Object.<string, any>=} options - Options to customize the `Face`.
+   * @param {string} id - The unique identifier to give the `File`.
    * @param {?TreeItem=} options.parent - The `TreeItem` that contains the item in its
    *      nested content.
    * @param {string=} options.text - The text to show in the item's span (and
    *      therefore in the tree). If `null`, `id` is used.
-   * @param {boolean} [options.removable=true] - Indicates if the item can be removed
-   *      from the tree.
    * @param {boolean} [options.renamable=false] - Indicates if the item can be renamed.
-   * @param {?Array.<TreeItem>=} [options.assocWith] - An array of the `TreeItem`s
-   *      that Face can be associated with. `null` if the Face isn't able to be
-   *      associated.
-   * @param {string=} options.dir - The folder representing the clusters of faces for
-   *      this video
-   * @param {string=} options.imagePath - The name of the image shown for this face
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(id, { parent = null, text = null, renamable = false } = {}) {
-    // (can't use 'this' until after super() call,
-    // so can't get rid of playButton, etc. until after super())
     super(id, {
       parent,
       text,
@@ -2570,7 +2559,52 @@ var Run = class Run extends TreeItem {
     });
     this.toggle();
     this.checkbox.type = "radio";
-    this.checkbox.name = "radioRuns";
+    this.checkbox.name = "radioFiles";
+  }
+};
+
+var Stat = class Stat extends TreeItem {
+  /**
+   * An object containing all `Stat`s by their id.
+   * Key is id, value is corresponding `Stat`:  {id: `Stat`}
+   * @type {Object.<string, Stat>}
+   * @static
+   */
+  static byId = {};
+
+  /**
+   * Names of properties to get in `getProperties`.
+   * @type {!string[]}
+   * @see getProperties
+   * @static
+   */
+  static properties = ["treeText"];
+
+  /**
+   * @param {string} id - The unique identifier to give the `Stat`.
+   * @param {?Object.<string, any>=} options - Options to customize the `Stat`.
+   * @param {?TreeItem=} options.parent - The `TreeItem` that contains the item in its
+   *      nested content.
+   * @param {string=} options.text - The text to show in the item's span (and
+   *      therefore in the tree). If `null`, `id` is used.
+   * @param {boolean} [options.removable=true] - Indicates if the item can be removed
+   *      from the tree.
+   * @throws {Error} If a `TreeItem` with `id` already exists.
+   */
+  constructor(id, { parent = null, text = null } = {}) {
+    super(id, {
+      parent,
+      text,
+    });
+    this.checkbox.type = "hidden";
+  }
+
+  style() {
+    if (this.rendered) {
+      this.li.style.fontSize = "8px";
+      this.span.style.whiteSpace = "pre";
+      this.span.style.fontFamily = "monospace";
+    }
   }
 };
 
@@ -2584,5 +2618,6 @@ export {
   Word,
   PeaksGroup,
   Face,
-  Run,
+  File,
+  Stat,
 };

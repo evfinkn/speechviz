@@ -7,6 +7,7 @@ const mime = require("mime/lite");
 router.get("/", (req, res) => {
   const file = req.query.file;
   const folder = req.query.folder;
+  const user = req.query.user;
   // for displaying clustered faces
   if (req.query.file !== undefined) {
     // sometimes when accessing a page
@@ -16,8 +17,28 @@ router.get("/", (req, res) => {
   }
 
   if (req.query.type === "video") {
-    if (fs.readdirSync("data/video").includes(file)) {
-      if (fs.readdirSync("data/faceClusters").includes(file)) {
+    if (folder !== undefined && folder !== null) {
+      if (fs.readdirSync("data/video/" + folder)) {
+        if (file === undefined || file === null) {
+          // the first time you click a folder there will be no file
+          const firstFile = fs.readdirSync("data/video/" + folder).at(0);
+          res.redirect(
+            `/viz?file=${firstFile}&user=${user}&type=video&folder=${folder}`
+          );
+        }
+        res.render("viz", {
+          user: req.session.user,
+          file: file,
+          folder: folder,
+          mimetype: mime.getType(file),
+          isVideo: true,
+          isFolder: true,
+        });
+      } else {
+        res.redirect("/");
+      }
+    } else {
+      if (fs.readdirSync("data/video").includes(file)) {
         res.render("viz", {
           user: req.session.user,
           file: file,
@@ -26,21 +47,20 @@ router.get("/", (req, res) => {
           isFolder: false,
         });
       } else {
-        res.render("viz", {
-          user: req.session.user,
-          file: file,
-          mimetype: mime.getType(file),
-          isVideo: true,
-          isFolder: false,
-        });
+        res.redirect("/");
       }
-    } else {
-      res.redirect("/");
     }
   } else {
     if (folder !== undefined && folder !== null) {
       // we have opened a folder
-      if (fs.readdirSync("data/audio/" + folder).includes(file)) {
+      if (fs.readdirSync("data/audio/" + folder)) {
+        if (file === undefined || file === null) {
+          // the first time you click a folder there will be no file
+          const firstFile = fs.readdirSync("data/audio/" + folder).at(0);
+          res.redirect(
+            `/viz?file=${firstFile}&user=${user}&type=audio&folder=${folder}`
+          );
+        }
         res.render("viz", {
           user: req.session.user,
           file: file,
@@ -49,6 +69,8 @@ router.get("/", (req, res) => {
           isVideo: false,
           isFolder: true,
         });
+      } else {
+        res.redirect("/");
       }
     } else {
       if (fs.readdirSync("data/audio").includes(file)) {

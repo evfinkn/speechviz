@@ -106,8 +106,9 @@ fetch("/filelist")
           this.checked = false;
           if (!this.id.includes(".")) {
             // no extension means this is a folder
-            // TODO: if they don't have a run0 this breaks
-            openViz("run0.wav", `audio&folder=${this.value}`, user);
+            window.location.assign(
+              `/viz?user=${user}&type=audio&folder=${this.value}`
+            );
           } else {
             openViz(this.value, "audio", user);
           }
@@ -125,7 +126,14 @@ fetch("/filelist")
         const div = createRadioDiv(fileName, "video-selection");
         div.firstElementChild.addEventListener("change", function () {
           this.checked = false;
-          openViz(this.value, "video", user);
+          if (!this.id.includes(".")) {
+            // no extension means this is a folder
+            window.location.assign(
+              `/viz?user=${user}&type=video&folder=${this.value}`
+            );
+          } else {
+            openViz(this.value, "video", user);
+          }
         });
         videoFieldset.append(div);
       });

@@ -1,6 +1,14 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import globals from "./globals.js";
-import { Group, Segment, PeaksGroup, Face, Word, Run } from "./treeClasses.js";
+import {
+  Group,
+  Segment,
+  PeaksGroup,
+  Face,
+  Word,
+  File,
+  Stat,
+} from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
@@ -27,6 +35,7 @@ const filename = globals.filename;
 const basename = globals.basename;
 const media = globals.media;
 const folder = globals.folder;
+const type = globals.type;
 
 // TODO: if this does what I assume it does, it can
 //       probably be moved to Segment as a property
@@ -149,34 +158,37 @@ const labeled = new Group("Labeled", { parent: analysis, playable: true });
 
 if (folder !== undefined && folder !== null) {
   // in a folder
-  console.log("the file was a folder");
-  const runs = new Group("Runs", { playable: false });
-  document.getElementById("tree").append(runs.li);
-  console.log(`audio/${folder}`);
-  fetch(`audio/${folder}`)
+  const files = new Group("Files", { playable: false });
+  document.getElementById("tree").append(files.li);
+  fetch(`${type}/${folder}`)
     .then(checkResponseStatus)
     .then((response) => response.json())
     .then((fileList) => {
-      fileList.forEach((run) => {
-        new Run(run, { parent: runs });
+      fileList.forEach((file) => {
+        new File(file, { parent: files });
       });
-      runs.children.sort(function (a, b) {
-        function getRunNum(aOrB) {
-          const fileAndExt = aOrB.id.split(".");
-          const file = fileAndExt[0];
-          const number = file.replace("run", "");
-          return parseInt(number);
-        }
-        return getRunNum(a) - getRunNum(b);
-      });
-      runs.children.forEach((child) => {
-        runs.nested.append(child.li);
+      try {
+        // try the specific sort for run0, run1, etc.
+        files.children.sort(function (a, b) {
+          function getRunNum(aOrB) {
+            const fileAndExt = aOrB.id.split(".");
+            const file = fileAndExt[0];
+            const number = file.replace("run", "");
+            return parseInt(number);
+          }
+          return getRunNum(a) - getRunNum(b);
+        });
+      } catch {
+        // just sort alphabetically
+        files.sort();
+      }
+      files.children.forEach((child) => {
+        files.nested.append(child.li);
         const childBasename = removeExtension(child.id);
         if (childBasename === basename) {
           // make radio button of audio selected
           child.toggle();
         }
-        console.log(child);
         child.addEventListener("click", function () {
           window.location.href = window.location.href.replace(
             `file=${basename}`,
@@ -378,6 +390,60 @@ if (poseContainer) {
       new GraphIMU(poseContainer, data, { width: 400, height: 400 });
     })
     .catch((error) => output404OrError(error, "pose data"));
+}
+
+// stats
+if (folder !== undefined && folder !== null) {
+  fetch(`stats/${folder}/${basename}-stats.csv`)
+    .then(checkResponseStatus)
+    .then((response) => response.text())
+    .then((statCsv) => {
+      const stats = new Group("Stats", {
+        parent: analysis,
+        playable: false,
+      });
+
+      // https://gist.github.com/Jezternz/c8e9fafc2c114e079829974e3764db75
+      const csvStringToArray = (strData) => {
+        const objPattern = new RegExp(
+          '(\\,|\\r?\\n|\\r|^)(?:"([^"]*(?:""[^"]*)*)"|([^\\,\\r\\n]*))',
+          "gi"
+        );
+        let arrMatches = null;
+        const arrData = [[]];
+        while ((arrMatches = objPattern.exec(strData))) {
+          if (arrMatches[1].length && arrMatches[1] !== ",") arrData.push([]);
+          arrData[arrData.length - 1].push(
+            arrMatches[2]
+              ? arrMatches[2].replace(new RegExp('""', "g"), '"')
+              : arrMatches[3]
+          );
+        }
+        return arrData;
+      };
+      const arrays = csvStringToArray(statCsv);
+
+      let longestHeader = 0;
+      for (let i = 0; i < arrays[0].length; i++) {
+        if (arrays[0][i].length > longestHeader) {
+          longestHeader = arrays[0][i].length;
+        }
+      }
+
+      for (let i = 0; i < arrays[0].length; i++) {
+        let statToDisplay = `${arrays[0][i]}: ${arrays[1][i]}`;
+        if (arrays[0][i].length < longestHeader) {
+          const difference = longestHeader - arrays[0][i].length;
+          statToDisplay =
+            arrays[0][i] + " ".repeat(difference) + ": " + arrays[1][i];
+        }
+        new Stat(statToDisplay, {
+          parent: stats,
+          playable: false,
+        });
+      }
+    })
+    .catch((error) => output404OrError(error, "stats"));
 }
 
 // This is commented out until we need to use something like this

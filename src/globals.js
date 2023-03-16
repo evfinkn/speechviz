@@ -6,6 +6,7 @@ import { removeExtension } from "./util.js";
 const urlParams = new URLSearchParams(window.location.search);
 const filename = urlParams.get("file"); // name of file with extension
 const folder = urlParams.get("folder");
+const type = urlParams.get("type");
 
 // name of the file without the extension
 const basename = removeExtension(filename);
@@ -49,6 +50,7 @@ globals.media = document.getElementById("media");
 globals.user = user;
 globals.dirty = false;
 globals.folder = folder;
+globals.type = type;
 
 let waveformJson = `waveforms/${basename}-waveform.json`;
 if (folder !== undefined && folder !== null) {
