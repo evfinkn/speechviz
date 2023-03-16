@@ -3,16 +3,18 @@ from __future__ import annotations
 import argparse
 import csv
 import glob
+import itertools
 import json
 import operator
 import pathlib
 import random
 import subprocess
 from collections.abc import Callable, Iterable, Iterator
-from typing import List, Optional, Union
+from typing import Any, List, Optional, TypeVar, Union
 
 import numpy as np
 
+T = TypeVar("T")
 Path = Union[str, pathlib.Path]
 Paths = List[Path]
 
@@ -265,6 +267,21 @@ def min_value_item(d: dict):
 def max_value_item(d: dict):
     """Returns the item from `d` with the maximum value."""
     return max(d.items(), key=operator.itemgetter(1))
+
+
+def sort_and_regroup(
+    lists: List[List[T]], key: Callable[[T], Any] = None
+) -> List[List[T]]:
+    flat = [(item, i) for i in range(len(lists)) for item in lists[i]]
+
+    if key is None:
+        key = operator.itemgetter(0)
+    else:
+        key = lambda item: key(item[0])  # noqa: E731
+
+    flat.sort(key=key)
+    grouped = itertools.groupby(flat, key=operator.itemgetter(1))
+    return [[item[0] for item in list(g)] for _, g in grouped]
 
 
 class AggregateData:

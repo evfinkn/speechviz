@@ -67,6 +67,29 @@ def get_times_duration(times):
     return np.sum(np.diff(times))
 
 
+def remove_overlapped(grouped, in_place=False):
+    if not in_place:
+        grouped = [group[:] for group in grouped]
+    i = 1
+    n = len(grouped)
+    while i < n:
+        if len(grouped[i]) == 0:
+            grouped.pop(i)
+            n -= 1
+            continue
+
+        if grouped[i][0][1] < grouped[i - 1][-1][1]:
+            grouped[i].pop(0)
+        else:
+            i += 1
+    return grouped
+
+
+def get_num_convo_turns(times):
+    grouped = util.sort_and_regroup(times)
+    return len(remove_overlapped(grouped))
+
+
 def get_complement_segments(segments, duration, color, label, times=None):
     times = (
         [(seg["startTime"], seg["endTime"]) for seg in segments]
@@ -285,18 +308,25 @@ def process_audio(
     vprint(f"Processing {path}", 0)
     start_time = time.perf_counter()
 
-    if len(path.parents) < 2 or path.parents[1].name != "data":
-        raise Exception("Input file must be in either data/audio or data/video")
-    data_dir = path.parents[1]
-    # ensure that waveforms and segments directories exist
-    (data_dir / "waveforms").mkdir(parents=True, exist_ok=True)
-    (data_dir / "segments").mkdir(parents=True, exist_ok=True)
-    (data_dir / "stats").mkdir(parents=True, exist_ok=True)
+    for ancestor in path.parents:
+        if ancestor.name == "audio" or ancestor.name == "video":
+            if ancestor.parent.name == "data":
+                data_dir = ancestor.parent
+                parent_dir = path.parent.relative_to(ancestor)
+                break
+    # an `else` for a `for` loop is executed if `break` is never reached
+    else:
+        raise Exception("Input file must be a descendant of data/audio or data/video.")
 
     # filepaths for the waveform, and segments files
-    waveform_path = data_dir / "waveforms" / f"{path.stem}-waveform.json"
-    segs_path = data_dir / "segments" / f"{path.stem}-segments.json"
-    stats_path = data_dir / "stats" / f"{path.stem}-stats.csv"
+    waveform_path = data_dir / "waveforms" / parent_dir / f"{path.stem}-waveform.json"
+    segs_path = data_dir / "segments" / parent_dir / f"{path.stem}-segments.json"
+    stats_path = data_dir / "stats" / parent_dir / f"{path.stem}-stats.csv"
+
+    # make the directories needed for all of the files
+    waveform_path.parent.mkdir(parents=True, exist_ok=True)
+    segs_path.parent.mkdir(parents=True, exist_ok=True)
+    stats_path.parent.mkdir(parents=True, exist_ok=True)
 
     # if the audio isn't in wav format, it'll need to be
     # converted to wav (because the pipelines requires wav)
@@ -400,6 +430,7 @@ def process_audio(
                 "sampling_rate": sr,
                 "duration": duration,
                 "num_speakers": len(spkrs),
+                "num_convo_turns": get_num_convo_turns(list(spkrs_times.values())),
                 "overall_snr": overall_snr,
                 "e_entropy_mean": e_entropy.mean,
                 "e_entropy_median": e_entropy.median,
