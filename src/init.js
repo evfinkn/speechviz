@@ -409,58 +409,60 @@ if (poseContainer) {
 }
 
 // stats
+let statsFetch = `stats/${basename}-stats.csv`;
 if (folder !== undefined && folder !== null) {
-  fetch(`stats/${folder}/${basename}-stats.csv`)
-    .then(checkResponseStatus)
-    .then((response) => response.text())
-    .then((statCsv) => {
-      const stats = new Group("Stats", {
-        parent: analysis,
+  statsFetch = `stats/${folder}/${basename}-stats.csv`;
+}
+fetch(statsFetch)
+  .then(checkResponseStatus)
+  .then((response) => response.text())
+  .then((statCsv) => {
+    const stats = new Group("Stats", {
+      parent: analysis,
+      playable: false,
+    });
+
+    // https://gist.github.com/Jezternz/c8e9fafc2c114e079829974e3764db75
+    const csvStringToArray = (strData) => {
+      const objPattern = new RegExp(
+        '(\\,|\\r?\\n|\\r|^)(?:"([^"]*(?:""[^"]*)*)"|([^\\,\\r\\n]*))',
+        "gi"
+      );
+      let arrMatches = null;
+      const arrData = [[]];
+      while ((arrMatches = objPattern.exec(strData))) {
+        if (arrMatches[1].length && arrMatches[1] !== ",") arrData.push([]);
+        arrData[arrData.length - 1].push(
+          arrMatches[2]
+            ? arrMatches[2].replace(new RegExp('""', "g"), '"')
+            : arrMatches[3]
+        );
+      }
+      return arrData;
+    };
+    const arrays = csvStringToArray(statCsv);
+
+    let longestHeader = 0;
+    for (let i = 0; i < arrays[0].length; i++) {
+      if (arrays[0][i].length > longestHeader) {
+        longestHeader = arrays[0][i].length;
+      }
+    }
+
+    for (let i = 0; i < arrays[0].length; i++) {
+      let statToDisplay = `${arrays[0][i]}: ${arrays[1][i]}`;
+      if (arrays[0][i].length < longestHeader) {
+        const difference = longestHeader - arrays[0][i].length;
+        statToDisplay =
+          arrays[0][i] + " ".repeat(difference) + ": " + arrays[1][i];
+      }
+      new Stat(statToDisplay, {
+        parent: stats,
         playable: false,
       });
-
-      // https://gist.github.com/Jezternz/c8e9fafc2c114e079829974e3764db75
-      const csvStringToArray = (strData) => {
-        const objPattern = new RegExp(
-          '(\\,|\\r?\\n|\\r|^)(?:"([^"]*(?:""[^"]*)*)"|([^\\,\\r\\n]*))',
-          "gi"
-        );
-        let arrMatches = null;
-        const arrData = [[]];
-        while ((arrMatches = objPattern.exec(strData))) {
-          if (arrMatches[1].length && arrMatches[1] !== ",") arrData.push([]);
-          arrData[arrData.length - 1].push(
-            arrMatches[2]
-              ? arrMatches[2].replace(new RegExp('""', "g"), '"')
-              : arrMatches[3]
-          );
-        }
-        return arrData;
-      };
-      const arrays = csvStringToArray(statCsv);
-
-      let longestHeader = 0;
-      for (let i = 0; i < arrays[0].length; i++) {
-        if (arrays[0][i].length > longestHeader) {
-          longestHeader = arrays[0][i].length;
-        }
-      }
-
-      for (let i = 0; i < arrays[0].length; i++) {
-        let statToDisplay = `${arrays[0][i]}: ${arrays[1][i]}`;
-        if (arrays[0][i].length < longestHeader) {
-          const difference = longestHeader - arrays[0][i].length;
-          statToDisplay =
-            arrays[0][i] + " ".repeat(difference) + ": " + arrays[1][i];
-        }
-        new Stat(statToDisplay, {
-          parent: stats,
-          playable: false,
-        });
-      }
-    })
-    .catch((error) => output404OrError(error, "stats"));
-}
+    }
+  })
+  .catch((error) => output404OrError(error, "stats"));
 
 // This is commented out until we need to use something like this
 // const plotContainer = document.getElementById("plot");
