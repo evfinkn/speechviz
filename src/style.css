@@ -390,6 +390,10 @@ ul {
   width: 100%;
 }
 
+.volume-input {
+  width: 3.5em;
+}
+
 /* .nested needs to be before .active so that .active has priority */
 .nested {
   display: none;

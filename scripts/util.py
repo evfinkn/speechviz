@@ -18,6 +18,8 @@ T = TypeVar("T")
 Path = Union[str, pathlib.Path]
 Paths = List[Path]
 
+_missing = object()
+
 
 def verbose_printer(quiet: bool, verbose: int) -> Callable[[str, int], None]:
     def inner(string: str, verbose_level: int = 1) -> None:
@@ -248,24 +250,33 @@ def add_to_csv(path: pathlib.Path, data: dict, remove_keys: Optional[list] = Non
         writer.writerow(data)
 
 
-def min_key_item(d: dict):
+def min_key_item(d: dict, default=_missing):
     """Returns the item from `d` with the minimum key."""
     # itemgetter is faster than `lambda item: item[0]`
+    if len(d) == 0 and default is not _missing:
+        return default
+    # if len(d) == 0 and default is _missing, this'll throw error like we want
     return min(d.items(), key=operator.itemgetter(0))
 
 
-def max_key_item(d: dict):
+def max_key_item(d: dict, default=_missing):
     """Returns the item from `d` with the maximum key."""
+    if len(d) == 0 and default is not _missing:
+        return default
     return max(d.items(), key=operator.itemgetter(0))
 
 
-def min_value_item(d: dict):
+def min_value_item(d: dict, default=_missing):
     """Returns the item from `d` with the minimum value."""
+    if len(d) == 0 and default is not _missing:
+        return default
     return min(d.items(), key=operator.itemgetter(1))
 
 
-def max_value_item(d: dict):
+def max_value_item(d: dict, default=_missing):
     """Returns the item from `d` with the maximum value."""
+    if len(d) == 0 and default is not _missing:
+        return default
     return max(d.items(), key=operator.itemgetter(1))
 
 
