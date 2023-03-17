@@ -262,13 +262,28 @@ fetch(channelsFetch)
       const label = htmlToElement(`<label>${channelNames[i]}: </label>`);
       // gain nodes volumes are between 0 and 1
       const slider = htmlToElement(
-        `<input type="range" min="0" max="1" step="0.01">`
+        `<input type="range" min="0" max="200" step="1"">`
       );
-      slider.value = "1"; // default volume is 100%
-      label.appendChild(slider);
+      const input = htmlToElement(
+        `<input class="volume-input" type="number" min="0" max="200" step="1">`
+      );
+
+      slider.value = 100; // default volume is 100%
+      input.value = 100;
+
       slider.addEventListener("input", () => {
-        gainNode.gain.value = parseFloat(slider.value);
+        const value = parseFloat(slider.value);
+        input.value = value;
+        gainNode.gain.value = value / 100;
       });
+      input.addEventListener("input", () => {
+        const value = parseFloat(input.value);
+        slider.value = value;
+        gainNode.gain.value = value / 100;
+      });
+
+      label.append(slider);
+      label.append(input);
       controlsDiv.append(label);
       controlsDiv.append(document.createElement("br"));
     }
