@@ -29,6 +29,7 @@
     "express-force-ssl": "^0.3.2",
     "express-session": "^1.17.3",
     "feather-icons": "^4.29.0",
+    "lodash": "^4.17.21",
     "mime": "^3.0.0",
     "morgan": "^1.10.0",
     "peaks.js": "git+https://research-git.uiowa.edu/uiowa-audiology-reu-2022/peaks.js#v2.1.0",

@@ -1,4 +1,5 @@
 import Split from "split.js"; // library for resizing columns by dragging
+import throttle from "lodash/throttle";
 import globals from "./globals.js";
 import {
   Group,
@@ -26,9 +27,6 @@ import {
 } from "./util.js";
 import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
 
-// make tree and viewer columns resizable
-Split(["#column", "#column2"], { sizes: [17, 79], snapOffset: 0 });
-
 const peaks = globals.peaks;
 const user = globals.user;
 const filename = globals.filename;
@@ -36,6 +34,21 @@ const basename = globals.basename;
 const media = globals.media;
 const folder = globals.folder;
 const type = globals.type;
+
+const zoomview = peaks.views.getView("zoomview");
+const overview = peaks.views.getView("overview");
+const fitPeaksToContainer = () => {
+  zoomview.fitToContainer();
+  overview.fitToContainer();
+};
+
+// make tree and viewer columns resizable
+// throttle because resizing the waveform is slow
+Split(["#column", "#column2"], {
+  sizes: [17, 79],
+  snapOffset: 0,
+  onDrag: throttle(fitPeaksToContainer, 250),
+});
 
 // TODO: if this does what I assume it does, it can
 //       probably be moved to Segment as a property
@@ -220,16 +233,15 @@ fetch(channelsFetch)
     }
 
     // resize peaks so that the waveforms aren't so small
-    const zoomview = document.getElementById("zoomview-container");
-    const overview = document.getElementById("overview-container");
-    zoomview.style.height = `${
-      zoomview.scrollHeight * Math.log2(numChannels)
+    const zoomviewContainer = document.getElementById("zoomview-container");
+    const overviewContainer = document.getElementById("overview-container");
+    zoomviewContainer.style.height = `${
+      zoomviewContainer.scrollHeight * Math.log2(numChannels)
     }px`;
-    overview.style.height = `${
-      overview.scrollHeight * Math.log2(numChannels)
+    overviewContainer.style.height = `${
+      overviewContainer.scrollHeight * Math.log2(numChannels)
     }px`;
-    peaks.views.getView("zoomview").fitToContainer();
-    peaks.views.getView("overview").fitToContainer();
+    fitPeaksToContainer();
 
     const context = new AudioContext();
     // source is the audio from the <audio> or <video> element being visualized
