@@ -324,6 +324,7 @@ def process_audio(
     waveform_path = data_dir / "waveforms" / parent_dir / f"{path.stem}-waveform.json"
     segs_path = data_dir / "segments" / parent_dir / f"{path.stem}-segments.json"
     stats_path = data_dir / "stats" / parent_dir / f"{path.stem}-stats.csv"
+    channels_path = data_dir / "channels" / parent_dir / f"{path.stem}-channels.csv"
 
     # make the directories needed for all of the files
     waveform_path.parent.mkdir(parents=True, exist_ok=True)
@@ -376,8 +377,9 @@ def process_audio(
                 path = new_path
                 made_wav = True
 
-            samples, sr = librosa.load(path, sr=None)
-            duration = librosa.get_duration(y=samples, sr=sr)
+            samples, sr = librosa.load(path, sr=None, mono=not split_channels)
+            mono_samples = librosa.to_mono(samples)
+            duration = librosa.get_duration(y=mono_samples, sr=sr)
 
             segs = []
             spkrs_segs, spkrs_times = get_diarization(
@@ -392,14 +394,14 @@ def process_audio(
                 spkr: len(spkr_segs) for spkr, spkr_segs in spkrs_segs.items()
             }
             diar_times = [time for spkr in spkrs_times.values() for time in spkr]
-            diar_times = flatten_times(diar_times, len(samples), sr)
+            diar_times = flatten_times(diar_times, len(mono_samples), sr)
 
-            noise_times = get_complement_times(diar_times, len(samples) / sr)
-            noise_samps = samples_from_times(noise_times, samples, sr)
+            noise_times = get_complement_times(diar_times, len(mono_samples) / sr)
+            noise_samps = samples_from_times(noise_times, mono_samples, sr)
             noise_powers = np.square(noise_samps)
             noise_rms = rms(noise_powers)
             spkrs_snrs = {
-                spkr: snr_from_times(spkrs_times[spkr], samples, sr, noise_rms)
+                spkr: snr_from_times(spkrs_times[spkr], mono_samples, sr, noise_rms)
                 for spkr in spkrs
             }
 
@@ -422,9 +424,9 @@ def process_audio(
             with segs_path.open("w") as segs_file:
                 json.dump(segs, segs_file)
 
-            overall_snr = snr_from_times(diar_times, samples, sr, noise_rms)
-            e_entropy = util.AggregateData(entropy.energy_entropy(samples, sr))
-            s_entropy = util.AggregateData(entropy.spectral_entropy(samples, sr))
+            overall_snr = snr_from_times(diar_times, mono_samples, sr, noise_rms)
+            e_entropy = util.AggregateData(entropy.energy_entropy(mono_samples, sr))
+            s_entropy = util.AggregateData(entropy.spectral_entropy(mono_samples, sr))
             diar_duration = get_times_duration(diar_times)
             vad_duration = get_times_duration(vad_times)
 
@@ -457,6 +459,29 @@ def process_audio(
                 "num_vad_segments": len(vad_segs),
                 "non_vad_duration": duration - vad_duration,
             }
+            for spkr, snr in spkrs_snrs.items():
+                stats[f"{spkr}_snr"] = snr
+            if split_channels and samples.ndim == 2:
+                if channels_path.exists():
+                    channel_names = channels_path.read_text().splitlines()
+                else:
+                    channel_names = [f"channel{i}" for i in range(samples.shape[0])]
+                for i, channel_name in enumerate(channel_names):
+                    c_noise_samps = samples_from_times(noise_times, samples[i], sr)
+                    c_noise_powers = np.square(c_noise_samps)
+                    c_noise_rms = rms(c_noise_powers)
+                    c_spkrs_snrs = {
+                        spkr: snr_from_times(
+                            spkrs_times[spkr], samples[i], sr, c_noise_rms
+                        )
+                        for spkr in spkrs
+                    }
+                    c_overall_snr = snr_from_times(
+                        diar_times, samples[i], sr, c_noise_rms
+                    )
+                    stats[f"{channel_name}_overall_snr"] = c_overall_snr
+                    for spkr, snr in c_spkrs_snrs.items():
+                        stats[f"{channel_name}_{spkr}_snr"] = snr
             util.add_to_csv(stats_path, stats)
 
         # if a video file has no audio it will throw an error trying to make
