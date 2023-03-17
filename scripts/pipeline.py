@@ -1,6 +1,7 @@
 import argparse
 import importlib
 import time
+import traceback
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 
@@ -40,34 +41,36 @@ def create_pipeline(
                 if on_error == "next_file":
                     if not quiet:
                         print(
-                            "WARNING: the following error was encountered while"
+                            "\nWARNING: the following error was encountered while"
                             f" running {step['script']} on {file} with the arguments"
                             f" {arguments}:"
                         )
                         print(err)
+                        traceback.print_tb(err.__traceback__)
                         print(
                             'Because on_error is "next_file", the rest of the steps on'
                             " this file will not be run and the pipeline will restart"
-                            " with the next file."
+                            " with the next file.\n"
                         )
                     return
                 elif on_error == "exit":
                     print(
-                        f"Encountered an error while running {file} through"
+                        f"\nEncountered an error while running {file} through"
                         f" {step['script']} with the arguments {arguments}"
                     )
                     raise err
                 elif on_error == "next_step":
                     if not quiet:
                         print(
-                            "WARNING: the following error was encountered while"
+                            "\nWARNING: the following error was encountered while"
                             f" running {step['script']} on {file} with the arguments"
                             f" {arguments}:"
                         )
                         print(err)
+                        traceback.print_tb(err.__traceback__)
                         print(
                             'Because on_error is "next_step", the rest of the steps on'
-                            " this file will still be run."
+                            " this file will still be run.\n"
                         )
                     # this doesn't really need to be here but it's more explicit
                     continue
@@ -149,10 +152,10 @@ if __name__ == "__main__":
         default="next_file",
         help=(
             "What to do when an error is encountered in one of the steps of the"
-            ' pipeline. If "next_file", a warning message will be output and the'
-            " pipeline will run on the next file--the pipeline will not finish on the"
-            ' file that caused the error. If "next_step", a warning message will be'
-            " output and the file that caused the error will be run through the"
+            ' pipeline. If "next_file" (the default), a warning message will be output'
+            " and the pipeline will run on the next file--the pipeline will not finish"
+            ' on the file that caused the error. If "next_step", a warning message will'
+            " be output and the file that caused the error will be run through the"
             ' remaining steps. If "exit", the pipeline will exit with the error.'
         ),
     )
