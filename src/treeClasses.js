@@ -539,12 +539,18 @@ var TreeItem = class TreeItem {
     });
 
     this.span = li.children[1];
-    this.span.addEventListener("click", () => {
+    // need to track mousemove to know if we want to
+    // drag a segment or click it for popup
+    let drag = false;
+    this.span.addEventListener("mousedown", () => (drag = false));
+    this.span.addEventListener("mousemove", () => (drag = true));
+    this.span.addEventListener("mouseup", () => {
       // TODO: move popup to TreeItem constructor?
-      if (this.popup) {
+      if (this.popup && drag === false) {
         this.popup.show();
       }
     });
+
     this.updateSpanTitle();
 
     this.nested = li.children[2];
