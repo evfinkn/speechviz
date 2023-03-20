@@ -100,17 +100,14 @@ def get_complement_segments(segments, duration, color, label, times=None):
     return [format_segment(start, end, color, label) for start, end in comp_times]
 
 
-def rms(powers):  # give it a list, and it finds the root mean squared
-    squares_sum = np.sum(np.square(powers))
-    if len(powers) != 0:
-        return np.sqrt(squares_sum / (len(powers)))
-    return 0
+def rms(samps):  # give it a list, and it finds the root mean squared
+    return np.sqrt(np.mean(np.square(samps)))
 
 
 def snr(signal, noise):
     signal_rms = rms(signal) if not isinstance(signal, float) else signal
     noise_rms = rms(noise) if not isinstance(noise, float) else noise
-    return (signal_rms - noise_rms) / noise_rms
+    return ((signal_rms - noise_rms) / noise_rms) ** 2
 
 
 def samples_from_times(times, samples, sr):
@@ -128,14 +125,12 @@ def snr_from_times(signal_times, samples, sr, noise_rms=None):
     if len(signal_times) == 0:
         return 0
     signal_samps = samples_from_times(signal_times, samples, sr)
-    signal_powers = np.square(signal_samps)
     if noise_rms is None:
         noise_samps = samples_from_times(
             get_complement_times(signal_times, len(samples) / sr), samples, sr
         )
-        noise_powers = np.square(noise_samps)
-        noise_rms = rms(noise_powers)
-    return snr(signal_powers, noise_rms)
+        noise_rms = rms(noise_samps)
+    return snr(signal_samps, noise_rms)
 
 
 def get_diarization(path: pathlib.Path, auth_token, verbose=0, num_speakers=None):
@@ -398,8 +393,7 @@ def process_audio(
 
             noise_times = get_complement_times(diar_times, len(mono_samples) / sr)
             noise_samps = samples_from_times(noise_times, mono_samples, sr)
-            noise_powers = np.square(noise_samps)
-            noise_rms = rms(noise_powers)
+            noise_rms = rms(noise_samps)
             spkrs_snrs = {
                 spkr: snr_from_times(spkrs_times[spkr], mono_samples, sr, noise_rms)
                 for spkr in spkrs
@@ -468,8 +462,7 @@ def process_audio(
                     channel_names = [f"channel{i}" for i in range(samples.shape[0])]
                 for i, channel_name in enumerate(channel_names):
                     c_noise_samps = samples_from_times(noise_times, samples[i], sr)
-                    c_noise_powers = np.square(c_noise_samps)
-                    c_noise_rms = rms(c_noise_powers)
+                    c_noise_rms = rms(c_noise_samps)
                     c_spkrs_snrs = {
                         spkr: snr_from_times(
                             spkrs_times[spkr], samples[i], sr, c_noise_rms
