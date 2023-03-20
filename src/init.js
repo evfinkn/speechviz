@@ -74,10 +74,10 @@ const createTree = function (id, parent, children, snr) {
         originalGroups[segment.id] = id;
       });
     } else {
-      // group is VAD or Non-VAD, which don't need popups
+      // group is VAD or Non-VAD
       const group = new PeaksGroup(id, { parent, snr });
       peaks.segments.add(children).forEach((segment) => {
-        new Segment(segment, { parent: group });
+        new Segment(segment, { parent: group, copyTo: [] });
       });
     }
   } else {
@@ -303,6 +303,8 @@ const segmentLoading = fetch(segmentsFetch)
     for (const [group, children, snr] of segments) {
       createTree(group, analysis, children, snr);
     }
+
+    // Set moveTo and copyTo for the added PeaksGroups
     const speakers = Group.byId["Speakers"];
     speakers.children.forEach((speaker) => {
       speaker.copyTo.push(labeled.children);
@@ -311,6 +313,12 @@ const segmentLoading = fetch(segmentsFetch)
         segment.copyTo.push(labeled.children);
       });
     });
+    const vadAndNonVad = [
+      ...Group.byId["VAD"].children,
+      ...Group.byId["Non-VAD"].children,
+    ];
+    vadAndNonVad.forEach((segment) => segment.copyTo.push(labeled.children));
+
     rankSnrs();
     const ids = Object.keys(Segment.byId);
     // since ids are of the form 'peaks.segment.#', parse the # from all of the ids
