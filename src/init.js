@@ -343,18 +343,23 @@ const segmentLoading = fetch(segmentsFetch)
       segment.li.onmousedown = dragMouse;
 
       function dragMouse() {
-        // on a new click reset listening for a where the mouse goes for copying
-        segment.copyTo[0].forEach((eachCopyTo) => {
-          eachCopyTo.li.onmouseover = undefined;
-        });
-        originalTop = segment.li.style.top;
-        originalLeft = segment.li.style.left;
-        window.event.preventDefault();
-        currentX = window.event.clientX;
-        currentY = window.event.clientY;
-        // when you let go of mouse stop dragging
-        document.onmouseup = stopDragging;
-        document.onmousemove = dragSegment;
+        if (
+          segment.popup.style !== undefined &&
+          segment.popup.style.display === "none"
+        ) {
+          // on a new click reset listening for a where the mouse goes for copying
+          segment.copyTo[0].forEach((eachCopyTo) => {
+            eachCopyTo.li.onmouseover = undefined;
+          });
+          originalTop = segment.li.style.top;
+          originalLeft = segment.li.style.left;
+          window.event.preventDefault();
+          currentX = window.event.clientX;
+          currentY = window.event.clientY;
+          // when you let go of mouse stop dragging
+          document.onmouseup = stopDragging;
+          document.onmousemove = dragSegment;
+        }
       }
 
       function dragSegment() {
