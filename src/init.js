@@ -398,6 +398,8 @@ const segmentLoading = fetch(segmentsFetch)
     speakers.children.forEach((speaker) => {
       speaker.children.forEach((segment) => dragToLabel(segment));
     });
+
+    vadAndNonVad.forEach((segment) => dragToLabel(segment));
   })
   .catch((error) => {
     output404OrError(error, "segments");
