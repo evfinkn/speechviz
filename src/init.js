@@ -309,7 +309,9 @@ const segmentLoading = fetch(segmentsFetch)
     speakers.children.forEach((speaker) => {
       speaker.copyTo.push(labeled.children);
       speaker.children.forEach((segment) => {
-        segment.moveTo.push(speakers.children);
+        segment.moveTo.push(
+          speakers.children.filter((speaker) => speaker.id != segment.parent.id)
+        );
         segment.copyTo.push(labeled.children);
       });
     });
@@ -328,6 +330,74 @@ const segmentLoading = fetch(segmentsFetch)
     // after loading, toggle everything off (usually end up
     // disabling most groups right away so just do it automatically)
     analysis.children.forEach((child) => child.toggle(false));
+
+    // for copying a segment to its copyTo via dragging
+    function dragToLabel(segment) {
+      let originalTop;
+      let originalLeft;
+      let newX = 0,
+        newY = 0,
+        currentX = 0,
+        currentY = 0;
+      // when you hold mouse make segment follow cursor
+      segment.li.onmousedown = dragMouse;
+
+      function dragMouse() {
+        // on a new click reset listening for a where the mouse goes for copying
+        segment.copyTo[0].forEach((eachCopyTo) => {
+          eachCopyTo.li.onmouseover = undefined;
+        });
+        originalTop = segment.li.style.top;
+        originalLeft = segment.li.style.left;
+        window.event.preventDefault();
+        currentX = window.event.clientX;
+        currentY = window.event.clientY;
+        // when you let go of mouse stop dragging
+        document.onmouseup = stopDragging;
+        document.onmousemove = dragSegment;
+      }
+
+      function dragSegment() {
+        window.event.preventDefault();
+        segment.li.style.position = "absolute";
+        newX = currentX - window.event.clientX;
+        newY = currentY - window.event.clientY;
+        currentX = window.event.clientX;
+        currentY = window.event.clientY;
+        // move the segments position to track cursor
+        segment.li.style.top = segment.li.offsetTop - newY + "px";
+        segment.li.style.left = segment.li.offsetLeft - newX + "px";
+      }
+
+      function stopDragging() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+
+        segment.copyTo[0].forEach((eachCopyTo) => {
+          eachCopyTo.li.onmouseover = () => {
+            // if was dragged to a spot it can be copied to copy it there
+            copyThere(eachCopyTo);
+          };
+        });
+
+        function copyThere(dest) {
+          const copied = segment.copy(dest);
+          if (copied) {
+            undoStorage.push(new Actions.CopyAction(copied));
+            dest.sort("startTime");
+          }
+          dest.open();
+        }
+        // move it back
+        segment.li.style.top = originalTop;
+        segment.li.style.left = originalLeft;
+        segment.li.style.position = "static";
+      }
+    }
+
+    speakers.children.forEach((speaker) => {
+      speaker.children.forEach((segment) => dragToLabel(segment));
+    });
   })
   .catch((error) => {
     output404OrError(error, "segments");
