@@ -301,7 +301,11 @@ var TreeItem = class TreeItem {
     }
 
     if (parent) {
-      parent.addChildren(this);
+      if (parent instanceof Node && this.rendered) {
+        parent.append(this.li);
+      } else {
+        parent.addChildren(this);
+      }
     }
 
     if (children) {
