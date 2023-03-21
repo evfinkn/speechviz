@@ -47,6 +47,15 @@ var TreeItem = class TreeItem {
   // and is more of an abstract class
 
   /**
+   * An object containing `TreeItem` and its subclasses by their name.
+   * The name of the class is the id, and the value is that class. For example,
+   * `{ "TreeItem": TreeItem, "Group": Group, "Segment": Segment }`. When subclassing
+   * `TreeItem`, be sure to add the subclass to this object.
+   */
+  // This is set at the bottom of the file
+  static types = {};
+
+  /**
    * An object containing all `TreeItem`s by their id.
    * Key is id, value is corresponding `TreeItem`:
    * {id: `TreeItem`}
@@ -418,6 +427,13 @@ var TreeItem = class TreeItem {
       })
     );
     return obj;
+  }
+
+  *preorder() {
+    yield this;
+    for (const child of this.children) {
+      yield* child.preorder();
+    }
   }
 
   /**
@@ -1100,7 +1116,10 @@ var Popup = class Popup {
     }
     // flatten until all subarrays have been flattened
     // see TreeItem.moveTo for why this is useful
-    const moveTo = this.treeItem.moveTo.flat(Infinity);
+    let moveTo = this.treeItem.moveTo.flat(Infinity);
+    if (this.treeItem.parent !== null) {
+      moveTo = moveTo.filter((dest) => dest.id !== this.treeItem.parent.id);
+    }
     moveDiv.hidden = moveTo.length === 0;
     moveTo.forEach((dest) => this.addMoveRadio(dest));
   }
@@ -1115,7 +1134,10 @@ var Popup = class Popup {
     while (copyDiv.children[1]) {
       copyDiv.removeChild(copyDiv.lastChild);
     }
-    const copyTo = this.treeItem.copyTo.flat(Infinity);
+    let copyTo = this.treeItem.copyTo.flat(Infinity);
+    if (this.treeItem.parent !== null) {
+      copyTo = copyTo.filter((dest) => dest.id !== this.treeItem.parent.id);
+    }
     copyDiv.hidden = copyTo.length === 0;
     copyTo.forEach((dest) => this.addCopyRadio(dest));
   }
@@ -2616,6 +2638,19 @@ var Stat = class Stat extends TreeItem {
       this.span.style.fontFamily = "monospace";
     }
   }
+};
+
+TreeItem.types = {
+  TreeItem,
+  Group,
+  PeaksItem,
+  Segment,
+  Point,
+  Word,
+  PeaksGroup,
+  Face,
+  File,
+  Stat,
 };
 
 export {

@@ -1,7 +1,9 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import throttle from "lodash/throttle";
+import { default as getNestedProp } from "lodash/get";
 import globals from "./globals.js";
 import {
+  TreeItem,
   Group,
   Segment,
   PeaksGroup,
@@ -35,6 +37,8 @@ const media = globals.media;
 const folder = globals.folder;
 const type = globals.type;
 
+const tree = document.getElementById("tree");
+
 const zoomview = peaks.views.getView("zoomview");
 const overview = peaks.views.getView("overview");
 const fitPeaksToContainer = () => {
@@ -59,7 +63,7 @@ const originalGroups = {};
 //       specifying if it's a Group or GroupOfGroups or Segment and also use property
 //       names e.g. "children" instead of an array
 //       After rewriting, add documentation if left as a function
-const createTree = function (id, parent, children, snr) {
+const oldCreateTree = function (id, parent, children, snr) {
   if (!Array.isArray(children[0])) {
     // group of segments
     if (id.includes("Speaker ")) {
@@ -84,9 +88,37 @@ const createTree = function (id, parent, children, snr) {
     // group of groups
     const group = new Group(id, { parent, playable: true });
     for (const [child, childChildren, childSNR] of children) {
-      createTree(child, group, childChildren, childSNR);
+      oldCreateTree(child, group, childChildren, childSNR);
     }
   }
+};
+
+const createTreeItemFromObj = (obj, parent = null) => {
+  if (Array.isArray(obj)) {
+    return obj.map((subObj) => createTreeItemFromObj(subObj));
+  }
+
+  const type = TreeItem.types[obj.type];
+  if (type === undefined) {
+    throw new Error(`No TreeItem type "${obj.type}" exists.`);
+  }
+
+  const args = obj.arguments || [];
+  const options = obj.options || {};
+  parent = parent || options.parent;
+  if (parent == undefined) {
+    parent = tree;
+  } else if (typeof options.parent === "string") {
+    parent = TreeItem.byId[options.parent];
+  }
+  options.parent = parent;
+  const children = options.children;
+  delete options.children;
+  const treeItem = new type(...args, options);
+  if (children !== undefined) {
+    children.map((child) => createTreeItemFromObj(child, treeItem));
+  }
+  return treeItem;
 };
 
 /**
@@ -159,9 +191,7 @@ const rankSnrs = () => {
   PeaksGroup.byId[maxSpeaker].span.style.color = "violet";
 };
 
-const tree = document.getElementById("tree");
 const analysis = new Group("Analysis", { parent: tree, playable: true });
-
 const custom = new PeaksGroup("Custom", {
   parent: analysis,
   color: getRandomColor(),
@@ -299,26 +329,52 @@ const segmentLoading = fetch(segmentsFetch)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((segments) => {
-    for (const [group, children, snr] of segments) {
-      createTree(group, analysis, children, snr);
+    const isOldFormat = Array.isArray(segments[0]);
+    // backwards compatibility for our old segments format
+    if (isOldFormat) {
+      for (const [group, children, snr] of segments) {
+        oldCreateTree(group, analysis, children, snr);
+      }
+    } else {
+      // the segments file is in the new format
+      createTreeItemFromObj(segments);
     }
 
-    // Set moveTo and copyTo for the added PeaksGroups
+    // Set moveTo and copyTo for the added tree items
     const speakers = Group.byId["Speakers"];
-    speakers.children.forEach((speaker) => {
-      speaker.copyTo.push(labeled.children);
-      speaker.children.forEach((segment) => {
-        segment.moveTo.push(
-          speakers.children.filter((speaker) => speaker.id != segment.parent.id)
-        );
-        segment.copyTo.push(labeled.children);
-      });
-    });
     const vadAndNonVad = [
       ...Group.byId["VAD"].children,
       ...Group.byId["Non-VAD"].children,
     ];
-    vadAndNonVad.forEach((segment) => segment.copyTo.push(labeled.children));
+    if (isOldFormat) {
+      speakers.children.forEach((speaker) => {
+        speaker.copyTo.push(labeled.children);
+        speaker.children.forEach((segment) => {
+          segment.moveTo.push(speakers.children);
+          segment.copyTo.push(labeled.children);
+        });
+      });
+      vadAndNonVad.forEach((segment) => segment.copyTo.push(labeled.children));
+    } else {
+      // moveTo and copyTo for imported segments are arrays of strings like
+      // `["Speakers.children"]` and `["Labeled.children"]`. The TreeItems with these
+      // ids might not exist until all segments are imported, so that's why we update
+      // them here instead of in createTreeItemFromObj
+      for (const item of analysis.preorder()) {
+        item?.moveTo?.forEach((dest, i) => {
+          if (typeof dest === "string") {
+            // getNestedProp because string might be path to property,
+            // like "Speakers.children"
+            item.moveTo[i] = getNestedProp(TreeItem.byId, dest);
+          }
+        });
+        item?.copyTo?.forEach((dest, i) => {
+          if (typeof dest === "string") {
+            item.copyTo[i] = getNestedProp(TreeItem.byId, dest);
+          }
+        });
+      }
+    }
 
     rankSnrs();
     const ids = Object.keys(Segment.byId);
