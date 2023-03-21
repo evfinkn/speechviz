@@ -343,35 +343,34 @@ const segmentLoading = fetch(segmentsFetch)
       segment.li.onmousedown = dragMouse;
 
       function dragMouse() {
-        if (
-          segment.popup.style !== undefined &&
-          segment.popup.style.display === "none"
-        ) {
-          // on a new click reset listening for a where the mouse goes for copying
-          segment.copyTo[0].forEach((eachCopyTo) => {
-            eachCopyTo.li.onmouseover = undefined;
-          });
-          originalTop = segment.li.style.top;
-          originalLeft = segment.li.style.left;
-          window.event.preventDefault();
-          currentX = window.event.clientX;
-          currentY = window.event.clientY;
-          // when you let go of mouse stop dragging
-          document.onmouseup = stopDragging;
-          document.onmousemove = dragSegment;
-        }
+        // on a new click reset listening for a where the mouse goes for copying
+        segment.copyTo[0].forEach((eachCopyTo) => {
+          eachCopyTo.li.onmouseover = undefined;
+        });
+        originalTop = segment.li.style.top;
+        originalLeft = segment.li.style.left;
+        window.event.preventDefault();
+        currentX = window.event.clientX;
+        currentY = window.event.clientY;
+        // when you let go of mouse stop dragging
+        document.onmouseup = stopDragging;
+        document.onmousemove = dragSegment;
       }
 
       function dragSegment() {
-        window.event.preventDefault();
-        segment.li.style.position = "absolute";
-        newX = currentX - window.event.clientX;
-        newY = currentY - window.event.clientY;
-        currentX = window.event.clientX;
-        currentY = window.event.clientY;
-        // move the segments position to track cursor
-        segment.li.style.top = segment.li.offsetTop - newY + "px";
-        segment.li.style.left = segment.li.offsetLeft - newX + "px";
+        // do not allow a segment to be dragged if it has its popup open
+        const popup = segment.li.children[segment.li.children.length - 1];
+        if (popup.style.display !== "block") {
+          window.event.preventDefault();
+          segment.li.style.position = "absolute";
+          newX = currentX - window.event.clientX;
+          newY = currentY - window.event.clientY;
+          currentX = window.event.clientX;
+          currentY = window.event.clientY;
+          // move the segments position to track cursor
+          segment.li.style.top = segment.li.offsetTop - newY + "px";
+          segment.li.style.left = segment.li.offsetLeft - newX + "px";
+        }
       }
 
       function stopDragging() {
@@ -397,6 +396,14 @@ const segmentLoading = fetch(segmentsFetch)
         segment.li.style.top = originalTop;
         segment.li.style.left = originalLeft;
         segment.li.style.position = "static";
+        // bug fix: if you drag something and don't copy it,
+        // if you hover over after it copies anyways. Remove event listeners
+        setTimeout(reset, 100);
+        function reset() {
+          segment.copyTo[0].forEach((eachCopyTo) => {
+            eachCopyTo.li.onmouseover = undefined;
+          });
+        }
       }
     }
 

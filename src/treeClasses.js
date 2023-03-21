@@ -944,16 +944,7 @@ var Popup = class Popup {
 
     const closeButton = htmlToElement("<a class='close'>&times</a>");
     popupContent.appendChild(closeButton);
-    closeButton.addEventListener("click", () => {
-      // bug fix: when you close a popup and then the cursor goes over a label it
-      // copies it to it, this fixes that (see function dragToLabel in init.js)
-      if (treeItem.copyTo.length > 0) {
-        treeItem.copyTo[0].forEach((eachCopyTo) => {
-          eachCopyTo.li.onmouseover = undefined;
-        });
-      }
-      this.hide();
-    });
+    closeButton.addEventListener("click", () => this.hide());
 
     if (treeItem.renamable) {
       const renameDiv = htmlToElement(`<div><h3>Rename ${text}</h3></div>`);
