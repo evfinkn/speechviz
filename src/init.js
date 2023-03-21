@@ -159,8 +159,8 @@ const rankSnrs = () => {
   PeaksGroup.byId[maxSpeaker].span.style.color = "violet";
 };
 
-const analysis = new Group("Analysis", { playable: true });
-document.getElementById("tree").append(analysis.li);
+const tree = document.getElementById("tree");
+const analysis = new Group("Analysis", { parent: tree, playable: true });
 
 const custom = new PeaksGroup("Custom", {
   parent: analysis,
@@ -171,8 +171,7 @@ const labeled = new Group("Labeled", { parent: analysis, playable: true });
 
 if (folder !== undefined && folder !== null) {
   // in a folder
-  const files = new Group("Files", { playable: false });
-  document.getElementById("tree").append(files.li);
+  const files = new Group("Files", { parent: tree, playable: false });
   fetch(`${type}/${folder}`)
     .then(checkResponseStatus)
     .then((response) => response.json())
@@ -415,8 +414,7 @@ const facesLoading = fetch(`/clustered-files/`)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((fileList) => {
-    const clusters = new Group("Clusters", { playable: false });
-    document.getElementById("tree").append(clusters.li);
+    const clusters = new Group("Clusters", { parent: tree, playable: false });
     const clusterfolders = fileList.cluster; // folder of each found cluster
     // name of the overall folder, same as video in speechviz w/out extension
     const dir = fileList.dir;
