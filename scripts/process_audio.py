@@ -371,117 +371,112 @@ def process_audio(
                 util.ffmpeg(old_path, new_path, verbose)
                 path = new_path
                 made_wav = True
-
-            samples, sr = librosa.load(path, sr=None, mono=not split_channels)
-            mono_samples = librosa.to_mono(samples)
-            duration = librosa.get_duration(y=mono_samples, sr=sr)
-
-            segs = []
-            spkrs_segs, spkrs_times = get_diarization(
-                path, auth_token, verbose=verbose, num_speakers=num_speakers
-            )
-            spkrs = sorted(spkrs_segs)
-            spkrs_durations = {
-                spkr: get_times_duration(spkr_times)
-                for spkr, spkr_times in spkrs_times.items()
-            }
-            spkrs_num_segs = {
-                spkr: len(spkr_segs) for spkr, spkr_segs in spkrs_segs.items()
-            }
-            diar_times = [time for spkr in spkrs_times.values() for time in spkr]
-            diar_times = flatten_times(diar_times, len(mono_samples), sr)
-
-            noise_times = get_complement_times(diar_times, len(mono_samples) / sr)
-            noise_samps = samples_from_times(noise_times, mono_samples, sr)
-            noise_rms = rms(noise_samps)
-            spkrs_snrs = {
-                spkr: snr_from_times(spkrs_times[spkr], mono_samples, sr, noise_rms)
-                for spkr in spkrs
-            }
-
-            vad_segs, vad_times = get_vad(path, auth_token, verbose)
-            non_vad_segs = get_complement_segments(
-                vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
-            )
-
-            segs.append(
-                (
-                    "Speakers",
-                    [(spkr, spkrs_segs[spkr], spkrs_snrs[spkr]) for spkr in spkrs],
-                )
-            )
-            segs.append(("VAD", vad_segs))
-            segs.append(("Non-VAD", non_vad_segs))
-
-            # save the segments
-            vprint(f"Creating {segs_path}")
-            with segs_path.open("w") as segs_file:
-                json.dump(segs, segs_file)
-
-            overall_snr = snr_from_times(diar_times, mono_samples, sr, noise_rms)
-            e_entropy = util.AggregateData(entropy.energy_entropy(mono_samples, sr))
-            s_entropy = util.AggregateData(entropy.spectral_entropy(mono_samples, sr))
-            diar_duration = get_times_duration(diar_times)
-            vad_duration = get_times_duration(vad_times)
-
-            stats = {
-                "sampling_rate": sr,
-                "duration": duration,
-                "num_speakers": len(spkrs),
-                "num_convo_turns": get_num_convo_turns(list(spkrs_times.values())),
-                "overall_snr": overall_snr,
-                "e_entropy_mean": e_entropy.mean,
-                "e_entropy_median": e_entropy.median,
-                "e_entropy_std": e_entropy.std,
-                "e_entropy_max": e_entropy.max,
-                "e_entropy_min": e_entropy.min,
-                "s_entropy_mean": s_entropy.mean,
-                "s_entropy_median": s_entropy.median,
-                "s_entropy_std": s_entropy.std,
-                "s_entropy_max": s_entropy.max,
-                "s_entropy_min": s_entropy.min,
-                "diar_duration": diar_duration,
-                "non_diar_duration": duration - diar_duration,
-                "num_diar_segments": sum(spkrs_num_segs.values()),
-                "least_segments": util.min_value_item(spkrs_num_segs, default="N/A"),
-                "most_segments": util.max_value_item(spkrs_num_segs, default="N/A"),
-                "shortest_speaker": util.min_value_item(spkrs_durations, default="N/A"),
-                "longest_speaker": util.max_value_item(spkrs_durations, default="N/A"),
-                "lowest_snr": util.min_value_item(spkrs_snrs, default="N/A"),
-                "highest_snr": util.max_value_item(spkrs_snrs, default="N/A"),
-                "vad_duration": vad_duration,
-                "num_vad_segments": len(vad_segs),
-                "non_vad_duration": duration - vad_duration,
-            }
-            for spkr, snr in spkrs_snrs.items():
-                stats[f"{spkr}_snr"] = snr
-            if split_channels and samples.ndim == 2:
-                if channels_path.exists():
-                    channel_names = channels_path.read_text().splitlines()
-                else:
-                    channel_names = [f"channel{i}" for i in range(samples.shape[0])]
-                for i, channel_name in enumerate(channel_names):
-                    c_noise_samps = samples_from_times(noise_times, samples[i], sr)
-                    c_noise_rms = rms(c_noise_samps)
-                    c_spkrs_snrs = {
-                        spkr: snr_from_times(
-                            spkrs_times[spkr], samples[i], sr, c_noise_rms
-                        )
-                        for spkr in spkrs
-                    }
-                    c_overall_snr = snr_from_times(
-                        diar_times, samples[i], sr, c_noise_rms
-                    )
-                    stats[f"{channel_name}_overall_snr"] = c_overall_snr
-                    for spkr, snr in c_spkrs_snrs.items():
-                        stats[f"{channel_name}_{spkr}_snr"] = snr
-            util.add_to_csv(stats_path, stats)
-
         # if a video file has no audio it will throw an error trying to make
         # segments, but we want to continue execution so other files
         # can have their audio processed
         except subprocess.CalledProcessError:
             print("This file has no audio to process so no segments were made")
+
+        samples, sr = librosa.load(path, sr=None, mono=not split_channels)
+        mono_samples = librosa.to_mono(samples)
+        duration = librosa.get_duration(y=mono_samples, sr=sr)
+
+        segs = []
+        spkrs_segs, spkrs_times = get_diarization(
+            path, auth_token, verbose=verbose, num_speakers=num_speakers
+        )
+        spkrs = sorted(spkrs_segs)
+        spkrs_durations = {
+            spkr: get_times_duration(spkr_times)
+            for spkr, spkr_times in spkrs_times.items()
+        }
+        spkrs_num_segs = {
+            spkr: len(spkr_segs) for spkr, spkr_segs in spkrs_segs.items()
+        }
+        diar_times = [time for spkr in spkrs_times.values() for time in spkr]
+        diar_times = flatten_times(diar_times, len(mono_samples), sr)
+
+        noise_times = get_complement_times(diar_times, len(mono_samples) / sr)
+        noise_samps = samples_from_times(noise_times, mono_samples, sr)
+        noise_rms = rms(noise_samps)
+        spkrs_snrs = {
+            spkr: snr_from_times(spkrs_times[spkr], mono_samples, sr, noise_rms)
+            for spkr in spkrs
+        }
+
+        vad_segs, vad_times = get_vad(path, auth_token, verbose)
+        non_vad_segs = get_complement_segments(
+            vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
+        )
+
+        segs.append(
+            (
+                "Speakers",
+                [(spkr, spkrs_segs[spkr], spkrs_snrs[spkr]) for spkr in spkrs],
+            )
+        )
+        segs.append(("VAD", vad_segs))
+        segs.append(("Non-VAD", non_vad_segs))
+
+        # save the segments
+        vprint(f"Creating {segs_path}")
+        with segs_path.open("w") as segs_file:
+            json.dump(segs, segs_file)
+
+        overall_snr = snr_from_times(diar_times, mono_samples, sr, noise_rms)
+        e_entropy = util.AggregateData(entropy.energy_entropy(mono_samples, sr))
+        s_entropy = util.AggregateData(entropy.spectral_entropy(mono_samples, sr))
+        diar_duration = get_times_duration(diar_times)
+        vad_duration = get_times_duration(vad_times)
+
+        stats = {
+            "sampling_rate": sr,
+            "duration": duration,
+            "num_speakers": len(spkrs),
+            "num_convo_turns": get_num_convo_turns(list(spkrs_times.values())),
+            "overall_snr": overall_snr,
+            "e_entropy_mean": e_entropy.mean,
+            "e_entropy_median": e_entropy.median,
+            "e_entropy_std": e_entropy.std,
+            "e_entropy_max": e_entropy.max,
+            "e_entropy_min": e_entropy.min,
+            "s_entropy_mean": s_entropy.mean,
+            "s_entropy_median": s_entropy.median,
+            "s_entropy_std": s_entropy.std,
+            "s_entropy_max": s_entropy.max,
+            "s_entropy_min": s_entropy.min,
+            "diar_duration": diar_duration,
+            "non_diar_duration": duration - diar_duration,
+            "num_diar_segments": sum(spkrs_num_segs.values()),
+            "least_segments": util.min_value_item(spkrs_num_segs, default="N/A"),
+            "most_segments": util.max_value_item(spkrs_num_segs, default="N/A"),
+            "shortest_speaker": util.min_value_item(spkrs_durations, default="N/A"),
+            "longest_speaker": util.max_value_item(spkrs_durations, default="N/A"),
+            "lowest_snr": util.min_value_item(spkrs_snrs, default="N/A"),
+            "highest_snr": util.max_value_item(spkrs_snrs, default="N/A"),
+            "vad_duration": vad_duration,
+            "num_vad_segments": len(vad_segs),
+            "non_vad_duration": duration - vad_duration,
+        }
+        for spkr, snr in spkrs_snrs.items():
+            stats[f"{spkr}_snr"] = snr
+        if split_channels and samples.ndim == 2:
+            if channels_path.exists():
+                channel_names = channels_path.read_text().splitlines()
+            else:
+                channel_names = [f"channel{i}" for i in range(samples.shape[0])]
+            for i, channel_name in enumerate(channel_names):
+                c_noise_samps = samples_from_times(noise_times, samples[i], sr)
+                c_noise_rms = rms(c_noise_samps)
+                c_spkrs_snrs = {
+                    spkr: snr_from_times(spkrs_times[spkr], samples[i], sr, c_noise_rms)
+                    for spkr in spkrs
+                }
+                c_overall_snr = snr_from_times(diar_times, samples[i], sr, c_noise_rms)
+                stats[f"{channel_name}_overall_snr"] = c_overall_snr
+                for spkr, snr in c_spkrs_snrs.items():
+                    stats[f"{channel_name}_{spkr}_snr"] = snr
+        util.add_to_csv(stats_path, stats)
 
     # if we converted to wav, remove that wav file
     # (since it was only needed for the pipelines)
