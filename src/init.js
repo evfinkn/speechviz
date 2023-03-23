@@ -405,25 +405,33 @@ const segmentLoading = fetch(segmentsFetch)
 
     // for copying a segment to its copyTo via dragging
     function dragToLabel(segment) {
-      let originalTop;
-      let originalLeft;
       let newX = 0,
         newY = 0,
         currentX = 0,
         currentY = 0;
       // when you hold mouse make segment follow cursor
-      segment.li.onmousedown = dragMouse;
+      segment.span.onmousedown = dragMouse;
 
       function dragMouse() {
         // on a new click reset listening for a where the mouse goes for copying
         segment.copyTo[0].forEach((eachCopyTo) => {
           eachCopyTo.li.onmouseover = undefined;
         });
-        originalTop = segment.li.style.top;
-        originalLeft = segment.li.style.left;
+        segment.li.style.position = "absolute";
         window.event.preventDefault();
-        currentX = window.event.clientX;
-        currentY = window.event.clientY;
+        currentX = window.event.pageX;
+        currentY = window.event.pageY;
+
+        // account for different top when scrolled
+        segment.li.style.top =
+          segment.li.offsetTop -
+          document.getElementById("column").scrollTop +
+          "px";
+        segment.li.style.left =
+          segment.li.offsetLeft -
+          document.getElementById("column").scrollLeft +
+          "px";
+
         // when you let go of mouse stop dragging
         document.onmouseup = stopDragging;
         document.onmousemove = dragSegment;
@@ -434,14 +442,21 @@ const segmentLoading = fetch(segmentsFetch)
         const popup = segment.li.children[segment.li.children.length - 1];
         if (popup.style.display !== "block") {
           window.event.preventDefault();
-          segment.li.style.position = "absolute";
-          newX = currentX - window.event.clientX;
-          newY = currentY - window.event.clientY;
-          currentX = window.event.clientX;
-          currentY = window.event.clientY;
+          newX = currentX - window.event.pageX;
+          newY = currentY - window.event.pageY;
+          currentX = window.event.pageX;
+          currentY = window.event.pageY;
           // move the segments position to track cursor
           segment.li.style.top = segment.li.offsetTop - newY + "px";
           segment.li.style.left = segment.li.offsetLeft - newX + "px";
+          if (
+            window.event.pageY - document.getElementById("column").scrollTop <
+            10
+          ) {
+            document.getElementById("column").scrollBy(0, -20);
+          }
+          // TODO: add downwards and maybe sideways scrolling, also
+          // make all 4 work for scrolling longer distances?
         }
       }
 
@@ -465,8 +480,8 @@ const segmentLoading = fetch(segmentsFetch)
           dest.open();
         }
         // move it back
-        segment.li.style.top = originalTop;
-        segment.li.style.left = originalLeft;
+        segment.li.style.top = "";
+        segment.li.style.left = "";
         segment.li.style.position = "static";
         // bug fix: if you drag something and don't copy it,
         // if you hover over after it copies anyways. Remove event listeners
@@ -484,6 +499,8 @@ const segmentLoading = fetch(segmentsFetch)
     });
 
     vadAndNonVad.forEach((segment) => dragToLabel(segment));
+
+    speakers.children.forEach((speaker) => dragToLabel(speaker));
   })
   .catch((error) => {
     output404OrError(error, "segments");
