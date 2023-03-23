@@ -79,7 +79,7 @@ const oldCreateTree = function (id, parent, children, snr) {
       });
     } else {
       // group is VAD or Non-VAD
-      const group = new PeaksGroup(id, { parent, snr });
+      const group = new PeaksGroup(id, { parent, snr, copyTo: [] });
       peaks.segments.add(children).forEach((segment) => {
         new Segment(segment, { parent: group, copyTo: [] });
       });
@@ -371,6 +371,8 @@ const segmentLoading = fetch(segmentsFetch)
           segment.copyTo.push(labeled.children);
         });
       });
+      Group.byId["VAD"].copyTo = [labeled.children];
+      Group.byId["Non-VAD"].copyTo = [labeled.children];
       vadAndNonVad.forEach((segment) => segment.copyTo.push(labeled.children));
     } else {
       // moveTo and copyTo for imported segments are arrays of strings like
