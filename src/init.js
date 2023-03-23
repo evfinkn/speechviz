@@ -410,6 +410,10 @@ const segmentLoading = fetch(segmentsFetch)
           segment.li.offsetTop -
           document.getElementById("column").scrollTop +
           "px";
+        segment.li.style.left =
+          segment.li.offsetLeft -
+          document.getElementById("column").scrollLeft +
+          "px";
 
         // when you let go of mouse stop dragging
         document.onmouseup = stopDragging;
@@ -428,6 +432,14 @@ const segmentLoading = fetch(segmentsFetch)
           // move the segments position to track cursor
           segment.li.style.top = segment.li.offsetTop - newY + "px";
           segment.li.style.left = segment.li.offsetLeft - newX + "px";
+          if (
+            window.event.pageY - document.getElementById("column").scrollTop <
+            10
+          ) {
+            document.getElementById("column").scrollBy(0, -20);
+          }
+          // TODO: add downwards and maybe sideways scrolling, also
+          // make all 4 work for scrolling longer distances?
         }
       }
 
