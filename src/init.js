@@ -114,10 +114,27 @@ const createTreeItemFromObj = (obj, parent = null) => {
   options.parent = parent;
   const children = options.children;
   delete options.children;
+  const childrenOptions = options.childrenOptions;
+  delete options.childrenOptions;
   const treeItem = new type(...args, options);
-  if (children !== undefined) {
-    children.map((child) => createTreeItemFromObj(child, treeItem));
-  }
+  children?.forEach((child) => {
+    // imported groups can have a property "childrenOptions" that will be
+    // applied to each of its children's options which can save space if
+    // its children all have the same properties. It's a property of options
+    // so that it can be nested within itself, e.g.
+    // "childrenOptions": { "childrenOptions": { "playable": true } }
+    // will make all grandchildren playable
+    if (childrenOptions !== undefined) {
+      if (child.options !== undefined) {
+        // child.options is after so that properties in child.options have
+        // priority over and will overwrite ones in obj.childrenProperties
+        child.options = { ...childrenOptions, ...child.options };
+      } else {
+        child.options = { ...childrenOptions }; // make a copy
+      }
+    }
+    createTreeItemFromObj(child, treeItem);
+  });
   return treeItem;
 };
 
