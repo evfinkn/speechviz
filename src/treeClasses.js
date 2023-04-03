@@ -16,12 +16,14 @@
 import Picker from "vanilla-picker";
 import globals from "./globals.js";
 import { undoStorage, Actions } from "./UndoRedo.js";
+import { Attribute, Attributes } from "./Attribute.js";
 import {
   htmlToElement,
   sortByProp,
   toggleButton,
   propertiesEqual,
   getRandomColor,
+  mappingToString,
 } from "./util.js";
 import { groupIcons, segmentIcons } from "./icon.js";
 
@@ -191,6 +193,12 @@ var TreeItem = class TreeItem {
   assocWith = null;
 
   /**
+   * An object containing miscellaneous attributes of this item.
+   * @type {?Object}
+   */
+  attributes = null;
+
+  /**
    * The li element that is displayed and that contains all other elements if this
    * item is rendered. `null` otherwise.
    * @type {?Element}
@@ -291,6 +299,7 @@ var TreeItem = class TreeItem {
       copyTo = null,
       render = true,
       assocWith = null,
+      attributes = null,
     } = {}
   ) {
     this.id = id;
@@ -304,6 +313,14 @@ var TreeItem = class TreeItem {
     this.moveTo = moveTo;
     this.copyTo = copyTo;
     this.assocWith = assocWith;
+    this.attributes = attributes;
+    if (attributes) {
+      for (const [key, value] of Object.entries(attributes)) {
+        if (Attributes[key] === undefined) {
+          Attributes[key] = new Attribute(key, value, this.constructor.name);
+        }
+      }
+    }
 
     if (render) {
       this.render();
@@ -1556,6 +1573,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
       moveTo = null,
       copyTo = null,
       render = true,
+      attributes = null,
     } = {}
   ) {
     // catch options contained within the peaks item
@@ -1576,6 +1594,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
       moveTo,
       copyTo,
       render: false,
+      attributes,
     });
     this.peaksItem = peaksItem;
     this.type = peaksItem.constructor.name === "Segment" ? "Segment" : "Point";
@@ -1828,6 +1847,7 @@ var Segment = class Segment extends PeaksItem {
       renamable = false,
       moveTo = null,
       copyTo = null,
+      attributes = null,
     } = {}
   ) {
     if (segment.constructor.name !== "Segment") {
@@ -1841,6 +1861,7 @@ var Segment = class Segment extends PeaksItem {
       renamable,
       moveTo,
       copyTo,
+      attributes,
     });
 
     this.updateDuration();
@@ -1906,6 +1927,9 @@ var Segment = class Segment extends PeaksItem {
       `Start time: ${this.startTime.toFixed(2)}\n` +
       `End time: ${this.endTime.toFixed(2)}\n` +
       `Duration: ${this.duration.toFixed(2)}`;
+    if (this.attributes !== null) {
+      this.span.title += `\n${mappingToString(this.attributes)}`;
+    }
   }
 
   /**

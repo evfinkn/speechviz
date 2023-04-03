@@ -14,6 +14,7 @@ import {
 } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
+import { FiltersPopup } from "./FiltersPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
 import {
   arrayMean,
@@ -983,6 +984,12 @@ settingsButton.innerHTML = settingsIcon;
 const settingsPopup = new SettingsPopup();
 settingsButton.addEventListener("click", function () {
   settingsPopup.show();
+});
+
+const filtersButton = document.getElementById("filters");
+const filtersPopup = new FiltersPopup();
+filtersButton.addEventListener("click", function () {
+  filtersPopup.show();
 });
 
 // https://www.w3schools.com/howto/howto_js_dropdown.asp

@@ -267,6 +267,32 @@ const removeExtension = function (filename) {
   return filename.replace(/\.[^/.]+$/, "");
 };
 
+/**
+ * Converts an object into a string representation.
+ * @param {*} mapping
+ * @param {number} indent
+ * @returns
+ */
+const mappingToString = (mapping, indent = 0) => {
+  if (typeof mapping !== "object") {
+    return `${" ".repeat(indent)}${mapping},`;
+  }
+  let string = "";
+  for (const [key, value] of Object.entries(mapping)) {
+    if (Array.isArray(value)) {
+      const arrayString = value
+        .map((item) => mappingToString(item, indent + 2))
+        .join("\n");
+      string += `${key}: [\n${arrayString}\n]\n`;
+    } else if (typeof value === "object") {
+      string += `${key}: {\n${mappingToString(value, indent + 2)}}\n`;
+    } else {
+      string += `${" ".repeat(indent)}${key}: ${value}\n`;
+    }
+  }
+  return string;
+};
+
 export {
   getRandomColor,
   htmlToElement,
@@ -282,4 +308,5 @@ export {
   checkResponseStatus,
   parseNumericalCsv,
   removeExtension,
+  mappingToString,
 };
