@@ -130,7 +130,7 @@ describe("sortByProp", () => {
     ]);
   });
   test("sorts lexicographically in reverse", () => {
-    expect(util.sortByProp(objs, "word1", true)).toEqual([
+    expect(util.sortByProp(objs, "word1", { reverse: true })).toEqual([
       obj2,
       obj4,
       obj5,
@@ -154,7 +154,7 @@ describe("sortByProp", () => {
     ]);
   });
   test("sorts numerically in reverse", () => {
-    expect(util.sortByProp(objs, "num1", true)).toEqual([
+    expect(util.sortByProp(objs, "num1", { reverse: true })).toEqual([
       obj5,
       obj4,
       obj3,
