@@ -407,3 +407,8 @@ ul {
 .active {
   display: block;
 }
+
+.grayed-out {
+  opacity: 0.5;
+  pointer-events: none;
+}

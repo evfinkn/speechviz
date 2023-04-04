@@ -219,9 +219,16 @@ const FiltersPopup = class FiltersPopup {
     popupContent.appendChild(topDiv);
 
     const matchType = htmlToElement(
-      "<label>Match <select></select> of the following rules:</label>"
+      `<label>
+        <input type="checkbox" autochecked="off" checked></input>
+         Match <select></select> of the following rules:
+      </label>`
     );
-    const matchTypeSelect = matchType.firstElementChild;
+    const [doFilteringCheckbox, matchTypeSelect] = matchType.children;
+    this.doFilteringCheckbox = doFilteringCheckbox;
+    doFilteringCheckbox.addEventListener("change", () => {
+      this.ul.classList.toggle("grayed-out", !doFilteringCheckbox.checked);
+    });
     this.matchTypeSelect = matchTypeSelect;
     console.log(matchTypeSelect);
     matchTypeSelect.appendChild(
@@ -244,9 +251,8 @@ const FiltersPopup = class FiltersPopup {
       this.ul.appendChild(filterElement.li);
     });
 
-    const ul = htmlToElement("<ul class='ul'></ul>");
-    this.ul = ul;
-    popupContent.appendChild(ul);
+    this.ul = document.createElement("ul");
+    popupContent.appendChild(this.ul);
 
     const bottomDiv = htmlToElement(
       "<div style='display:flex;justify-content:flex-end;'></div>"
@@ -301,6 +307,12 @@ const FiltersPopup = class FiltersPopup {
 
   /** Applies the filters to the `TreeItem`s. */
   applyFilters() {
+    if (!this.doFilteringCheckbox.checked) {
+      Object.values(TreeItem.byId).forEach((item) => {
+        item.span.style.color = "black";
+      });
+      return;
+    }
     const pass = (item) => (item.span.style.color = "red");
     const fail = (item) => (item.span.style.color = "black");
     let passesFilters;
