@@ -230,7 +230,6 @@ const FiltersPopup = class FiltersPopup {
       this.ul.classList.toggle("grayed-out", !doFilteringCheckbox.checked);
     });
     this.matchTypeSelect = matchTypeSelect;
-    console.log(matchTypeSelect);
     matchTypeSelect.appendChild(
       htmlToElement("<option value='all'>all</option>")
     );
