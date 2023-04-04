@@ -121,15 +121,13 @@ var TreeItem = class TreeItem {
   /**
    * The text shown in `span` (and therefore in the tree).
    * This will still have a value if this item hasn't been rendered.
-   * This is hidden to differentiate between the getter and setter for `text`.
-   * Can probably be removed by just changing getter and setter for `text` to only use
-   * `span.innerHTML`.
    * @type {string}
    */
   #text;
 
   /**
    * A `boolean` indicating if this item is checked / enabled.
+   * This will still have a value if this item hasn't been rendered.
    * @type {boolean}
    */
   #checked = true;
@@ -343,6 +341,8 @@ var TreeItem = class TreeItem {
   /**
    * Gets every constructor used to construct `this`.
    * In other words, gets `this`' class and all of its superclasses.
+   * The order is from the closest superclass to the furthest, so the first element is
+   * the class of `this` and the last element is the superclass before `Object`.
    * @return {!Array.<Object>} The constructors of `this`.
    */
   get constructors() {
@@ -367,6 +367,8 @@ var TreeItem = class TreeItem {
     parent.addChildren(this);
   }
 
+  // We have to have a separate property for text instead of just using
+  // span.innerHTML because span is null if !this.rendered
   /**
    * The text shown in (or would be) `span` (and therefore in the tree).
    * @type {string}
@@ -851,7 +853,7 @@ var TreeItem = class TreeItem {
   /**
    * Sets up a function that will be called whenever the specified event is
    * delivered to the target.
-   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener|EventTarget.addEventListener}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener EventTarget.addEventListener}
    */
   addEventListener(type, listener, options) {
     this.li.addEventListener(type, listener, options);
@@ -860,7 +862,7 @@ var TreeItem = class TreeItem {
   /**
    * Removes an event listener previously registered with `addEventListener`
    * from the target.
-   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener|EventTarget.removeEventListener}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener EventTarget.removeEventListener}
    */
   removeEventListener(type, listener, options) {
     this.li.removeEventListener(type, listener, options);
@@ -868,7 +870,7 @@ var TreeItem = class TreeItem {
 
   /**
    * Sends an `Event` to this item, invoking the affected `EventListeners`.
-   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent|EventTarget.dispatchEvent}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent EventTarget.dispatchEvent}
    */
   dispatchEvent(event) {
     return this.li.dispatchEvent(event);
@@ -2585,7 +2587,7 @@ var File = class File extends TreeItem {
   /**
    * An object containing all `File`s by their id.
    * Key is id, value is corresponding `File`:  {id: `File`}
-   * @type {Object.<string, Run>}
+   * @type {Object.<string, File>}
    * @static
    */
   static byId = {};
