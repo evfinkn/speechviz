@@ -5,6 +5,7 @@ import globals from "./globals.js";
 import {
   TreeItem,
   Group,
+  CarouselGroup,
   Segment,
   PeaksGroup,
   Face,
@@ -220,13 +221,13 @@ const labeled = new Group("Labeled", { parent: analysis, playable: true });
 
 if (folder !== undefined && folder !== null) {
   // in a folder
-  const files = new Group("Files", { parent: tree, playable: false });
+  const files = new CarouselGroup("Files", { parent: tree, playable: false });
   fetch(`${type}/${folder}`)
     .then(checkResponseStatus)
     .then((response) => response.json())
     .then((fileList) => {
       fileList.forEach((file) => new File(file, { parent: files }));
-      File.byId[filename].toggle(true); // turn on button for current file
+      File.byId[filename].toggleTree(true); // turn on button for current file
       // sort in natural sort order
       files.sort((file1, file2) =>
         naturalCompare(file1.filename, file2.filename)

@@ -137,6 +137,16 @@ const minusIcon = feather.icons.minus.toSvg({
   style: "vertical-align:middle;",
 });
 
+const arrowOptions = Object.assign(
+  {
+    stroke: "inherit",
+    style: "vertical-align:middle;",
+  },
+  widthHeight17
+);
+const arrowLeftIcon = feather.icons["arrow-left"].toSvg(arrowOptions);
+const arrowRightIcon = feather.icons["arrow-right"].toSvg(arrowOptions);
+
 export {
   segmentIcons,
   groupIcons,
@@ -148,4 +158,6 @@ export {
   settingsIcon,
   plusIcon,
   minusIcon,
+  arrowLeftIcon,
+  arrowRightIcon,
 };

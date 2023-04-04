@@ -26,7 +26,12 @@ import {
   removeExtension,
   mappingToString,
 } from "./util.js";
-import { groupIcons, segmentIcons } from "./icon.js";
+import {
+  groupIcons,
+  segmentIcons,
+  arrowLeftIcon,
+  arrowRightIcon,
+} from "./icon.js";
 
 const media = globals.media;
 const peaks = globals.peaks;
@@ -1466,6 +1471,95 @@ var Group = class Group extends TreeItem {
   }
 };
 
+var CarouselGroup = class CarouselGroup extends Group {
+  /**
+   * An object containing all `CarouselGroup`s by their id.
+   * Key is id, value is corresponding `CarouselGroup`:
+   * {id: `CarouselGroup`}
+   * @type {!Object.<string, CarouselGroup>}
+   */
+  static byId = {};
+
+  /**
+   * The a element used to untoggle the currently selected item in the group and
+   * toggle the item to its left in `children`.
+   * If the currently selected item is the first item in `children`, the last item in
+   * `children` is selected. If multiple items are selected, the first selected item is
+   * used. If there are no items in `children` or no items are selected, nothing
+   * happens.
+   * @type {!Element}
+   */
+  leftButton;
+
+  /**
+   * The a element used to untoggle the currently selected item in the group and
+   * toggle the item to its right in `children`.
+   * If the currently selected item is the last item in `children`, the first item in
+   * `children` is selected. If multiple items are selected, the first selected item is
+   * used. If there are no items in `children` or no items are selected, nothing
+   * happens.
+   * @type {!Element}
+   */
+  rightButton;
+
+  /**
+   * @param {string} id - The unique identifier to give the `CarouselGroup`.
+   * @param {?Object.<string, any>=} options - Options to customize the group.
+   * @param {?TreeItem=} options.parent - The `TreeItem` that contains the
+   *      group in its nested content.
+   * @param {?Array.<TreeItem>=} options.children - An array of `TreeItem`s to put in
+   *      the group's nested content.
+   * @param {string=} options.text - The text to show in the group's span (and
+   *      therefore in the tree). If `null`, `id` is used.
+   * @param {boolean} [options.playable=false] - Indicates if the group can be played
+   *      and looped.
+   * @param {boolean} [options.removable=false] - Indicates if the group can be removed
+   *      from the tree.
+   * @param {?Array.<TreeItem>=} [options.moveTo] - An array of the `TreeItem`s
+   *      that the group can be moved to. `null` if the group isn't moveable.
+   * @param {?Array.<TreeItem>=} [options.copyTo] - An array of the `TreeItem`s
+   *      that the group can be copied to. `null` if the group isn't copyable.
+   * @throws {Error} If a `TreeItem` with `id` already exists.
+   */
+  constructor(
+    id,
+    {
+      parent = null,
+      children = null,
+      text = null,
+      playable = false,
+      removable = false,
+      moveTo = null,
+      copyTo = null,
+    } = {}
+  ) {
+    super(id, { parent, children, text, playable, removable, moveTo, copyTo });
+    this.leftButton = htmlToElement(
+      `<a href="javascript:;" class="button-on">${arrowLeftIcon}</a>`
+    );
+    // this puts the left button before any other buttons
+    this.span.after(this.leftButton);
+    this.leftButton.addEventListener("click", () => {
+      const currentIndex = this.children.findIndex((child) => child.checked);
+      const leftIndex = currentIndex - 1;
+      this.children[currentIndex].toggle(false);
+      // .at() to wrap around to the last index if leftIndex is -1
+      this.children.at(leftIndex).toggle(true);
+    });
+    this.rightButton = htmlToElement(
+      `<a href="javascript:;" class="button-on">${arrowRightIcon}</a>`
+    );
+    this.leftButton.after(this.rightButton);
+    this.rightButton.addEventListener("click", () => {
+      const currentIndex = this.children.findIndex((child) => child.checked);
+      // if currentIndex is the last index, this will wrap around to 0
+      const rightIndex = (currentIndex + 1) % this.children.length;
+      this.children[currentIndex].toggle(false);
+      this.children[rightIndex].toggle(true);
+    });
+  }
+};
+
 /**
  * A `TreeItem` for a Peaks.js class (segment / point).
  * @extends TreeItem
@@ -2638,15 +2732,10 @@ var File = class File extends TreeItem {
       text,
       renamable,
     });
-    this.toggle(false);
+    this.toggleTree(false);
     this.checkbox.type = "radio";
     this.checkbox.name = "radioFiles";
-    this.addEventListener("click", () => {
-      window.location.href = window.location.href.replace(
-        `file=${basename}`,
-        `file=${this.basename}`
-      );
-    });
+    this.addEventListener("click", () => this.openFile());
   }
 
   /**
@@ -2663,6 +2752,28 @@ var File = class File extends TreeItem {
    */
   get basename() {
     return removeExtension(this.filename);
+  }
+
+  /**
+   * An alias for `this.toggleTree(force)`, with the addition of opening this' file
+   * in the interface if this is checked.
+   * @see toggleTree
+   */
+  toggle(force = null) {
+    if (!this.toggleTree(force)) {
+      return false;
+    } // no toggling necessary
+    // this.checked will be changed by toggleTree
+    if (this.checked) {
+      this.openFile();
+    }
+  }
+
+  openFile() {
+    window.location.href = window.location.href.replace(
+      `file=${basename}`,
+      `file=${this.basename}`
+    );
   }
 };
 
@@ -2714,6 +2825,7 @@ var Stat = class Stat extends TreeItem {
 TreeItem.types = {
   TreeItem,
   Group,
+  CarouselGroup,
   PeaksItem,
   Segment,
   Point,
@@ -2728,6 +2840,7 @@ export {
   TreeItem,
   Popup,
   Group,
+  CarouselGroup,
   PeaksItem,
   Segment,
   Point,
