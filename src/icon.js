@@ -132,7 +132,10 @@ const plusIcon = feather.icons.plus.toSvg({ stroke: "inherit" });
  * SVG string for the minus button icon.
  * @type {string}
  */
-const minusIcon = feather.icons.minus.toSvg({ stroke: "inherit" });
+const minusIcon = feather.icons.minus.toSvg({
+  stroke: "inherit",
+  style: "vertical-align:middle;",
+});
 
 export {
   segmentIcons,
