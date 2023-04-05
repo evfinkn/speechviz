@@ -285,14 +285,14 @@ ul {
 
 .column3 {
   float: left;
-  width: 45%;
+  width: 35%;
   overflow-y: auto;
   height: auto;
 }
 
 .column4 {
   float: right;
-  width: 55%;
+  width: 45%;
   overflow-y: auto;
   height: auto;
 }
