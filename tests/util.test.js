@@ -68,6 +68,50 @@ describe("getRandomColor", () => {
 //     });
 // });
 
+const stringsToSort = [
+  "file1.txt",
+  "file10.txt",
+  "file100.txt",
+  "file101.txt",
+  "file102.txt",
+  "file11.txt",
+  "file12.txt",
+  "file2.txt",
+  "file20.txt",
+  "file21.txt",
+  "file3.txt",
+  "file30.txt",
+];
+
+describe("naturalCompare", () => {
+  test("compares 2 before 10", () => {
+    expect(util.naturalCompare("2", "10")).toBeLessThan(0);
+  });
+  test("compares 11 after 10", () => {
+    expect(util.naturalCompare("11", "10")).toBeGreaterThan(0);
+  });
+  test("compares 10 equal to 10", () => {
+    expect(util.naturalCompare("10", "10")).toBe(0);
+  });
+  test("sorts in natural order", () => {
+    const sorted = [...stringsToSort].sort(util.naturalCompare);
+    expect(sorted).toEqual([
+      "file1.txt",
+      "file2.txt",
+      "file3.txt",
+      "file10.txt",
+      "file11.txt",
+      "file12.txt",
+      "file20.txt",
+      "file21.txt",
+      "file30.txt",
+      "file100.txt",
+      "file101.txt",
+      "file102.txt",
+    ]);
+  });
+});
+
 const obj1 = {
   word1: "alfa",
   word2: "mike",
@@ -267,10 +311,22 @@ describe("checkResponseStatus", () => {
       expect(() => util.checkResponseStatus(res)).not.toThrow();
     });
   });
-  test("throws on unsuccessful response", () => {
+  test("throws ResponseError on unsuccessful response", () => {
     unsuccessfulFetch().then((res) => {
       // have to wrap in () => for .toThrow to properly detect a thrown error
-      expect(() => util.checkResponseStatus(res)).toThrow();
+      expect(() => util.checkResponseStatus(res)).toThrow(util.ResponseError);
     });
+  });
+});
+
+describe("removeExtension", () => {
+  test("removes extension from filename", () => {
+    expect(util.removeExtension("filename.ext")).toBe("filename");
+  });
+  test("only removes last extension", () => {
+    expect(util.removeExtension("filename.ext.ext")).toBe("filename.ext");
+  });
+  test("returns filename if no extension", () => {
+    expect(util.removeExtension("filename")).toBe("filename");
   });
 });
