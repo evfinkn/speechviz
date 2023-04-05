@@ -14,18 +14,22 @@ const setUser = function (newUser) {
 
 /**
  * Opens the main interface to visualize the specified file.
- * @param {string} fileName - The name of the file to open.
+ * @param {string} fileName - The name of the file / folder to open.
  * @param {string} type - The type of file to open. Either `"audio"` or `"video"`.
  * @param {?string} user - The name of the user opening the file.
  */
 const openViz = function (fileName, type, user = null) {
-  if (user !== null) {
-    console.log(`/viz?user=${user}&file=${fileName}&type=${type}`);
-    window.location.assign(`/viz?user=${user}&file=${fileName}&type=${type}`);
+  let url = `/viz?type=${type}`;
+  if (!fileName.includes(".")) {
+    // no extension means this is a folder
+    url += `&folder=${fileName}`;
   } else {
-    console.log(`/viz?file=${fileName}&type=${type}`);
-    window.location.assign(`/viz?file=${fileName}&type=${type}`);
+    url += `&file=${fileName}`;
   }
+  if (user != null) {
+    url += `&user=${user}`;
+  }
+  window.location.assign(url);
 };
 
 /**
@@ -96,72 +100,45 @@ fetch("/filelist")
     const videoFieldset = document.getElementById("video-selection");
     const faceFieldset = document.getElementById("face-selection");
 
-    if (audiofiles?.length !== 0) {
-      audiofiles.forEach(function (fileName) {
-        // add radio buttons for each audio file
-        const div = createRadioDiv(fileName, "audio-selection");
-        div.firstElementChild.addEventListener("change", function () {
-          // uncheck manually because otherwise after using back button to go
-          // back to this page, the radio button will still be checked
-          this.checked = false;
-          if (!this.id.includes(".")) {
-            // no extension means this is a folder
-            window.location.assign(
-              `/viz?user=${user}&type=audio&folder=${this.value}`
-            );
-          } else {
-            openViz(this.value, "audio", user);
-          }
-        });
-        audioFieldset.append(div);
+    audiofiles?.forEach(function (fileName) {
+      // add radio buttons for each audio file
+      const div = createRadioDiv(fileName, "audio-selection");
+      div.firstElementChild.addEventListener("change", function () {
+        // uncheck manually because otherwise after using back button to go
+        // back to this page, the radio button will still be checked
+        this.checked = false;
+        openViz(this.value, "audio", user);
       });
+      audioFieldset.append(div);
+    });
 
-      // add separation between audio and video file sections
-    }
-
-    if (videofiles?.length !== 0) {
-      // header for video files
-      videofiles.forEach(function (fileName) {
-        // add radio buttons for each video file
-        const div = createRadioDiv(fileName, "video-selection");
-        div.firstElementChild.addEventListener("change", function () {
-          this.checked = false;
-          if (!this.id.includes(".")) {
-            // no extension means this is a folder
-            window.location.assign(
-              `/viz?user=${user}&type=video&folder=${this.value}`
-            );
-          } else {
-            openViz(this.value, "video", user);
-          }
-        });
-        videoFieldset.append(div);
+    // header for video files
+    videofiles?.forEach(function (fileName) {
+      // add radio buttons for each video file
+      const div = createRadioDiv(fileName, "video-selection");
+      div.firstElementChild.addEventListener("change", function () {
+        this.checked = false;
+        openViz(this.value, "video", { user });
       });
+      videoFieldset.append(div);
+    });
 
-      // add separation between video and clustered sections
-    }
-
-    if (clusterfolders?.length !== 0) {
-      // header for cluster folders
-      clusterfolders.forEach(function (folderName) {
-        // folderName matches corresponding video fileName, so give it a different id
-        const div = createRadioDiv(
-          folderName + " Clusters",
-          "cluster-selection"
+    // header for cluster folders
+    clusterfolders?.forEach(function (folderName) {
+      // folderName matches corresponding video fileName, so give it a different id
+      const div = createRadioDiv(folderName + " Clusters", "cluster-selection");
+      div.firstElementChild.addEventListener("change", function () {
+        this.checked = false;
+        // when radio button clicked, show each cluster folder to choose which to view
+        // remove its different id, go to correct folder
+        window.location.assign(
+          `/clustered-faces?${user ? "user=" + user + "&" : ""}` +
+            `dir=${this.value.replace(" Clusters", "")}` +
+            `&inFaceFolder=false`
         );
-        div.firstElementChild.addEventListener("change", function () {
-          this.checked = false;
-          // when radio button clicked, show each cluster folder to choose which to view
-          // remove its different id, go to correct folder
-          window.location.assign(
-            `/clustered-faces?${user ? "user=" + user + "&" : ""}` +
-              `dir=${this.value.replace(" Clusters", "")}` +
-              `&inFaceFolder=false`
-          );
-        });
-        faceFieldset.append(div);
       });
-    }
+      faceFieldset.append(div);
+    });
     var acc = document.getElementsByClassName("accordion");
     var i;
 
