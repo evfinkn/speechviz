@@ -226,7 +226,9 @@ if (folder !== undefined && folder !== null) {
     .then(checkResponseStatus)
     .then((response) => response.json())
     .then((fileList) => {
-      fileList.forEach((file) => new File(file, { parent: files }));
+      fileList.forEach(
+        (file) => new File(file, { parent: files, curFile: filename })
+      );
       File.byId[filename].toggleTree(true); // turn on button for current file
       // sort in natural sort order
       files.sort((file1, file2) =>

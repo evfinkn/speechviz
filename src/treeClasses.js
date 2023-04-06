@@ -1542,9 +1542,8 @@ var CarouselGroup = class CarouselGroup extends Group {
     this.leftButton.addEventListener("click", () => {
       const currentIndex = this.children.findIndex((child) => child.checked);
       const leftIndex = currentIndex - 1;
-      this.children[currentIndex].toggle(false);
       // .at() to wrap around to the last index if leftIndex is -1
-      this.children.at(leftIndex).toggle(true);
+      this.children.at(leftIndex).openFile();
     });
     this.rightButton = htmlToElement(
       `<a href="javascript:;" class="button-on">${arrowRightIcon}</a>`
@@ -1554,8 +1553,7 @@ var CarouselGroup = class CarouselGroup extends Group {
       const currentIndex = this.children.findIndex((child) => child.checked);
       // if currentIndex is the last index, this will wrap around to 0
       const rightIndex = (currentIndex + 1) % this.children.length;
-      this.children[currentIndex].toggle(false);
-      this.children[rightIndex].toggle(true);
+      this.children.at(rightIndex).openFile();
     });
   }
 };
@@ -2715,6 +2713,13 @@ var File = class File extends TreeItem {
   static byId = {};
 
   /**
+   * Stores what the file being viewed right now is
+   * @type {string}
+   * @static
+   */
+  static currentFile;
+
+  /**
    * @param {string} filename - The name of the file, including its extension.
    * @param {?TreeItem=} options.parent - The `TreeItem` that contains the item in its
    *      nested content.
@@ -2725,17 +2730,29 @@ var File = class File extends TreeItem {
    */
   constructor(
     filename,
-    { parent = null, text = null, renamable = false } = {}
+    { parent = null, text = null, renamable = false, curFile } = {}
   ) {
     super(filename, {
       parent,
       text,
       renamable,
     });
+    this.currentFile = curFile;
     this.toggleTree(false);
     this.checkbox.type = "radio";
     this.checkbox.name = "radioFiles";
-    this.addEventListener("click", () => this.openFile());
+    this.parent.addEventListener("click", () => {
+      File.byId[curFile].toggleTree(true); // turn on button for current file
+    });
+    this.addEventListener("click", () => {
+      if (this.id !== this.currentFile) {
+        // don't allow the same file to be clicked again and
+        this.openFile();
+      } else {
+        // if the same radio button is clicked don't unclick it
+        this.toggleTree(true);
+      }
+    });
   }
 
   /**
@@ -2759,11 +2776,11 @@ var File = class File extends TreeItem {
    * in the interface if this is checked.
    * @see toggleTree
    */
-  toggle(force = null) {
-    if (!this.toggleTree(force)) {
+  toggle() {
+    if (!this.toggleTree(false)) {
       return false;
     } // no toggling necessary
-    // this.checked will be changed by toggleTree
+
     if (this.checked) {
       this.openFile();
     }
