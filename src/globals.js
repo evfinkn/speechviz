@@ -7,6 +7,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const filename = urlParams.get("file"); // name of file with extension
 const folder = urlParams.get("folder");
 const type = urlParams.get("type");
+const mono = urlParams.get("mono");
 
 // name of the file without the extension
 const basename = removeExtension(filename);
@@ -53,8 +54,14 @@ globals.folder = folder;
 globals.type = type;
 
 let waveformJson = `waveforms/${basename}-waveform.json`;
+if (mono !== undefined && mono !== null) {
+  waveformJson = `waveforms/${basename}-waveform-mono.json`;
+}
 if (folder !== undefined && folder !== null) {
   waveformJson = `waveforms/${folder}/${basename}-waveform.json`;
+  if (mono !== undefined && mono !== null) {
+    waveformJson = `waveforms/${folder}/${basename}-waveform-mono.json`;
+  }
 }
 const options = {
   // options passed to Peaks

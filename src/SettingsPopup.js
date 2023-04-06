@@ -32,6 +32,7 @@ const SettingsPopup = class SettingsPopup {
       event: "change",
       props: { checked: true },
     },
+    { name: "switchMono", event: "change", props: { checked: false } },
   ];
 
   /**
@@ -81,6 +82,11 @@ const SettingsPopup = class SettingsPopup {
    */
   maintainVideoAspectRatio;
 
+  /**
+   * Switch to mono or switch to split channels
+   * @type {!Element}
+   */
+  switchMono;
   /**
    * The button element that resets all moved segments.
    * @type {!Element}
@@ -189,6 +195,27 @@ const SettingsPopup = class SettingsPopup {
         document.getElementById("media").style = "object-fit: cover";
       } else {
         document.getElementById("media").style = "object-fit: fill";
+      }
+    });
+
+    // switch audio wave form between mono and split channels
+    let checkBoxInit = `<input type='checkbox'>`;
+    if (window.location.href.includes("&mono=True")) {
+      // if we are already mono start it checked
+      checkBoxInit = `<input type='checkbox checked'>`;
+    }
+    const switchMonoDiv = htmlToElement(`<div>
+            <label>
+              ${checkBoxInit} Display mono waveforms
+            </label>
+        </div>`);
+    popupContent.append(switchMonoDiv);
+    this.switchMono = switchMonoDiv.firstElementChild.firstElementChild;
+    this.switchMono.addEventListener("change", function () {
+      if (this.checked) {
+        window.location.href = window.location.href + "&mono=True";
+      } else {
+        window.location.href = window.location.href.replace("&mono=True", "");
       }
     });
 
