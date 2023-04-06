@@ -170,14 +170,18 @@ def get_diarization(path: pathlib.Path, auth_token, verbose=0, num_speakers=None
 
     vprint("Running the diarization pipeline")
     start_time = time.perf_counter()
-    if num_speakers is not None:
-        diar = diar_pipe(path, num_speakers=num_speakers)
-    else:
-        diar = diar_pipe(path)
-    vprint(
-        "Diarization pipeline completed in"
-        f" {time.perf_counter() - start_time:.4f} seconds"
-    )
+    try:
+        if num_speakers is not None:
+            diar = diar_pipe(path, num_speakers=num_speakers)
+        else:
+            diar = diar_pipe(path)
+        vprint(
+            "Diarization pipeline completed in"
+            f" {time.perf_counter() - start_time:.4f} seconds"
+        )
+    except ValueError:
+        print(str(path) + " failed diarization or has no speakers")
+        return (collections.defaultdict(list), collections.defaultdict(list))
 
     # format the speakers segments for peaks
     colors = util.random_color_generator(2)
@@ -378,6 +382,14 @@ def process_audio(
                 made_wav = True
             vprint(f"Creating {waveform_path}")
             util.audiowaveform(path, waveform_path, verbose, split_channels)
+            if split_channels:  # also make a mono wavforms for viewing if user wants
+                mono_waveform_path = (
+                    data_dir
+                    / "waveforms"
+                    / parent_dir
+                    / f"{path.stem}-waveform-mono.json"
+                )
+                util.audiowaveform(path, mono_waveform_path, verbose, False)
         # if a video file has no audio it will throw an error trying to make
         # an audiowaveform, but we want to continue execution so other files
         # can have their audio processed
@@ -463,11 +475,11 @@ def process_audio(
             for spkr in spkrs
         }
 
-        vad_segs, vad_times = get_vad(path, auth_token, verbose)
-        non_vad_segs = []
-        for start, end in get_complement_times(vad_times, duration):
-            # don't need to give options because the Non-VAD PeaksGroup handles it
-            non_vad_segs.append(format_segment(start, end, "#b59896", "Non-VAD"))
+        speech_pause_segs = []
+        for start, end in get_complement_times(
+            vad_times, duration, True
+        ):  # True means we just want what is likely pauses in speech for noise rms calc
+            speech_pause_segs.append(format_segment(start, end, "#092b12", "SNR-Noise"))
 
         tree_items = []
 
@@ -502,8 +514,12 @@ def process_audio(
         non_vad_options["children"] = non_vad_segs
         non_vad = format_peaks_group("Non-VAD", non_vad_options)
 
+        speech_pause_options = vad_options.copy()
+        speech_pause_options["children"] = speech_pause_segs
+        speech_pause = format_peaks_group("SNR-Noise", speech_pause_options)
+
         # save the segments
-        tree_items = [speakers, vad, non_vad]
+        tree_items = [speakers, vad, non_vad, speech_pause]
         vprint(f"Creating {segs_path}")
         with segs_path.open("w") as segs_file:
             json.dump(tree_items, segs_file)
@@ -513,6 +529,7 @@ def process_audio(
         s_entropy = util.AggregateData(entropy.spectral_entropy(mono_samples, sr))
         diar_duration = get_times_duration(diar_times)
         vad_duration = get_times_duration(vad_times)
+        snr_noise_duration = get_times_duration(speech_pause_times)
 
         stats = {
             "sampling_rate": sr,
@@ -542,6 +559,7 @@ def process_audio(
             "vad_duration": vad_duration,
             "num_vad_segments": len(vad_segs),
             "non_vad_duration": duration - vad_duration,
+            "snr_noise_duration": snr_noise_duration,
         }
         for spkr, snr in spkrs_snrs.items():
             stats[f"{spkr}_snr_db"] = snr
