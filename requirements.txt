@@ -14,4 +14,4 @@ face_recognition
 scikit-learn
 pre-commit
 orjson
-yaml
+pyyaml
