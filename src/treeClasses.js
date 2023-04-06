@@ -2787,10 +2787,15 @@ var File = class File extends TreeItem {
   }
 
   openFile() {
-    window.location.href = window.location.href.replace(
+    let tempWindowLocationHref = window.location.href;
+    tempWindowLocationHref = tempWindowLocationHref.replace(
       `file=${basename}`,
       `file=${this.basename}`
     );
+    // take out mono if the previous file was viewing the mono version in
+    // case this file doesn't have a mono version
+    tempWindowLocationHref = tempWindowLocationHref.replace("&mono=True", "");
+    window.location.href = tempWindowLocationHref;
   }
 };
 
