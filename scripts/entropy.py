@@ -62,7 +62,7 @@ def energy_entropy(
     return entropy
 
 
-def spectral_entropy(y, sr, window=None, overlap=None, freq_range=None):
+def spectral_entropy(y, sr, window=0.03, overlap=0.02, freq_range=(80, 8000)):
     """Calculates the spectral entropy of an audio signal.
 
     Parameters
@@ -71,27 +71,23 @@ def spectral_entropy(y, sr, window=None, overlap=None, freq_range=None):
         The audio signal.
     sr : int
         Sample rate of the audio.
-    window : int
-        Window applied in the time domain.
-    overlap : int
-        Number of samples overlapped between adjacent windows.
+    window : float
+        Window size in seconds.
+    overlap : float
+        Window overlap in seconds.
     freq_range : tuple of 2 ints
         Frequency range in Hz.
     """
-    if window is None:
-        window = signal.windows.hamming(round(0.03 * sr))
-    if overlap is None:
-        overlap = round(0.02 * sr)
-    if freq_range is None:
-        freq_range = (80, 8000)
+    window = signal.windows.hamming(round(window * sr))
+    overlap = round(overlap * sr)
 
     y = librosa.to_mono(y)
-    f, t, Sxx = signal.spectrogram(
-        y, sr, window=window, nperseg=len(window), noverlap=overlap
-    )
+    f, t, Sxx = signal.spectrogram(y, sr, window=window, noverlap=overlap)
 
     # frequency bin indices corresponding to the specified frequency range
     freq_bins = np.where((f >= freq_range[0]) & (f <= freq_range[1]))[0]
+    b1 = freq_bins[0]
+    b2 = freq_bins[-1]
     Sxx_range = Sxx[freq_bins, :]  # spectral values within freq_range for each time
     sum_Sxx_range = np.sum(Sxx_range, axis=0)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -104,8 +100,6 @@ def spectral_entropy(y, sr, window=None, overlap=None, freq_range=None):
     entropy = np.zeros_like(t)
     for i in range(len(t)):
         sk = norm_Sxx_range[:, i]
-        b1 = freq_bins[0]
-        b2 = freq_bins[-1]
         entropy[i] = -np.nansum(sk * np.log2(sk)) / np.log2(b2 - b1)
 
     return entropy

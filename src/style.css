@@ -194,10 +194,14 @@ body {
   height: 85px;
 }
 
+.space-between,
 .navbar {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+}
+
+.navbar {
+  align-items: center;
   height: 25px;
 }
 
@@ -281,14 +285,14 @@ ul {
 
 .column3 {
   float: left;
-  width: 45%;
+  width: 35%;
   overflow-y: auto;
   height: auto;
 }
 
 .column4 {
   float: right;
-  width: 55%;
+  width: 45%;
   overflow-y: auto;
   height: auto;
 }
@@ -402,4 +406,9 @@ ul {
 .show,
 .active {
   display: block;
+}
+
+.grayed-out {
+  opacity: 0.5;
+  pointer-events: none;
 }

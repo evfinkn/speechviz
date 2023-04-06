@@ -3,6 +3,12 @@ var router = express.Router();
 const fs = require("fs");
 const mime = require("mime/lite");
 
+// A set of files to exclude file lists.
+// ".DS_STORE" is a hidden file on mac in all folders
+const excludedFiles = new Set([".DS_Store"]);
+const readdirAndFilter = (path) =>
+  fs.readdirSync(path).filter((file) => !excludedFiles.has(file));
+
 /* GET home page. */
 router.get("/", (req, res) => {
   const file = req.query.file;
@@ -21,7 +27,7 @@ router.get("/", (req, res) => {
       if (fs.readdirSync("data/video/" + folder)) {
         if (file === undefined || file === null) {
           // the first time you click a folder there will be no file
-          const firstFile = fs.readdirSync("data/video/" + folder).at(0);
+          const firstFile = readdirAndFilter("data/video/" + folder).at(0);
           res.redirect(
             `/viz?file=${firstFile}&user=${user}&type=video&folder=${folder}`
           );
@@ -56,7 +62,7 @@ router.get("/", (req, res) => {
       if (fs.readdirSync("data/audio/" + folder)) {
         if (file === undefined || file === null) {
           // the first time you click a folder there will be no file
-          const firstFile = fs.readdirSync("data/audio/" + folder).at(0);
+          const firstFile = readdirAndFilter("data/audio/" + folder).at(0);
           res.redirect(
             `/viz?file=${firstFile}&user=${user}&type=audio&folder=${folder}`
           );

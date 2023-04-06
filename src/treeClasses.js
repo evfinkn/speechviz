@@ -16,17 +16,26 @@
 import Picker from "vanilla-picker";
 import globals from "./globals.js";
 import { undoStorage, Actions } from "./UndoRedo.js";
+import { Attribute, Attributes } from "./Attribute.js";
 import {
   htmlToElement,
-  sortByProp,
+  compareProperty,
   toggleButton,
   propertiesEqual,
   getRandomColor,
+  removeExtension,
+  mappingToString,
 } from "./util.js";
-import { groupIcons, segmentIcons } from "./icon.js";
+import {
+  groupIcons,
+  segmentIcons,
+  arrowLeftIcon,
+  arrowRightIcon,
+} from "./icon.js";
 
 const media = globals.media;
 const peaks = globals.peaks;
+const basename = globals.basename;
 
 // typedefs (used for JSDoc, can help explain types)
 /**
@@ -119,15 +128,13 @@ var TreeItem = class TreeItem {
   /**
    * The text shown in `span` (and therefore in the tree).
    * This will still have a value if this item hasn't been rendered.
-   * This is hidden to differentiate between the getter and setter for `text`.
-   * Can probably be removed by just changing getter and setter for `text` to only use
-   * `span.innerHTML`.
    * @type {string}
    */
   #text;
 
   /**
    * A `boolean` indicating if this item is checked / enabled.
+   * This will still have a value if this item hasn't been rendered.
    * @type {boolean}
    */
   #checked = true;
@@ -189,6 +196,12 @@ var TreeItem = class TreeItem {
    * @see moveTo
    */
   assocWith = null;
+
+  /**
+   * An object containing miscellaneous attributes of this item.
+   * @type {?Object}
+   */
+  attributes = null;
 
   /**
    * The li element that is displayed and that contains all other elements if this
@@ -291,6 +304,7 @@ var TreeItem = class TreeItem {
       copyTo = null,
       render = true,
       assocWith = null,
+      attributes = null,
     } = {}
   ) {
     this.id = id;
@@ -304,6 +318,14 @@ var TreeItem = class TreeItem {
     this.moveTo = moveTo;
     this.copyTo = copyTo;
     this.assocWith = assocWith;
+    this.attributes = attributes;
+    if (attributes) {
+      for (const [key, value] of Object.entries(attributes)) {
+        if (Attributes[key] === undefined) {
+          Attributes[key] = new Attribute(key, value, this.constructor.name);
+        }
+      }
+    }
 
     if (render) {
       this.render();
@@ -326,6 +348,8 @@ var TreeItem = class TreeItem {
   /**
    * Gets every constructor used to construct `this`.
    * In other words, gets `this`' class and all of its superclasses.
+   * The order is from the closest superclass to the furthest, so the first element is
+   * the class of `this` and the last element is the superclass before `Object`.
    * @return {!Array.<Object>} The constructors of `this`.
    */
   get constructors() {
@@ -350,6 +374,8 @@ var TreeItem = class TreeItem {
     parent.addChildren(this);
   }
 
+  // We have to have a separate property for text instead of just using
+  // span.innerHTML because span is null if !this.rendered
   /**
    * The text shown in (or would be) `span` (and therefore in the tree).
    * @type {string}
@@ -757,16 +783,45 @@ var TreeItem = class TreeItem {
   }
 
   /**
-   * Sorts this item's children in the tree.
-   * @param {string} by - The name of the property to sort by.
+   * Sorts this item's children in the tree by a property.
+   * @param {string} prop - The property to sort by.
+   * @param {Object} options - The options for sorting.
+   * @param {boolean} [options.reverse=false] - Whether to reverse the order of the
+   *   children after sorting them.
+   * @param {boolean} [options.reappend=true] - Whether to reappend the children to
+   *   this' `li` so that the elements are in the sorted order. Only applies if
+   *   this item is rendered and only applies to the children that are rendered.
+   * @returns {TreeItem[]} The reference to this item's children, now sorted.
    */
-  sort(by) {
-    const children = sortByProp(this.children, by);
-    if (this.rendered) {
-      children
+  sortBy(prop, { reverse = false, reappend = true } = {}) {
+    return this.sort(
+      (child1, child2) => compareProperty(child1, child2, prop),
+      { reverse, reappend }
+    );
+  }
+
+  /**
+   * Sorts this item's children in the tree.
+   * @param {function} compareFn - The function to use to compare the children.
+   * @param {Object} options - The options for sorting.
+   * @param {boolean} [options.reverse=false] - Whether to reverse the order of the
+   *    children after sorting them.
+   * @param {boolean} [options.reappend=true] - Whether to reappend the children to
+   *     this' `li` so that the elements are in the sorted order. Only applies if
+   *     this item is rendered and only applies to the children that are rendered.
+   * @returns {TreeItem[]} The reference to this item's children, now sorted.
+   */
+  sort(compareFn, { reverse = false, reappend = true } = {}) {
+    this.children.sort(compareFn);
+    if (reverse) {
+      this.children.reverse();
+    }
+    if (this.rendered && reappend) {
+      this.children
         .filter((child) => child.rendered)
         .forEach((child) => this.nested.append(child.li));
     }
+    return this.children;
   }
 
   /**
@@ -834,7 +889,7 @@ var TreeItem = class TreeItem {
   /**
    * Sets up a function that will be called whenever the specified event is
    * delivered to the target.
-   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener|EventTarget.addEventListener}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener EventTarget.addEventListener}
    */
   addEventListener(type, listener, options) {
     this.li.addEventListener(type, listener, options);
@@ -843,7 +898,7 @@ var TreeItem = class TreeItem {
   /**
    * Removes an event listener previously registered with `addEventListener`
    * from the target.
-   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener|EventTarget.removeEventListener}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener EventTarget.removeEventListener}
    */
   removeEventListener(type, listener, options) {
     this.li.removeEventListener(type, listener, options);
@@ -851,7 +906,7 @@ var TreeItem = class TreeItem {
 
   /**
    * Sends an `Event` to this item, invoking the affected `EventListeners`.
-   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent|EventTarget.dispatchEvent}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent EventTarget.dispatchEvent}
    */
   dispatchEvent(event) {
     return this.li.dispatchEvent(event);
@@ -1200,7 +1255,7 @@ var Popup = class Popup {
       const copied = this.treeItem.copy(dest);
       if (copied) {
         undoStorage.push(new Actions.CopyAction(copied));
-        dest.sort("startTime");
+        dest.sortBy("startTime");
       }
       dest.open();
       radioButton.checked = false;
@@ -1329,19 +1384,16 @@ var Group = class Group extends TreeItem {
     // a segment before it is reached by the generator, it will get included, even
     // though it wasn't checked when checkedGenerator was initially called
     do {
-      // get children inside the loop because user may have checked more tree items
-      const children = sortByProp(
-        this.children.filter((child) => child.checked && child.playable),
-        "startTime"
-      );
+      // get children inside the loop because user may have added / removed children
+      const children = [...this.sortBy("startTime")];
       if (children.length === 0) {
         // there's nothing to play, so stop the iterator completely using return
         // return will set the done property of generator.next() to true
         return;
       }
       for (const child of children) {
-        // checked and playable are checked above, but they might've changed,
-        // so check again just to ensure that the child is still valid
+        // only yield checked, playable children because those are the only ones
+        // that can be played
         if (child.checked && child.playable) {
           yield child;
         }
@@ -1416,6 +1468,95 @@ var Group = class Group extends TreeItem {
     // this way, the endedHandler can be removed (we couldn't do it here because
     // it's not defined here)
     this.dispatchEvent(new Event("manualpause", { bubbles: true }));
+  }
+};
+
+var CarouselGroup = class CarouselGroup extends Group {
+  /**
+   * An object containing all `CarouselGroup`s by their id.
+   * Key is id, value is corresponding `CarouselGroup`:
+   * {id: `CarouselGroup`}
+   * @type {!Object.<string, CarouselGroup>}
+   */
+  static byId = {};
+
+  /**
+   * The a element used to untoggle the currently selected item in the group and
+   * toggle the item to its left in `children`.
+   * If the currently selected item is the first item in `children`, the last item in
+   * `children` is selected. If multiple items are selected, the first selected item is
+   * used. If there are no items in `children` or no items are selected, nothing
+   * happens.
+   * @type {!Element}
+   */
+  leftButton;
+
+  /**
+   * The a element used to untoggle the currently selected item in the group and
+   * toggle the item to its right in `children`.
+   * If the currently selected item is the last item in `children`, the first item in
+   * `children` is selected. If multiple items are selected, the first selected item is
+   * used. If there are no items in `children` or no items are selected, nothing
+   * happens.
+   * @type {!Element}
+   */
+  rightButton;
+
+  /**
+   * @param {string} id - The unique identifier to give the `CarouselGroup`.
+   * @param {?Object.<string, any>=} options - Options to customize the group.
+   * @param {?TreeItem=} options.parent - The `TreeItem` that contains the
+   *      group in its nested content.
+   * @param {?Array.<TreeItem>=} options.children - An array of `TreeItem`s to put in
+   *      the group's nested content.
+   * @param {string=} options.text - The text to show in the group's span (and
+   *      therefore in the tree). If `null`, `id` is used.
+   * @param {boolean} [options.playable=false] - Indicates if the group can be played
+   *      and looped.
+   * @param {boolean} [options.removable=false] - Indicates if the group can be removed
+   *      from the tree.
+   * @param {?Array.<TreeItem>=} [options.moveTo] - An array of the `TreeItem`s
+   *      that the group can be moved to. `null` if the group isn't moveable.
+   * @param {?Array.<TreeItem>=} [options.copyTo] - An array of the `TreeItem`s
+   *      that the group can be copied to. `null` if the group isn't copyable.
+   * @throws {Error} If a `TreeItem` with `id` already exists.
+   */
+  constructor(
+    id,
+    {
+      parent = null,
+      children = null,
+      text = null,
+      playable = false,
+      removable = false,
+      moveTo = null,
+      copyTo = null,
+    } = {}
+  ) {
+    super(id, { parent, children, text, playable, removable, moveTo, copyTo });
+    this.leftButton = htmlToElement(
+      `<a href="javascript:;" class="button-on">${arrowLeftIcon}</a>`
+    );
+    // this puts the left button before any other buttons
+    this.span.after(this.leftButton);
+    this.leftButton.addEventListener("click", () => {
+      const currentIndex = this.children.findIndex((child) => child.checked);
+      const leftIndex = currentIndex - 1;
+      this.children[currentIndex].toggle(false);
+      // .at() to wrap around to the last index if leftIndex is -1
+      this.children.at(leftIndex).toggle(true);
+    });
+    this.rightButton = htmlToElement(
+      `<a href="javascript:;" class="button-on">${arrowRightIcon}</a>`
+    );
+    this.leftButton.after(this.rightButton);
+    this.rightButton.addEventListener("click", () => {
+      const currentIndex = this.children.findIndex((child) => child.checked);
+      // if currentIndex is the last index, this will wrap around to 0
+      const rightIndex = (currentIndex + 1) % this.children.length;
+      this.children[currentIndex].toggle(false);
+      this.children[rightIndex].toggle(true);
+    });
   }
 };
 
@@ -1556,6 +1697,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
       moveTo = null,
       copyTo = null,
       render = true,
+      attributes = null,
     } = {}
   ) {
     // catch options contained within the peaks item
@@ -1576,6 +1718,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
       moveTo,
       copyTo,
       render: false,
+      attributes,
     });
     this.peaksItem = peaksItem;
     this.type = peaksItem.constructor.name === "Segment" ? "Segment" : "Point";
@@ -1828,6 +1971,7 @@ var Segment = class Segment extends PeaksItem {
       renamable = false,
       moveTo = null,
       copyTo = null,
+      attributes = null,
     } = {}
   ) {
     if (segment.constructor.name !== "Segment") {
@@ -1841,6 +1985,7 @@ var Segment = class Segment extends PeaksItem {
       renamable,
       moveTo,
       copyTo,
+      attributes,
     });
 
     this.updateDuration();
@@ -1906,6 +2051,9 @@ var Segment = class Segment extends PeaksItem {
       `Start time: ${this.startTime.toFixed(2)}\n` +
       `End time: ${this.endTime.toFixed(2)}\n` +
       `Duration: ${this.duration.toFixed(2)}`;
+    if (this.attributes !== null) {
+      this.span.title += `\n${mappingToString(this.attributes)}`;
+    }
   }
 
   /**
@@ -2233,7 +2381,7 @@ var PeaksGroup = class PeaksGroup extends Group {
 
     this.snr = snr;
     if (children) {
-      this.sort("startTime");
+      this.sortBy("startTime");
     }
 
     if (color) {
@@ -2287,7 +2435,7 @@ var PeaksGroup = class PeaksGroup extends Group {
         this.hidden.add(child);
       }
     }
-    this.sort("startTime");
+    this.sortBy("startTime");
   }
 
   /**
@@ -2561,37 +2709,71 @@ var File = class File extends TreeItem {
   /**
    * An object containing all `File`s by their id.
    * Key is id, value is corresponding `File`:  {id: `File`}
-   * @type {Object.<string, Run>}
+   * @type {Object.<string, File>}
    * @static
    */
   static byId = {};
 
   /**
-   * Names of properties to get in `getProperties`.
-   * @type {!string[]}
-   * @see getProperties
-   * @static
-   */
-  static properties = ["treeText"];
-
-  /**
-   * @param {string} id - The unique identifier to give the `File`.
+   * @param {string} filename - The name of the file, including its extension.
    * @param {?TreeItem=} options.parent - The `TreeItem` that contains the item in its
    *      nested content.
    * @param {string=} options.text - The text to show in the item's span (and
-   *      therefore in the tree). If `null`, `id` is used.
+   *      therefore in the tree). If `null`, `filename` is used.
    * @param {boolean} [options.renamable=false] - Indicates if the item can be renamed.
-   * @throws {Error} If a `TreeItem` with `id` already exists.
+   * @throws {Error} If a `TreeItem` with an id equal to `filename` already exists.
    */
-  constructor(id, { parent = null, text = null, renamable = false } = {}) {
-    super(id, {
+  constructor(
+    filename,
+    { parent = null, text = null, renamable = false } = {}
+  ) {
+    super(filename, {
       parent,
       text,
       renamable,
     });
-    this.toggle();
+    this.toggleTree(false);
     this.checkbox.type = "radio";
     this.checkbox.name = "radioFiles";
+    this.addEventListener("click", () => this.openFile());
+  }
+
+  /**
+   * The name of the file that this `File` represents, including its extension.
+   * @type {string}
+   */
+  get filename() {
+    return this.id;
+  }
+
+  /**
+   * The name of the file that this `File` represents, without its extension.
+   * @type {string}
+   */
+  get basename() {
+    return removeExtension(this.filename);
+  }
+
+  /**
+   * An alias for `this.toggleTree(force)`, with the addition of opening this' file
+   * in the interface if this is checked.
+   * @see toggleTree
+   */
+  toggle(force = null) {
+    if (!this.toggleTree(force)) {
+      return false;
+    } // no toggling necessary
+    // this.checked will be changed by toggleTree
+    if (this.checked) {
+      this.openFile();
+    }
+  }
+
+  openFile() {
+    window.location.href = window.location.href.replace(
+      `file=${basename}`,
+      `file=${this.basename}`
+    );
   }
 };
 
@@ -2643,6 +2825,7 @@ var Stat = class Stat extends TreeItem {
 TreeItem.types = {
   TreeItem,
   Group,
+  CarouselGroup,
   PeaksItem,
   Segment,
   Point,
@@ -2657,6 +2840,7 @@ export {
   TreeItem,
   Popup,
   Group,
+  CarouselGroup,
   PeaksItem,
   Segment,
   Point,

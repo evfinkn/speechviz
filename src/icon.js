@@ -122,6 +122,31 @@ const saveIcon = feather.icons.save.toSvg({ stroke: "inherit" });
  */
 const settingsIcon = feather.icons.settings.toSvg({ stroke: "inherit" });
 
+/**
+ * SVG string for the plus button icon.
+ * @type {string}
+ */
+const plusIcon = feather.icons.plus.toSvg({ stroke: "inherit" });
+
+/**
+ * SVG string for the minus button icon.
+ * @type {string}
+ */
+const minusIcon = feather.icons.minus.toSvg({
+  stroke: "inherit",
+  style: "vertical-align:middle;",
+});
+
+const arrowOptions = Object.assign(
+  {
+    stroke: "inherit",
+    style: "vertical-align:middle;",
+  },
+  widthHeight17
+);
+const arrowLeftIcon = feather.icons["arrow-left"].toSvg(arrowOptions);
+const arrowRightIcon = feather.icons["arrow-right"].toSvg(arrowOptions);
+
 export {
   segmentIcons,
   groupIcons,
@@ -131,4 +156,8 @@ export {
   redoIcon,
   saveIcon,
   settingsIcon,
+  plusIcon,
+  minusIcon,
+  arrowLeftIcon,
+  arrowRightIcon,
 };

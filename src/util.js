@@ -28,6 +28,18 @@ const htmlToElement = function (html) {
 };
 
 /**
+ * Compares two strings using natural sort order.
+ * @param {string} a - The first string to compare.
+ * @param {string} b - The second string to compare.
+ * @returns {number} A negative number if `a` is before `b`, a positive number if `a`
+ *      is after `b`, or `0` if `a` equals `b`.
+ * @see {@link https://en.wikipedia.org/wiki/Natural_sort_order Natural sort order}
+ */
+const naturalCompare = function (a, b) {
+  return a.localeCompare(b, undefined, { numeric: true });
+};
+
+/**
  * Compares two `Objects` by one of their properties.
  * Uses less than and greater than to compare the properties.
  * @param {!Object.<any, any>} obj1 - An object to compare.
@@ -51,12 +63,13 @@ const compareProperty = function (obj1, obj2, property) {
  * Sorts an array of `Object`s in place by a property of its elements.
  * @param {!Array.<Object.<any, any>>} array - The array of objects to sort.
  * @param {any} property - The name of the property to sort by.
- * @param {boolean} [reverse=false] - If `false`, the array is sorted in ascending
- *      order. Otherwise, the array is sorted in descending order.
+ * @param {Object} options - The options for sorting.
+ * @param {boolean} [options.reverse=false] - If `false`, the array is sorted in
+ *      ascending order. Otherwise, the array is sorted in descending order.
  * @returns {!Array.<Object.<any, any>>} The reference to the original array, now
  *      sorted.
  */
-const sortByProp = function (array, property, reverse = false) {
+const sortByProp = function (array, property, { reverse = false } = {}) {
   reverse = reverse ? -1 : 1;
   array.sort((obj1, obj2) => compareProperty(obj1, obj2, property) * reverse);
   return array;
@@ -267,9 +280,36 @@ const removeExtension = function (filename) {
   return filename.replace(/\.[^/.]+$/, "");
 };
 
+/**
+ * Converts an object into a string representation.
+ * @param {*} mapping
+ * @param {number} indent
+ * @returns
+ */
+const mappingToString = (mapping, indent = 0) => {
+  if (typeof mapping !== "object") {
+    return `${" ".repeat(indent)}${mapping},`;
+  }
+  let string = "";
+  for (const [key, value] of Object.entries(mapping)) {
+    if (Array.isArray(value)) {
+      const arrayString = value
+        .map((item) => mappingToString(item, indent + 2))
+        .join("\n");
+      string += `${key}: [\n${arrayString}\n]\n`;
+    } else if (typeof value === "object") {
+      string += `${key}: {\n${mappingToString(value, indent + 2)}}\n`;
+    } else {
+      string += `${" ".repeat(indent)}${key}: ${value}\n`;
+    }
+  }
+  return string;
+};
+
 export {
   getRandomColor,
   htmlToElement,
+  naturalCompare,
   compareProperty,
   sortByProp,
   propertiesEqual,
@@ -282,4 +322,5 @@ export {
   checkResponseStatus,
   parseNumericalCsv,
   removeExtension,
+  mappingToString,
 };

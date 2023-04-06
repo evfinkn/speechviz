@@ -411,7 +411,7 @@ var GraphIMU = class GraphIMU {
       const index = Math.abs(
         binarySearch(this.timestamps[i], media.currentTime, (t1, t2) => t1 - t2)
       );
-      if (index > this.quaternions[i].length) {
+      if (index >= this.quaternions[i].length) {
         return; // prevent out of bounds errors
       }
       // update glasses' orientation

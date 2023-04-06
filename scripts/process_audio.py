@@ -17,9 +17,31 @@ import util
 AUDIO_FILES = {".mp3", ".wav", ".flac", ".ogg", ".opus"}
 VIDEO_FILES = {".mp4", ".mov"}
 
+COPY_TO_LABELED = {"copyTo": ["Labeled.children"]}
 
-def format_segment(start, end, color, label):
-    return {"startTime": start, "endTime": end, "color": color, "labelText": label}
+
+def format_tree_item(item_type: str, arguments: list, options: dict = None):
+    item = {"type": item_type, "arguments": arguments}
+    if options is not None:
+        item["options"] = options
+    return item
+
+
+def format_group(name: str, options: dict = None):
+    return format_tree_item("Group", [name], options)
+
+
+def format_peaks_group(name: str, options: dict = None):
+    return format_tree_item("PeaksGroup", [name], options)
+
+
+def format_segment(start, end, color, label, options=None):
+    # round start and end to save space in the json file and because many times from
+    # the pyannote pipelines look like 5.3071874999999995 and 109.99968750000001
+    start = round(start, 7)
+    end = round(end, 7)
+    peaks_seg = {"startTime": start, "endTime": end, "color": color, "labelText": label}
+    return format_tree_item("Segment", [peaks_seg], options)
 
 
 def get_complement_times(times, duration, pauses=False):
@@ -94,16 +116,6 @@ def remove_overlapped(grouped, in_place=False):
 def get_num_convo_turns(times):
     grouped = util.sort_and_regroup(times)
     return len(remove_overlapped(grouped))
-
-
-def get_complement_segments(segments, duration, color, label, times=None):
-    times = (
-        [(seg["startTime"], seg["endTime"]) for seg in segments]
-        if times is None
-        else times
-    )
-    comp_times = get_complement_times(times, duration)
-    return [format_segment(start, end, color, label) for start, end in comp_times]
 
 
 def rms(samps):  # give it a list, and it finds the root mean squared
@@ -184,6 +196,7 @@ def get_diarization(path: pathlib.Path, auth_token, verbose=0, num_speakers=None
                 colors
             )  # each speaker has a color used for all of their segments
 
+        # don't need to give segment options because the speaker PeaksGroups handles it
         spkrs_segs[spkr].append(format_segment(start, end, spkrs_colors[spkr], spkr))
         spkrs_times[spkr].append((start, end))
 
@@ -229,6 +242,7 @@ def get_vad(path: pathlib.Path, auth_token, onset, offset, verbose=0):
     for turn, _ in vad.itertracks():
         start = turn.start
         end = turn.end
+        # don't need to give segment options because the VAD PeaksGroup handles it
         vad_segs.append(format_segment(start, end, "#5786c9", "VAD"))
         vad_times.append((start, end))
 
@@ -396,11 +410,10 @@ def process_audio(
         mono_samples = librosa.to_mono(samples)
         duration = librosa.get_duration(y=mono_samples, sr=sr)
 
-        segs = []
         spkrs_segs, spkrs_times = get_diarization(
             path, auth_token, verbose=verbose, num_speakers=num_speakers
         )
-        spkrs = sorted(spkrs_segs)
+        spkrs = sorted(spkrs_segs.keys())
         spkrs_durations = {
             spkr: get_times_duration(spkr_times)
             for spkr, spkr_times in spkrs_times.items()
@@ -412,9 +425,10 @@ def process_audio(
         diar_times = flatten_times(diar_times, len(mono_samples), sr)
 
         vad_segs, vad_times = get_vad(path, auth_token, onset, offset, verbose)
-        non_vad_segs = get_complement_segments(
-            vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
-        )
+        non_vad_segs = []
+        for start, end in get_complement_times(vad_times, duration):
+            # don't need to give options because the Non-VAD PeaksGroup handles it
+            non_vad_segs.append(format_segment(start, end, "#b59896", "Non-VAD"))
 
         speech_pause_times = get_complement_times(
             vad_times, len(mono_samples) / sr, True
@@ -431,9 +445,10 @@ def process_audio(
                 onset = onset + 0.05
                 offset = offset + 0.05
                 vad_segs, vad_times = get_vad(path, auth_token, onset, offset, verbose)
-                non_vad_segs = get_complement_segments(
-                    vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
+                speech_pause_times = get_complement_times(
+                    vad_times, len(mono_samples) / sr, True
                 )
+                noise_times = speech_pause_times
             onset = originalOnset
             offset = originalOffset
         # if still no noise for snr throw exception
@@ -448,19 +463,50 @@ def process_audio(
             for spkr in spkrs
         }
 
-        segs.append(
-            (
-                "Speakers",
-                [(spkr, spkrs_segs[spkr], spkrs_snrs[spkr]) for spkr in spkrs],
-            )
-        )
-        segs.append(("VAD", vad_segs))
-        segs.append(("Non-VAD", non_vad_segs))
+        vad_segs, vad_times = get_vad(path, auth_token, verbose)
+        non_vad_segs = []
+        for start, end in get_complement_times(vad_times, duration):
+            # don't need to give options because the Non-VAD PeaksGroup handles it
+            non_vad_segs.append(format_segment(start, end, "#b59896", "Non-VAD"))
+
+        tree_items = []
+
+        spkrs_groups = []
+        spkrs_children_options = COPY_TO_LABELED.copy()
+        spkrs_children_options["moveTo"] = ["Speakers.children"]
+        for spkr in spkrs:
+            options = {
+                "snr": spkrs_snrs[spkr],
+                "childrenOptions": spkrs_children_options,
+                "children": spkrs_segs[spkr],
+            }
+            spkr_group = format_peaks_group(spkr, options)
+            spkrs_groups.append(spkr_group)
+        spkrs_options = {
+            "parent": "Analysis",
+            "playable": True,
+            "childrenOptions": COPY_TO_LABELED,
+            "children": spkrs_groups,
+        }
+        speakers = format_group("Speakers", spkrs_options)
+
+        vad_options = {
+            "parent": "Analysis",
+            "copyTo": ["Labeled.children"],
+            "childrenOptions": COPY_TO_LABELED,
+            "children": vad_segs,
+        }
+        vad = format_peaks_group("VAD", vad_options)
+
+        non_vad_options = vad_options.copy()
+        non_vad_options["children"] = non_vad_segs
+        non_vad = format_peaks_group("Non-VAD", non_vad_options)
 
         # save the segments
+        tree_items = [speakers, vad, non_vad]
         vprint(f"Creating {segs_path}")
         with segs_path.open("w") as segs_file:
-            json.dump(segs, segs_file)
+            json.dump(tree_items, segs_file)
 
         overall_snr = snr_from_times(diar_times, mono_samples, sr, noise_rms)
         e_entropy = util.AggregateData(entropy.energy_entropy(mono_samples, sr))

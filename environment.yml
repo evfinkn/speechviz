@@ -26,3 +26,4 @@ dependencies:
     - face_recognition
     - scikit-learn
     - orjson
+    - yaml

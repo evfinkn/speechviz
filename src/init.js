@@ -5,6 +5,7 @@ import globals from "./globals.js";
 import {
   TreeItem,
   Group,
+  CarouselGroup,
   Segment,
   PeaksGroup,
   Face,
@@ -14,18 +15,19 @@ import {
 } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
+import { FiltersPopup } from "./FiltersPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
 import {
   arrayMean,
   objectMap,
   getRandomColor,
+  naturalCompare,
   sortByProp,
   toggleButton,
   ResponseError,
   checkResponseStatus,
   parseNumericalCsv,
   htmlToElement,
-  removeExtension,
 } from "./util.js";
 import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
 
@@ -160,15 +162,16 @@ const rankSnrs = () => {
 
   // add the numbers in the circles next to the text of the speakers in the tree
   // decreasing order because want highest snr to be 1
-  sortByProp(groups, "snr", true);
+  sortByProp(groups, "snr", { reverse: true });
   for (let i = 0; i < groups.length; i++) {
     // uses HTML symbol codes for the circled numbers
     // (can be found at https://www.htmlsymbols.xyz/search?q=circled)
     // numbers 1 - 20 use 9312 - 9331 (inclusive),
     // numbers 21 - 35 use 12881 - 12895 (inclusive)
-    // should probably add case for numbers 36 - 50?
-    // Extremely unlikely ever have that many speakers but still
-    groups[i].text = `&#${(i <= 19 ? 9312 : 12861) + i} ${groups[i].text}`;
+    // only show the top 15
+    if (i <= 14) {
+      groups[i].text = `&#${9312 + i} ${groups[i].text}`;
+    }
   }
 
   // for the next lines (snrMean to durZScores), it would be faster to loop
@@ -218,32 +221,17 @@ const labeled = new Group("Labeled", { parent: analysis, playable: true });
 
 if (folder !== undefined && folder !== null) {
   // in a folder
-  const files = new Group("Files", { parent: tree, playable: false });
+  const files = new CarouselGroup("Files", { parent: tree, playable: false });
   fetch(`${type}/${folder}`)
     .then(checkResponseStatus)
     .then((response) => response.json())
     .then((fileList) => {
-      fileList.forEach((file) => {
-        new File(file, { parent: files });
-      });
+      fileList.forEach((file) => new File(file, { parent: files }));
+      File.byId[filename].toggleTree(true); // turn on button for current file
       // sort in natural sort order
-      files.children.sort(function (a, b) {
-        return a.id.localeCompare(b.id, undefined, { numeric: true });
-      });
-      files.children.forEach((child) => {
-        files.nested.append(child.li);
-        const childBasename = removeExtension(child.id);
-        if (childBasename === basename) {
-          // make radio button of audio selected
-          child.toggle();
-        }
-        child.addEventListener("click", function () {
-          window.location.href = window.location.href.replace(
-            `file=${basename}`,
-            `file=${childBasename}`
-          );
-        });
-      });
+      files.sort((file1, file2) =>
+        naturalCompare(file1.filename, file2.filename)
+      );
     })
     .catch((error) => output404OrError(error, "folder grabbing runs"));
 }
@@ -477,7 +465,7 @@ const segmentLoading = fetch(segmentsFetch)
           const copied = segment.copy(dest);
           if (copied) {
             undoStorage.push(new Actions.CopyAction(copied));
-            dest.sort("startTime");
+            dest.sortBy("startTime");
           }
           dest.open();
         }
@@ -804,7 +792,7 @@ fetch("load", {
             moveTo: [labeled.children],
           });
         }
-        parent.sort("startTime");
+        parent.sortBy("startTime");
 
         if (segment.labelText.match(regex)) {
           segmentCounter++;
@@ -983,6 +971,12 @@ settingsButton.innerHTML = settingsIcon;
 const settingsPopup = new SettingsPopup();
 settingsButton.addEventListener("click", function () {
   settingsPopup.show();
+});
+
+const filtersButton = document.getElementById("filters");
+const filtersPopup = new FiltersPopup();
+filtersButton.addEventListener("click", function () {
+  filtersPopup.show();
 });
 
 // https://www.w3schools.com/howto/howto_js_dropdown.asp
