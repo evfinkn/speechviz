@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import math
 import os
 import pathlib
 import subprocess
@@ -21,7 +22,7 @@ def format_segment(start, end, color, label):
     return {"startTime": start, "endTime": end, "color": color, "labelText": label}
 
 
-def get_complement_times(times, duration):
+def get_complement_times(times, duration, pauses=False):
     comp_times = []
     if len(times) == 0:
         comp_times.append((0, duration))
@@ -37,7 +38,12 @@ def get_complement_times(times, duration):
         else:
             comp_times.append((0, times[0][0]))
         for i in range(start_index, len(times)):
-            comp_times.append((times[i - 1][1], times[i][0]))
+            if not pauses:
+                comp_times.append((times[i - 1][1], times[i][0]))
+            elif (
+                times[i][0] - times[i - 1][1] < 2
+            ):  # if the nonvad time is less than 2 seconds it's prob. a pause in speech
+                comp_times.append((times[i - 1][1], times[i][0]))
         if times[-1][1] != duration:
             comp_times.append((times[-1][1], duration))
     return comp_times
@@ -104,10 +110,12 @@ def rms(samps):  # give it a list, and it finds the root mean squared
     return np.sqrt(np.mean(np.square(samps)))
 
 
-def snr(signal, noise):
+def snr(signal, noise):  # https://en.m.wikipedia.org/wiki/Signal-to-noise_ratio
     signal_rms = rms(signal) if not isinstance(signal, float) else signal
     noise_rms = rms(noise) if not isinstance(noise, float) else noise
-    return ((signal_rms - noise_rms) / noise_rms) ** 2
+    snr = ((signal_rms - noise_rms) / noise_rms) ** 2
+    snr_db = 10 * (math.log(snr, 10))
+    return snr_db
 
 
 def samples_from_times(times, samples, sr):
@@ -121,15 +129,10 @@ def samples_from_times(times, samples, sr):
     return samps
 
 
-def snr_from_times(signal_times, samples, sr, noise_rms=None):
+def snr_from_times(signal_times, samples, sr, noise_rms):
     if len(signal_times) == 0:
         return 0
     signal_samps = samples_from_times(signal_times, samples, sr)
-    if noise_rms is None:
-        noise_samps = samples_from_times(
-            get_complement_times(signal_times, len(samples) / sr), samples, sr
-        )
-        noise_rms = rms(noise_samps)
     return snr(signal_samps, noise_rms)
 
 
@@ -190,7 +193,7 @@ def get_diarization(path: pathlib.Path, auth_token, verbose=0, num_speakers=None
     return (spkrs_segs, spkrs_times)
 
 
-def get_vad(path: pathlib.Path, auth_token, verbose=0):
+def get_vad(path: pathlib.Path, auth_token, onset, offset, verbose=0):
     # use global vad_pipe so that it doesn't need
     # to be re-initialized (which is time-consuming)
     global vad_pipe
@@ -204,6 +207,16 @@ def get_vad(path: pathlib.Path, auth_token, verbose=0):
         vad_pipe = Pipeline.from_pretrained(
             "pyannote/voice-activity-detection", use_auth_token=auth_token
         )
+    old_params = vad_pipe.parameters(instantiated=True)
+
+    new_params = {}
+    if onset is not None:
+        new_params["onset"] = onset
+    if offset is not None:
+        new_params["offset"] = offset
+    # change default parameters of onset and offset if given
+    old_params.update(new_params)
+    vad_pipe.instantiate(old_params)
 
     vprint("Running the VAD pipeline")
     start_time = time.perf_counter()
@@ -299,6 +312,8 @@ def process_audio(
     quiet=False,
     verbose=0,
     split_channels=False,
+    onset=None,
+    offset=None,
     num_speakers=None,
 ):
     vprint = util.verbose_printer(quiet, verbose)
@@ -396,18 +411,42 @@ def process_audio(
         diar_times = [time for spkr in spkrs_times.values() for time in spkr]
         diar_times = flatten_times(diar_times, len(mono_samples), sr)
 
-        noise_times = get_complement_times(diar_times, len(mono_samples) / sr)
+        vad_segs, vad_times = get_vad(path, auth_token, onset, offset, verbose)
+        non_vad_segs = get_complement_segments(
+            vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
+        )
+
+        speech_pause_times = get_complement_times(
+            vad_times, len(mono_samples) / sr, True
+        )  # True means we just want what is likely pauses in speech for noise rms calc.
+
+        noise_times = speech_pause_times
+
+        # no noise to base off of, and can't calculate snr?
+        # then try again with higher onset and offset (less strict)
+        if not noise_times:
+            originalOnset = onset
+            originalOffset = offset
+            while not noise_times:
+                onset = onset + 0.05
+                offset = offset + 0.05
+                vad_segs, vad_times = get_vad(path, auth_token, onset, offset, verbose)
+                non_vad_segs = get_complement_segments(
+                    vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
+                )
+            onset = originalOnset
+            offset = originalOffset
+        # if still no noise for snr throw exception
+        # and let user decide what they'd like to do about it
+        if not noise_times:
+            raise Exception("No non-vad to calculate snr with for file " + str(path))
+
         noise_samps = samples_from_times(noise_times, mono_samples, sr)
         noise_rms = rms(noise_samps)
         spkrs_snrs = {
             spkr: snr_from_times(spkrs_times[spkr], mono_samples, sr, noise_rms)
             for spkr in spkrs
         }
-
-        vad_segs, vad_times = get_vad(path, auth_token, verbose)
-        non_vad_segs = get_complement_segments(
-            vad_segs, duration, "#b59896", "Non-VAD", times=vad_times
-        )
 
         segs.append(
             (
@@ -434,7 +473,7 @@ def process_audio(
             "duration": duration,
             "num_speakers": len(spkrs),
             "num_convo_turns": get_num_convo_turns(list(spkrs_times.values())),
-            "overall_snr": overall_snr,
+            "overall_snr_db": overall_snr,
             "e_entropy_mean": e_entropy.mean,
             "e_entropy_median": e_entropy.median,
             "e_entropy_std": e_entropy.std,
@@ -452,14 +491,14 @@ def process_audio(
             "most_segments": util.max_value_item(spkrs_num_segs, default="N/A"),
             "shortest_speaker": util.min_value_item(spkrs_durations, default="N/A"),
             "longest_speaker": util.max_value_item(spkrs_durations, default="N/A"),
-            "lowest_snr": util.min_value_item(spkrs_snrs, default="N/A"),
-            "highest_snr": util.max_value_item(spkrs_snrs, default="N/A"),
+            "lowest_snr_db": util.min_value_item(spkrs_snrs, default="N/A"),
+            "highest_snr_db": util.max_value_item(spkrs_snrs, default="N/A"),
             "vad_duration": vad_duration,
             "num_vad_segments": len(vad_segs),
             "non_vad_duration": duration - vad_duration,
         }
         for spkr, snr in spkrs_snrs.items():
-            stats[f"{spkr}_snr"] = snr
+            stats[f"{spkr}_snr_db"] = snr
         if split_channels and samples.ndim == 2:
             if channels_path.exists():
                 channel_names = channels_path.read_text().splitlines()
@@ -473,9 +512,9 @@ def process_audio(
                     for spkr in spkrs
                 }
                 c_overall_snr = snr_from_times(diar_times, samples[i], sr, c_noise_rms)
-                stats[f"{channel_name}_overall_snr"] = c_overall_snr
+                stats[f"{channel_name}_overall_snr_db"] = c_overall_snr
                 for spkr, snr in c_spkrs_snrs.items():
-                    stats[f"{channel_name}_{spkr}_snr"] = snr
+                    stats[f"{channel_name}_{spkr}_snr_db"] = snr
         util.add_to_csv(stats_path, stats)
 
     # if we converted to wav, remove that wav file
@@ -525,6 +564,22 @@ if __name__ == "__main__":
         help=(
             "The path to the file to process. If an audio file, processes the audio"
             " file. If a directory, processes every audio file in the directory."
+        ),
+    )
+    parser.add_argument(
+        "--onset",
+        type=float,
+        help=(
+            "When probability of vad goes above this it is vad for vad_pipe. Between"
+            " (0,1)"
+        ),
+    )
+    parser.add_argument(
+        "--offset",
+        type=float,
+        help=(
+            "When probability of vad goes below this it is nonvad for vad_pipe. Between"
+            " (0,1)"
         ),
     )
     parser.add_argument(
