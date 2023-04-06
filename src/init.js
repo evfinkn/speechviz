@@ -636,6 +636,21 @@ fetch(statsFetch)
   })
   .catch((error) => output404OrError(error, "stats"));
 
+fetch("/isSplitChannel", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ folder: folder, basename: basename }),
+})
+  .then(checkResponseStatus)
+  .then((response) => response.text())
+  .then((trueOrFalse) => {
+    // if it is not a split channel, don't allow switching between mono and split
+    if (trueOrFalse !== "true") {
+      document.getElementById("switchMono").type = "hidden";
+      document.getElementById("switchMonoText").hidden = true;
+    }
+  });
+
 // This is commented out until we need to use something like this
 // const plotContainer = document.getElementById("plot");
 // if (plotContainer) {

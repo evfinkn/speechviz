@@ -199,14 +199,16 @@ const SettingsPopup = class SettingsPopup {
     });
 
     // switch audio wave form between mono and split channels
-    let checkBoxInit = `<input type='checkbox'>`;
+    // id is so we can get rid of this checkbox if the file doesn't have mono waveform
+    let checkBoxInit = `<input id='switchMono' type='checkbox'>`;
     if (window.location.href.includes("&mono=True")) {
       // if we are already mono start it checked
-      checkBoxInit = `<input type='checkbox checked'>`;
+      checkBoxInit = `<input id='switchMono' type='checkbox' checked>`;
+      console.log(true);
     }
     const switchMonoDiv = htmlToElement(`<div>
             <label>
-              ${checkBoxInit} Display mono waveforms
+              ${checkBoxInit} <span id='switchMonoText'> Display mono waveforms </span>
             </label>
         </div>`);
     popupContent.append(switchMonoDiv);

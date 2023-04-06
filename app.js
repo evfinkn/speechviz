@@ -231,7 +231,6 @@ const save = db.transaction((filename, user, segments, notes, faces) => {
   }
 
   insertNotes.run([fileId, userId, notes]);
-  console.log(faces);
   for (let i = 0; i < faces.length; i = i + 2) {
     insertFace.run([fileId, userId, faces[i], faces[i + 1]]);
   }
@@ -312,6 +311,21 @@ const resetMoved = db.transaction((filename, user, highestId) => {
     }
   }
 });
+
+app.use(express.json()); // <==== parse request body as JSON
+app.post("/isSplitChannel", (req, res) => {
+  const folder = req.body.folder;
+  const basename = req.body.basename;
+  let waveforms;
+  if (folder !== null && folder !== null)
+    waveforms = readdirAndFilter(`data/waveforms/${folder}`);
+  else waveforms = readdirAndFilter("data/waveforms");
+  // if it has a -mono waveform it must be a split-channel file
+  if (waveforms.indexOf(`${basename}-waveform-mono.json`) !== -1)
+    res.send(true);
+  else res.send(false);
+});
+
 app.use("/reset-moved/", (req, res) => {
   resetMoved(req.body["filename"], req.body["user"], req.body["highestId"]);
   res.end();
