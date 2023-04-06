@@ -18,7 +18,7 @@ const setUser = function (newUser) {
  * @param {string} type - The type of file to open. Either `"audio"` or `"video"`.
  * @param {?string} user - The name of the user opening the file.
  */
-const openViz = function (fileName, type, user = null) {
+const openViz = function (fileName, type, { user = null } = {}) {
   let url = `/viz?type=${type}`;
   if (!fileName.includes(".")) {
     // no extension means this is a folder
@@ -107,7 +107,7 @@ fetch("/filelist")
         // uncheck manually because otherwise after using back button to go
         // back to this page, the radio button will still be checked
         this.checked = false;
-        openViz(this.value, "audio", user);
+        openViz(this.value, "audio", { user });
       });
       audioFieldset.append(div);
     });
