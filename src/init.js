@@ -254,16 +254,18 @@ const output404OrError = (error, missing) => {
 
 const numChannels = channelNames.length;
 if (numChannels > 1) {
-  // resize peaks so that the waveforms aren't so small
-  const zoomviewContainer = document.getElementById("zoomview-container");
-  const overviewContainer = document.getElementById("overview-container");
-  zoomviewContainer.style.height = `${
-    zoomviewContainer.scrollHeight * Math.log2(numChannels)
-  }px`;
-  overviewContainer.style.height = `${
-    overviewContainer.scrollHeight * Math.log2(numChannels)
-  }px`;
-  fitPeaksToContainer();
+  if (!globals.mono) {
+    // resize peaks so that the waveforms aren't so small
+    const zoomviewContainer = document.getElementById("zoomview-container");
+    const overviewContainer = document.getElementById("overview-container");
+    zoomviewContainer.style.height = `${
+      zoomviewContainer.scrollHeight * Math.log2(numChannels)
+    }px`;
+    overviewContainer.style.height = `${
+      overviewContainer.scrollHeight * Math.log2(numChannels)
+    }px`;
+    fitPeaksToContainer();
+  }
 
   const context = new AudioContext();
   // source is the audio from the <audio> or <video> element being visualized

@@ -7,7 +7,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const filename = urlParams.get("file"); // name of file with extension
 const folder = urlParams.get("folder");
 const type = urlParams.get("type");
-const mono = urlParams.get("mono");
+const mono = urlParams.get("mono") !== null;
 
 // name of the file without the extension
 const basename = removeExtension(filename);
@@ -44,6 +44,7 @@ const channelNames = await fetch(channelsFile)
  * @prop {!Element} media - The audio / video element being visualized.
  * @prop {!Array.<string>} channelNames - The names of the channels in the media file,
  *    if there is a -channels file for the media. Otherwise, an empty array.
+ * @prop {boolean} mono - Whether to display the mono waveform.
  * @prop {string} user - The name of the user whose segments are being viewed. Always
  *      equal to the logged-in user, unless "admin" is logged-in (since the admin can
  *      view any user's segments).
@@ -60,6 +61,7 @@ globals.filename = filename;
 globals.basename = basename;
 globals.media = document.getElementById("media");
 globals.channelNames = channelNames;
+globals.mono = mono;
 globals.user = user;
 globals.dirty = false;
 globals.folder = folder;
