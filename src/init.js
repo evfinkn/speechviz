@@ -36,6 +36,7 @@ const user = globals.user;
 const filename = globals.filename;
 const basename = globals.basename;
 const media = globals.media;
+const channelNames = globals.channelNames;
 const folder = globals.folder;
 const type = globals.type;
 
@@ -250,79 +251,66 @@ const output404OrError = (error, missing) => {
   }
 };
 
-let channelsFetch = `/channels/${basename}-channels.csv`;
-if (folder !== undefined && folder !== null) {
-  channelsFetch = `/channels/${folder}/${basename}-channels.csv`;
+const numChannels = channelNames.length;
+if (numChannels > 1) {
+  // resize peaks so that the waveforms aren't so small
+  const zoomviewContainer = document.getElementById("zoomview-container");
+  const overviewContainer = document.getElementById("overview-container");
+  zoomviewContainer.style.height = `${
+    zoomviewContainer.scrollHeight * Math.log2(numChannels)
+  }px`;
+  overviewContainer.style.height = `${
+    overviewContainer.scrollHeight * Math.log2(numChannels)
+  }px`;
+  fitPeaksToContainer();
+
+  const context = new AudioContext();
+  // source is the audio from the <audio> or <video> element being visualized
+  const source = context.createMediaElementSource(globals.media);
+  const splitter = context.createChannelSplitter(numChannels);
+  const merger = context.createChannelMerger(numChannels);
+
+  source.connect(splitter);
+  const controlsDiv = document.getElementById("controls");
+  // create volume controls for each channel
+  for (let i = 0; i < numChannels; i++) {
+    // create the gain node that actually controls the volume
+    const gainNode = context.createGain();
+    splitter.connect(gainNode, i); // connect splitter's ith channel to a gain node
+    gainNode.connect(merger, 0, i); // connect the gain node to merger's ith channel
+
+    // create the volume slider
+    const label = htmlToElement(`<label>${channelNames[i]}: </label>`);
+    // gain nodes volumes are between 0 and 1
+    const slider = htmlToElement(
+      `<input type="range" min="0" max="200" step="1"">`
+    );
+    const input = htmlToElement(
+      `<input class="volume-input" type="number" min="0" max="200" step="1">`
+    );
+
+    slider.value = 100; // default volume is 100%
+    input.value = 100;
+
+    slider.addEventListener("input", () => {
+      const value = parseFloat(slider.value);
+      input.value = value;
+      gainNode.gain.value = value / 100;
+    });
+    input.addEventListener("input", () => {
+      const value = parseFloat(input.value);
+      slider.value = value;
+      gainNode.gain.value = value / 100;
+    });
+
+    label.append(slider);
+    label.append(input);
+    controlsDiv.append(label);
+    controlsDiv.append(document.createElement("br"));
+  }
+  // connect the re-merged audio to the user's audio output device
+  merger.connect(context.destination);
 }
-fetch(channelsFetch)
-  .then(checkResponseStatus)
-  .then((res) => res.text())
-  .then((channelsText) => {
-    const channelNames = channelsText.split("\n").slice(0, -1);
-    const numChannels = channelNames.length;
-    if (numChannels <= 1) {
-      return;
-    }
-
-    // resize peaks so that the waveforms aren't so small
-    const zoomviewContainer = document.getElementById("zoomview-container");
-    const overviewContainer = document.getElementById("overview-container");
-    zoomviewContainer.style.height = `${
-      zoomviewContainer.scrollHeight * Math.log2(numChannels)
-    }px`;
-    overviewContainer.style.height = `${
-      overviewContainer.scrollHeight * Math.log2(numChannels)
-    }px`;
-    fitPeaksToContainer();
-
-    const context = new AudioContext();
-    // source is the audio from the <audio> or <video> element being visualized
-    const source = context.createMediaElementSource(globals.media);
-    const splitter = context.createChannelSplitter(numChannels);
-    const merger = context.createChannelMerger(numChannels);
-
-    source.connect(splitter);
-    const controlsDiv = document.getElementById("controls");
-    // create volume controls for each channel
-    for (let i = 0; i < numChannels; i++) {
-      // create the gain node that actually controls the volume
-      const gainNode = context.createGain();
-      splitter.connect(gainNode, i); // connect splitter's ith channel to a gain node
-      gainNode.connect(merger, 0, i); // connect the gain node to merger's ith channel
-
-      // create the volume slider
-      const label = htmlToElement(`<label>${channelNames[i]}: </label>`);
-      // gain nodes volumes are between 0 and 1
-      const slider = htmlToElement(
-        `<input type="range" min="0" max="200" step="1"">`
-      );
-      const input = htmlToElement(
-        `<input class="volume-input" type="number" min="0" max="200" step="1">`
-      );
-
-      slider.value = 100; // default volume is 100%
-      input.value = 100;
-
-      slider.addEventListener("input", () => {
-        const value = parseFloat(slider.value);
-        input.value = value;
-        gainNode.gain.value = value / 100;
-      });
-      input.addEventListener("input", () => {
-        const value = parseFloat(input.value);
-        slider.value = value;
-        gainNode.gain.value = value / 100;
-      });
-
-      label.append(slider);
-      label.append(input);
-      controlsDiv.append(label);
-      controlsDiv.append(document.createElement("br"));
-    }
-    // connect the re-merged audio to the user's audio output device
-    merger.connect(context.destination);
-  })
-  .catch((error) => output404OrError(error, "channels"));
 
 let segmentsFetch = `/segments/${basename}-segments.json`;
 if (folder !== undefined && folder !== null) {

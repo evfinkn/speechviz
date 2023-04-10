@@ -1,6 +1,6 @@
 import Peaks from "peaks.js";
 import createSegmentMarker from "./CustomSegmentMarker.js";
-import { removeExtension } from "./util.js";
+import { checkResponseStatus, removeExtension } from "./util.js";
 
 // query parameters that appear in url, such as ?file=audio.mp3
 const urlParams = new URLSearchParams(window.location.search);
@@ -30,16 +30,30 @@ if (!user) {
   }
 }
 
+let channelsFetch = `/channels/${basename}-channels.csv`;
+if (folder !== undefined && folder !== null) {
+  channelsFetch = `/channels/${folder}/${basename}-channels.csv`;
+}
+const channelNames = await fetch(channelsFetch)
+  .then(checkResponseStatus)
+  .then((res) => res.text())
+  .then((channelsText) => channelsText.split("\n").slice(0, -1))
+  .catch(() => []);
+
 /**
  * `Object` containing global constants shared across the javascript files.
  * @prop {string} filename - The name of the media file including its extension.
  * @prop {string} basename - The name of the media file excluding its extension
  * @prop {!Element} media - The audio / video element being visualized.
+ * @prop {!Array.<string>} channelNames - The names of the channels in the media file,
+ *    if there is a -channels file for the media. Otherwise, an empty array.
  * @prop {string} user - The name of the user whose segments are being viewed. Always
  *      equal to the logged-in user, unless "admin" is logged-in (since the admin can
  *      view any user's segments).
  * @prop {!Peaks.PeaksInstance} peaks - Instance of peaks
  * @prop {boolean} dirty - Whether there are unsaved changes.
+ * @prop {string} folder - The name of the folder containing the media file, if any.
+ * @prop {string} type - The type of media file (audio or video).
  * @type {!Object.<string, any>}
  */
 const globals = {};
@@ -48,6 +62,7 @@ const globals = {};
 globals.filename = filename;
 globals.basename = basename;
 globals.media = document.getElementById("media");
+globals.channelNames = channelNames;
 globals.user = user;
 globals.dirty = false;
 globals.folder = folder;
