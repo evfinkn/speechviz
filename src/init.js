@@ -60,11 +60,6 @@ Split(["#column", "#column2"], {
 //       probably be moved to Segment as a property
 const originalGroups = {};
 
-// TODO: edit how process_audio.py outputs segments and then edit this to make it more
-//       extensibile, e.g. maybe in process_audio make each dict have a "type" property
-//       specifying if it's a Group or GroupOfGroups or Segment and also use property
-//       names e.g. "children" instead of an array
-//       After rewriting, add documentation if left as a function
 const oldCreateTree = function (id, parent, children, snr) {
   if (!Array.isArray(children[0])) {
     // group of segments
@@ -95,6 +90,7 @@ const oldCreateTree = function (id, parent, children, snr) {
   }
 };
 
+// TODO: add documentation
 const createTreeItemFromObj = (obj, parent = null) => {
   if (Array.isArray(obj)) {
     return obj.map((subObj) => createTreeItemFromObj(subObj));
