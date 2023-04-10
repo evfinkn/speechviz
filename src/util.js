@@ -306,6 +306,29 @@ const mappingToString = (mapping, indent = 0) => {
   return string;
 };
 
+/**
+ * @param {string} subdir - The name of the data subdirectory containing the file being
+ *    fetched. Shouldn't include the trailing and leading slash.
+ * @param {string} basename - The name of the file without the suffix.
+ * @param {string} suffix - The suffix of the filename, including the period.
+ * @param {string} folder - The name of the folder containing the file. If the file
+ *   is in the root of `subdir`, this should be `null`.
+ * @example
+ * // returns "/segments/file1-segments.json"
+ * getUrl("segments", "file1", "-segments.json")
+ * @example
+ * // returns "/audio/folder1/file1.wav"
+ * getUrl("audio", "file1", ".wav", "folder1")
+ * @returns {string} The path to the file.
+ */
+const getUrl = (subdir, basename, suffix, folder = null) => {
+  if (folder !== undefined && folder !== null) {
+    return `/${subdir}/${folder}/${basename}${suffix}`;
+  } else {
+    return `/${subdir}/${basename}${suffix}`;
+  }
+};
+
 export {
   getRandomColor,
   htmlToElement,
@@ -323,4 +346,5 @@ export {
   parseNumericalCsv,
   removeExtension,
   mappingToString,
+  getUrl,
 };

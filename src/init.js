@@ -28,6 +28,7 @@ import {
   checkResponseStatus,
   parseNumericalCsv,
   htmlToElement,
+  getUrl,
 } from "./util.js";
 import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
 
@@ -312,11 +313,8 @@ if (numChannels > 1) {
   merger.connect(context.destination);
 }
 
-let segmentsFetch = `/segments/${basename}-segments.json`;
-if (folder !== undefined && folder !== null) {
-  segmentsFetch = `/segments/${folder}/${basename}-segments.json`;
-}
-const segmentLoading = fetch(segmentsFetch)
+const segmentsFile = getUrl("segments", basename, "-segments.json", folder);
+const segmentLoading = fetch(segmentsFile)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((segments) => {
@@ -507,11 +505,13 @@ const facesLoading = fetch(`/clustered-files/`)
   })
   .catch((error) => output404OrError(error, "clustered faces"));
 
-let transcripFetch = `/transcriptions/${basename}-transcription.json`;
-if (folder !== undefined && folder !== null) {
-  transcripFetch = `/transcriptions/${folder}/${basename}-transcription.json`;
-}
-fetch(transcripFetch)
+const wordsFile = getUrl(
+  "transcriptions",
+  basename,
+  "-transcription.json",
+  folder
+);
+fetch(wordsFile)
   .then(checkResponseStatus)
   .then((response) => response.json())
   .then((words) => {
@@ -564,12 +564,8 @@ if (poseContainer) {
     .catch((error) => output404OrError(error, "pose data"));
 }
 
-// stats
-let statsFetch = `stats/${basename}-stats.csv`;
-if (folder !== undefined && folder !== null) {
-  statsFetch = `stats/${folder}/${basename}-stats.csv`;
-}
-fetch(statsFetch)
+const statsFile = getUrl("stats", basename, "-stats.csv", folder);
+fetch(statsFile)
   .then(checkResponseStatus)
   .then((response) => response.text())
   .then((statCsv) => {

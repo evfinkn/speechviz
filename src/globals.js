@@ -1,6 +1,6 @@
 import Peaks from "peaks.js";
 import createSegmentMarker from "./CustomSegmentMarker.js";
-import { checkResponseStatus, removeExtension } from "./util.js";
+import { checkResponseStatus, removeExtension, getUrl } from "./util.js";
 
 // query parameters that appear in url, such as ?file=audio.mp3
 const urlParams = new URLSearchParams(window.location.search);
@@ -30,11 +30,8 @@ if (!user) {
   }
 }
 
-let channelsFetch = `/channels/${basename}-channels.csv`;
-if (folder !== undefined && folder !== null) {
-  channelsFetch = `/channels/${folder}/${basename}-channels.csv`;
-}
-const channelNames = await fetch(channelsFetch)
+const channelsFile = getUrl("channels", basename, "-channels.csv", folder);
+const channelNames = await fetch(channelsFile)
   .then(checkResponseStatus)
   .then((res) => res.text())
   .then((channelsText) => channelsText.split("\n").slice(0, -1))
@@ -68,16 +65,12 @@ globals.dirty = false;
 globals.folder = folder;
 globals.type = type;
 
-let waveformJson = `waveforms/${basename}-waveform.json`;
-if (mono !== undefined && mono !== null) {
-  waveformJson = `waveforms/${basename}-waveform-mono.json`;
-}
-if (folder !== undefined && folder !== null) {
-  waveformJson = `waveforms/${folder}/${basename}-waveform.json`;
-  if (mono !== undefined && mono !== null) {
-    waveformJson = `waveforms/${folder}/${basename}-waveform-mono.json`;
-  }
-}
+const waveformFile = getUrl(
+  "waveforms",
+  basename,
+  mono ? "-waveform-mono.json" : "-waveform.json",
+  folder
+);
 const options = {
   // options passed to Peaks
   zoomview: {
@@ -92,7 +85,7 @@ const options = {
   },
   mediaElement: globals.media,
   dataUri: {
-    json: waveformJson,
+    json: waveformFile,
   },
   keyboard: true,
   pointMarkerColor: "#006eb0",
