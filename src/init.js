@@ -150,8 +150,8 @@ const rankSnrs = () => {
     (group) => group.snr !== null
   );
   if (groups.length == 0) {
-    return;
-  } // no groups have SNRs
+    return; // no groups have SNRs
+  }
 
   const snrs = {};
   const durations = {};

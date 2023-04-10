@@ -53,18 +53,15 @@ def calculate_position(timestamp, acceleration, sample_rate):
     # Identify moving periods
     is_moving = np.empty(len(timestamp))
     for index in range(len(timestamp)):
-        is_moving[index] = (
-            np.sqrt(acceleration[index].dot(acceleration[index])) > 2
-        )  # threshold = 2 m/s/s
+        # threshold = 2 m/s/s
+        is_moving[index] = np.sqrt(acceleration[index].dot(acceleration[index])) > 2
 
     for index in range(len(timestamp) - margin):
-        is_moving[index] = any(
-            is_moving[index : (index + margin)]
-        )  # add leading margin
+        # add leading margin
+        is_moving[index] = any(is_moving[index : (index + margin)])
     for index in range(len(timestamp) - 1, margin, -1):
-        is_moving[index] = any(
-            is_moving[(index - margin) : index]
-        )  # add trailing margin
+        # add trailing margin
+        is_moving[index] = any(is_moving[(index - margin) : index])
 
     # Calculate velocity (includes integral drift)
     velocity = np.zeros((len(timestamp), 3))
@@ -214,9 +211,8 @@ def create_poses(
             data = np.concatenate((timestamp, quaternion), axis=1)
         writer = csv.writer(file)
         if headers:
-            file.write(
-                "# "
-            )  # first row is the header row, add # to indicate it's a comment
+            # first row is the header row, add # to indicate it's a comment
+            file.write("# ")
             writer.writerow(header)
         writer.writerows(data)
 
@@ -236,12 +232,10 @@ def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kw
     vprint = util.verbose_printer(quiet, verbose)
 
     if len(paths) == 0:
-        paths = [
-            os.getcwd()
-        ]  # if no file or directory given, use directory script was called from
-    elif (
-        len(paths) > 1
-    ):  # if multiple files (or directories) given, run function on each one
+        # if no file or directory given, use directory script was called from
+        paths = [os.getcwd()]
+    # if multiple files (or directories) given, run function on each one
+    elif len(paths) > 1:
         if len(paths) == 2:
             path1, path2 = paths
             if path1.parent != path2.parent:
@@ -260,7 +254,8 @@ def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kw
         # done in the function calls in the for loop
         return
 
-    path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
+    # paths[0] is--at this point--the only argument in paths
+    path = paths[0].absolute()
 
     if path.is_dir():
         if path.name == "data":

@@ -62,9 +62,8 @@ def get_complement_times(times, duration, pauses=False):
         for i in range(start_index, len(times)):
             if not pauses:
                 comp_times.append((times[i - 1][1], times[i][0]))
-            elif (
-                times[i][0] - times[i - 1][1] < 2
-            ):  # if the nonvad time is less than 2 seconds it's prob. a pause in speech
+            # if the nonvad time is less than 2 seconds it's prob. a pause in speech
+            elif times[i][0] - times[i - 1][1] < 2:
                 comp_times.append((times[i - 1][1], times[i][0]))
         if times[-1][1] != duration:
             comp_times.append((times[-1][1], duration))
@@ -185,9 +184,8 @@ def get_diarization(path: pathlib.Path, auth_token, verbose=0, num_speakers=None
 
     # format the speakers segments for peaks
     colors = util.random_color_generator(2)
-    spkrs_colors = (
-        {}
-    )  # dictionary to store speaker's colors. key = speaker, value = color
+    # dictionary to store speaker's colors. key = speaker, value = color
+    spkrs_colors = {}
     spkrs_segs = collections.defaultdict(list)
     spkrs_times = collections.defaultdict(list)
     for turn, _, spkr in diar.itertracks(yield_label=True):
@@ -196,9 +194,8 @@ def get_diarization(path: pathlib.Path, auth_token, verbose=0, num_speakers=None
         spkr = f"Speaker {int(spkr.split('_')[1]) + 1}"
 
         if spkr not in spkrs_colors:
-            spkrs_colors[spkr] = next(
-                colors
-            )  # each speaker has a color used for all of their segments
+            # each speaker has a color used for all of their segments
+            spkrs_colors[spkr] = next(colors)
 
         # don't need to give segment options because the speaker PeaksGroups handles it
         spkrs_segs[spkr].append(format_segment(start, end, spkrs_colors[spkr], spkr))
@@ -279,12 +276,10 @@ def route_dir(dir, verbose=0, scan_dir=True, **kwargs):
 
 def route_file(*paths: pathlib.Path, verbose=0, scan_dir=True, **kwargs):
     if len(paths) == 0:
-        paths = [
-            pathlib.Path.cwd()
-        ]  # if no file or directory given, use directory script was called from
-    elif (
-        len(paths) > 1
-    ):  # if multiple files (or directories) given, run function on each one
+        # if no file or directory given, use directory script was called from
+        paths = [pathlib.Path.cwd()]
+    # if multiple files (or directories) given, run function on each one
+    elif len(paths) > 1:
         for path in paths:
             route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
         # stop function because all of the processing is
@@ -299,9 +294,8 @@ def route_file(*paths: pathlib.Path, verbose=0, scan_dir=True, **kwargs):
 
     # run process audio on every file in file.path if it is a dir and scan_dir is True
     elif path.is_dir() and scan_dir:
-        if (
-            path.name == "data"
-        ):  # the data dir was passed so run on data/audio and data/video
+        # the data dir was passed so run on data/audio and data/video
+        if path.name == "data":
             route_dir(path / "audio", verbose=verbose, scan_dir=scan_dir, **kwargs)
             route_dir(path / "video", verbose=verbose, scan_dir=scan_dir, **kwargs)
         else:
@@ -442,9 +436,10 @@ def process_audio(
             # don't need to give options because the Non-VAD PeaksGroup handles it
             non_vad_segs.append(format_segment(start, end, "#b59896", "Non-VAD"))
 
+        # True means we just want what is likely pauses in speech for noise rms calc.
         speech_pause_times = get_complement_times(
             vad_times, len(mono_samples) / sr, True
-        )  # True means we just want what is likely pauses in speech for noise rms calc.
+        )
 
         noise_times = speech_pause_times
 

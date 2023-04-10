@@ -39,9 +39,8 @@ def route_file(*paths: pathlib.Path, verbose: int = 0, scan_dir=True, **kwargs):
 
     # run process audio on every file in file.path if it is a dir and scan_dir is True
     elif path.is_dir() and scan_dir:
-        if (
-            path.name == "data"
-        ):  # the data dir was passed so run on data/audio and data/video
+        if path.name == "data":
+            # the data dir was passed so run on data/audio and data/video
             route_dir(path / "audio", verbose=verbose, scan_dir=scan_dir, **kwargs)
             route_dir(path / "video", verbose=verbose, scan_dir=scan_dir, **kwargs)
         else:
