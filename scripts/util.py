@@ -8,6 +8,7 @@ import json
 import operator
 import pathlib
 import random
+import re
 import subprocess
 from collections.abc import Callable, Iterable, Iterator
 from typing import Any, List, Optional, TypeVar, Union
@@ -230,22 +231,25 @@ def add_to_csv(path: pathlib.Path, data: dict, remove_keys: Optional[list] = Non
         The data to update the CSV file with. Fields in `data` that are already in
         the CSV are updated with the corresponding value, and fields that aren't are
         added.
-    remove_keys: list of str, optional
-        Keys to remove from the CSV, if present. The keys are removed after `data`
-        is combined with the CSV data.
+    remove_keys: list of str or pattern, optional
+        Keys to remove from the CSV, if present. The keys are removed before `data`
+        is combined with the CSV data. If a key is a string, that key will be removed.
+        If a key is a `re.Pattern`, any key that matches the pattern will be removed.
     """
     if path.exists():
         with path.open(newline="") as file:
             reader = csv.DictReader(file)
-            try:  # using next on an empty file will crash
-                read_data = next(reader)
-                read_data.update(data)
-                data = read_data
-            except StopIteration:
-                pass
-    if remove_keys is not None:
-        for key in remove_keys:
-            data.pop(key, None)
+            read_data = next(reader)
+        if remove_keys is not None:
+            for key in remove_keys:
+                if isinstance(key, str):
+                    read_data.pop(key, None)
+                elif isinstance(key, re.Pattern):
+                    for k in list(read_data.keys()):
+                        if key.match(k):
+                            read_data.pop(k, None)
+        read_data.update(data)
+        data = read_data
     fieldnames = list(data.keys())
     with path.open("w", newline="") as file:
         writer = csv.DictWriter(file, fieldnames)

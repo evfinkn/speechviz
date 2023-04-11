@@ -6,6 +6,7 @@ import json
 import math
 import os
 import pathlib
+import re
 import subprocess
 import time
 
@@ -574,7 +575,8 @@ def process_audio(
                 stats[f"{channel_name}_overall_snr_db"] = c_overall_snr
                 for spkr, snr in c_spkrs_snrs.items():
                     stats[f"{channel_name}_{spkr}_snr_db"] = snr
-        util.add_to_csv(stats_path, stats)
+        remove_keys = [re.compile(".*_snr")]
+        util.add_to_csv(stats_path, stats, remove_keys=remove_keys)
 
     # if we converted to wav, remove that wav file
     # (since it was only needed for the pipelines)
