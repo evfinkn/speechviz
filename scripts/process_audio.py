@@ -444,21 +444,22 @@ def process_audio(
 
         noise_times = speech_pause_times
 
+        # todo: decide if we implement this with nonvad and/or speech_pause / or both
         # no noise to base off of, and can't calculate snr?
         # then try again with higher onset and offset (less strict)
-        if not noise_times:
-            originalOnset = onset
-            originalOffset = offset
-            while not noise_times:
-                onset = onset + 0.05
-                offset = offset + 0.05
-                vad_segs, vad_times = get_vad(path, auth_token, onset, offset, verbose)
-                speech_pause_times = get_complement_times(
-                    vad_times, len(mono_samples) / sr, True
-                )
-                noise_times = speech_pause_times
-            onset = originalOnset
-            offset = originalOffset
+        # if not noise_times:
+        # originalOnset = onset
+        # originalOffset = offset
+        # while not noise_times and onset < 1:
+        # onset = onset + 0.05
+        # offset = offset + 0.05
+        # vad_segs, vad_times = get_vad(path, auth_token, onset, offset, verbose)
+        # speech_pause_times = get_complement_times(
+        # vad_times, len(mono_samples) / sr, True
+        # )
+        # noise_times = speech_pause_times
+        # onset = originalOnset
+        # offset = originalOffset
         # if still no noise for snr throw exception
         # and let user decide what they'd like to do about it
         if not noise_times:
@@ -466,6 +467,14 @@ def process_audio(
 
         noise_samps = samples_from_times(noise_times, mono_samples, sr)
         noise_rms = rms(noise_samps)
+        if noise_rms == 0:
+            # can't divide by 0, be less picky and take non vad not just speech_pause
+            non_vad_times = get_complement_times(
+                vad_times, len(mono_samples) / sr, False
+            )
+            non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
+            noise_rms = rms(non_vad_samps)
+
         spkrs_snrs = {
             spkr: snr_from_times(spkrs_times[spkr], mono_samples, sr, noise_rms)
             for spkr in spkrs
@@ -567,6 +576,14 @@ def process_audio(
             for i, channel_name in enumerate(channel_names):
                 c_noise_samps = samples_from_times(noise_times, samples[i], sr)
                 c_noise_rms = rms(c_noise_samps)
+                if c_noise_rms == 0:
+                    # can't divide by 0, be less picky and take
+                    # non vad not just speech_pause
+                    non_vad_times = get_complement_times(
+                        vad_times, len(mono_samples) / sr, False
+                    )
+                    non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
+                    c_noise_rms = rms(non_vad_samps)
                 c_spkrs_snrs = {
                     spkr: snr_from_times(spkrs_times[spkr], samples[i], sr, c_noise_rms)
                     for spkr in spkrs
