@@ -55,7 +55,8 @@ def get_complement_times(times, duration, pauses=False):
             start_index = 2
             if len(times) == 1:
                 if times[0][1] != duration:
-                    comp_times.append((times[0][1], duration))
+                    if not pauses or duration - times[0][1] < 2:
+                        comp_times.append((times[0][1], duration))
             else:
                 # if the nonvad time is less than 2 seconds it's prob. a pause in speech
                 if not pauses or times[1][0] - times[0][1] < 2:
@@ -68,7 +69,6 @@ def get_complement_times(times, duration, pauses=False):
             # if the nonvad time is less than 2 seconds it's prob. a pause in speech
             if not pauses or times[i][0] - times[i - 1][1] < 2:
                 comp_times.append((times[i - 1][1], times[i][0]))
-
         if times[-1][1] != duration:
             # if the nonvad time is less than 2 seconds it's prob. a pause in speech
             if not pauses or duration - times[-1][1] < 2:
