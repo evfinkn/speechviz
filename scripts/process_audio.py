@@ -493,6 +493,10 @@ def process_audio(
         ):  # True means we just want what is likely pauses in speech for noise rms calc
             speech_pause_segs.append(format_segment(start, end, "#092b12", "SNR-Noise"))
 
+        # if speech pause segs had nothing added, we used regular non vad
+        if speech_pause_segs == []:
+            speech_pause_segs = non_vad_segs
+
         tree_items = []
 
         spkrs_groups = []
