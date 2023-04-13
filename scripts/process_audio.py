@@ -455,7 +455,7 @@ def process_audio(
         # if not noise_times:
         # originalOnset = onset
         # originalOffset = offset
-        # while not noise_times and onset < 1:
+        # while not noise_times:
         # onset = onset + 0.05
         # offset = offset + 0.05
         # vad_segs, vad_times = get_vad(path, auth_token, onset, offset, verbose)
@@ -468,7 +468,9 @@ def process_audio(
         # if still no noise for snr throw exception
         # and let user decide what they'd like to do about it
         if not noise_times:
-            raise Exception("No non-vad to calculate snr with for file " + str(path))
+            noise_times = get_complement_times(vad_times, len(mono_samples) / sr, False)
+        # if not noise_times:
+        # raise Exception("No non-vad to calculate snr with for file " + str(path))
 
         noise_samps = samples_from_times(noise_times, mono_samples, sr)
         noise_rms = rms(noise_samps)
