@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import functools
 import json
 import math
 import os
@@ -547,6 +548,18 @@ def process_audio(
         vad_duration = get_times_duration(vad_times)
         snr_noise_duration = get_times_duration(speech_pause_times)
 
+        # Bind "N/A" as default to save room when calling these functions
+        maxval = functools.partial(util.max_value_item, default="N/A")
+        minval = functools.partial(util.min_value_item, default="N/A")
+
+        # key (speaker) is first item in tuple, value is second
+        least_segs_spkr, least_segs = minval(spkrs_num_segs)
+        most_segs_spkr, most_segs = maxval(spkrs_num_segs)
+        shortest_spkr, shortest_spkr_duration = minval(spkrs_durations)
+        longest_spkr, longest_spkr_duration = maxval(spkrs_durations)
+        lowest_snr_spkr, lowest_snr = minval(spkrs_snrs)
+        highest_snr_spkr, highest_snr = maxval(spkrs_snrs)
+
         stats = {
             "sampling_rate": sr,
             "duration": duration,
@@ -566,12 +579,18 @@ def process_audio(
             "diar_duration": diar_duration,
             "non_diar_duration": duration - diar_duration,
             "num_diar_segments": sum(spkrs_num_segs.values()),
-            "least_segments": util.min_value_item(spkrs_num_segs, default="N/A"),
-            "most_segments": util.max_value_item(spkrs_num_segs, default="N/A"),
-            "shortest_speaker": util.min_value_item(spkrs_durations, default="N/A"),
-            "longest_speaker": util.max_value_item(spkrs_durations, default="N/A"),
-            "lowest_snr_db": util.min_value_item(spkrs_snrs, default="N/A"),
-            "highest_snr_db": util.max_value_item(spkrs_snrs, default="N/A"),
+            "least_segments": least_segs,
+            "least_segments_speaker": least_segs_spkr,
+            "most_segments": most_segs,
+            "most_segments_speaker": most_segs_spkr,
+            "shortest_duration": shortest_spkr_duration,
+            "shortest_duration_speaker": shortest_spkr,
+            "longest_duration": longest_spkr_duration,
+            "longest_duration_speaker": longest_spkr,
+            "lowest_snr_db": lowest_snr,
+            "lowest_snr_db_speaker": lowest_snr_spkr,
+            "highest_snr_db": highest_snr,
+            "highest_snr_db_speaker": highest_snr_spkr,
             "vad_duration": vad_duration,
             "num_vad_segments": len(vad_segs),
             "non_vad_duration": duration - vad_duration,
