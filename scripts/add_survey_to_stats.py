@@ -10,8 +10,9 @@ def main(survey_path: pathlib.Path, stats_path: pathlib.Path):
         reader = csv.DictReader(csvfile)
         for row in reader:
             stats_file = stats_path / f"run{row['run']}-stats.csv"
-            data = {"type": row["type"], "eVal": row["eVal"]}
-            util.add_to_csv(stats_file, data)
+            if stats_file.exists():
+                data = {"type": row["type"], "eVal": row["eVal"]}
+                util.add_to_csv(stats_file, data)
 
 
 if __name__ == "__main__":
