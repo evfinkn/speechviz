@@ -39,10 +39,17 @@ def main(
     for file_path in file_paths:
         with file_path.open(newline="") as file:
             reader = csv.DictReader(file)
+            # we use a list instead of a set because we want to preserve the order,
+            # but we don't want duplicates, hence the use of extend_not_in
             extend_not_in(fieldnames, reader.fieldnames)
-            row = next(reader)  # read first line of data (that isn't the fieldnames)
-            row["file"] = file_path.stem
-            rows.append(row)
+            for row in reader:  # read the data (this doesn't include the header row)
+                if row.get("file") is not None:
+                    # this CSV is from a file that has already been combined, so we
+                    # add this CSV's file name to the beginning of the file column
+                    row["file"] = f"{file_path.stem} {row['file']}"
+                else:
+                    row["file"] = file_path.stem
+                rows.append(row)
     with output_path.open("w", newline="") as output:
         writer = csv.DictWriter(output, fieldnames)
         writer.writeheader()
