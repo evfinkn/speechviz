@@ -111,7 +111,7 @@ def run_pipeline(
         files.extend(dir.iterdir())
     for file in files:
         if verbose:
-            print(f"Running the pipeline on {file}")
+            print(f"\nRunning the pipeline on {file}")
         pipeline(file)
 
 
