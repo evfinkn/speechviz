@@ -549,8 +549,9 @@ def process_audio(
         snr_noise_duration = get_times_duration(speech_pause_times)
 
         # Bind "N/A" as default to save room when calling these functions
-        maxval = functools.partial(util.max_value_item, default="N/A")
-        minval = functools.partial(util.min_value_item, default="N/A")
+        # default is a tuple of "N/A" and "N/A" so that it can be unpacked
+        maxval = functools.partial(util.max_value_item, default=("N/A", "N/A"))
+        minval = functools.partial(util.min_value_item, default=("N/A", "N/A"))
 
         # key (speaker) is first item in tuple, value is second
         least_segs_spkr, least_segs = minval(spkrs_num_segs)
