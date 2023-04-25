@@ -170,7 +170,8 @@ def main(
     audio, sr = librosa.load(audio_paths[0], sr=None, mono=mono)
     audios = [audio]
     for audio_path in audio_paths[1:]:
-        audios.append(librosa.load(audio_path, sr=sr)[0])
+        audio, _ = librosa.load(audio_path, sr=sr, mono=mono)
+        audios.append(audio)
 
     lags = get_audios_lags(audios, verbose=verbose)
     synced_audios = sync_audios(audios, lags, mode=mode, verbose=verbose)
