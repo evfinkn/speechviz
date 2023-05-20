@@ -15,6 +15,7 @@ import {
 } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
+import { Channels } from "./ChannelAudio.js";
 import { FiltersPopup } from "./FiltersPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
 import {
@@ -27,7 +28,6 @@ import {
   ResponseError,
   checkResponseStatus,
   parseNumericalCsv,
-  htmlToElement,
   getUrl,
 } from "./util.js";
 import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
@@ -268,51 +268,15 @@ if (numChannels > 1) {
   }
 
   const context = new AudioContext();
+  context.destination.channelCount = 1; // downmix to mono
   // source is the audio from the <audio> or <video> element being visualized
   const source = context.createMediaElementSource(globals.media);
-  const splitter = context.createChannelSplitter(numChannels);
-  const merger = context.createChannelMerger(numChannels);
 
-  source.connect(splitter);
-  const controlsDiv = document.getElementById("controls");
-  // create volume controls for each channel
-  for (let i = 0; i < numChannels; i++) {
-    // create the gain node that actually controls the volume
-    const gainNode = context.createGain();
-    splitter.connect(gainNode, i); // connect splitter's ith channel to a gain node
-    gainNode.connect(merger, 0, i); // connect the gain node to merger's ith channel
-
-    // create the volume slider
-    const label = htmlToElement(`<label>${channelNames[i]}: </label>`);
-    // gain nodes volumes are between 0 and 1
-    const slider = htmlToElement(
-      `<input type="range" min="0" max="200" step="1"">`
-    );
-    const input = htmlToElement(
-      `<input class="volume-input" type="number" min="0" max="200" step="1">`
-    );
-
-    slider.value = 100; // default volume is 100%
-    input.value = 100;
-
-    slider.addEventListener("input", () => {
-      const value = parseFloat(slider.value);
-      input.value = value;
-      gainNode.gain.value = value / 100;
-    });
-    input.addEventListener("input", () => {
-      const value = parseFloat(input.value);
-      slider.value = value;
-      gainNode.gain.value = value / 100;
-    });
-
-    label.append(slider);
-    label.append(input);
-    controlsDiv.append(label);
-    controlsDiv.append(document.createElement("br"));
-  }
-  // connect the re-merged audio to the user's audio output device
-  merger.connect(context.destination);
+  const channels = new Channels(context, source, channelNames, {
+    volumeMax: 200,
+  });
+  channels.merger.connect(context.destination);
+  document.getElementById("controls").append(channels.div);
 }
 
 const segmentsFile = getUrl("segments", basename, "-segments.json", folder);
