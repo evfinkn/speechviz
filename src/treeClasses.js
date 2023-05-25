@@ -578,15 +578,88 @@ var TreeItem = class TreeItem {
       this.toggle();
     });
     // on right click
+    const contextMenu = document.getElementById("contextmenu");
     this.checkbox.addEventListener("contextmenu", (event) => {
       // prevent default so that the right click context menu doesn't show
       event.preventDefault();
-      this.nested.classList.toggle("active");
+
+      const { clientX: mouseX, clientY: mouseY } = event;
+
+      contextMenu.style.top = `${mouseY}px`;
+      contextMenu.style.left = `${mouseX}px`;
+
+      contextMenu.style.display = "block";
+      // can't have class names with spaces in them
+      const noSpaces = this.id.split(" ");
+      noSpaces.forEach((split) => contextMenu.classList.add(split));
+    });
+
+    const closeContext = () => {
+      // reset what id the context menu is for, then hide it
+      contextMenu.setAttribute("class", "");
+      contextMenu.style.display = "none";
+    };
+
+    // close context menu when anywhere else is clicked
+    document.querySelector("body").addEventListener("click", (e) => {
+      if (e.target.offsetParent != contextMenu) {
+        closeContext();
+      }
+    });
+
+    const collapseItem = document.getElementById("collapse");
+    collapseItem.addEventListener("click", () => {
+      // value re adds the spaces automatically
+      if (contextMenu.classList.value === this.id) {
+        this.nested.classList.toggle("active");
+        closeContext();
+      }
+    });
+
+    const invertItem = document.getElementById("invert");
+    invertItem.addEventListener("click", () => {
+      // value re adds the spaces automatically
+      if (contextMenu.classList.value === this.id) {
+        this.children.forEach((child) => child.toggle());
+        closeContext();
+      }
+    });
+
+    const unselectItem = document.getElementById("unselect");
+    unselectItem.addEventListener("click", () => {
+      // value re adds the spaces automatically
+      if (contextMenu.classList.value === this.id) {
+        let topOfTree = this;
+        while (topOfTree.parent) topOfTree = topOfTree.parent;
+        topOfTree.toggle();
+        topOfTree.toggle();
+
+        const unselect = (parent) => {
+          if (parent.hasChild(contextMenu.classList.value) && !parent.#checked)
+            parent.toggle();
+          else if (
+            parent.id !== contextMenu.classList.value &&
+            !parent.hasChild(contextMenu.classList.value) &&
+            parent.#checked
+          )
+            parent.toggle();
+
+          if (parent.id !== contextMenu.classList.value) {
+            parent.children.forEach((child) => {
+              unselect(child);
+            });
+          }
+        };
+        unselect(topOfTree);
+
+        closeContext();
+      }
     });
 
     this.span = li.children[1];
     // need to track mousemove to know if we want to
     // drag a segment or click it for popup
+    // TODO: give some wiggle room before drag is considered true
     let drag = false;
     this.span.addEventListener("mousedown", () => (drag = false));
     this.span.addEventListener("mousemove", () => (drag = true));
@@ -881,6 +954,24 @@ var TreeItem = class TreeItem {
         this.parent.open();
       }
     }
+  }
+
+  /**
+   * Takes in the id of a TreeItem that could be a immediate/distant child
+   * and returns if it does or doesn't have it as a child
+   * @param {*} childId
+   * @returns whether this TreeItem has that child somewhere underneath it
+   */
+  hasChild(childId) {
+    let hasChild = false;
+    const potentialParent = TreeItem.byId[this.id];
+    potentialParent.children.forEach((child) => {
+      // base case
+      if (child.id === childId) hasChild = true;
+      // step case
+      else if (child.hasChild(childId)) hasChild = true;
+    });
+    return hasChild;
   }
 
   // FIXME: make events work even if this item hasn't been rendered

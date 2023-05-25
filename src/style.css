@@ -341,6 +341,26 @@ ul {
   background: #fff;
 }
 
+#contextmenu {
+  position: fixed;
+  z-index: 10000;
+  background: #1b1a1a;
+  border-radius: 5px;
+  display: none;
+}
+
+#contextmenu .item {
+  padding: 8px 10px;
+  font-size: 10px;
+  color: #eee;
+  cursor: pointer;
+  border-radius: inherit;
+}
+
+#contextmenu .item:hover {
+  background: #343434;
+}
+
 .close {
   color: #aaa;
   float: right;
