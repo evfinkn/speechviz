@@ -202,5 +202,5 @@ conda update ffmpeg
 If installing for the first time on a fresh machine and you get this error `/usr/bin/env: ‘bash\r’: No such file or directory` the problem is likely you don't have nodejs. This should fix it:
 
 ```bash
-sudo apt install nodejs
+sudo apt install nodejs npm
 ```
