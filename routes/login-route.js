@@ -4,7 +4,22 @@ var db = require("better-sqlite3")("speechviz.sqlite3");
 
 const redirectToReferer = function (referer, res) {
   referer = referer ? decodeURI(referer) : "/";
-  res.redirect(referer);
+  const json = JSON.parse(referer);
+  if (json.user) {
+    // is a folder if .type shows up
+    if (json.type)
+      res.redirect(
+        `${json.referer}&type=${json.type}&folder=${json.folder}&user=${json.user}`
+      );
+    // is not a folder, just these show up
+    else res.redirect(`${json.referer}&file=${json.file}&user=${json.user}`);
+  } else {
+    // is a folder if .type shows up
+    if (json.type)
+      res.redirect(`${json.referer}&type=${json.type}&folder=${json.folder}`);
+    // is not a folder, just these show up
+    else res.redirect(`${json.referer}&file=${json.file}`);
+  }
 };
 
 /* GET login page. */
@@ -13,7 +28,7 @@ router.get("/", (req, res) => {
     redirectToReferer(req.query.referer, res);
   } else {
     res.render("login", {
-      referer: req.query.referer,
+      referer: req.query,
       retry: "retry" in req.query,
     });
   }
