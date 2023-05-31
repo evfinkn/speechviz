@@ -56,7 +56,7 @@ The image is built from the
 image, so you'll need to build that container first.
 
 ```bash
-git clone https://github.com/facebookresearch/Aria_data_tools.git
+git clone https://github.com/facebookresearch/Aria_data_tools.git --recursive
 cd Aria_data_tools
 docker build -t aria_data_tools .
 ```
