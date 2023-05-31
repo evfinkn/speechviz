@@ -199,8 +199,9 @@ following should resolve the issue:
 conda update ffmpeg
 ```
 
-If installing for the first time on a fresh machine and you get this error `/usr/bin/env: ‘bash\r’: No such file or directory` the problem is likely you don't have nodejs. This should fix it:
+If installing for the first time on a fresh wsl and you get this error `/usr/bin/env: ‘bash\r’: No such file or directory` the problem is likely you don't have nodejs. This should fix it:
 
 ```bash
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 sudo apt install nodejs npm
 ```
