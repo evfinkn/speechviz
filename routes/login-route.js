@@ -5,7 +5,9 @@ var db = require("better-sqlite3")("speechviz.sqlite3");
 const redirectToReferer = function (referer, res) {
   referer = referer ? decodeURI(referer) : "/";
   const json = JSON.parse(referer);
-  if (json.user) {
+  // if there is no file don't redirect
+  if (!json.file) res.redirect("/");
+  else if (json.user) {
     // is a folder if .type shows up
     if (json.type)
       res.redirect(
