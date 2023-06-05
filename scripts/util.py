@@ -239,7 +239,10 @@ def add_to_csv(path: pathlib.Path, data: dict, remove_keys: Optional[list] = Non
     if path.exists():
         with path.open(newline="") as file:
             reader = csv.DictReader(file)
-            read_data = next(reader)
+            try:
+                read_data = next(reader)
+            except StopIteration:
+                read_data = {}  # empty file
         if remove_keys is not None:
             for key in remove_keys:
                 if isinstance(key, str):
