@@ -95,7 +95,7 @@ You can then start the container by running
 ```bash
 docker run -it \
     -v ./data:/speechviz/data \
-    -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
+    -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3 \
     speechviz
 ```
 
@@ -105,7 +105,7 @@ By default, the interface uses port 3000, so the command for that port is
 ```bash
 docker run -it -p 3000:3000 \
     -v ./data:/speechviz/data \
-    -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3
+    -v ./speechviz.sqlite3:/speechviz/speechviz.sqlite3 \
     speechviz
 ```
 
