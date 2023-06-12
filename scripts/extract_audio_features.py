@@ -1,11 +1,11 @@
 import argparse
 import pathlib
 import subprocess
-import time
 
 import librosa
 import numpy as np
 import util
+from util import logger
 
 AUDIO_FILES = {".mp3", ".wav", ".flac", ".ogg", ".opus"}
 VIDEO_FILES = {".mp4", ".mov"}
@@ -97,21 +97,20 @@ def amplitude_envelope(y: np.ndarray, *, n_fft=2048, hop_length=512):
     return ae
 
 
-def route_dir(dir, verbose=0, scan_dir=True, **kwargs):
-    if verbose:
-        print(f"Running extract_features on each file in {dir}")
+def route_dir(dir, scan_dir=True, **kwargs):
+    logger.debug("Running extract_features on each file in {}", dir)
     for path in dir.iterdir():
-        route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
+        route_file(path, scan_dir=scan_dir, **kwargs)
 
 
-def route_file(*paths: pathlib.Path, verbose=0, scan_dir=True, **kwargs):
+def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
     if len(paths) == 0:
         # if no file or directory given, use directory script was called from
         paths = [pathlib.Path.cwd()]
     # if multiple files (or directories) given, run function on each one
     elif len(paths) > 1:
         for path in paths:
-            route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
+            route_file(path, scan_dir=scan_dir, **kwargs)
         # stop function because all of the processing is
         # done in the function calls in the for loop
         return
@@ -120,16 +119,16 @@ def route_file(*paths: pathlib.Path, verbose=0, scan_dir=True, **kwargs):
 
     # if file.path is an audio or video file, process it
     if path.suffix.casefold() in AUDIO_FILES or path.suffix.casefold() in VIDEO_FILES:
-        extract_features(path, verbose=verbose, **kwargs)
+        extract_features(path, **kwargs)
 
     # run process audio on every file in file.path if it is a dir and scan_dir is True
     elif path.is_dir() and scan_dir:
         # the data dir was passed so run on data/audio and data/video
         if path.name == "data":
-            route_dir(path / "audio", verbose=verbose, scan_dir=scan_dir, **kwargs)
-            route_dir(path / "video", verbose=verbose, scan_dir=scan_dir, **kwargs)
+            route_dir(path / "audio", scan_dir=scan_dir, **kwargs)
+            route_dir(path / "video", scan_dir=scan_dir, **kwargs)
         else:
-            route_dir(path, verbose=verbose, scan_dir=False, **kwargs)
+            route_dir(path, scan_dir=False, **kwargs)
 
 
 def run_from_pipeline(args):
@@ -138,16 +137,18 @@ def run_from_pipeline(args):
     route_file(*paths, **args)
 
 
+@util.Timer()
 def extract_features(
     path: pathlib.Path,
     n_mfcc: int = 20,
     reprocess: bool = False,
-    quiet: bool = False,
-    verbose: int = 0,
 ):
-    vprint = util.verbose_printer(quiet, verbose)
-    vprint(f"Processing {path}", 0)
-    start_time = time.perf_counter()
+    util.log_vars(
+        log_separate_=True,
+        path=path,
+        n_mfcc=n_mfcc,
+        reprocess=reprocess,
+    )
 
     for ancestor in path.parents:
         if ancestor.name == "audio" or ancestor.name == "video":
@@ -161,30 +162,36 @@ def extract_features(
 
     features_path = data_dir / "features" / parent_dir / f"{path.stem}-features.npz"
     if features_path.exists() and not reprocess:
-        vprint(
-            f"Features already extracted for {path}. To reprocess, use the -r flag.", 0
-        )
+        logger.info("Features already extracted for {}. To reprocess, pass -r", path)
         return
     features_path.parent.mkdir(parents=True, exist_ok=True)
+
+    util.log_vars(
+        log_separate_=True,
+        data_dir=data_dir,
+        parent_dir=parent_dir,
+        features_path=features_path,
+    )
 
     made_wav = False
     try:
         if path.suffix.casefold() in VIDEO_FILES:
             old_path = path
             path = path.with_suffix(".wav")
-            vprint(f"Creating {path}")
-            util.ffmpeg(old_path, path, verbose)
+            logger.debug("{} is not a wav file. Creating {}", old_path.name, path.name)
+            util.ffmpeg(old_path, path)
             made_wav = True
     except subprocess.CalledProcessError:
-        print(f"{old_path} has no audio so features can't be extracted")
+        logger.error("{} has no audio to process", path)
         return
 
-    vprint(f"Loading {path}")
+    logger.trace("Loading the audio")
     y, sr = librosa.load(path, sr=None, mono=False)
     n_channels = 1 if y.ndim == 1 else y.shape[0]
 
-    vprint("Extracting features")
-    features_start_time = time.perf_counter()
+    logger.trace("Extracting the audio's features")
+    extraction_timer = util.Timer("Extracting features took {}")
+    extraction_timer.start()
     features = {}
 
     S = librosa.stft(y)
@@ -251,22 +258,13 @@ def extract_features(
         # features["zero_crossings_mono"] = librosa.zero_crossings(y_mono)
         features["zero_crossing_rate_mono"] = librosa.feature.zero_crossing_rate(y_mono)
 
-    vprint(
-        f"Extracted features in {time.perf_counter() - features_start_time:.2f} seconds"
-    )
+    extraction_timer.stop()
 
-    vprint(f"Saving features to {features_path}")
     np.savez_compressed(features_path, **features)
 
     if made_wav:
-        vprint(f"Deleting {path}")
+        logger.debug("Deleting {}", path)
         path.unlink()
-        path = old_path
-
-    vprint(
-        f"Extracted features from {path} in"
-        f" {time.perf_counter() - start_time:.2f} seconds"
-    )
 
 
 if __name__ == "__main__":
@@ -278,16 +276,6 @@ if __name__ == "__main__":
         help="Reprocess audio files detected to have already been processed",
     )
     parser.add_argument(
-        "-q", "--quiet", action="store_true", help="Don't print anything"
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Print various debugging information",
-    )
-    parser.add_argument(
         "path",
         nargs="*",
         type=pathlib.Path,
@@ -297,11 +285,9 @@ if __name__ == "__main__":
             " the directory."
         ),
     )
+    util.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    start_time = time.perf_counter()
-    route_file(*args.pop("path"), **args)
-    if not args["quiet"] or args["verbose"]:
-        print(
-            f"Processing took a total of {time.perf_counter() - start_time:.4f} seconds"
-        )
+    util.setup_logging(args.pop("log_level"))
+    with util.Timer("Extracting features took {}"):
+        route_file(*args.pop("path"), **args)
