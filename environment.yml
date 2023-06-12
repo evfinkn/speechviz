@@ -27,3 +27,4 @@ dependencies:
     - scikit-learn
     - orjson
     - pyyaml
+    - loguru
