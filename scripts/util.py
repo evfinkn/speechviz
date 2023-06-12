@@ -483,14 +483,6 @@ def shorten_data_path(path: Path, max_length: int = 50) -> str:
                 return shorten_str(string, max_length)
 
 
-def verbose_printer(quiet: bool, verbose: int) -> Callable[[str, int], None]:
-    def inner(string: str, verbose_level: int = 1) -> None:
-        if (verbose_level == 0 and not quiet) or (verbose >= verbose_level):
-            print(string)
-
-    return inner
-
-
 def flatten(arr: Iterable) -> Iterator:
     for val in arr:
         if isinstance(val, Iterable) and not isinstance(val, str):
