@@ -4,13 +4,12 @@ import argparse
 import csv
 import re
 import shutil
-import subprocess
-import time
 from pathlib import Path
 
 import numpy as np
 import orjson
 import util
+from util import logger
 
 DATA_TYPES = {  # numpy data types corresponding to data types in the VRS metadata
     "DataPieceValue<uint32_t>": np.uint32,
@@ -158,18 +157,16 @@ def build_dict_from_dict_list(dict_list, out_dict=None):
     return out_dict
 
 
+@util.Timer()
 def create_video(
     images_dir: Path,
     keep_images: bool = False,
     rotate: bool = True,
-    verbose: int = 0,
     pattern: str = r"(?i)(\d+\.\d+)\.(jpg|jpeg|png)$",
 ):
     """Creates an mp4 video file from a directory of images."""
     # this generates the video by using a concat file with ffmpeg
     # a concat file basically just lists the file names and their durations
-
-    start_time = time.perf_counter()
 
     stem = images_dir.stem
     output_dir = images_dir.parent
@@ -222,9 +219,8 @@ def create_video(
     util.ffmpeg(
         concat_path,
         video_path,
-        verbose,
-        ["-f", "concat"],
-        [
+        input_options=["-f", "concat"],
+        output_options=[
             "-vf",
             "settb=1/1000,setpts=PTS/1000",
             "-c:v",
@@ -245,19 +241,12 @@ def create_video(
         util.ffmpeg(
             video_path,
             rotated_video_path,
-            verbose,
             output_options=["-vf", "transpose=1"],
         )
         rotated_video_path.replace(video_path)  # rename rotated video
 
     if not keep_images:
         shutil.rmtree(images_dir, ignore_errors=True)
-
-    if verbose:
-        print(
-            f"Created the video for {stem} in"
-            f" {time.perf_counter() - start_time:.4f} seconds"
-        )
 
 
 # It might be surprising, but using replace + orjson is actually faster than using other
@@ -271,7 +260,7 @@ def create_video(
 # - json: 1min 40s
 # - orjson + .replace: 37.9 s
 # - ujson: 55 s
-def load_json_with_nan(s):
+def load_json_with_nan(s: str):
     """Loads a JSON string containing "NaN" using orjson.
     orjson normally throws an exception if the JSON contains "NaN", so this
     function loads the JSON after replacing "NaN" with "null".
@@ -279,14 +268,13 @@ def load_json_with_nan(s):
     return orjson.loads(s.replace("NaN", "null"))
 
 
-def route_dir(dir, verbose=0, scan_dir=True, **kwargs):
-    if verbose:
-        print(f"Running process_audio on each file in {dir}")
+def route_dir(dir, scan_dir=True, **kwargs):
+    logger.debug("Running process_audio on each file in {}", dir)
     for path in dir.iterdir():
-        route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
+        route_file(path, scan_dir=scan_dir, **kwargs)
 
 
-def route_file(*paths: Path, verbose: int = 0, scan_dir: bool = True, **kwargs):
+def route_file(*paths: Path, scan_dir: bool = True, **kwargs):
     """Handles the different types of files that can be input into this script."""
     if len(paths) == 0:
         paths = [
@@ -296,7 +284,7 @@ def route_file(*paths: Path, verbose: int = 0, scan_dir: bool = True, **kwargs):
         len(paths) > 1
     ):  # if multiple files (or directories) given, run function on each one
         for path in paths:
-            route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
+            route_file(path, scan_dir=scan_dir, **kwargs)
         # stop function because all of the processing is
         # done in the function calls in the for loop
         return
@@ -304,17 +292,17 @@ def route_file(*paths: Path, verbose: int = 0, scan_dir: bool = True, **kwargs):
     path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
     if path.suffix.casefold() == ".vrs":
-        extract_vrs_data(path, verbose=verbose, **kwargs)
+        extract_vrs_data(path, **kwargs)
 
     elif path.name == "metadata.jsons":
-        extract_sensor_data(path, verbose=verbose, **kwargs)
+        extract_sensor_data(path, **kwargs)
 
     # route every file in file.path if it is a dir and scan_dir is True
     elif path.is_dir() and scan_dir:
         if path.name == "data":  # the data dir was passed so run on data/vrs
-            route_dir(path / "vrs", verbose=verbose, scan_dir=scan_dir, **kwargs)
+            route_dir(path / "vrs", scan_dir=scan_dir, **kwargs)
         else:
-            route_dir(path, verbose=verbose, scan_dir=False, **kwargs)
+            route_dir(path, scan_dir=False, **kwargs)
 
 
 # cam slam left is excluded to check for it separately since it might be moved
@@ -408,11 +396,19 @@ def extract_vrs_data(
     move=False,
     images=False,
     metadata=False,
-    quiet=False,
-    verbose=0,
     **kwargs,
 ):
     """Extract video, audio, and metadata from a VRS file."""
+    util.log_vars(
+        log_separate_=True,
+        path=path,
+        reprocess=reprocess,
+        calib=calib,
+        move=move,
+        images=images,
+        metadata=metadata,
+    )
+
     # I didn't want to name the options stuff like --keep-metadata because then the
     # opposite would be --no-keep-metadata which doesn't really make sense, but I also
     # didn't want to name them just the regular --metadata because then the actual data
@@ -422,15 +418,16 @@ def extract_vrs_data(
     keep_images = images
     keep_metadata = metadata
 
-    vprint = util.verbose_printer(quiet, verbose)
-    vprint(f"Processing {path}", 0)
-    start_time = time.perf_counter()
+    # manually use timer instead of wrapping function because we don't want the timer
+    # to include extract_sensor_data
+    timer = util.Timer("extract_vrs_data took {}")
+    timer.start()
 
     if len(path.parents) < 2 or path.parents[1].name != "data":
         raise Exception("Input file must be in either data/audio or data/video")
     data_dir = path.parents[1]
     output_dir = data_dir / "graphical" / path.stem
-    vprint(f"Output directory path is '{output_dir}'")
+    util.log_vars(output_dir=output_dir)
 
     reprocess_metadata = metadata_needs_reprocessed(output_dir, reprocess, save_calib)
     needs_extracted, needs_videos = vrs_needs_reprocessed(
@@ -439,23 +436,13 @@ def extract_vrs_data(
 
     if needs_extracted:
         output_dir.mkdir(parents=True, exist_ok=True)
-        vprint('Running "vrs extract-all"')
-        vrs_start_time = time.perf_counter()
-        subprocess.run(
-            ["vrs", "extract-all", path, "--to", output_dir],
-            capture_output=verbose < 2,
-            check=True,
-        )
-        vprint(
-            '"vrs extract-all" finished in'
-            f" {time.perf_counter() - vrs_start_time:.4f} seconds"
-        )
+        util.run_and_log_subprocess(["vrs", "extract-all", path, "--to", output_dir])
         # move the audio file out of its directory and remove the directory
         # there should only be one audio file, so [0] is getting the only one
         old_audio_path = list((output_dir / "231-1").glob("*.wav"))[0]
         old_audio_path.replace(output_dir / "231-1.wav")
         shutil.rmtree(output_dir / "231-1", ignore_errors=True)
-        vprint("Renaming the audio and video files")
+        logger.trace("Renaming the audio and video files")
         # old_path = output_dir / "231-1.wav"
         # new_path = output_dir / f"{STREAM_NAMES['231-1']}.wav"
         # util.mv(old_path, new_path)
@@ -464,31 +451,21 @@ def extract_vrs_data(
             new_path = output_dir / f"{STREAM_NAMES[stream]}.mp4"
             old_path.replace(new_path)
     else:
-        vprint(
-            f"{path} has already been processed. To reprocess it, use the -r agrument",
-            0,
-        )
+        logger.info("{} has already been processed. To reprocess it, pass -r", path)
 
     if needs_videos:
-        vprint("Creating videos from the images")
-        video_start_time = time.perf_counter()
-        for stream in VIDEO_STREAMS:
-            # rotate=stream != "211-1" to not rotate the eye tracking camera
-            # because its orientation is already correct
-            create_video(
-                output_dir / STREAM_NAMES[stream],
-                keep_images,
-                rotate=stream != "211-1",
-                verbose=verbose,
-            )
-        vprint(
-            "Created the videos in"
-            f" {time.perf_counter() - video_start_time:.4f} seconds"
-        )
+        logger.trace("Creating videos from the images")
+        with util.Timer("Creating videos took {}"):
+            for stream in VIDEO_STREAMS:
+                # rotate=stream != "211-1" to not rotate the eye tracking camera
+                # because its orientation is already correct
+                create_video(
+                    output_dir / STREAM_NAMES[stream],
+                    keep_images,
+                    rotate=stream != "211-1",
+                )
     else:
-        vprint(
-            "Videos have already been created. To recreate them, use the -r argument"
-        )
+        logger.info("Videos have already been created. To recreate them, pass -r")
 
     if move:
         old_audio_path = output_dir / "microphones.wav"
@@ -506,7 +483,7 @@ def extract_vrs_data(
             new_images_path = data_dir / "imagesForEncoding" / f"{path.stem}"
             old_images_path.replace(new_images_path)
 
-    vprint(f"Processed {path} in {time.perf_counter() - start_time:.4f} seconds", 0)
+    timer.stop()
 
     if reprocess_metadata:
         extract_sensor_data(
@@ -514,18 +491,16 @@ def extract_vrs_data(
             reprocess,
             calib=save_calib,
             metadata=keep_metadata,
-            quiet=quiet,
-            verbose=verbose,
             **kwargs,
         )
     else:
-        vprint(
-            f"{output_dir / 'metadata.jsons'} has already been processed. To"
-            " reprocess it, use the '-r' argument",
-            0,
+        logger.info(
+            "{} has already been processed. To reprocess it, pass -r",
+            output_dir / "metadata.jsons",
         )
 
 
+@util.Timer()
 def extract_sensor_data(
     path: Path,
     reprocess=False,
@@ -533,11 +508,19 @@ def extract_sensor_data(
     headers=True,
     nanoseconds=False,
     metadata=False,
-    quiet=False,
-    verbose=0,
     **kwargs,  # kwargs to catch any arguments meant for extract_vrs_data
 ):
     """Extract sensor data from a VRS file's extracted metadata.jsons file."""
+    util.log_vars(
+        log_separate_=True,
+        path=path,
+        reprocess=reprocess,
+        calib=calib,
+        headers=headers,
+        nanoseconds=nanoseconds,
+        metadata=metadata,
+    )
+
     # I didn't want to name the options stuff like --keep-metadata because then the
     # opposite would be --no-keep-metadata which doesn't really make sense, but I also
     # didn't want to name them just the regular --metadata because then the actual data
@@ -546,26 +529,21 @@ def extract_sensor_data(
     save_calib = calib
     keep_metadata = metadata
 
-    vprint = util.verbose_printer(quiet, verbose)
-    vprint(f"Processing {path}", 0)
-    start_time = time.perf_counter()
-
     if len(path.parents) < 2 or path.parents[2].name != "data":
         raise Exception("Input file must be in a directory in data/graphical")
     output_dir = path.parents[0]
-    vprint(f"Output directory path is '{output_dir}'", 2)
+    util.log_vars(output_dir=output_dir)
 
     # check if vrs has already been processed and only process if reprocess is True
     if not metadata_needs_reprocessed(output_dir, reprocess, save_calib):
-        vprint(
-            f"{path} has already been processed. To reprocess it, use the '-r'"
-            " argument",
-            0,
-        )
+        logger.info("{} has already been processed. To reprocess it, pass -r", path)
         return
 
-    vprint("Extracting sensor data from metadata.jsons")
-    metadata_start_time = time.perf_counter()
+    logger.trace("Extracting sensor data from metadata.jsons")
+    # manually use timer instead of using context manager to save an indent level
+    metadata_timer = util.Timer("Extracting sensor data from metadata.jsons took {}")
+    metadata_timer.start()
+
     with path.open(encoding="utf-8") as metadata_file:
         # main metadata of the file containing info about the different streams
         # the rest of the file contains data from non-audial and non-visual streams
@@ -597,11 +575,8 @@ def extract_sensor_data(
                 arrays[stream][indices[stream]] = formatted_data
                 indices[stream] += 1
 
-    vprint(
-        "Extracting sensor data finished in"
-        f" {time.perf_counter() - metadata_start_time:.4f} seconds"
-    )
-    vprint("Converting to unix timestamps")
+    metadata_timer.stop()  # this will log the timing info for us
+    logger.trace("Converting to unix timestamps")
 
     if arrays.get("285-1") is not None:
         first_device_timestamp, first_unix_timestamp = arrays["285-1"][0]
@@ -631,8 +606,10 @@ def extract_sensor_data(
                 )
                 video_timestamps_path.unlink()
 
-    vprint("Writing files")
-    write_start_time = time.perf_counter()
+    logger.trace("Writing files")
+    # manually use timer instead of using context manager to save an indent level
+    write_timer = util.Timer("Writing files took {}")
+    write_timer.start()
 
     with open(output_dir / "vrs-info.json", "w") as info_file:
         info_file.write(metadata_json)
@@ -681,17 +658,12 @@ def extract_sensor_data(
                 # doesn't work the same on structured arrays
                 writer.writerow(util.flatten(row))
 
-    vprint(
-        "Writing files finished in"
-        f" {time.perf_counter() - write_start_time:.4f} seconds"
-    )
+    write_timer.stop()
 
     if not keep_metadata:
-        vprint("Removing metadata.jsons")
+        logger.debug("Removing metadata.jsons")
         (output_dir / "metadata.jsons").unlink()
     (output_dir / "ReadMe.md").unlink()
-
-    vprint(f"Processed {path} in {time.perf_counter() - start_time:.4f} seconds", 0)
 
 
 if __name__ == "__main__":
@@ -758,21 +730,9 @@ if __name__ == "__main__":
         default=False,
         help="Save the metadata.jsons file. Default is False.",
     )
-    parser.add_argument(
-        "-q", "--quiet", action="store_true", help="Don't print anything."
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Print various debugging information.",
-    )
+    util.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    start_time = time.perf_counter()
-    route_file(*args.pop("path"), **args)
-    if not args["quiet"] or args["verbose"]:
-        print(
-            f"Extraction took a total of {time.perf_counter() - start_time:.4f} seconds"
-        )
+    util.setup_logging(args.pop("log_level"))
+    with util.Timer("Extraction took {}"):
+        route_file(*args.pop("path"), **args)

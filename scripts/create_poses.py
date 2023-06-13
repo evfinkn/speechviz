@@ -2,7 +2,6 @@ import argparse
 import csv
 import os
 import pathlib
-import time
 from dataclasses import dataclass
 
 import imufusion
@@ -10,6 +9,7 @@ import numpy as np
 import pyark.datatools as datatools
 import util
 from scipy import interpolate
+from util import logger
 
 RADIAN_TO_DEGREE_FACTOR = 180 / np.pi
 DEGREE_TO_RADIAN_FACTOR = np.pi / 180
@@ -49,6 +49,7 @@ def run_ahrs(timestamp, accelerometer, gyroscope, magnetometer, sample_rate):
 def calculate_position(timestamp, acceleration, sample_rate):
     delta_time = np.diff(timestamp, prepend=timestamp[0])
     margin = int(0.05 * sample_rate)
+    util.log_vars(margin=margin)
 
     # Identify moving periods
     is_moving = np.empty(len(timestamp))
@@ -122,30 +123,35 @@ def calculate_position(timestamp, acceleration, sample_rate):
     return position
 
 
+@util.Timer()
 def create_poses(
     imu_path: pathlib.Path,
     mag_path: pathlib.Path,
     reprocess: bool = False,
     headers=True,
     positions=False,
-    quiet=False,
-    verbose=0,
 ):
+    util.log_vars(
+        log_separate_=True,
+        imu_path=imu_path,
+        mag_path=mag_path,
+        reprocess=reprocess,
+        headers=headers,
+        positions=positions,
+    )
+
     parent = imu_path.parent
-    vprint = util.verbose_printer(quiet, verbose)
-    vprint(f"Processing {parent}", 0)
-    start_time = time.perf_counter()
 
     pose_path = parent / "pose.csv"
+    util.log_vars(log_separate_=True, parent=parent, pose_path=pose_path)
     if pose_path.exists() and not reprocess:
-        vprint(
-            f"Poses for {parent} have already been created. To recreate them, use the"
-            " '-r' argument",
-            0,
+        logger.info(
+            "Poses for {} have already been created. To recreate them, pass -r",
+            parent,
         )
         return
 
-    vprint("Loading data")
+    logger.trace("Loading data")
     with open(parent / "calib.txt", encoding="utf-8") as file:
         calibration = file.read()
     device_model = datatools.sensors.DeviceModel.fromJson(calibration)
@@ -183,25 +189,19 @@ def create_poses(
     sample_rates = 1 / np.diff(timestamp)
     sample_rate = round(np.mean(sample_rates))
 
-    vprint("Running ahrs")
-    ahrs_start_time = time.perf_counter()
-    quaternion, acceleration = run_ahrs(
-        timestamp, accelerometer, gyroscope, magnetometer, sample_rate
-    )
-    vprint(f"ahrs finished in {time.perf_counter() - ahrs_start_time:.4f} seconds")
-    if positions:
-        vprint("Calculating position")
-        position_start_time = time.perf_counter()
-        position = calculate_position(timestamp, acceleration, sample_rate)
-        vprint(
-            "Calculated positions in"
-            f" {time.perf_counter() - position_start_time:.4f} seconds"
+    with util.Timer("ahrs took {}"):
+        quaternion, acceleration = run_ahrs(
+            timestamp, accelerometer, gyroscope, magnetometer, sample_rate
         )
+    if positions:
+        logger.trace("Calculating position")
+        with util.Timer("Calculating positions took {}"):
+            position = calculate_position(timestamp, acceleration, sample_rate)
         header = "t,x,y,z,qw,qx,qy,qz".split(",")
     else:
         header = "t,qw,qx,qy,qz".split(",")
 
-    vprint("Writing files")
+    logger.trace("Writing files")
     with pose_path.open("w", newline="") as file:
         # reshape timestamp into a column vector for np.concatenate
         timestamp = timestamp.reshape(timestamp.shape[0], 1)
@@ -216,8 +216,6 @@ def create_poses(
             writer.writerow(header)
         writer.writerows(data)
 
-    vprint(f"Processed {parent} in {time.perf_counter() - start_time:.4f} seconds", 0)
-
 
 def route_dir(dir, verbose=0, **kwargs):
     imu_path = dir / "imu-left.csv"
@@ -228,9 +226,6 @@ def route_dir(dir, verbose=0, **kwargs):
 
 def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kwargs):
     """Handles the different types of files that can be input into this script."""
-
-    vprint = util.verbose_printer(quiet, verbose)
-
     if len(paths) == 0:
         # if no file or directory given, use directory script was called from
         paths = [os.getcwd()]
@@ -239,7 +234,7 @@ def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kw
         if len(paths) == 2:
             path1, path2 = paths
             if path1.parent != path2.parent:
-                vprint(f"{path1} and {path2} need to be in the same directory.", 0)
+                logger.error("{} and {} need to be in the same directory", path1, path2)
             if path1.name == "imu-left.csv" and path2.name == "magnetometer.csv":
                 create_poses(path1, path2, quiet=quiet, verbose=verbose, **kwargs)
             elif path2.name == "imu-left.csv" and path1.name == "magnetometer.csv":
@@ -266,11 +261,10 @@ def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kw
         elif path.parent.name == "graphical":
             route_dir(path, quiet=quiet, verbose=verbose, **kwargs)
         else:
-            vprint(
-                f"{path} is an invalid directory. Must be either the data directory,"
-                " the graphical directory, or a subdirectory of the graphical"
-                " directory",
-                0,
+            logger.error(
+                "{} is an invalid directory. Must be either the data directory, the"
+                " graphical directory, or a subdirectory of the graphical directory",
+                path,
             )
 
 
@@ -313,22 +307,9 @@ if __name__ == "__main__":
             " very accurate. Default is False."
         ),
     )
-    parser.add_argument(
-        "-q", "--quiet", action="store_true", help="Don't print anything"
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Print various debugging information",
-    )
+    util.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    start_time = time.perf_counter()
-    route_file(*args.pop("path"), **args)
-    if not args["quiet"] or args["verbose"]:
-        print(
-            "Pose creation took a total of"
-            f" {time.perf_counter() - start_time:.4f} seconds"
-        )
+    util.setup_logging(args.pop("log_level"))
+    with util.Timer("Pose creation took {}"):
+        route_file(*args.pop("path"), **args)

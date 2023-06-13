@@ -1,12 +1,23 @@
 import argparse
 import importlib
-import time
-import traceback
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 
 import util
 import yaml
+from util import logger
+
+ERROR_MSG = (
+    "The following error was encountered while running {} on {} with the arguments {}:"
+)
+NEXT_FILE_MSG = (
+    'Because on_error is "next_file", the rest of the steps on this file will not'
+    " be run and the pipeline will restart with the next file."
+)
+NEXT_STEP_MSG = (
+    'Because on_error is "next_step", the rest of the steps will still be run on this'
+    " file."
+)
 
 
 # this isn't an actual class, just a type for type hinting
@@ -15,76 +26,59 @@ class Step(TypedDict):
     arguments: Dict[str, Any]
 
 
-def create_pipeline(
-    steps: List[Step], on_error: str = "next_file", quiet: bool = False
-):
+def create_pipeline(steps: List[Step], on_error: str = "next_file"):
     # copy the dicts in the list because we're gonna add items to them
     steps = [step.copy() for step in steps]
     for step in steps:
-        script_name = step["script"]
+        # replace / with . because modules use . to separate directories
+        script_name = step["script"].replace("/", ".")
         if script_name.endswith(".py"):
             script_name = script_name[:-3]
         script = importlib.import_module(script_name)
-        step["run_step"] = getattr(script, "run_from_pipeline")
+        try:
+            step["run_step"] = getattr(script, "run_from_pipeline")
+        except AttributeError:
+            raise AttributeError(
+                f"{step['script']} is missing a run_from_pipeline function."
+            )
 
+    @util.Timer()
     def pipeline(file: Path):
+        logger.debug("Running pipeline on {}", file)
+        results = []
         for step in steps:
             # (shallow) copy because we're replacing the values that're strings
-            arguments = step["arguments"].copy()
+            arguments = step.get("arguments", {}).copy()
             for key, value in arguments.items():
                 if isinstance(value, str):
                     # replace the file placeholders like {file.stem}
                     arguments[key] = value.format(file=file)
             try:
-                step["run_step"](arguments)
+                results.append(step["run_step"](arguments))
             except Exception as err:
+                logger.exception(ERROR_MSG, step["script"], file, arguments)
                 if on_error == "next_file":
-                    if not quiet:
-                        print(
-                            "\nWARNING: the following error was encountered while"
-                            f" running {step['script']} on {file} with the arguments"
-                            f" {arguments}:"
-                        )
-                        print(err)
-                        traceback.print_tb(err.__traceback__)
-                        print(
-                            'Because on_error is "next_file", the rest of the steps on'
-                            " this file will not be run and the pipeline will restart"
-                            " with the next file.\n"
-                        )
-                    return
+                    logger.warning(NEXT_FILE_MSG)
+                    results.append(err)
+                    return results
                 elif on_error == "exit":
-                    print(
-                        f"\nEncountered an error while running {file} through"
-                        f" {step['script']} with the arguments {arguments}"
-                    )
-                    raise err
+                    # exit instead of raising so exception isn't logged twice
+                    exit(1)
                 elif on_error == "next_step":
-                    if not quiet:
-                        print(
-                            "\nWARNING: the following error was encountered while"
-                            f" running {step['script']} on {file} with the arguments"
-                            f" {arguments}:"
-                        )
-                        print(err)
-                        traceback.print_tb(err.__traceback__)
-                        print(
-                            'Because on_error is "next_step", the rest of the steps on'
-                            " this file will still be run.\n"
-                        )
-                    # this doesn't really need to be here but it's more explicit
-                    continue
+                    logger.warning(NEXT_STEP_MSG)
+                    results.append(err)
+        return results
 
     return pipeline
 
 
+@logger.catch
+@util.Timer(message="entire pipeline took {}")
 def run_pipeline(
     config_path: Path,
     files: List[Path],
     dirs: List[Path],
     on_error: str = "next_file",
-    quiet: bool = False,
-    verbose: int = 0,
 ):
     config_yaml = config_path.read_text()
     config = yaml.safe_load(config_yaml)
@@ -95,24 +89,28 @@ def run_pipeline(
         dirs = config.get("directories", [])
 
     if len(files) == 0 and len(dirs) == 0:
-        raise Exception(
+        raise ValueError(
             "You must give at least 1 file or directory in the command line or"
             " config file."
         )
 
     steps = config.get("steps", [])
     if len(steps) == 0:
-        raise Exception("At least 1 step must be specified in the config file.")
-    pipeline = create_pipeline(steps, on_error, quiet)
+        raise ValueError("At least 1 step must be specified in the config file.")
+    pipeline = create_pipeline(steps, on_error)
 
     files = list(util.expand_files(files, to_paths=True))
     dirs = util.expand_files(dirs, to_paths=True)
     for dir in dirs:
         files.extend(dir.iterdir())
+
+    errored_on = []
     for file in files:
-        if verbose:
-            print(f"\nRunning the pipeline on {file}")
-        pipeline(file)
+        results = pipeline(file)
+        if any(isinstance(result, Exception) for result in results):
+            errored_on.append(file)
+    if len(errored_on) > 0:
+        logger.warning("The pipeline errored on the following files: {}", errored_on)
 
 
 if __name__ == "__main__":
@@ -159,21 +157,11 @@ if __name__ == "__main__":
             ' remaining steps. If "exit", the pipeline will exit with the error.'
         ),
     )
-    parser.add_argument(
-        "-q", "--quiet", action="store_true", help="Don't print anything"
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Print various debugging information",
-    )
+    util.add_log_level_argument(parser)
 
-    args = vars(parser.parse_args())
-    start_time = time.perf_counter()
-    run_pipeline(args.pop("config"), args.pop("file"), args.pop("directory"), **args)
-    if not args["quiet"] or args["verbose"]:
-        print(
-            f"The pipeline completed in {time.perf_counter() - start_time:.4f} seconds"
+    args = vars(parser.parse_args())  # convert to dict to make it easier to pop
+    util.setup_logging(args.pop("log_level"))
+    with util.Timer("Running pipeline on all files took {}"):
+        run_pipeline(
+            args.pop("config"), args.pop("file"), args.pop("directory"), **args
         )

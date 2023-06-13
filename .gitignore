@@ -11,3 +11,4 @@ scripts/transcribe
 scripts/models
 src/index.js
 scripts/combineAndPadAudio.py
+logs

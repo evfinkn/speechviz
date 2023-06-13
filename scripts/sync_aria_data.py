@@ -3,8 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
-import subprocess
-import time
 
 import librosa
 import numpy as np
@@ -12,16 +10,17 @@ import scipy.io.wavfile
 import scipy.signal
 import sync_audios
 import util
+from util import logger
 
 
 # don't have separate functions for sync and hstack because doing them together
 # in one ffmpeg command is a lot quicker than separating them
+@util.Timer()
 def sync_and_hstack_videos(
     video_paths: list[pathlib.Path],
     offsets: list[float],
     output_path: pathlib.Path,
     audio_path: pathlib.Path = None,
-    verbose: int = 0,
 ):
     """Trims the videos and stacks them left-to-right in columns.
     This assumes that the videos have the same height (an error will be thrown by
@@ -38,8 +37,6 @@ def sync_and_hstack_videos(
         The path to save the processed video to.
     audio_path : pathlib.Path, optional
         If given, this audio is added to the output.
-    verbose : int, default=0
-        Whether to print various debugging information.
 
     Returns
     -------
@@ -51,12 +48,9 @@ def sync_and_hstack_videos(
     Exception
         If `video_paths` has less than 2 elements.
     """
-    start_time = time.perf_counter()
     if len(video_paths) < 2:
         raise Exception("video_paths must have at least 2 elements")
     args = ["ffmpeg", "-y"]
-    if verbose < 3:
-        args.append("-hide_banner")
 
     for video_path, offset in zip(video_paths, offsets):
         minutes, seconds = divmod(offset, 60)
@@ -84,25 +78,17 @@ def sync_and_hstack_videos(
         args.extend(["-map", f"{len(video_paths)}:a", "-c:a", "aac"])
 
     args.append(output_path)
-    result = subprocess.run(args, capture_output=verbose < 2, check=True)
-    if verbose:
-        print(
-            "sync_and_hstack_videos took"
-            f" {time.perf_counter() - start_time:.4f} seconds"
-        )
-    return result
+    return util.run_and_log_subprocess(args)
 
 
+@util.Timer()
 def sync_poses(
     pose_paths: list[pathlib.Path],
     offsets: list[float],
     last_time: float,
     output_dir: pathlib.Path,
-    verbose: int = 0,
 ):
     """ """
-    start_time = time.perf_counter()
-
     for i in range(len(pose_paths)):
         pose = np.genfromtxt(pose_paths[i], delimiter=",", skip_header=1)
         pose[:, 0] -= pose[0, 0]  # make the timestamps start at 0.0
@@ -114,9 +100,6 @@ def sync_poses(
         else:
             header = "t,x,y,z,qw,qx,qy,qz"
         np.savetxt(trimmed_pose_path, pose, fmt="%.15f", delimiter=",", header=header)
-
-    if verbose:
-        print(f"sync_poses took {time.perf_counter() - start_time:.4f} seconds")
 
 
 def needs_reprocessed(output_dir: pathlib.Path, num_paths, reprocess=False):
@@ -138,24 +121,26 @@ def needs_reprocessed(output_dir: pathlib.Path, num_paths, reprocess=False):
     return audios_need_synced, videos_need_synced, poses_need_synced
 
 
+@util.Timer()
 def sync_aria_data(
     paths: list[pathlib.Path],
     output_dir: pathlib.Path,
     reprocess: bool = False,
     offsets: bool = True,
-    quiet: bool = False,
-    verbose: int = 0,
 ):
     """ """
-    save_offsets = offsets
-
-    vprint = util.verbose_printer(quiet, verbose)
-    vprint(f"Processing {', '.join(map(str, paths))}", 0)
-    start_time = time.perf_counter()
+    util.log_vars(
+        log_separate_=True,
+        paths=paths,
+        output_dir=output_dir,
+        reprocess=reprocess,
+        offsets=offsets,
+    )
+    save_offsets = offsets  # rename to save_offsets to avoid confusion
 
     needs_resynced = needs_reprocessed(output_dir, len(paths), reprocess)
     if not any(needs_resynced):
-        vprint("Paths have already been synced. To resync them, use the -r argument", 0)
+        logger.info("Paths have already been synced. To resync them, pass -r")
         return
 
     # TODO: use offsets.json instead of always reprocessing audio
@@ -193,8 +178,8 @@ def sync_aria_data(
         raise Exception(f"Audios must all have the same sample rate, but srs = {srs}")
     sr = srs[0]
 
-    lags = sync_audios.get_audios_lags(audios, verbose=verbose)
-    synced_audios = sync_audios.sync_audios(audios, lags, mode="trim", verbose=verbose)
+    lags = sync_audios.get_audios_lags(audios)
+    synced_audios = sync_audios.sync_audios(audios, lags, mode="trim")
     mixed_audio = sync_audios.mix_audios(synced_audios)
     mixed_audio_path = output_dir / "microphones-mono.wav"
     scipy.io.wavfile.write(mixed_audio_path, sr, mixed_audio)
@@ -210,39 +195,31 @@ def sync_aria_data(
         if all([video_path.exists() for video_path in video_paths]):
             mixed_video_path = output_dir / "camera-slam-left.mp4"
             sync_and_hstack_videos(
-                video_paths, offsets, mixed_video_path, mixed_audio_path, verbose
+                video_paths, offsets, mixed_video_path, mixed_audio_path
             )
         else:
-            vprint("Skipping sync_and_hstack_videos (not all paths have a video) ", 0)
+            logger.info("Skipping sync_and_hstack_videos (not all paths have a video)")
     else:
-        vprint(
-            "Videos have already been mixed. To reprocess them, use the -r agrument", 0
-        )
+        logger.info("Videos have already been mixed. To reprocess them, pass -r")
 
     if resync_poses:
         pose_paths = [path / "pose.csv" for path in paths]
         if all([pose_path.exists() for pose_path in pose_paths]):
             last_time = len(mixed_audio) / sr
-            sync_poses(pose_paths, offsets, last_time, output_dir, verbose)
+            sync_poses(pose_paths, offsets, last_time, output_dir)
         else:
-            vprint("Skipping sync_poses (not all paths have a pose file)", 0)
+            logger.info("Skipping sync_poses (not all paths have a pose file)")
     else:
-        vprint(
-            "Poses have already been synced. To reprocess them, use the -r agrument", 0
-        )
-
-    vprint(f"sync_aria_data took {time.perf_counter() - start_time:.4f} seconds")
+        logger.info("Poses have already been synced. To reprocess them, pass -r")
 
 
-def route_file(
-    paths: list[pathlib.Path], output_dir: pathlib.Path, verbose: int = 0, **kwargs
-):
+def route_file(paths: list[pathlib.Path], output_dir: pathlib.Path, **kwargs):
     # I know there's is_file but not is_dir felt safer in my mind idk why
     if any([not path.is_dir() for path in paths]):
         raise Exception("All paths must be paths to directories")
     paths = [path.absolute() for path in paths]
 
-    sync_aria_data(paths, output_dir, verbose=verbose, **kwargs)
+    sync_aria_data(paths, output_dir, **kwargs)
 
 
 def run_from_pipeline(args):
@@ -278,22 +255,9 @@ if __name__ == "__main__":
         default=True,
         help="Save the offsets between the recordings. Default is True.",
     )
-    parser.add_argument(
-        "-q", "--quiet", action="store_true", help="Don't print anything."
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Print various debugging information.",
-    )
+    util.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    start_time = time.perf_counter()
-    route_file(args.pop("path"), args.pop("output_dir"), **args)
-    if not args["quiet"] or args["verbose"]:
-        print(
-            "Synchronization took a total of"
-            f" {time.perf_counter() - start_time:.4f} seconds"
-        )
+    util.setup_logging(args.pop("log_level"))
+    with util.Timer("Syncing took {}"):
+        route_file(args.pop("path"), args.pop("output_dir"), **args)

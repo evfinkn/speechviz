@@ -1,9 +1,8 @@
 import argparse
 import pathlib
-import subprocess
-import time
 
 import util
+from util import logger
 
 AUDIO_FILES = {".mp3", ".wav", ".flac", ".ogg", ".opus"}
 VIDEO_FILES = {".mp4", ".mov"}
@@ -13,20 +12,19 @@ TRANSCRIBE_SCRIPT = SCRIPTS_DIR / "transcribe"
 BASE_MODEL = SCRIPTS_DIR / "models/whisper-base.en.bin"
 
 
-def route_dir(dir, verbose=0, scan_dir=True, **kwargs):
-    if verbose:
-        print(f"Running transcribe on each file in {dir}")
+def route_dir(dir, scan_dir=True, **kwargs):
+    logger.trace(f"Running transcribe on each file in {dir}")
     for path in dir.iterdir():
-        route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
+        route_file(path, scan_dir=scan_dir, **kwargs)
 
 
-def route_file(*paths: pathlib.Path, verbose: int = 0, scan_dir=True, **kwargs):
+def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
     if len(paths) == 0:
         # if no file or directory given, use directory script was called from
         paths = [pathlib.Path.cwd()]
     elif len(paths) > 1:
         for path in paths:
-            route_file(path, verbose=verbose, scan_dir=scan_dir, **kwargs)
+            route_file(path, scan_dir=scan_dir, **kwargs)
         # stop function because all of the processing is
         # done in the function calls in the for loop
         return
@@ -35,16 +33,16 @@ def route_file(*paths: pathlib.Path, verbose: int = 0, scan_dir=True, **kwargs):
 
     # if file.path is an audio or video file, transcribe it
     if path.suffix.casefold() in AUDIO_FILES or path.suffix.casefold() in VIDEO_FILES:
-        transcribe(path, verbose=verbose, **kwargs)
+        transcribe(path, **kwargs)
 
     # run process audio on every file in file.path if it is a dir and scan_dir is True
     elif path.is_dir() and scan_dir:
         if path.name == "data":
             # the data dir was passed so run on data/audio and data/video
-            route_dir(path / "audio", verbose=verbose, scan_dir=scan_dir, **kwargs)
-            route_dir(path / "video", verbose=verbose, scan_dir=scan_dir, **kwargs)
+            route_dir(path / "audio", scan_dir=scan_dir, **kwargs)
+            route_dir(path / "video", scan_dir=scan_dir, **kwargs)
         else:
-            route_dir(path, verbose=verbose, scan_dir=False, **kwargs)
+            route_dir(path, scan_dir=False, **kwargs)
 
 
 def run_from_pipeline(args):
@@ -52,29 +50,47 @@ def run_from_pipeline(args):
     route_file(*paths, **args)
 
 
+@util.Timer()
 def transcribe(
     path: pathlib.Path,
     model: pathlib.Path = BASE_MODEL,
     max_len: int = 1,
     reprocess: bool = False,
-    quiet: bool = False,
-    verbose: int = 0,
 ):
-    if len(path.parents) < 2 or path.parents[1].name != "data":
-        raise Exception("Input file must be in either data/audio or data/video")
+    # if len(path.parents) < 2 or path.parents[1].name != "data":
+    #     raise Exception("Input file must be in either data/audio or data/video")
 
-    vprint = util.verbose_printer(quiet, verbose)
-    vprint(f"Transcribing {path}", 0)
-    start_time = time.perf_counter()
+    # vprint = util.verbose_printer(quiet, verbose)
+    util.log_vars(log_separate_=True, path=path, model=model)
+    util.log_vars(max_len=max_len, reprocess=reprocess)
 
-    transcriptions_dir = path.parents[1] / "transcriptions"
+    # transcriptions_dir = path.parents[1] / "transcriptions"
+    # transcriptions_dir.mkdir(exist_ok=True)
+    # transcription_path = transcriptions_dir / f"{path.stem}-transcription.json"
+    for ancestor in path.parents:
+        if ancestor.name == "audio" or ancestor.name == "video":
+            if ancestor.parent.name == "data":
+                data_dir = ancestor.parent
+                parent_dir = path.parent.relative_to(ancestor)
+                break
+    # an else for a for loop is executed if break is never reached
+    else:
+        raise ValueError("Input file must be a descendant of data/audio or data/video.")
+
+    transcriptions_dir = data_dir / "transcriptions"
     transcriptions_dir.mkdir(exist_ok=True)
-    transcription_path = transcriptions_dir / f"{path.stem}-transcription.json"
+    transcription_path = (
+        transcriptions_dir / parent_dir / f"{path.stem}-transcription.json"
+    )
+    util.log_vars(
+        log_separate_=True,
+        data_dir=data_dir,
+        parent_dir=parent_dir,
+        transcription_path=transcription_path,
+    )
     if transcription_path.exists() and not reprocess:
-        vprint(
-            f"{path} has already been transcribed. To re-transcribe it, use the -r"
-            " argument",
-            0,
+        logger.info(
+            "{} has already been transcribed. To re-transcribe it, pass -r", path
         )
         return
 
@@ -82,23 +98,24 @@ def transcribe(
     util.ffmpeg(
         path,
         converted_path,
-        verbose,
-        [],
-        ["-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le"],
+        output_options=["-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le"],
     )
 
-    subprocess.run(
-        [TRANSCRIBE_SCRIPT, "-m", model, "-ml", str(max_len), "-f", converted_path],
-        capture_output=verbose < 2,
-        check=True,
+    util.run_and_log_subprocess(
+        [
+            TRANSCRIBE_SCRIPT,
+            "-m",
+            model,
+            "-ml",
+            str(max_len),
+            "-i",
+            converted_path,
+            "-o",
+            transcription_path,
+        ]
     )
-    converted_transcriptions_path = (
-        transcriptions_dir / f"{path.stem}-pcm_s16le-transcription.json"
-    )
-    converted_transcriptions_path.replace(transcription_path)
+    logger.info("Transcription saved to {}", transcription_path)
     converted_path.unlink()
-
-    vprint(f"Transcribing took {time.perf_counter() - start_time:.4f} seconds", 1)
 
 
 if __name__ == "__main__":
@@ -134,16 +151,8 @@ if __name__ == "__main__":
         action="store_true",
         help="Re-transcribe audio files detected to have already been processed.",
     )
-    parser.add_argument(
-        "-q", "--quiet", action="store_true", help="Don't print anything."
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Print various debugging information",
-    )
+    util.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
+    util.setup_logging(args.pop("log_level"))
     route_file(*args.pop("path"), **args)
