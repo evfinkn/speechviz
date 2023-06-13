@@ -713,10 +713,13 @@ document.getElementById("add-segment").addEventListener("click", function () {
 
 const notes = document.getElementById("notes");
 
+const folderFile =
+  folder !== undefined && folder !== null ? `${folder}/${filename}` : filename;
+
 fetch("load", {
   method: "POST",
   headers: { "Content-Type": "application/json; charset=UTF-8" },
-  body: JSON.stringify({ user, filename }),
+  body: JSON.stringify({ user, filename: folderFile }),
 })
   .then(checkResponseStatus)
   .then((res) => res.json())
@@ -844,7 +847,7 @@ const save = () => {
   );
 
   // fileParagraph.innerHTML = `${filename} - Saving`;
-  const groupRegex = /Speaker |VAD|Non-VAD|Words/;
+  const groupRegex = /Speaker |VAD|Non-VAD|Words|SNR-Noise/;
   // only save groups that aren't from the pipeline
   const groups = Object.values(PeaksGroup.byId).filter(
     (group) => !group.id.match(groupRegex)
@@ -883,17 +886,20 @@ const save = () => {
     }
   });
 
+  /** DEPRECATED: Things will be able to move between anything
+   *  i.e. speaker to vad, new method required
   const movedSegments = recurseGetSegments(Group.byId["Speakers"])
     .filter((segment) => segment.parent.id != originalGroups[segment.id])
     .map((segment) => segment.getProperties(["text", "duration", "color"]));
   segments.push(...movedSegments);
+  */
 
   fetch("save", {
     method: "POST",
     headers: { "Content-Type": "application/json; charset=UTF-8" },
     body: JSON.stringify({
       user,
-      filename,
+      filename: folderFile,
       segments,
       notes: notes.value,
       faces,
