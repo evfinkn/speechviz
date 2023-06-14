@@ -8,6 +8,8 @@ from typing import (
     Literal,
     Optional,
     Protocol,
+    Tuple,
+    TypedDict,
     TypeVar,
     Union,
 )
@@ -50,3 +52,35 @@ SupportsRichComparison = Union[SupportsGT[Any], SupportsLT[Any]]
 class KeyFunc(Generic[T]):
     def __class_getitem__(cls, item):
         return Callable[[item], SupportsRichComparison]
+
+
+class TreeItem(TypedDict, total=False):
+    type: str
+    arguments: tuple
+    options: dict
+
+
+class Group(TypedDict, total=False):
+    type: Literal["Group"]
+    arguments: Tuple[str]
+    options: dict
+
+
+# can't inherit from Group because we change the type of `type`
+class PeaksGroup(TypedDict, total=False):
+    type: Literal["PeaksGroup"]
+    arguments: Tuple[str]
+    options: dict
+
+
+class PeaksSegment(TypedDict):
+    startTime: float
+    endTime: float
+    color: str
+    labelText: str
+
+
+class Segment(TypedDict, total=False):
+    type: Literal["Segment"]
+    arguments: Tuple[PeaksSegment]
+    options: dict

@@ -3,41 +3,47 @@ from __future__ import annotations
 import argparse
 import functools
 import json
-import math
 import os
 import pathlib
 import re
 import subprocess
 from collections import defaultdict
+from typing import Optional, Sequence
 
 import librosa
 import numpy as np
 
 import entropy
 import log
+import snr
 import util
+from _types import Group, PeaksGroup, Segment, TreeItem
 from constants import AUDIO_EXTS, VIDEO_EXTS
 from log import logger
 
 COPY_TO_LABELED = {"copyTo": ["Labeled.children"]}
 
 
-def format_tree_item(item_type: str, arguments: list, options: dict = None):
+def format_tree_item(
+    item_type: str, arguments: Sequence, options: Optional[dict] = None
+) -> TreeItem:
     item = {"type": item_type, "arguments": arguments}
     if options is not None:
         item["options"] = options
     return item
 
 
-def format_group(name: str, options: dict = None):
+def format_group(name: str, options: Optional[dict] = None) -> Group:
     return format_tree_item("Group", [name], options)
 
 
-def format_peaks_group(name: str, options: dict = None):
+def format_peaks_group(name: str, options: Optional[dict] = None) -> PeaksGroup:
     return format_tree_item("PeaksGroup", [name], options)
 
 
-def format_segment(start, end, color, label, options=None):
+def format_segment(
+    start: float, end: float, color: str, label: str, options: Optional[dict] = None
+) -> Segment:
     # round start and end to save space in the json file and because many times from
     # the pyannote pipelines look like 5.3071874999999995 and 109.99968750000001
     start = round(start, 7)
@@ -115,18 +121,6 @@ def get_num_convo_turns(times):
     return len(remove_overlapped(grouped))
 
 
-def rms(samps):  # give it a list, and it finds the root mean squared
-    return np.sqrt(np.mean(np.square(samps)))
-
-
-def snr(signal, noise):  # https://en.m.wikipedia.org/wiki/Signal-to-noise_ratio
-    signal_rms = rms(signal) if not isinstance(signal, float) else signal
-    noise_rms = rms(noise) if not isinstance(noise, float) else noise
-    snr = ((signal_rms - noise_rms) / noise_rms) ** 2
-    snr_db = 10 * (math.log(snr, 10))
-    return snr_db
-
-
 def samples_from_times(times, samples, sr):
     indices = (np.array(times) * sr).astype(int)
     samps = np.empty(np.sum(np.clip(indices[:, 1] - indices[:, 0], 0, None)))
@@ -139,10 +133,8 @@ def samples_from_times(times, samples, sr):
 
 
 def snr_from_times(signal_times, samples, sr, noise_rms):
-    if len(signal_times) == 0:
-        return 0
     signal_samps = samples_from_times(signal_times, samples, sr)
-    return snr(signal_samps, noise_rms)
+    return snr.snr(signal_samps, noise_rms)
 
 
 @log.Timer()
@@ -449,10 +441,10 @@ def process_audio(
         # raise Exception("No non-vad to calculate snr with for file " + str(path))
 
         noise_samps = samples_from_times(noise_times, mono_samples, sr)
-        noise_rms = rms(noise_samps)
+        noise_rms = snr.rms(noise_samps)
         if noise_rms == 0:
             # can't divide by 0, be less picky and take non vad not just speech_pause
-            noise_rms = rms(non_vad_samps)
+            noise_rms = snr.rms(non_vad_samps)
 
         spkrs_snrs = {
             spkr: snr_from_times(spkrs_times[spkr], mono_samples, sr, noise_rms)
@@ -566,8 +558,8 @@ def process_audio(
             "non_vad_duration": duration - vad_duration,
             "snr_noise_duration": snr_noise_duration,
         }
-        for spkr, snr in spkrs_snrs.items():
-            stats[f"{spkr}_snr_db"] = snr
+        for spkr, spkr_snr in spkrs_snrs.items():
+            stats[f"{spkr}_snr_db"] = spkr_snr
         if split_channels and samples.ndim == 2:
             if channels_path.exists():
                 channel_names = channels_path.read_text().splitlines()
@@ -576,20 +568,20 @@ def process_audio(
             logger.debug("channel_names={}", channel_names)
             for i, channel_name in enumerate(channel_names):
                 c_noise_samps = samples_from_times(noise_times, samples[i], sr)
-                c_noise_rms = rms(c_noise_samps)
+                c_noise_rms = snr.rms(c_noise_samps)
                 if c_noise_rms == 0:
                     logger.debug('channel "{}"\'s noise rms is 0', channel_name)
                     # can't divide by 0, be less picky and take
                     # non vad not just speech_pause
-                    c_noise_rms = rms(non_vad_samps)
+                    c_noise_rms = snr.rms(non_vad_samps)
                 c_spkrs_snrs = {
                     spkr: snr_from_times(spkrs_times[spkr], samples[i], sr, c_noise_rms)
                     for spkr in spkrs
                 }
                 c_overall_snr = snr_from_times(diar_times, samples[i], sr, c_noise_rms)
                 stats[f"{channel_name}_overall_snr_db"] = c_overall_snr
-                for spkr, snr in c_spkrs_snrs.items():
-                    stats[f"{channel_name}_{spkr}_snr_db"] = snr
+                for spkr, spkr_snr in c_spkrs_snrs.items():
+                    stats[f"{channel_name}_{spkr}_snr_db"] = spkr_snr
         remove_keys = [re.compile(".*_snr")]
         util.add_to_csv(stats_path, stats, remove_keys=remove_keys)
 
