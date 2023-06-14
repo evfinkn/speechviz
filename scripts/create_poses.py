@@ -5,12 +5,13 @@ import pathlib
 from dataclasses import dataclass
 
 import imufusion
-import log
 import numpy as np
 import pyark.datatools as datatools
+from scipy import interpolate
+
+import log
 import util
 from log import logger
-from scipy import interpolate
 
 RADIAN_TO_DEGREE_FACTOR = 180 / np.pi
 DEGREE_TO_RADIAN_FACTOR = np.pi / 180

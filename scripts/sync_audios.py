@@ -4,10 +4,11 @@ import pathlib
 from typing import Literal
 
 import librosa
-import log
 import numpy as np
 import scipy.io.wavfile
 import scipy.signal
+
+import log
 import util
 from log import logger
 

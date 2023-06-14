@@ -3,9 +3,10 @@ import importlib
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 
+import yaml
+
 import log
 import util
-import yaml
 from log import logger
 
 ERROR_MSG = (

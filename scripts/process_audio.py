@@ -10,10 +10,11 @@ import re
 import subprocess
 from collections import defaultdict
 
-import entropy
 import librosa
-import log
 import numpy as np
+
+import entropy
+import log
 import util
 from constants import AUDIO_EXTS, VIDEO_EXTS
 from log import logger

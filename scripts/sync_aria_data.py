@@ -5,10 +5,11 @@ import json
 import pathlib
 
 import librosa
-import log
 import numpy as np
 import scipy.io.wavfile
 import scipy.signal
+
+import log
 import sync_audios
 import util
 from log import logger

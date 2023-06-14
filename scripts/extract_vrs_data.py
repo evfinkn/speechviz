@@ -6,9 +6,10 @@ import re
 import shutil
 from pathlib import Path
 
-import log
 import numpy as np
 import orjson
+
+import log
 import util
 from log import logger
 

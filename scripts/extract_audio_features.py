@@ -3,8 +3,9 @@ import pathlib
 import subprocess
 
 import librosa
-import log
 import numpy as np
+
+import log
 import util
 from constants import AUDIO_EXTS, VIDEO_EXTS
 from log import logger

@@ -9,9 +9,10 @@ import sys
 import time
 from typing import TYPE_CHECKING, Callable, Optional
 
+from loguru import logger
+
 from _types import LogLevel, PathLike, Retention
 from constants import DATA_DIR, LOGS_DIR
-from loguru import logger
 
 if TYPE_CHECKING:
     # argparse is only used for type checking
