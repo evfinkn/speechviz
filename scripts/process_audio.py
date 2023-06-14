@@ -420,13 +420,11 @@ def process_audio(
 
         # Filter to get segments that are less than 2 seconds long since these
         # are probably pauses in speech
-        speech_pause_times = list(filter(lambda tr: tr[1] - tr[0] < 2, non_vad_times))
-        if len(speech_pause_times) == 0:
+        noise_times = list(filter(lambda tr: tr[1] - tr[0] < 2, non_vad_times))
+        if len(noise_times) == 0:
             logger.trace("No noise found, using non-vad instead")
             # if there are no speech pause times, just use regular nonvad instead
             noise_times = non_vad_times
-        else:
-            noise_times = speech_pause_times
 
         # todo: decide if we implement this with nonvad and/or speech_pause / or both
         # no noise to base off of, and can't calculate snr?
@@ -461,14 +459,9 @@ def process_audio(
             for spkr in spkrs
         }
 
-        speech_pause_segs = []
-        for start, end in speech_pause_times:
-            speech_pause_segs.append(format_segment(start, end, "#092b12", "SNR-Noise"))
-
-        # if speech pause segs had nothing added, we used regular non vad
-        if speech_pause_segs == []:
-            logger.debug("speech_pause_segs is empty, using non_vad_segs")
-            speech_pause_segs = non_vad_segs
+        noise_segs = []
+        for start, end in noise_times:
+            noise_segs.append(format_segment(start, end, "#092b12", "SNR-Noise"))
 
         logger.trace("Creating tree items for Speechviz")
 
@@ -506,7 +499,7 @@ def process_audio(
         non_vad = format_peaks_group("Non-VAD", non_vad_options)
 
         speech_pause_options = vad_options.copy()
-        speech_pause_options["children"] = speech_pause_segs
+        speech_pause_options["children"] = noise_segs
         speech_pause = format_peaks_group("SNR-Noise", speech_pause_options)
 
         # save the segments
@@ -522,7 +515,7 @@ def process_audio(
         s_entropy = util.AggregateData(entropy.spectral_entropy(mono_samples, sr))
         diar_duration = get_times_duration(diar_times)
         vad_duration = get_times_duration(vad_times)
-        snr_noise_duration = get_times_duration(speech_pause_times)
+        snr_noise_duration = get_times_duration(noise_times)
 
         # Bind "N/A" as default to save room when calling these functions
         # default is a tuple of "N/A" and "N/A" so that it can be unpacked
