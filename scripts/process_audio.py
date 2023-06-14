@@ -415,11 +415,12 @@ def process_audio(
         for start, end in non_vad_times:
             # don't need to give options because the Non-VAD PeaksGroup handles it
             non_vad_segs.append(format_segment(start, end, "#b59896", "Non-VAD"))
+        non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
 
         logger.trace("Calculating SNRs")
 
         # Filter to get segments that are less than 2 seconds long since these
-        # are probably pauses in speech
+        # are probably pauses in speech (and thus noise)
         noise_times = list(filter(lambda tr: tr[1] - tr[0] < 2, non_vad_times))
         if len(noise_times) == 0:
             logger.trace("No noise found, using non-vad instead")
@@ -451,7 +452,6 @@ def process_audio(
         noise_rms = rms(noise_samps)
         if noise_rms == 0:
             # can't divide by 0, be less picky and take non vad not just speech_pause
-            non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
             noise_rms = rms(non_vad_samps)
 
         spkrs_snrs = {
@@ -581,7 +581,6 @@ def process_audio(
                     logger.debug('channel "{}"\'s noise rms is 0', channel_name)
                     # can't divide by 0, be less picky and take
                     # non vad not just speech_pause
-                    non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
                     c_noise_rms = rms(non_vad_samps)
                 c_spkrs_snrs = {
                     spkr: snr_from_times(spkrs_times[spkr], samples[i], sr, c_noise_rms)
