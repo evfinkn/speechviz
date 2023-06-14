@@ -46,7 +46,7 @@ def format_segment(start, end, color, label, options=None):
     return format_tree_item("Segment", [peaks_seg], options)
 
 
-def get_complement_times(times, duration, pauses=False):
+def get_complement_times(times, duration):
     comp_times = []
     if len(times) == 0:
         comp_times.append((0, duration))
@@ -56,24 +56,15 @@ def get_complement_times(times, duration, pauses=False):
             start_index = 2
             if len(times) == 1:
                 if times[0][1] != duration:
-                    if not pauses or duration - times[0][1] < 2:
-                        comp_times.append((times[0][1], duration))
+                    comp_times.append((times[0][1], duration))
             else:
-                # if the nonvad time is less than 2 seconds it's prob. a pause in speech
-                if not pauses or times[1][0] - times[0][1] < 2:
-                    comp_times.append((times[0][1], times[1][0]))
+                comp_times.append((times[0][1], times[1][0]))
         else:
-            # if the nonvad time is less than 2 seconds it's prob. a pause in speech
-            if not pauses or times[0][0] < 2:
-                comp_times.append((0, times[0][0]))
+            comp_times.append((0, times[0][0]))
         for i in range(start_index, len(times)):
-            # if the nonvad time is less than 2 seconds it's prob. a pause in speech
-            if not pauses or times[i][0] - times[i - 1][1] < 2:
-                comp_times.append((times[i - 1][1], times[i][0]))
+            comp_times.append((times[i - 1][1], times[i][0]))
         if times[-1][1] != duration:
-            # if the nonvad time is less than 2 seconds it's prob. a pause in speech
-            if not pauses or duration - times[-1][1] < 2:
-                comp_times.append((times[-1][1], duration))
+            comp_times.append((times[-1][1], duration))
     return comp_times
 
 
@@ -420,16 +411,22 @@ def process_audio(
 
         vad_segs, vad_times = get_vad(path, auth_token, onset, offset)
         non_vad_segs = []
-        for start, end in get_complement_times(vad_times, duration):
+        non_vad_times = get_complement_times(vad_times, duration)
+        for start, end in non_vad_times:
             # don't need to give options because the Non-VAD PeaksGroup handles it
             non_vad_segs.append(format_segment(start, end, "#b59896", "Non-VAD"))
 
         logger.trace("Calculating SNRs")
 
-        # True means we just want what is likely pauses in speech for noise rms calc.
-        speech_pause_times = get_complement_times(vad_times, duration, True)
-
-        noise_times = speech_pause_times
+        # Filter to get segments that are less than 2 seconds long since these
+        # are probably pauses in speech
+        speech_pause_times = list(filter(lambda tr: tr[1] - tr[0] < 2, non_vad_times))
+        if len(speech_pause_times) == 0:
+            logger.trace("No noise found, using non-vad instead")
+            # if there are no speech pause times, just use regular nonvad instead
+            noise_times = non_vad_times
+        else:
+            noise_times = speech_pause_times
 
         # todo: decide if we implement this with nonvad and/or speech_pause / or both
         # no noise to base off of, and can't calculate snr?
@@ -449,8 +446,6 @@ def process_audio(
         # offset = originalOffset
         # if still no noise for snr throw exception
         # and let user decide what they'd like to do about it
-        if not noise_times:
-            noise_times = get_complement_times(vad_times, duration, False)
         # if not noise_times:
         # raise Exception("No non-vad to calculate snr with for file " + str(path))
 
@@ -458,7 +453,6 @@ def process_audio(
         noise_rms = rms(noise_samps)
         if noise_rms == 0:
             # can't divide by 0, be less picky and take non vad not just speech_pause
-            non_vad_times = get_complement_times(vad_times, duration, False)
             non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
             noise_rms = rms(non_vad_samps)
 
@@ -468,9 +462,7 @@ def process_audio(
         }
 
         speech_pause_segs = []
-        for start, end in get_complement_times(
-            vad_times, duration, True
-        ):  # True means we just want what is likely pauses in speech for noise rms calc
+        for start, end in speech_pause_times:
             speech_pause_segs.append(format_segment(start, end, "#092b12", "SNR-Noise"))
 
         # if speech pause segs had nothing added, we used regular non vad
@@ -596,7 +588,6 @@ def process_audio(
                     logger.debug('channel "{}"\'s noise rms is 0', channel_name)
                     # can't divide by 0, be less picky and take
                     # non vad not just speech_pause
-                    non_vad_times = get_complement_times(vad_times, duration, False)
                     non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
                     c_noise_rms = rms(non_vad_samps)
                 c_spkrs_snrs = {
