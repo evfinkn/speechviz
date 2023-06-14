@@ -427,9 +427,7 @@ def process_audio(
         logger.trace("Calculating SNRs")
 
         # True means we just want what is likely pauses in speech for noise rms calc.
-        speech_pause_times = get_complement_times(
-            vad_times, len(mono_samples) / sr, True
-        )
+        speech_pause_times = get_complement_times(vad_times, duration, True)
 
         noise_times = speech_pause_times
 
@@ -444,7 +442,7 @@ def process_audio(
         # offset = offset + 0.05
         # vad_segs, vad_times = get_vad(path, auth_token, onset, offset)
         # speech_pause_times = get_complement_times(
-        # vad_times, len(mono_samples) / sr, True
+        # vad_times, duration, True
         # )
         # noise_times = speech_pause_times
         # onset = originalOnset
@@ -452,7 +450,7 @@ def process_audio(
         # if still no noise for snr throw exception
         # and let user decide what they'd like to do about it
         if not noise_times:
-            noise_times = get_complement_times(vad_times, len(mono_samples) / sr, False)
+            noise_times = get_complement_times(vad_times, duration, False)
         # if not noise_times:
         # raise Exception("No non-vad to calculate snr with for file " + str(path))
 
@@ -460,9 +458,7 @@ def process_audio(
         noise_rms = rms(noise_samps)
         if noise_rms == 0:
             # can't divide by 0, be less picky and take non vad not just speech_pause
-            non_vad_times = get_complement_times(
-                vad_times, len(mono_samples) / sr, False
-            )
+            non_vad_times = get_complement_times(vad_times, duration, False)
             non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
             noise_rms = rms(non_vad_samps)
 
@@ -600,9 +596,7 @@ def process_audio(
                     logger.debug('channel "{}"\'s noise rms is 0', channel_name)
                     # can't divide by 0, be less picky and take
                     # non vad not just speech_pause
-                    non_vad_times = get_complement_times(
-                        vad_times, len(mono_samples) / sr, False
-                    )
+                    non_vad_times = get_complement_times(vad_times, duration, False)
                     non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
                     c_noise_rms = rms(non_vad_samps)
                 c_spkrs_snrs = {
