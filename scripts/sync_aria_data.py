@@ -5,17 +5,18 @@ import json
 import pathlib
 
 import librosa
+import log
 import numpy as np
 import scipy.io.wavfile
 import scipy.signal
 import sync_audios
 import util
-from util import logger
+from log import logger
 
 
 # don't have separate functions for sync and hstack because doing them together
 # in one ffmpeg command is a lot quicker than separating them
-@util.Timer()
+@log.Timer()
 def sync_and_hstack_videos(
     video_paths: list[pathlib.Path],
     offsets: list[float],
@@ -78,10 +79,10 @@ def sync_and_hstack_videos(
         args.extend(["-map", f"{len(video_paths)}:a", "-c:a", "aac"])
 
     args.append(output_path)
-    return util.run_and_log_subprocess(args)
+    return log.run_and_log_subprocess(args)
 
 
-@util.Timer()
+@log.Timer()
 def sync_poses(
     pose_paths: list[pathlib.Path],
     offsets: list[float],
@@ -121,7 +122,7 @@ def needs_reprocessed(output_dir: pathlib.Path, num_paths, reprocess=False):
     return audios_need_synced, videos_need_synced, poses_need_synced
 
 
-@util.Timer()
+@log.Timer()
 def sync_aria_data(
     paths: list[pathlib.Path],
     output_dir: pathlib.Path,
@@ -129,7 +130,7 @@ def sync_aria_data(
     offsets: bool = True,
 ):
     """ """
-    util.log_vars(
+    log.log_vars(
         log_separate_=True,
         paths=paths,
         output_dir=output_dir,
@@ -255,9 +256,9 @@ if __name__ == "__main__":
         default=True,
         help="Save the offsets between the recordings. Default is True.",
     )
-    util.add_log_level_argument(parser)
+    log.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    util.setup_logging(args.pop("log_level"))
-    with util.Timer("Syncing took {}"):
+    log.setup_logging(args.pop("log_level"))
+    with log.Timer("Syncing took {}"):
         route_file(args.pop("path"), args.pop("output_dir"), **args)

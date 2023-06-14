@@ -6,10 +6,11 @@ import re
 import shutil
 from pathlib import Path
 
+import log
 import numpy as np
 import orjson
 import util
-from util import logger
+from log import logger
 
 DATA_TYPES = {  # numpy data types corresponding to data types in the VRS metadata
     "DataPieceValue<uint32_t>": np.uint32,
@@ -157,7 +158,7 @@ def build_dict_from_dict_list(dict_list, out_dict=None):
     return out_dict
 
 
-@util.Timer()
+@log.Timer()
 def create_video(
     images_dir: Path,
     keep_images: bool = False,
@@ -399,7 +400,7 @@ def extract_vrs_data(
     **kwargs,
 ):
     """Extract video, audio, and metadata from a VRS file."""
-    util.log_vars(
+    log.log_vars(
         log_separate_=True,
         path=path,
         reprocess=reprocess,
@@ -420,14 +421,14 @@ def extract_vrs_data(
 
     # manually use timer instead of wrapping function because we don't want the timer
     # to include extract_sensor_data
-    timer = util.Timer("extract_vrs_data took {}")
+    timer = log.Timer("extract_vrs_data took {}")
     timer.start()
 
     if len(path.parents) < 2 or path.parents[1].name != "data":
         raise Exception("Input file must be in either data/audio or data/video")
     data_dir = path.parents[1]
     output_dir = data_dir / "graphical" / path.stem
-    util.log_vars(output_dir=output_dir)
+    log.log_vars(output_dir=output_dir)
 
     reprocess_metadata = metadata_needs_reprocessed(output_dir, reprocess, save_calib)
     needs_extracted, needs_videos = vrs_needs_reprocessed(
@@ -436,16 +437,13 @@ def extract_vrs_data(
 
     if needs_extracted:
         output_dir.mkdir(parents=True, exist_ok=True)
-        util.run_and_log_subprocess(["vrs", "extract-all", path, "--to", output_dir])
+        log.run_and_log_subprocess(["vrs", "extract-all", path, "--to", output_dir])
         # move the audio file out of its directory and remove the directory
         # there should only be one audio file, so [0] is getting the only one
         old_audio_path = list((output_dir / "231-1").glob("*.wav"))[0]
         old_audio_path.replace(output_dir / "231-1.wav")
         shutil.rmtree(output_dir / "231-1", ignore_errors=True)
         logger.trace("Renaming the audio and video files")
-        # old_path = output_dir / "231-1.wav"
-        # new_path = output_dir / f"{STREAM_NAMES['231-1']}.wav"
-        # util.mv(old_path, new_path)
         for stream in VIDEO_STREAMS:
             old_path = output_dir / f"{stream}.mp4"
             new_path = output_dir / f"{STREAM_NAMES[stream]}.mp4"
@@ -455,7 +453,7 @@ def extract_vrs_data(
 
     if needs_videos:
         logger.trace("Creating videos from the images")
-        with util.Timer("Creating videos took {}"):
+        with log.Timer("Creating videos took {}"):
             for stream in VIDEO_STREAMS:
                 # rotate=stream != "211-1" to not rotate the eye tracking camera
                 # because its orientation is already correct
@@ -500,7 +498,7 @@ def extract_vrs_data(
         )
 
 
-@util.Timer()
+@log.Timer()
 def extract_sensor_data(
     path: Path,
     reprocess=False,
@@ -511,7 +509,7 @@ def extract_sensor_data(
     **kwargs,  # kwargs to catch any arguments meant for extract_vrs_data
 ):
     """Extract sensor data from a VRS file's extracted metadata.jsons file."""
-    util.log_vars(
+    log.log_vars(
         log_separate_=True,
         path=path,
         reprocess=reprocess,
@@ -532,7 +530,7 @@ def extract_sensor_data(
     if len(path.parents) < 2 or path.parents[2].name != "data":
         raise Exception("Input file must be in a directory in data/graphical")
     output_dir = path.parents[0]
-    util.log_vars(output_dir=output_dir)
+    log.log_vars(output_dir=output_dir)
 
     # check if vrs has already been processed and only process if reprocess is True
     if not metadata_needs_reprocessed(output_dir, reprocess, save_calib):
@@ -541,7 +539,7 @@ def extract_sensor_data(
 
     logger.trace("Extracting sensor data from metadata.jsons")
     # manually use timer instead of using context manager to save an indent level
-    metadata_timer = util.Timer("Extracting sensor data from metadata.jsons took {}")
+    metadata_timer = log.Timer("Extracting sensor data from metadata.jsons took {}")
     metadata_timer.start()
 
     with path.open(encoding="utf-8") as metadata_file:
@@ -551,7 +549,7 @@ def extract_sensor_data(
         metadata = load_json_with_nan(metadata_json)
         # save the calibration string to use it in create_poses.py
         calib = metadata["tags"]["calib_json"]
-        metadata = util.recurse_loads(metadata)
+        metadata = util.recurse_load_json(metadata)
 
         arrays = create_device_data_arrays(metadata["devices"], requested_streams)
         indices = dict.fromkeys(arrays.keys(), 0)
@@ -608,7 +606,7 @@ def extract_sensor_data(
 
     logger.trace("Writing files")
     # manually use timer instead of using context manager to save an indent level
-    write_timer = util.Timer("Writing files took {}")
+    write_timer = log.Timer("Writing files took {}")
     write_timer.start()
 
     with open(output_dir / "vrs-info.json", "w") as info_file:
@@ -730,9 +728,9 @@ if __name__ == "__main__":
         default=False,
         help="Save the metadata.jsons file. Default is False.",
     )
-    util.add_log_level_argument(parser)
+    log.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    util.setup_logging(args.pop("log_level"))
-    with util.Timer("Extraction took {}"):
+    log.setup_logging(args.pop("log_level"))
+    with log.Timer("Extraction took {}"):
         route_file(*args.pop("path"), **args)

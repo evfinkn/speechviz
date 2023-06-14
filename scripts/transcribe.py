@@ -1,13 +1,11 @@
 import argparse
 import pathlib
 
+import log
 import util
-from util import logger
+from constants import AUDIO_EXTS, SCRIPTS_DIR, VIDEO_EXTS
+from log import logger
 
-AUDIO_FILES = {".mp3", ".wav", ".flac", ".ogg", ".opus"}
-VIDEO_FILES = {".mp4", ".mov"}
-
-SCRIPTS_DIR = pathlib.Path(__file__).parent
 TRANSCRIBE_SCRIPT = SCRIPTS_DIR / "transcribe"
 BASE_MODEL = SCRIPTS_DIR / "models/whisper-base.en.bin"
 
@@ -32,7 +30,7 @@ def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
     path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
     # if file.path is an audio or video file, transcribe it
-    if path.suffix.casefold() in AUDIO_FILES or path.suffix.casefold() in VIDEO_FILES:
+    if path.suffix.casefold() in AUDIO_EXTS or path.suffix.casefold() in VIDEO_EXTS:
         transcribe(path, **kwargs)
 
     # run process audio on every file in file.path if it is a dir and scan_dir is True
@@ -50,7 +48,7 @@ def run_from_pipeline(args):
     route_file(*paths, **args)
 
 
-@util.Timer()
+@log.Timer()
 def transcribe(
     path: pathlib.Path,
     model: pathlib.Path = BASE_MODEL,
@@ -60,9 +58,8 @@ def transcribe(
     # if len(path.parents) < 2 or path.parents[1].name != "data":
     #     raise Exception("Input file must be in either data/audio or data/video")
 
-    # vprint = util.verbose_printer(quiet, verbose)
-    util.log_vars(log_separate_=True, path=path, model=model)
-    util.log_vars(max_len=max_len, reprocess=reprocess)
+    log.log_vars(log_separate_=True, path=path, model=model)
+    log.log_vars(max_len=max_len, reprocess=reprocess)
 
     # transcriptions_dir = path.parents[1] / "transcriptions"
     # transcriptions_dir.mkdir(exist_ok=True)
@@ -82,7 +79,7 @@ def transcribe(
     transcription_path = (
         transcriptions_dir / parent_dir / f"{path.stem}-transcription.json"
     )
-    util.log_vars(
+    log.log_vars(
         log_separate_=True,
         data_dir=data_dir,
         parent_dir=parent_dir,
@@ -101,7 +98,7 @@ def transcribe(
         output_options=["-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le"],
     )
 
-    util.run_and_log_subprocess(
+    log.run_and_log_subprocess(
         [
             TRANSCRIBE_SCRIPT,
             "-m",
@@ -151,8 +148,9 @@ if __name__ == "__main__":
         action="store_true",
         help="Re-transcribe audio files detected to have already been processed.",
     )
-    util.add_log_level_argument(parser)
+    log.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    util.setup_logging(args.pop("log_level"))
-    route_file(*args.pop("path"), **args)
+    log.setup_logging(args.pop("log_level"))
+    with log.Timer("Transcribing took {}"):
+        route_file(*args.pop("path"), **args)

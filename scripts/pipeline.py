@@ -3,9 +3,10 @@ import importlib
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 
+import log
 import util
 import yaml
-from util import logger
+from log import logger
 
 ERROR_MSG = (
     "The following error was encountered while running {} on {} with the arguments {}:"
@@ -42,7 +43,7 @@ def create_pipeline(steps: List[Step], on_error: str = "next_file"):
                 f"{step['script']} is missing a run_from_pipeline function."
             )
 
-    @util.Timer()
+    @log.Timer()
     def pipeline(file: Path):
         logger.debug("Running pipeline on {}", file)
         results = []
@@ -73,7 +74,7 @@ def create_pipeline(steps: List[Step], on_error: str = "next_file"):
 
 
 @logger.catch
-@util.Timer(message="entire pipeline took {}")
+@log.Timer(message="entire pipeline took {}")
 def run_pipeline(
     config_path: Path,
     files: List[Path],
@@ -157,11 +158,11 @@ if __name__ == "__main__":
             ' remaining steps. If "exit", the pipeline will exit with the error.'
         ),
     )
-    util.add_log_level_argument(parser)
+    log.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())  # convert to dict to make it easier to pop
-    util.setup_logging(args.pop("log_level"))
-    with util.Timer("Running pipeline on all files took {}"):
+    log.setup_logging(args.pop("log_level"))
+    with log.Timer("Running pipeline on all files took {}"):
         run_pipeline(
             args.pop("config"), args.pop("file"), args.pop("directory"), **args
         )

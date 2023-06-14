@@ -12,12 +12,11 @@ from collections import defaultdict
 
 import entropy
 import librosa
+import log
 import numpy as np
 import util
-from util import logger
-
-AUDIO_FILES = {".mp3", ".wav", ".flac", ".ogg", ".opus"}
-VIDEO_FILES = {".mp4", ".mov"}
+from constants import AUDIO_EXTS, VIDEO_EXTS
+from log import logger
 
 COPY_TO_LABELED = {"copyTo": ["Labeled.children"]}
 
@@ -154,7 +153,7 @@ def snr_from_times(signal_times, samples, sr, noise_rms):
     return snr(signal_samps, noise_rms)
 
 
-@util.Timer()
+@log.Timer()
 def get_diarization(path: pathlib.Path, auth_token, num_speakers=None):
     # use global diar_pipe so that it doesn't need
     # to be re-initialized (which is time-consuming)
@@ -168,7 +167,7 @@ def get_diarization(path: pathlib.Path, auth_token, num_speakers=None):
 
     if "diar_pipe" not in globals():  # diar_pipe hasn't been initialized yet
         logger.trace("Initializing diarization pipeline")
-        with util.Timer("Initializing diarization pipeline took {}"):
+        with log.Timer("Initializing diarization pipeline took {}"):
             diar_pipe = Pipeline.from_pretrained(
                 "pyannote/speaker-diarization@2.1", use_auth_token=auth_token
             )
@@ -206,7 +205,7 @@ def get_diarization(path: pathlib.Path, auth_token, num_speakers=None):
     return (spkrs_segs, spkrs_times)
 
 
-@util.Timer()
+@log.Timer()
 def get_vad(path: pathlib.Path, auth_token, onset, offset):
     # use global vad_pipe so that it doesn't need
     # to be re-initialized (which is time-consuming)
@@ -215,7 +214,7 @@ def get_vad(path: pathlib.Path, auth_token, onset, offset):
 
     if "vad_pipe" not in globals():  # vad_pipe hasn't been initialized yet
         logger.trace("Initializing VAD pipeline")
-        with util.Timer("Initializing VAD pipeline took {}"):
+        with log.Timer("Initializing VAD pipeline took {}"):
             vad_pipe = Pipeline.from_pretrained(
                 "pyannote/voice-activity-detection", use_auth_token=auth_token
             )
@@ -283,7 +282,7 @@ def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
     path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
     # if file.path is an audio or video file, process it
-    if path.suffix.casefold() in AUDIO_FILES or path.suffix.casefold() in VIDEO_FILES:
+    if path.suffix.casefold() in AUDIO_EXTS or path.suffix.casefold() in VIDEO_EXTS:
         process_audio(path, **kwargs)
 
     # run process audio on every file in file.path if it is a dir and scan_dir is True
@@ -311,7 +310,7 @@ def run_from_pipeline(args):
     route_file(*paths, **args)
 
 
-@util.Timer()
+@log.Timer()
 def process_audio(
     path: pathlib.Path,
     auth_token,
@@ -321,7 +320,7 @@ def process_audio(
     offset=None,
     num_speakers=None,
 ):
-    util.log_vars(
+    log.log_vars(
         log_separate_=True,
         path=path,
         reprocess=reprocess,
@@ -347,7 +346,7 @@ def process_audio(
     stats_path = data_dir / "stats" / parent_dir / f"{path.stem}-stats.csv"
     channels_path = data_dir / "channels" / parent_dir / f"{path.stem}-channels.csv"
 
-    util.log_vars(
+    log.log_vars(
         log_separate_=True,
         data_dir=data_dir,
         parent_dir=parent_dir,
@@ -371,7 +370,7 @@ def process_audio(
         if (
             reprocess
             or not segs_path.exists()
-            or (not waveform_path.exists() and path.suffix.casefold() in VIDEO_FILES)
+            or (not waveform_path.exists() and path.suffix.casefold() in VIDEO_EXTS)
         ):
             logger.debug("{} is not a wav file. Creating {}", path.name, new_path.name)
             try:
@@ -538,8 +537,8 @@ def process_audio(
 
         # Bind "N/A" as default to save room when calling these functions
         # default is a tuple of "N/A" and "N/A" so that it can be unpacked
-        maxval = functools.partial(util.max_value_item, default=("N/A", "N/A"))
-        minval = functools.partial(util.min_value_item, default=("N/A", "N/A"))
+        maxval = functools.partial(util.max_value, default=("N/A", "N/A"))
+        minval = functools.partial(util.min_value, default=("N/A", "N/A"))
 
         # key (speaker) is first item in tuple, value is second
         least_segs_spkr, least_segs = minval(spkrs_num_segs)
@@ -652,7 +651,6 @@ if __name__ == "__main__":
             " file. If a directory, processes every audio file in the directory."
         ),
     )
-    util.add_log_level_argument(parser)
     parser.add_argument(
         "--onset",
         type=float,
@@ -674,9 +672,10 @@ if __name__ == "__main__":
         type=int,
         help="Number of speakers if known from face clustering",
     )
+    log.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
     args["auth_token"] = get_auth_token(args["auth_token"])
-    util.setup_logging(args.pop("log_level"))
-    with util.Timer("Processing took {}"):
+    log.setup_logging(args.pop("log_level"))
+    with log.Timer("Processing took {}"):
         route_file(*args.pop("path"), **args)

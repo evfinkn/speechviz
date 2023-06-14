@@ -1,9 +1,10 @@
 import argparse
 import csv
 import pathlib
-import time
 
+import log
 import util
+from log import logger
 
 
 def flatten_dirs_to_files(*paths: pathlib.Path):
@@ -24,14 +25,9 @@ def main(
     paths: pathlib.Path,
     output_path: pathlib.Path,
     reprocess: bool = False,
-    quiet: bool = False,
 ):
     if output_path.exists() and not reprocess:
-        if not quiet:
-            print(
-                "The stats have already been combined. To resync them, use the -r"
-                " argument."
-            )
+        logger.info("The stats have already been combined. To resync them, pass -r")
         return
     file_paths = flatten_dirs_to_files(*paths)
     fieldnames = ["file"]
@@ -79,23 +75,9 @@ if __name__ == "__main__":
         default=False,
         help='Recombine the stats even if "output" already exists. Default is False.',
     )
-    parser.add_argument(
-        "-q", "--quiet", action="store_true", help="Don't print anything."
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Print various debugging information.",
-    )
+    log.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    verbose = args.pop("verbose")  # pop because verbose isn't used in main
-    start_time = time.perf_counter()
-    route_file(args.pop("path"), args.pop("output"), **args)
-    if not args["quiet"] or verbose:
-        print(
-            "Combining the stats took a total of"
-            f" {time.perf_counter() - start_time:.4f} seconds"
-        )
+    log.setup_logging(args.pop("log_level"))
+    with log.Timer("Combining the stats took {}"):
+        route_file(args.pop("path"), args.pop("output"), **args)

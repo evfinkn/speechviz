@@ -1,14 +1,15 @@
 import argparse
 import itertools
 import pathlib
-import time
 from typing import Literal
 
 import librosa
+import log
 import numpy as np
 import scipy.io.wavfile
 import scipy.signal
 import util
+from log import logger
 
 Mode = Literal["trim", "pad"]
 
@@ -257,8 +258,9 @@ def get_audios_lags(
     return final_lags
 
 
+@log.Timer()
 def sync_audios(
-    audios: list[np.ndarray], lags: list[int], mode: Mode = "trim", verbose: int = 0
+    audios: list[np.ndarray], lags: list[int], mode: Mode = "trim"
 ) -> list[np.ndarray]:
     """Synchronizes audios so that each starts and stops at the same real-world time.
 
@@ -285,7 +287,6 @@ def sync_audios(
     Exception
         If `audios` has less than 2 elements.
     """
-    start_time = time.perf_counter()
     if len(audios) < 2:
         # can't synchronize less than 2 audios
         raise Exception("audios must have at least 2 elements.")
@@ -323,8 +324,6 @@ def sync_audios(
         pads = zip(left_pads, right_pads)
         synced = [pad_axis(audio, pad) for audio, pad in zip(audios, pads)]
 
-    if verbose:
-        print(f"sync_audios took {time.perf_counter() - start_time:.4f} seconds")
     return synced
 
 
@@ -373,20 +372,14 @@ def main(
     mode: str = "pad",
     mono: bool = False,
     reprocess: bool = False,
-    quiet: bool = False,
-    verbose: int = 0,
 ):
     if output_path.exists() and not reprocess:
-        if not quiet:
-            print(
-                "The audio files have already been synced. To resync them, use the -r"
-                " argument"
-            )
+        logger.info("The audio files have already been synced. To resync them, pass -r")
         return
 
     audios, sr = load_audios(audio_paths, mono=mono)
-    lags = get_audios_lags(audios, verbose=verbose)
-    synced_audios = sync_audios(audios, lags, mode=mode, verbose=verbose)
+    lags = get_audios_lags(audios)
+    synced_audios = sync_audios(audios, lags, mode=mode)
     if mono:
         synced_audio = mix_audios(synced_audios)
     else:
@@ -443,22 +436,9 @@ if __name__ == "__main__":
             'Resync the audio files even if "output" already exists. Default is False.'
         ),
     )
-    parser.add_argument(
-        "-q", "--quiet", action="store_true", help="Don't print anything."
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Print various debugging information.",
-    )
+    log.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    start_time = time.perf_counter()
-    main(args.pop("path"), args.pop("output"), **args)
-    if not args["quiet"] or args["verbose"]:
-        print(
-            "Synchronization took a total of"
-            f" {time.perf_counter() - start_time:.4f} seconds"
-        )
+    log.setup_logging(args.pop("log_level"))
+    with log.Timer("Synchronization took {}"):
+        main(args.pop("path"), args.pop("output"), **args)

@@ -5,11 +5,12 @@ import pathlib
 from dataclasses import dataclass
 
 import imufusion
+import log
 import numpy as np
 import pyark.datatools as datatools
 import util
+from log import logger
 from scipy import interpolate
-from util import logger
 
 RADIAN_TO_DEGREE_FACTOR = 180 / np.pi
 DEGREE_TO_RADIAN_FACTOR = np.pi / 180
@@ -49,7 +50,7 @@ def run_ahrs(timestamp, accelerometer, gyroscope, magnetometer, sample_rate):
 def calculate_position(timestamp, acceleration, sample_rate):
     delta_time = np.diff(timestamp, prepend=timestamp[0])
     margin = int(0.05 * sample_rate)
-    util.log_vars(margin=margin)
+    log.log_vars(margin=margin)
 
     # Identify moving periods
     is_moving = np.empty(len(timestamp))
@@ -123,7 +124,7 @@ def calculate_position(timestamp, acceleration, sample_rate):
     return position
 
 
-@util.Timer()
+@log.Timer()
 def create_poses(
     imu_path: pathlib.Path,
     mag_path: pathlib.Path,
@@ -131,7 +132,7 @@ def create_poses(
     headers=True,
     positions=False,
 ):
-    util.log_vars(
+    log.log_vars(
         log_separate_=True,
         imu_path=imu_path,
         mag_path=mag_path,
@@ -143,7 +144,7 @@ def create_poses(
     parent = imu_path.parent
 
     pose_path = parent / "pose.csv"
-    util.log_vars(log_separate_=True, parent=parent, pose_path=pose_path)
+    log.log_vars(log_separate_=True, parent=parent, pose_path=pose_path)
     if pose_path.exists() and not reprocess:
         logger.info(
             "Poses for {} have already been created. To recreate them, pass -r",
@@ -189,13 +190,13 @@ def create_poses(
     sample_rates = 1 / np.diff(timestamp)
     sample_rate = round(np.mean(sample_rates))
 
-    with util.Timer("ahrs took {}"):
+    with log.Timer("ahrs took {}"):
         quaternion, acceleration = run_ahrs(
             timestamp, accelerometer, gyroscope, magnetometer, sample_rate
         )
     if positions:
         logger.trace("Calculating position")
-        with util.Timer("Calculating positions took {}"):
+        with log.Timer("Calculating positions took {}"):
             position = calculate_position(timestamp, acceleration, sample_rate)
         header = "t,x,y,z,qw,qx,qy,qz".split(",")
     else:
@@ -307,9 +308,9 @@ if __name__ == "__main__":
             " very accurate. Default is False."
         ),
     )
-    util.add_log_level_argument(parser)
+    log.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    util.setup_logging(args.pop("log_level"))
-    with util.Timer("Pose creation took {}"):
+    log.setup_logging(args.pop("log_level"))
+    with log.Timer("Pose creation took {}"):
         route_file(*args.pop("path"), **args)

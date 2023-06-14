@@ -3,12 +3,11 @@ import pathlib
 import subprocess
 
 import librosa
+import log
 import numpy as np
 import util
-from util import logger
-
-AUDIO_FILES = {".mp3", ".wav", ".flac", ".ogg", ".opus"}
-VIDEO_FILES = {".mp4", ".mov"}
+from constants import AUDIO_EXTS, VIDEO_EXTS
+from log import logger
 
 
 def frames(num_frames: int, frame_length: int, hop_length: int):
@@ -118,7 +117,7 @@ def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
     path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
     # if file.path is an audio or video file, process it
-    if path.suffix.casefold() in AUDIO_FILES or path.suffix.casefold() in VIDEO_FILES:
+    if path.suffix.casefold() in AUDIO_EXTS or path.suffix.casefold() in VIDEO_EXTS:
         extract_features(path, **kwargs)
 
     # run process audio on every file in file.path if it is a dir and scan_dir is True
@@ -137,13 +136,13 @@ def run_from_pipeline(args):
     route_file(*paths, **args)
 
 
-@util.Timer()
+@log.Timer()
 def extract_features(
     path: pathlib.Path,
     n_mfcc: int = 20,
     reprocess: bool = False,
 ):
-    util.log_vars(
+    log.log_vars(
         log_separate_=True,
         path=path,
         n_mfcc=n_mfcc,
@@ -166,7 +165,7 @@ def extract_features(
         return
     features_path.parent.mkdir(parents=True, exist_ok=True)
 
-    util.log_vars(
+    log.log_vars(
         log_separate_=True,
         data_dir=data_dir,
         parent_dir=parent_dir,
@@ -175,7 +174,7 @@ def extract_features(
 
     made_wav = False
     try:
-        if path.suffix.casefold() in VIDEO_FILES:
+        if path.suffix.casefold() in VIDEO_EXTS:
             old_path = path
             path = path.with_suffix(".wav")
             logger.debug("{} is not a wav file. Creating {}", old_path.name, path.name)
@@ -190,7 +189,7 @@ def extract_features(
     n_channels = 1 if y.ndim == 1 else y.shape[0]
 
     logger.trace("Extracting the audio's features")
-    extraction_timer = util.Timer("Extracting features took {}")
+    extraction_timer = log.Timer("Extracting features took {}")
     extraction_timer.start()
     features = {}
 
@@ -285,9 +284,9 @@ if __name__ == "__main__":
             " the directory."
         ),
     )
-    util.add_log_level_argument(parser)
+    log.add_log_level_argument(parser)
 
     args = vars(parser.parse_args())
-    util.setup_logging(args.pop("log_level"))
-    with util.Timer("Extracting features took {}"):
+    log.setup_logging(args.pop("log_level"))
+    with log.Timer("Extracting features took {}"):
         route_file(*args.pop("path"), **args)
