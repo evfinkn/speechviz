@@ -76,19 +76,36 @@ const Channel = class Channel {
    */
   soloButton;
 
+  #scale = 1;
+
+  /**
+   * Scale factor for the channel's volume.
+   *
+   * `this.volume` is multiplied by this value before being sent to the gain node.
+   * @type {number}
+   */
+  get scale() {
+    return this.#scale;
+  }
+
+  set scale(value) {
+    this.#scale = value;
+    this.volume = this.slider.value; // reset the volume to apply the new scale
+  }
+
   /**
    * The volume of the channel as a percentage.
    * @type {number}
    */
   get volume() {
-    // since the gain node's value will be 0 if the channel is muted, we
-    // need to return the slider's value instead of the gain node's value
-    return this.slider.value;
+    // use the slider value when the channel isn't muted because the gain node
+    // uses the scaled value
+    return this.muted ? 0 : this.slider.value;
   }
 
   set volume(value) {
     if (!this.muted) {
-      this.gainNode.gain.value = value / 100;
+      this.gainNode.gain.value = (value / 100) * this.scale;
     }
     this.slider.value = value;
     this.input.value = value;
@@ -203,7 +220,7 @@ const Channel = class Channel {
       this.muted = false;
     }
     if (!this.muted && !this.mutedBySolo) {
-      this.gainNode.gain.value = this.volume / 100;
+      this.volume = this.slider.value;
       this.slider.disabled = false;
       this.input.disabled = false;
     }
@@ -219,6 +236,10 @@ const Channel = class Channel {
   unsolo() {
     this.soloed = false;
     this.soloButton.classList.remove("pressed");
+  }
+
+  connect(destination, ...args) {
+    this.gainNode.connect(destination, ...args);
   }
 };
 
@@ -258,7 +279,43 @@ const Channels = class Channels {
       this.div.append(channel.label);
       this.div.append(document.createElement("br"));
     });
-    this.output = this.merge(this.channels.map((channel) => channel.gainNode));
+
+    const grouped = this.#groupForMerging(this.channels);
+    this.output = this.#scaleAndMerge(grouped, grouped.length);
+  }
+
+  // Returns a (possibly nested) array of nodes to be merged
+  // Each element of the array is either a node or an array of nodes. The array
+  // (and subarrays) are groups of nodes to be merged together.
+  #groupForMerging(nodes) {
+    nodes = [...nodes]; // copy the array so we don't modify the original
+    // it shouldn't happen, but nodes only has one element, nest it in an array
+    // so that nodes[0] is always an array
+    if (nodes.length === 1) {
+      nodes = [nodes];
+    }
+    while (nodes.length > 1) {
+      if (nodes.length >= 4) {
+        nodes.push(nodes.splice(-4));
+      } else {
+        nodes.push(nodes.splice(-2));
+      }
+    }
+    return nodes[0];
+  }
+
+  #scaleAndMerge(grouped, factor) {
+    const merger = this.audioContext.createChannelMerger(grouped.length);
+    grouped.forEach((item, i) => {
+      if (Array.isArray(item)) {
+        const merged = this.#scaleAndMerge(item, factor * item.length);
+        merged.connect(merger, 0, i);
+      } else {
+        item.scale *= factor;
+        item.connect(merger, 0, i);
+      }
+    });
+    return merger;
   }
 
   muteAll(except = [], bySolo = false) {
@@ -267,30 +324,6 @@ const Channels = class Channels {
         channel.mute(bySolo);
       }
     });
-  }
-
-  // This returns a single merger node by merging all the nodes in the array
-  // in groups of 2 and 4 until there is only one node left.
-  // The reason for 2 and 4 is that they are downmixed by averaging the channels
-  // instead of dropping the extra ones.
-  merge(nodes) {
-    nodes = [...nodes]; // copy the array so we don't modify the original
-    while (nodes.length > 1) {
-      let merger;
-      let toMerge;
-      if (nodes.length >= 4) {
-        merger = this.audioContext.createChannelMerger(4);
-        toMerge = nodes.splice(-4);
-      } else {
-        merger = this.audioContext.createChannelMerger(2);
-        toMerge = nodes.splice(-2);
-      }
-      toMerge.forEach((node, i) => {
-        node.connect(merger, 0, i);
-      });
-      nodes.push(merger);
-    }
-    return nodes[0];
   }
 
   unmuteAll(bySolo = false) {
