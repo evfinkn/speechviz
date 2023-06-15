@@ -275,7 +275,7 @@ if (numChannels > 1) {
   const channels = new Channels(context, source, channelNames, {
     volumeMax: 200,
   });
-  channels.merger.connect(context.destination);
+  channels.output.connect(context.destination);
   document.getElementById("controls").append(channels.div);
 }
 

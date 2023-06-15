@@ -227,8 +227,8 @@ const Channels = class Channels {
   audioContext;
   source;
   channels;
-  merger;
   splitter;
+  output;
 
   constructor(audioContext, source, channelNames, channelOptions = {}) {
     this.div = document.createElement("div");
@@ -238,13 +238,11 @@ const Channels = class Channels {
     this.channels = channelNames.map(
       (name) => new Channel(name, audioContext, channelOptions)
     );
-    this.merger = audioContext.createChannelMerger(channelNames.length);
     this.splitter = audioContext.createChannelSplitter(channelNames.length);
 
     this.source.connect(this.splitter);
     this.channels.forEach((channel, i) => {
       this.splitter.connect(channel.gainNode, i);
-      channel.gainNode.connect(this.merger, 0, i);
 
       channel.soloButton.addEventListener("click", () => {
         if (channel.soloed) {
@@ -260,6 +258,7 @@ const Channels = class Channels {
       this.div.append(channel.label);
       this.div.append(document.createElement("br"));
     });
+    this.output = this.merge(this.channels.map((channel) => channel.gainNode));
   }
 
   muteAll(except = [], bySolo = false) {
@@ -268,6 +267,30 @@ const Channels = class Channels {
         channel.mute(bySolo);
       }
     });
+  }
+
+  // This returns a single merger node by merging all the nodes in the array
+  // in groups of 2 and 4 until there is only one node left.
+  // The reason for 2 and 4 is that they are downmixed by averaging the channels
+  // instead of dropping the extra ones.
+  merge(nodes) {
+    nodes = [...nodes]; // copy the array so we don't modify the original
+    while (nodes.length > 1) {
+      let merger;
+      let toMerge;
+      if (nodes.length >= 4) {
+        merger = this.audioContext.createChannelMerger(4);
+        toMerge = nodes.splice(-4);
+      } else {
+        merger = this.audioContext.createChannelMerger(2);
+        toMerge = nodes.splice(-2);
+      }
+      toMerge.forEach((node, i) => {
+        node.connect(merger, 0, i);
+      });
+      nodes.push(merger);
+    }
+    return nodes[0];
   }
 
   unmuteAll(bySolo = false) {
