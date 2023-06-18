@@ -608,57 +608,6 @@ var TreeItem = class TreeItem {
       contextMenu.dataset.id = this.id;
     });
 
-    const closeContext = () => {
-      // reset what id the context menu is for, then hide it
-      contextMenu.dataset.id = "";
-      contextMenu.style.display = "none";
-    };
-
-    // close context menu when anywhere else is clicked
-    document.querySelector("body").addEventListener("click", (e) => {
-      if (e.target.offsetParent != contextMenu) {
-        closeContext();
-      }
-    });
-
-    // FIXME: don't add this for every item, just add once and then use dataset.id
-    //        same as the other context menu events
-    const collapseItem = document.getElementById("collapse");
-    collapseItem.addEventListener("click", () => {
-      if (contextMenu.dataset.id === this.id) {
-        this.nested.classList.toggle("active");
-        closeContext();
-      }
-    });
-
-    const invertItem = document.getElementById("invert");
-    invertItem.addEventListener("click", () => {
-      if (contextMenu.dataset.id === this.id) {
-        this.children.forEach((child) => child.toggle());
-        closeContext();
-      }
-    });
-
-    const unselectItem = document.getElementById("unselect");
-    unselectItem.addEventListener("click", () => {
-      if (contextMenu.dataset.id === this.id) {
-        const ancestors = this.ancestors;
-        if (ancestors === null) {
-          // toggling the root doesn't make sense because it has no siblings
-          closeContext();
-          return;
-        }
-        // exclude this so that this and none of its descendants are toggled
-        for (const item of ancestors[0].preorder([this])) {
-          // toggle off everything (excluding ancestors so that this item stays open)
-          if (!ancestors.includes(item)) {
-            item.toggle(false);
-          }
-        }
-        closeContext();
-      }
-    });
-
     this.span = li.children[1];
     // need to track mousemove to know if we want to
     // drag a segment or click it for popup

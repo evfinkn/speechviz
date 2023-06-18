@@ -962,6 +962,66 @@ window.onclick = function (event) {
   }
 };
 
+const contextMenus = [...document.getElementsByClassName("contextmenu")];
+
+const closeContextMenu = (/** @type {HTMLElement} */ menu) => {
+  // reset what id the context menu is for, then hide it
+  menu.dataset.id = "";
+  menu.style.display = "none";
+};
+
+// close context menu when anywhere else is clicked
+document.body.addEventListener("click", (e) => {
+  contextMenus.forEach((menu) => {
+    if (e.target.offsetParent != menu) {
+      closeContextMenu(menu);
+    }
+  });
+});
+
+const checkboxMenu = document.getElementById("checkbox-contextmenu");
+
+const collapseItem = document.getElementById("collapse");
+collapseItem.addEventListener("click", () => {
+  // if collapseItem is clicked checkboxMenu.dataset.id should hypothetically never
+  // be "", but leaving this here just in case (same with the other menu items)
+  if (checkboxMenu.dataset.id !== "") {
+    const treeItem = TreeItem.byId[checkboxMenu.dataset.id];
+    treeItem.nested.classList.toggle("active");
+    closeContextMenu(checkboxMenu);
+  }
+});
+
+const invertItem = document.getElementById("invert");
+invertItem.addEventListener("click", () => {
+  if (checkboxMenu.dataset.id !== "") {
+    const treeItem = TreeItem.byId[checkboxMenu.dataset.id];
+    treeItem.children.forEach((child) => child.toggle());
+    closeContextMenu(checkboxMenu);
+  }
+});
+
+const unselectItem = document.getElementById("unselect");
+unselectItem.addEventListener("click", () => {
+  if (checkboxMenu.dataset.id !== "") {
+    const treeItem = TreeItem.byId[checkboxMenu.dataset.id];
+    const ancestors = treeItem.ancestors;
+    if (ancestors === null) {
+      // toggling the root doesn't make sense because it has no siblings
+      closeContextMenu(checkboxMenu);
+      return;
+    }
+    // exclude treeItem so that treeItem and none of its descendants are toggled
+    for (const item of ancestors[0].preorder([treeItem])) {
+      // toggle off everything (excluding ancestors so that treeItem item stays open)
+      if (!ancestors.includes(item)) {
+        item.toggle(false);
+      }
+    }
+    closeContextMenu(checkboxMenu);
+  }
+});
+
 window.addEventListener("keydown", function (event) {
   // ctrl key for windows, meta key is command for mac
   if (event.ctrlKey || event.metaKey) {
