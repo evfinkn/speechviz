@@ -423,16 +423,29 @@ var TreeItem = class TreeItem {
    * `[root, great-grandparent, grandparent, parent]`.
    * @type {?Array.<TreeItem>}
    */
-  get path() {
+  get ancestors() {
     if (this.parent) {
-      const parentPath = this.parent.path;
-      if (parentPath) {
-        parentPath.push(this.parent.id);
-        return parentPath; // path is parent's path + parent
+      const parentAncestors = this.parent.ancestors;
+      if (parentAncestors) {
+        parentAncestors.push(this.parent);
+        return parentAncestors; // ancestors is parent's ancestors + parent
       }
-      return [this.parent.id]; // parent has no path, so path is just parent
+      return [this.parent]; // parent has no ancestors, so ancestors is just parent
     }
-    return null; // no parent, so no path
+    return null; // no parent, so no ancestors
+  }
+
+  /**
+   * `null` if this item doesn't have a parent. Otherwise, an array containing this
+   * item's parent's id, this item's parent's parent's id, etc. Top-most parents' ids
+   * are first in the array, with this item's parent's id being last. For example,
+   * `[root.id, great-grandparent.id, grandparent.id, parent.id]`.
+   *
+   * This is here for backwards compatibility with the database.
+   * @type {?Array.<String>}
+   */
+  get path() {
+    return this.ancestors?.map((ancestor) => ancestor.id);
   }
 
   /**
@@ -608,6 +621,8 @@ var TreeItem = class TreeItem {
       }
     });
 
+    // FIXME: don't add this for every item, just add once and then use dataset.id
+    //        same as the other context menu events
     const collapseItem = document.getElementById("collapse");
     collapseItem.addEventListener("click", () => {
       if (contextMenu.dataset.id === this.id) {
@@ -626,31 +641,20 @@ var TreeItem = class TreeItem {
 
     const unselectItem = document.getElementById("unselect");
     unselectItem.addEventListener("click", () => {
-      // value re adds the spaces automatically
       if (contextMenu.dataset.id === this.id) {
-        let topOfTree = this;
-        while (topOfTree.parent) topOfTree = topOfTree.parent;
-        topOfTree.toggle();
-        topOfTree.toggle();
-
-        const unselect = (parent) => {
-          if (parent.hasChild(contextMenu.dataset.id) && !parent.#checked)
-            parent.toggle();
-          else if (
-            parent.id !== contextMenu.dataset.id &&
-            !parent.hasChild(contextMenu.dataset.id) &&
-            parent.#checked
-          )
-            parent.toggle();
-
-          if (parent.id !== contextMenu.dataset.id) {
-            parent.children.forEach((child) => {
-              unselect(child);
-            });
+        const ancestors = this.ancestors;
+        if (ancestors === null) {
+          // toggling the root doesn't make sense because it has no siblings
+          closeContext();
+          return;
+        }
+        // exclude this so that this and none of its descendants are toggled
+        for (const item of ancestors[0].preorder([this])) {
+          // toggle off everything (excluding ancestors so that this item stays open)
+          if (!ancestors.includes(item)) {
+            item.toggle(false);
           }
-        };
-        unselect(topOfTree);
-
+        }
         closeContext();
       }
     });
