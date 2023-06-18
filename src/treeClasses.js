@@ -455,10 +455,12 @@ var TreeItem = class TreeItem {
     return obj;
   }
 
-  *preorder() {
-    yield this;
-    for (const child of this.children) {
-      yield* child.preorder();
+  *preorder(/** @type {?Array.<TreeItem>} */ exclude = null) {
+    if (!exclude?.includes(this)) {
+      yield this;
+      for (const child of this.children) {
+        yield* child.preorder(exclude);
+      }
     }
   }
 
