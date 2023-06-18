@@ -341,7 +341,7 @@ ul {
   background: #fff;
 }
 
-#contextmenu {
+.contextmenu {
   position: fixed;
   z-index: 10000;
   background: #1b1a1a;
@@ -349,7 +349,7 @@ ul {
   display: none;
 }
 
-#contextmenu .item {
+.contextmenu .item {
   padding: 8px 10px;
   font-size: 10px;
   color: #eee;
@@ -357,7 +357,7 @@ ul {
   border-radius: inherit;
 }
 
-#contextmenu .item:hover {
+.contextmenu .item:hover {
   background: #343434;
 }
 

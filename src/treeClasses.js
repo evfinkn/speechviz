@@ -578,7 +578,7 @@ var TreeItem = class TreeItem {
       this.toggle();
     });
     // on right click
-    const contextMenu = document.getElementById("contextmenu");
+    const contextMenu = document.getElementById("checkbox-contextmenu");
     this.checkbox.addEventListener("contextmenu", (event) => {
       // prevent default so that the right click context menu doesn't show
       event.preventDefault();
@@ -589,14 +589,13 @@ var TreeItem = class TreeItem {
       contextMenu.style.left = `${mouseX}px`;
 
       contextMenu.style.display = "block";
-      // can't have class names with spaces in them
-      const noSpaces = this.id.split(" ");
-      noSpaces.forEach((split) => contextMenu.classList.add(split));
+      // set "data-id" to the id of the TreeItem that was right clicked to check later
+      contextMenu.dataset.id = this.id;
     });
 
     const closeContext = () => {
       // reset what id the context menu is for, then hide it
-      contextMenu.setAttribute("class", "");
+      contextMenu.dataset.id = "";
       contextMenu.style.display = "none";
     };
 
@@ -609,8 +608,7 @@ var TreeItem = class TreeItem {
 
     const collapseItem = document.getElementById("collapse");
     collapseItem.addEventListener("click", () => {
-      // value re adds the spaces automatically
-      if (contextMenu.classList.value === this.id) {
+      if (contextMenu.dataset.id === this.id) {
         this.nested.classList.toggle("active");
         closeContext();
       }
@@ -618,8 +616,7 @@ var TreeItem = class TreeItem {
 
     const invertItem = document.getElementById("invert");
     invertItem.addEventListener("click", () => {
-      // value re adds the spaces automatically
-      if (contextMenu.classList.value === this.id) {
+      if (contextMenu.dataset.id === this.id) {
         this.children.forEach((child) => child.toggle());
         closeContext();
       }
@@ -628,23 +625,23 @@ var TreeItem = class TreeItem {
     const unselectItem = document.getElementById("unselect");
     unselectItem.addEventListener("click", () => {
       // value re adds the spaces automatically
-      if (contextMenu.classList.value === this.id) {
+      if (contextMenu.dataset.id === this.id) {
         let topOfTree = this;
         while (topOfTree.parent) topOfTree = topOfTree.parent;
         topOfTree.toggle();
         topOfTree.toggle();
 
         const unselect = (parent) => {
-          if (parent.hasChild(contextMenu.classList.value) && !parent.#checked)
+          if (parent.hasChild(contextMenu.dataset.id) && !parent.#checked)
             parent.toggle();
           else if (
-            parent.id !== contextMenu.classList.value &&
-            !parent.hasChild(contextMenu.classList.value) &&
+            parent.id !== contextMenu.dataset.id &&
+            !parent.hasChild(contextMenu.dataset.id) &&
             parent.#checked
           )
             parent.toggle();
 
-          if (parent.id !== contextMenu.classList.value) {
+          if (parent.id !== contextMenu.dataset.id) {
             parent.children.forEach((child) => {
               unselect(child);
             });
