@@ -93,9 +93,11 @@ const options = {
   pointMarkerColor: "#006eb0",
   showPlayheadTime: true,
   waveformCache: true,
+  segmentsOptions: {
+    startMarkerColor: "rgba(120, 120, 120, 1)",
+    endMarkerColor: "rgba(120, 120, 120, 1)",
+  },
   zoomLevels: [256, 512, 1024, 2048, 4096],
-  segmentStartMarkerColor: "rgba(120, 120, 120, 1)",
-  segmentEndMarkerColor: "rgba(120, 120, 120, 1)",
   createSegmentMarker: createSegmentMarker,
 };
 
