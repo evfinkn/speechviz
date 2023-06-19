@@ -486,10 +486,12 @@ fetch(wordsFile)
       playable: false,
       color: "#00000000",
     });
-    // words.map((word) => {
-    //   word["color"] = "#00000000";
-    //   peaks.points.add(word);
-    // })
+    words.map((word) => {
+      // posibile bug in peaks.js, previously we let the color get set by wordsGroup,
+      // but in latest version we need to set it here because calling points.update
+      // doesn't update the color on the waveform
+      word["color"] = "#00000000";
+    });
     peaks.points.add(words).forEach((word) => {
       new Word(word, { parent: wordsGroup });
     });
