@@ -2156,6 +2156,45 @@ var Segment = class Segment extends PeaksItem {
   }
 
   /**
+   * Splits this segment into 2 segments.
+   *
+   * @returns {!Segment} The new segment.
+   */
+  split() {
+    if (this.duration < 0.15) {
+      return null; // don't split if segment is too short
+    }
+
+    let newSegStart = this.startTime + this.duration / 2;
+    const newSegEnd = this.endTime;
+    this.endTime = newSegStart;
+    // if there's enough room, leave a tiny gap between the segments so that the drag
+    // handles don't overlap
+    if (this.duration > 0.3) {
+      // 0.0375 is from trial and error, leaves a tiny tiny gap between the drag handles
+      newSegStart += 0.0375;
+      this.endTime -= 0.0375;
+    }
+    this.updateDuration();
+
+    const newSegment = peaks.segments.add({
+      startTime: newSegStart,
+      endTime: newSegEnd,
+      editable: this.editable,
+      labelText: this.labelText,
+    });
+    return new Segment(newSegment, {
+      parent: this.parent,
+      text: this.text,
+      removable: this.removable,
+      renamable: this.renamable,
+      moveTo: this.moveTo,
+      copyTo: this.copyTo,
+      attributes: this.attributes,
+    });
+  }
+
+  /**
    * Copies this segment to another `PeaksGroup`.
    * @param {!PeaksGroup} copyParent - `PeaksGroup` to add the copied segment to.
    * @returns {?Segment} The copied segment if `copyParent` didn't already have a

@@ -1022,6 +1022,28 @@ unselectItem.addEventListener("click", () => {
   }
 });
 
+const segmentMenu = document.getElementById("peakssegment-contextmenu");
+peaks.on("segments.contextmenu", function (event) {
+  // get the segment and the original mouse event from the peaks event
+  // var is needed because event is already declared
+  const { segment, evt } = event;
+  if (segment.editable) {
+    segmentMenu.dataset.id = segment.id;
+    // prevent default so that the right click context menu doesn't show
+    evt.preventDefault();
+    segmentMenu.style.top = `${evt.clientY}px`;
+    segmentMenu.style.left = `${evt.clientX}px`;
+    segmentMenu.style.display = "block";
+  }
+});
+
+const splitItem = document.getElementById("split-segment");
+splitItem.addEventListener("click", function () {
+  const segment = Segment.byId[segmentMenu.dataset.id];
+  segment.split();
+  closeContextMenu(segmentMenu);
+});
+
 window.addEventListener("keydown", function (event) {
   // ctrl key for windows, meta key is command for mac
   if (event.ctrlKey || event.metaKey) {
