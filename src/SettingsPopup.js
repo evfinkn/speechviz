@@ -28,6 +28,11 @@ const SettingsPopup = class SettingsPopup {
     { name: "enableSeekInput", event: "change", props: { checked: true } },
     { name: "showDragHandlesInput", event: "change", props: { checked: true } },
     {
+      name: "enableSegmentDraggingInput",
+      event: "change",
+      props: { checked: false },
+    },
+    {
       name: "maintainVideoAspectRatio",
       event: "change",
       props: { checked: true },
@@ -74,6 +79,12 @@ const SettingsPopup = class SettingsPopup {
    * @type {!Element}
    */
   showDragHandlesInput;
+
+  /**
+   * The input element of the checkbox that enables / disables dragging of segments.
+   * @type {!Element}
+   */
+  enableSegmentDraggingInput;
 
   /**
    * The input element of the checkbox that keeps/disables
@@ -178,6 +189,20 @@ const SettingsPopup = class SettingsPopup {
       Object.values(Segment.byId).forEach((segment) =>
         segment.toggleDragHandles(this.checked)
       );
+    });
+
+    // setting to enable segment dragging
+    const enableSegmentDraggingDiv = htmlToElement(`<div>
+            <label>
+              <input type='checkbox'> Enable segment dragging
+            </label>
+        </div>`);
+    popupContent.append(enableSegmentDraggingDiv);
+
+    this.enableSegmentDraggingInput =
+      enableSegmentDraggingDiv.firstElementChild.firstElementChild;
+    this.enableSegmentDraggingInput.addEventListener("change", function () {
+      zoomview.enableSegmentDragging(this.checked);
     });
 
     // setting to enable seeking (clicking peaks to jump to a time)
