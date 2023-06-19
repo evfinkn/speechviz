@@ -2155,6 +2155,7 @@ var Segment = class Segment extends PeaksItem {
     this.dispatchEvent(new Event("manualpause", { bubbles: true }));
   }
 
+  // TODO: create undo action for splitting
   /**
    * Splits this segment into 2 segments.
    *
@@ -2222,6 +2223,24 @@ var Segment = class Segment extends PeaksItem {
       });
     }
     return null;
+  }
+
+  // TODO: create undo action for merging
+  /**
+   * Merges this segment with the given segments.
+   *
+   * @param {...Segment} segments - Segments to merge with this segment.
+   */
+  merge(...segments) {
+    segments.forEach((segment) => {
+      if (segment.startTime < this.startTime) {
+        this.startTime = segment.startTime;
+      }
+      if (segment.endTime > this.endTime) {
+        this.endTime = segment.endTime;
+      }
+      segment.remove();
+    });
   }
 };
 
@@ -2610,6 +2629,34 @@ var PeaksGroup = class PeaksGroup extends Group {
       }
     }
     return copiedChildren;
+  }
+
+  /**
+   * Gets the `Segment`s of this group that overlap with `segment`.
+   *
+   * @param {!Segment} segment - The `Segment` to check for overlap with.
+   * @returns {!Array.<Segment>} The `Segment`s of this group that overlap with
+   *      `segment`.
+   */
+  getOverlapping(segment) {
+    const overlapping = [];
+    const segmentIndex = this.children.indexOf(segment);
+    // children are already sorted by startTime (every time a child is added)
+    // so we can just look at the segments before and after the segment
+    let i = segmentIndex - 1;
+    // add all segments before the segment that overlap with the segment
+    while (i >= 0 && this.children[i].endTime > segment.startTime) {
+      overlapping.push(this.children[i]);
+      i--;
+    }
+    const length = this.children.length;
+    i = segmentIndex + 1;
+    // add all segments after the segment that overlap with the segment
+    while (i < length && this.children[i].startTime < segment.endTime) {
+      overlapping.push(this.children[i]);
+      i++;
+    }
+    return overlapping;
   }
 };
 

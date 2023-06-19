@@ -1046,6 +1046,14 @@ splitItem.addEventListener("click", function () {
   closeContextMenu(segmentMenu);
 });
 
+const mergeItem = document.getElementById("merge-segments");
+mergeItem.addEventListener("click", function () {
+  const segment = Segment.byId[segmentMenu.dataset.id];
+  const overlapping = segment.parent.getOverlapping(segment);
+  segment.merge(...overlapping);
+  closeContextMenu(segmentMenu);
+});
+
 window.addEventListener("keydown", function (event) {
   // ctrl key for windows, meta key is command for mac
   if (event.ctrlKey || event.metaKey) {
