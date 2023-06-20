@@ -330,6 +330,33 @@ const SplitSegmentAction = class SplitSegmentAction {
   }
 };
 
+const MergeSegmentsAction = class MergeSegmentsAction {
+  /** @type {!Segment} */ segment;
+  /** @type {number} */ oldStartTime;
+  /** @type {number} */ oldEndTime;
+  /** @type {!Array.<Segment>} */ overlapping;
+
+  constructor(segment) {
+    this.segment = segment;
+    this.oldStartTime = segment.startTime;
+    this.oldEndTime = segment.endTime;
+    this.overlapping = segment.parent.getOverlapping(segment);
+    segment.merge(...this.overlapping);
+  }
+
+  undo() {
+    this.segment.update({
+      startTime: this.oldStartTime,
+      endTime: this.oldEndTime,
+    });
+    this.overlapping.forEach((segment) => segment.readd(this.segment.parent));
+  }
+
+  redo() {
+    this.segment.merge(...this.overlapping);
+  }
+};
+
 /**
  * An enum containing every type of `Action`.
  * @type {!Object.<string, Action>}
@@ -345,6 +372,7 @@ const Actions = {
   UnassociateAction,
   ColorAction,
   SplitSegmentAction,
+  MergeSegmentsAction,
 };
 
 export { undoStorage, redoStorage, Actions };

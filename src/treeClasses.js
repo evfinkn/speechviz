@@ -2160,8 +2160,6 @@ var Segment = class Segment extends PeaksItem {
     // event as well so that it can get paused properly
     this.dispatchEvent(new Event("manualpause", { bubbles: true }));
   }
-
-  // TODO: create undo action for splitting
   /**
    * Splits this segment into 2 segments.
    *
@@ -2231,7 +2229,6 @@ var Segment = class Segment extends PeaksItem {
     return null;
   }
 
-  // TODO: create undo action for merging
   /**
    * Merges this segment with the given segments.
    *

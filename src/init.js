@@ -1049,8 +1049,7 @@ splitItem.addEventListener("click", function () {
 const mergeItem = document.getElementById("merge-segments");
 mergeItem.addEventListener("click", function () {
   const segment = Segment.byId[segmentMenu.dataset.id];
-  const overlapping = segment.parent.getOverlapping(segment);
-  segment.merge(...overlapping);
+  undoStorage.push(new Actions.MergeSegmentsAction(segment));
   closeContextMenu(segmentMenu);
 });
 
