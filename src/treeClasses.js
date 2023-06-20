@@ -2054,6 +2054,7 @@ var Segment = class Segment extends PeaksItem {
   }
   set startTime(newStart) {
     this.segment.update({ startTime: newStart });
+    this.updateDuration();
   }
 
   /**
@@ -2065,6 +2066,7 @@ var Segment = class Segment extends PeaksItem {
   }
   set endTime(newEnd) {
     this.segment.update({ endTime: newEnd });
+    this.updateDuration();
   }
 
   /**
@@ -2074,6 +2076,13 @@ var Segment = class Segment extends PeaksItem {
   get treeText() {
     return this.text;
   } // backwards compatibility (database expects 'treeText')
+
+  update(options) {
+    super.update(options);
+    if (options.startTime !== undefined || options.endTime !== undefined) {
+      this.updateDuration();
+    }
+  }
 
   /** Updates `duration` using this segment's start and end times. */
   updateDuration() {
