@@ -94,6 +94,8 @@ var redoStorage = new RedoStorage();
 // arrow function so that in redo(), `this` refers to redoStorage and not redoButton
 redoButton.addEventListener("click", () => redoStorage.redo());
 
+// FIXME: unlike the other actions, this one doesn't actually do the initial action
+//        (it gets passed the item that was added). is this elegantly fixable?
 const AddAction = class AddAction {
   /** @type {!TreeItem} */ item;
   /** @type {!TreeItem} */ parent;
@@ -309,6 +311,25 @@ const ColorAction = class ColorAction {
   }
 };
 
+const SplitSegmentAction = class SplitSegmentAction {
+  /** @type {!Segment} */ ogSegment;
+  /** @type {!Segment} */ newSegment;
+
+  constructor(segment) {
+    this.ogSegment = segment;
+    this.newSegment = segment.split();
+  }
+
+  undo() {
+    this.ogSegment.update({ endTime: this.newSegment.endTime });
+    this.newSegment.remove();
+  }
+
+  redo() {
+    this.newSegment = this.ogSegment.split();
+  }
+};
+
 /**
  * An enum containing every type of `Action`.
  * @type {!Object.<string, Action>}
@@ -323,6 +344,7 @@ const Actions = {
   AssociateAction,
   UnassociateAction,
   ColorAction,
+  SplitSegmentAction,
 };
 
 export { undoStorage, redoStorage, Actions };

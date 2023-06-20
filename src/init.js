@@ -1042,7 +1042,7 @@ peaks.on("segments.contextmenu", function (event) {
 const splitItem = document.getElementById("split-segment");
 splitItem.addEventListener("click", function () {
   const segment = Segment.byId[segmentMenu.dataset.id];
-  segment.split();
+  undoStorage.push(new Actions.SplitSegmentAction(segment));
   closeContextMenu(segmentMenu);
 });
 
