@@ -517,10 +517,6 @@ var TreeItem = class TreeItem {
    * This also sets `this.playable` to `true` and `this.duration` to 0.
    */
   makePlayable() {
-    if (this.playButton && this.loopButton && this.pauseButton) {
-      return; // this item has already been made playable
-    }
-
     this.playable = true;
     this.duration = 0;
 
@@ -553,10 +549,6 @@ var TreeItem = class TreeItem {
    * This also sets `this.removable` to `true`.
    */
   makeRemovable() {
-    if (this.removeButton) {
-      return; // this item has already been made removable
-    }
-
     this.removable = true;
 
     if (this.rendered) {
@@ -761,9 +753,13 @@ var TreeItem = class TreeItem {
    * is `null` and `this.parent` isn't, `this.parent` is used instead. Otherwise, if
    * both are `null`, this item isn't added to any parent.
    * @param {?TreeItem} parent - The `TreeItem` to add this item to, if any.
+   * @param {boolean} [render=true] - Whether to render this item after readding it.
    */
-  readd(parent = null) {
+  readd(parent = null, render = true) {
     this.addToById(); // will throw an error if one already exists !
+    if (render) {
+      this.render();
+    }
     if (parent !== null) {
       parent.addChildren(this);
     } else if (this.parent !== null) {
@@ -1904,10 +1900,11 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * `null`. If `parent` is `null` and `this.parent` isn't, `this.parent` is used
    * instead. Otherwise, if both are `null`, this item isn't added to any parent.
    * @param {?PeaksGroup} parent - The `PeaksGroup` to add this item to, if any.
+   * @param {boolean} [render=true] - Whether to render this item after readding it.
    */
-  readd(parent = null) {
+  readd(parent = null, render = true) {
     this.#addToPeaks();
-    super.readd(parent);
+    super.readd(parent, render);
   }
 
   /**
