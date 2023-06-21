@@ -1030,14 +1030,27 @@ peaks.on("segments.contextmenu", function (event) {
   // get the segment and the original mouse event from the peaks event
   // var is needed because event is already declared
   const { segment, evt } = event;
-  if (segment.editable) {
-    segmentMenu.dataset.id = segment.id;
-    // prevent default so that the right click context menu doesn't show
-    evt.preventDefault();
-    segmentMenu.style.top = `${evt.clientY}px`;
-    segmentMenu.style.left = `${evt.clientX}px`;
-    segmentMenu.style.display = "block";
+  segmentMenu.dataset.id = segment.id;
+  // prevent default so that the right click context menu doesn't show
+  evt.preventDefault();
+  segmentMenu.style.top = `${evt.clientY}px`;
+  segmentMenu.style.left = `${evt.clientX}px`;
+  segmentMenu.style.display = "block";
+  // hide button's that edit segments if the segment is not editable
+  for (const item of segmentMenu.children) {
+    if (!item.classList.contains("editonly") || segment.editable) {
+      item.style.display = "block";
+    } else {
+      item.style.display = "none";
+    }
   }
+});
+
+const showInTreeItem = document.getElementById("show-in-tree");
+showInTreeItem.addEventListener("click", function () {
+  const segment = Segment.byId[segmentMenu.dataset.id];
+  segment.scrollIntoView();
+  closeContextMenu(segmentMenu);
 });
 
 const splitItem = document.getElementById("split-segment");

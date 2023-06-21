@@ -922,6 +922,21 @@ var TreeItem = class TreeItem {
     return hasChild;
   }
 
+  /**
+   * Opens the tree and scrolls this item into view, making it visible to the user.
+   *
+   * @param {boolean} [highlight=true] - Whether to highlight this item after scrolling.
+   *     Highlighting adds a blue border around the item temporarily.
+   */
+  scrollIntoView(highlight = true) {
+    this.open();
+    this.li.scrollIntoView({ block: "center" });
+    if (highlight) {
+      this.li.classList.add("highlight");
+      setTimeout(() => this.li.classList.remove("highlight"), 2000);
+    }
+  }
+
   // FIXME: make events work even if this item hasn't been rendered
   // The following 3 methods implement the EventTarget interface
   // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget

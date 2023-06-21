@@ -243,6 +243,10 @@ ul {
   list-style-type: none;
 }
 
+li {
+  width: fit-content;
+}
+
 .icon {
   /* padding-left: 2px; */
   text-decoration: none;
@@ -454,6 +458,11 @@ ul {
 .show,
 .active {
   display: block;
+}
+
+.highlight {
+  /* outline instead of border so it doesn't change the size of the element */
+  outline: 3px solid #3478f6;
 }
 
 .grayed-out {
