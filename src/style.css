@@ -361,6 +361,34 @@ ul {
   background: #343434;
 }
 
+.notification {
+  position: fixed;
+  z-index: 7500;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none; /* will be set to flex when shown */
+  align-items: center;
+  background-color: #505050;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.notification-message {
+  flex-grow: 1;
+  color: #eee;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.notification-close {
+  width: 16px;
+  height: 16px;
+}
+
 .close {
   color: #aaa;
   float: right;

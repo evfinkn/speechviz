@@ -147,6 +147,20 @@ const arrowOptions = Object.assign(
 const arrowLeftIcon = feather.icons["arrow-left"].toSvg(arrowOptions);
 const arrowRightIcon = feather.icons["arrow-right"].toSvg(arrowOptions);
 
+const notifIconOptions = {
+  stroke: "#eee",
+  width: "16px",
+  height: "16px",
+};
+const alertIcon = feather.icons["alert-triangle"].toSvg(notifIconOptions);
+const infoIcon = feather.icons.info.toSvg(notifIconOptions);
+const xIcon = feather.icons.x.toSvg(notifIconOptions);
+const notifIcons = {
+  alert: alertIcon,
+  info: infoIcon,
+  x: xIcon,
+};
+
 export {
   segmentIcons,
   groupIcons,
@@ -160,4 +174,5 @@ export {
   minusIcon,
   arrowLeftIcon,
   arrowRightIcon,
+  notifIcons,
 };

@@ -18,6 +18,7 @@ import SettingsPopup from "./SettingsPopup.js";
 import { Channels } from "./ChannelAudio.js";
 import { FiltersPopup } from "./FiltersPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
+import { notification } from "./Notification.js";
 import {
   arrayMean,
   objectMap,
@@ -1049,7 +1050,10 @@ splitItem.addEventListener("click", function () {
 const mergeItem = document.getElementById("merge-segments");
 mergeItem.addEventListener("click", function () {
   const segment = Segment.byId[segmentMenu.dataset.id];
-  undoStorage.push(new Actions.MergeSegmentsAction(segment));
+  const action = new Actions.MergeSegmentsAction(segment);
+  if (action.overlapping.length === 0) {
+    notification.show("No overlapping segments to merge.");
+  }
   closeContextMenu(segmentMenu);
 });
 
