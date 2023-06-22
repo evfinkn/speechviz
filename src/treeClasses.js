@@ -2244,10 +2244,12 @@ var Segment = class Segment extends PeaksItem {
     return null;
   }
 
+  // FIXME: this assumes the segments overlap
   /**
    * Merges this segment with the given segments.
    *
-   * @param {...Segment} segments - Segments to merge with this segment.
+   * @param {...Segment} segments - Segments to merge with this segment. All
+   *     segments must overlap this segment. They will be removed after merging.
    */
   merge(...segments) {
     segments.forEach((segment) => {
