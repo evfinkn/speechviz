@@ -1066,6 +1066,8 @@ mergeItem.addEventListener("click", function () {
   const action = new Actions.MergeSegmentsAction(segment);
   if (action.overlapping.length === 0) {
     notification.show("No overlapping segments to merge.");
+  } else {
+    undoStorage.push(action);
   }
   closeContextMenu(segmentMenu);
 });
