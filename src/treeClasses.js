@@ -2658,21 +2658,12 @@ var PeaksGroup = class PeaksGroup extends Group {
    */
   getOverlapping(segment) {
     const overlapping = [];
-    const segmentIndex = this.children.indexOf(segment);
-    // children are already sorted by startTime (every time a child is added)
-    // so we can just look at the segments before and after the segment
-    let i = segmentIndex - 1;
-    // add all segments before the segment that overlap with the segment
-    while (i >= 0 && this.children[i].endTime > segment.startTime) {
-      overlapping.push(this.children[i]);
-      i--;
-    }
-    const length = this.children.length;
-    i = segmentIndex + 1;
-    // add all segments after the segment that overlap with the segment
-    while (i < length && this.children[i].startTime < segment.endTime) {
-      overlapping.push(this.children[i]);
-      i++;
+    for (const child of this.children) {
+      if (child.startTime >= segment.endTime) {
+        break;
+      } else if (child.endTime > segment.startTime && child !== segment) {
+        overlapping.push(child);
+      }
     }
     return overlapping;
   }
