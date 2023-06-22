@@ -93,10 +93,94 @@ const oldCreateTree = function (id, parent, children, snr) {
   }
 };
 
-// TODO: add documentation
+/**
+ * An object representing a tree item.
+ * @typedef {Object} TreeItemObj
+ * @property {string} type - The type of the tree item. Must be a key in
+ *      {@link TreeItem.types}.
+ * @property {Array} [arguments] - The arguments to pass to the constructor of the tree
+ *      item's class, excluding the options object.
+ * @property {Object} [options] - The options passed as the last argument to the
+ *      constructor of the tree item's class. For example, the last argument to
+ *      {@link TreeItem} is an object with options like `text` and `removable`. Any
+ *      option that takes some form of TreeItem as a value should be passed as the
+ *      id of the TreeItem. Besides `parent`, `moveTo` and `copyTo` are examples of
+ *      such options, being arrays of TreeItem ids. If new options like this are
+ *      added, the constructor should either 1. handle the conversion from id to
+ *      TreeItem itself or 2. accept the ids temporarily and let the caller of
+ *      `createTreeItemFromObj` fix it after the tree item is created. The latter
+ *      is usually necessary, since some of the TreeItems being referenced might not
+ *      have been created yet.
+ * @property {string} [options.parent] - The id of the parent tree item. Mostly only
+ *      useful for direct children of the root tree item, `"Analysis"`, since items
+ *      defined in a tree item's `children` property will have their parent set to that
+ *      tree item automatically.
+ * @property {Array.<TreeItemObj>} [options.children] - For tree items that can have
+ *      children, an array of tree item objects representing the children. The children
+ *      aren't passed to the constructor of the tree item's class but are instead
+ *      created after the tree item is created.
+ * @property {Object} [options.childrenOptions] - For tree items that can have
+ *      children, an object whose properties are options to pass to the constructor
+ *      of the tree item's class for each child. This is useful for when all the
+ *      children share one or more options. The options are overridden by the
+ *      `options` property of each child if defined there. The property can be
+ *      nested within itself. E.g., `"childrenOptions": { "childrenOptions": {
+ *      "playable": true } }` will make all grandchildren playable.
+ * @example <caption>Example tree item object</caption>
+ * {
+ *   "type": "PeaksGroup",
+ *   "arguments": ["Speaker 1"], // "Speaker 1" is the group's id
+ *   "options": {
+ *     "parent": "Analysis",
+ *     "snr": 0.1,
+ *     "childrenOptions": {
+ *       "copyTo": ["Labeled.children"],  // . allows nested properties, children
+ *       "moveTo": ["Speakers.children"]  // lets you move item to any child of Labeled
+ *     },
+ *     "children": [
+ *       {
+ *         // note that this object doesn't have a "parent" property
+ *         // since it's defined in `children` of its parent
+ *         "type": "Segment",
+ *         "arguments": [
+ *           {
+ *             "startTime": 1.32259,
+ *             "endTime": 3.67215,
+ *             "color": "#f4dcf2",
+ *             "labelText": "Speaker 1"
+ *           }
+ *         ]
+ *       },
+ *       {
+ *         "type": "Segment",
+ *         "arguments": [
+ *           {
+ *            "startTime": 4.02100,
+ *            "endTime": 5.10923,
+ *            "color": "#f4dcf2",
+ *            "labelText": "Speaker 1"
+ *           }
+ *         ],
+ *         "options": {
+ *           "copyTo": ["Custom"] // this overrides copyTo from childrenOptions
+ *         }
+ *       }
+ *     ] // end of children
+ *   } // end of options
+ * } // end of tree item object
+ */
+
+/**
+ *
+ * @param {(!TreeItemObj|!Array.<TreeItemObj>)} obj - The tree item object or array of
+ *     tree item objects to create.
+ * @param {?TreeItem} parent - The parent of the tree item(s) being created. If not
+ *     specified, the root tree item ("Analysis") is used.
+ * @returns {(!TreeItem|!Array.<TreeItem>)} The tree item(s) created.
+ */
 const createTreeItemFromObj = (obj, parent = null) => {
   if (Array.isArray(obj)) {
-    return obj.map((subObj) => createTreeItemFromObj(subObj));
+    return obj.map((subObj) => createTreeItemFromObj(subObj, parent));
   }
 
   const type = TreeItem.types[obj.type];
