@@ -9,7 +9,7 @@ module.exports = {
     includePattern: ".js$",
   },
   opts: {
-    destination: "doc/",
+    destination: "docs/js/",
     encoding: "utf8",
     readme: "README.md",
     template: "node_modules/better-docs",

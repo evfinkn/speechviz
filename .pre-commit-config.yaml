@@ -1,6 +1,6 @@
 default_language_version:
   python: python3.10
-exclude: (doc|patches)\/
+exclude: (docs\/js|patches)\/
 repos:
   - repo: https://github.com/psf/black
     rev: 22.10.0
