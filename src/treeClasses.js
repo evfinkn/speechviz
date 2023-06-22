@@ -42,6 +42,16 @@ const basename = globals.basename;
  * A hex string in the form "#RRGGBB" that represents a color.
  * @typedef {string} Color
  */
+/**
+ * Object containing options for a Peaks segment.
+ * @typedef {Object} PeaksSegmentOptions
+ * @prop {number} startTime - The segment start time.
+ * @prop {number} endTime - The segment end time.
+ * @prop {boolean} [editable] - Whether the segment is editable.
+ * @prop {Color} [color] - The segment color.
+ * @prop {string} [labelText] - A text label displayed on hover over the segment.
+ * @prop {string} [id] - The segment identifier.
+ */
 
 // instead of const use var so the classes hoist and
 // can reference each other before definition
@@ -907,7 +917,7 @@ var TreeItem = class TreeItem {
   /**
    * Takes in the id of a TreeItem that could be a immediate/distant child
    * and returns if it does or doesn't have it as a child
-   * @param {*} childId
+   * @param {string} childId
    * @returns whether this TreeItem has that child somewhere underneath it
    */
   hasChild(childId) {
@@ -1998,8 +2008,8 @@ var Segment = class Segment extends PeaksItem {
   ];
 
   /**
-   * @param {!PeaksSegment} segment - The Peaks segment being represented in the tree
-   *      by the `Segment`.
+   * @param {(!PeaksSegment|!PeaksSegmentOptions)} segment - The Peaks segment or the
+   *      options to create it.
    * @param {?Object.<string, any>=} options - Options to customize the segment.
    * @param {?PeaksGroup=} options.parent - The `PeaksGroup` that contains the segment
    *      in its nested content.
@@ -2175,6 +2185,7 @@ var Segment = class Segment extends PeaksItem {
     // event as well so that it can get paused properly
     this.dispatchEvent(new Event("manualpause", { bubbles: true }));
   }
+
   /**
    * Splits this segment into 2 segments.
    *
