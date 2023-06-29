@@ -274,12 +274,12 @@ def main():
         default=4,
         help="Number of consecutive sentences to consider",
     )
-    parser.add_argument(
-        "--threshold",
-        type=float,
-        default=1.0,
-        help="Time threshold for grouping sentences",
-    )
+    # parser.add_argument(
+    # "--threshold",
+    # type=float,
+    # default=1.0,
+    # help="Time threshold for grouping sentences",
+    # )
     parser.add_argument(
         "-r",
         "--reprocess",
