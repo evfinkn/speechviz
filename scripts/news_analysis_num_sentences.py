@@ -8,6 +8,12 @@ from llama_cpp import Llama
 
 from _types import PeaksGroup, Segment, TreeItem
 
+# global variable for the model
+llm = Llama(
+    model_path="scripts/models/open-llama-13b-open-instruct.ggmlv3.q6_K.bin",
+    verbose=False,
+)
+
 
 def prompt_open_llama(
     path: pathlib.Path,
@@ -51,18 +57,14 @@ def prompt_open_llama(
 
     grouped_sentences = group_sentences(data, numbers)
 
-    llm = Llama(
-        model_path="scripts/models/open-llama-13b-open-instruct.ggmlv3.q6_K.bin",
-        verbose=False,
-    )
-
     prompt_template = (
         "Below is an instruction that describes a task. Write a response that"
         " appropriately completes the request.\n\n###"
         " Instruction:\n{instruction}\n\n### Response:"
     )
 
-    pattern = r"\bother\b"
+    pattern_other = r"\bother\b|\sother\s"
+    pattern_news = r"\bnews\b|\snews\s"
 
     news_segs = []
     # news_times = []
@@ -88,9 +90,15 @@ def prompt_open_llama(
         # print(inputt)
         print(output.get("choices")[0].get("text"))
 
-        # if the answer did noet contain other, it was news
-        matches = re.findall(pattern, output.get("choices")[0].get("text").lower())
-        if not matches:
+        matches_other = re.findall(
+            pattern_other, output.get("choices")[0].get("text").lower()
+        )
+        matches_news = re.findall(
+            pattern_news, output.get("choices")[0].get("text").lower()
+        )
+        # whichever was said more news and other, that is what the answer is
+        # err on side of other, need more news than other
+        if len(matches_news) > len(matches_other):
             print(start, stop)
             news_segs.append(format_segment(start, stop, "#880808", "News"))
             # news_times.append((start, end))
