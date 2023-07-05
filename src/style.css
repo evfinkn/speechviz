@@ -473,3 +473,23 @@ li {
 .pressed {
   border-style: inset;
 }
+
+/* versions popup style */
+
+.commit {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.commit .message {
+  font-weight: bold;
+}
+
+.author-name {
+  color: black;
+}
+
+.time-ago {
+  color: gray;
+}

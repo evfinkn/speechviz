@@ -15,6 +15,7 @@ import {
 } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
+import CommitsPopup from "./CommitsPopup.js";
 import { Channels } from "./ChannelAudio.js";
 import { FiltersPopup } from "./FiltersPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
@@ -1027,6 +1028,13 @@ settingsButton.innerHTML = settingsIcon;
 const settingsPopup = new SettingsPopup();
 settingsButton.addEventListener("click", function () {
   settingsPopup.show();
+});
+
+// button for popup containing the commit versions
+const commitsButton = document.getElementById("versions");
+const commitsPopup = new CommitsPopup();
+commitsButton.addEventListener("click", function () {
+  commitsPopup.show();
 });
 
 const filtersButton = document.getElementById("filters");
