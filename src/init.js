@@ -16,6 +16,7 @@ import {
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
 import CommitsPopup from "./CommitsPopup.js";
+import SavePopup from "./SavePopup.js";
 import { Channels } from "./ChannelAudio.js";
 import { FiltersPopup } from "./FiltersPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
@@ -1005,7 +1006,10 @@ const save = () => {
 };
 
 // saves the segments
-saveButton.addEventListener("click", save);
+const savePopup = new SavePopup();
+saveButton.addEventListener("click", function () {
+  savePopup.show();
+});
 // document.querySelector('button[data-action="save"]').addEventListener("click", save);
 
 // setting to change the speed at which the media plays
@@ -1203,3 +1207,5 @@ window.addEventListener("beforeunload", function (event) {
   (event || window.event).returnValue = confirmationMessage;
   return confirmationMessage;
 });
+
+export { save };
