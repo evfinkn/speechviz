@@ -936,7 +936,8 @@ const save = () => {
   );
 
   // fileParagraph.innerHTML = `${filename} - Saving`;
-  const groupRegex = /Speaker |VAD|Non-VAD|Words|SNR-Noise/;
+  const groupRegex =
+    /Speaker |\bVAD\b|\bNon-VAD\b|\bWords\b|\bSNR-Noise\b|\bNews\b/;
   // only save groups that aren't from the pipeline
   const groups = Object.values(PeaksGroup.byId).filter(
     (group) => !group.id.match(groupRegex)
