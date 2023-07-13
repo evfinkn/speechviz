@@ -12,3 +12,4 @@ scripts/models
 src/index.js
 scripts/combineAndPadAudio.py
 logs
+scripts/output/llmMatchPercentages.csv
