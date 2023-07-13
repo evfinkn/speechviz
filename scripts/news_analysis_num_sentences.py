@@ -18,6 +18,7 @@ llm = Llama(
 def prompt_open_llama(
     path: pathlib.Path,
     numbers,
+    threshold,
     reprocess=False,
 ):
     for ancestor in path.parents:
@@ -50,12 +51,13 @@ def prompt_open_llama(
     # if "News" is already in segments and we don't
     # wish to reprocess, return and go to next file
     if found and not reprocess:
+        print("File already processed")
         return
 
     with open(path, "r") as file:
         data = json.load(file)
 
-    grouped_sentences = group_sentences(data, numbers)
+    grouped_sentences = group_sentences(data, numbers, threshold)
 
     prompt_template = (
         "Below is an instruction that describes a task. Write a response that"
@@ -77,15 +79,19 @@ def prompt_open_llama(
         start = items[1]
         stop = items[2]
 
+        # SAY DO IT IN JSON, OUTPUT A SINGLE CLASS
         prompt = (
-            'Classify the Transcript as "news" or "other" in a word.\nTranscript:'
-            ' "{current_group}"'
+            'Classify the Transcript as "news" or "other" in a one word answer of news'
+            ' or other.\nTranscript: "{current_group}"'
         )
 
         inserted_prompt = prompt.format(current_group=group)
         inputt = prompt_template.format(instruction=inserted_prompt)
 
-        output = llm(inputt, max_tokens=32)
+        # reset model state
+        llm.reset()
+
+        output = llm(inputt, max_tokens=100)
 
         # print(inputt)
         print(output.get("choices")[0].get("text"))
@@ -139,13 +145,15 @@ def prompt_open_llama(
         json.dump(data, file)
 
 
-def group_sentences(data, numbers):
+def group_sentences(data, numbers, threshold):
     paragraphs = []
     paragraph_start = []
     paragraph_stop = []
     current_paragraph = ""
     current_sentence_number = 0
     start = True
+
+    prev_time = None
 
     for item in data:
         label_text = item["labelText"]
@@ -161,6 +169,17 @@ def group_sentences(data, numbers):
         if label_text.endswith("."):
             current_sentence_number += 1
 
+        # over `threshold` amount of time has happened since the last word, so we are
+        # probably on another topic/speaker
+        if (prev_time is not None and time - prev_time > threshold) or (
+            len(label_text) + len(current_paragraph.strip()) > 800
+        ):
+            paragraphs.append(current_paragraph.strip())
+            paragraph_stop.append(time)
+            start = True
+            current_paragraph = ""
+            current_sentence_number = 0
+
         # we have passed `numbers` amount of sentences or the context
         # would be too big for running, thus time for a new paragraph
         if (current_sentence_number >= numbers) or (
@@ -172,6 +191,8 @@ def group_sentences(data, numbers):
             current_paragraph = ""
             current_sentence_number = 0
 
+        prev_time = time
+
     if current_paragraph:
         paragraphs.append(current_paragraph.strip())
         paragraph_stop.append(time)
@@ -179,34 +200,6 @@ def group_sentences(data, numbers):
     print(paragraphs)
 
     return [paragraphs, paragraph_start, paragraph_stop]
-
-
-# currently unused, but should be able to use
-# instead of number of sentences as an argument later
-def group_sentences_threshold(data, threshold):
-    sentences = []
-    current_sentence = ""
-    prev_time = None
-
-    for item in data:
-        label_text = item["labelText"]
-        current_time = item["time"]
-
-        # if we are not on the first one, and this word was within one second of the
-        # last word or the prompt would make us run out of memory start a new group
-        if (prev_time is not None and current_time - prev_time > threshold) or (
-            len(current_sentence.strip()) + len(label_text) > 1000
-        ):
-            sentences.append(current_sentence.strip())
-            current_sentence = ""
-
-        current_sentence += label_text + " "
-        prev_time = current_time
-
-    if current_sentence:
-        sentences.append(current_sentence.strip())
-
-    return sentences
 
 
 def format_segment(
@@ -282,12 +275,12 @@ def main():
         default=4,
         help="Number of consecutive sentences to consider",
     )
-    # parser.add_argument(
-    # "--threshold",
-    # type=float,
-    # default=1.0,
-    # help="Time threshold for grouping sentences",
-    # )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.75,
+        help="Time threshold for grouping sentences",
+    )
     parser.add_argument(
         "-r",
         "--reprocess",
@@ -296,8 +289,6 @@ def main():
     )
 
     args = vars(parser.parse_args())
-    # json_file = args.path
-    # numbers = args.numbers
 
     route_file(*args.pop("path"), **args)
 
