@@ -1,74 +1,42 @@
+-- Some comments use /* */ instead of -- because the autoformatter keeps /* */ comments
+-- on their own line (it moves some -- comments to the end of the previous line)
 SELECT json_object(
-    'uuid',
-    -- artifact ID of the file
-    uuid,
-    'datetime',
-    datetime(event.mtime, 'localtime', 'subsec'),
-    -- maybe unixepoch should also get 'localtime'?
-    'unixtime',
-    unixepoch(event.mtime, 'subsec'),
+    'file',
+    artifact.file,
+    'id',
+    artifact.fid,
+    'commit',
+    artifact.cid,
     'branch',
-    tagxref.value,
-    'comment',
-    coalesce(ecomment, comment),
+    artifact.branch,
+    'message',
+    artifact.comment,
     'user',
-    coalesce(euser, user),
+    artifact.user,
+    'datetime',
+    datetime(artifact.mtime, 'subsec'),
+    'unixtime',
+    unixepoch(artifact.mtime, 'subsec'),
     'tags',
     (
-      -- substr to remove the "sym-" prefix
-      SELECT json_group_object(substr(tagname, 5), value)
-      FROM tag,
-        tagxref
-        /* only show tags added by the user (not added internally by fossil) */
-      WHERE tagname GLOB 'sym-*'
-        AND tag.tagid = tagxref.tagid
-        AND tagxref.rid = blob.rid
-        AND tagxref.tagtype > 0
+      SELECT json_group_object(tag.tagname, tag.value)
+      FROM spchviz_user_tag AS tag
+      WHERE tag.rid = artifact.rid
+        /* fossil adds the branch name as a tag, but we don't need it */
+        AND tag.tagname != artifact.branch
     )
   )
-FROM tag
-  CROSS JOIN event
-  CROSS JOIN blob
-  LEFT JOIN tagxref ON tagxref.tagid = tag.tagid
-  AND tagxref.tagtype > 0
-  AND tagxref.rid = blob.rid
-WHERE blob.rid = event.objid
-  AND tag.tagname = 'branch'
-  AND (
-    -- filter by branch
+FROM spchviz_artifact AS artifact
+WHERE (
     :branch IS NULL -- if NULL, versions from all branches are returned
-    OR tagxref.value IS NULL -- this shouldn't happen, but just in case
-    OR tagxref.value = :branch -- only show versions from the specified branch
-  )
-  AND event.type = 'ci' -- only show checkins (commits)
-  AND (
-    :file IS NULL -- if NULL, versions of all files are returned
-    OR EXISTS(
-      -- filter by file name
-      SELECT 1
-      FROM mlink
-      WHERE mlink.mid = event.objid
-        AND mlink.fnid IN (
-          SELECT fnid
-          FROM filename
-          WHERE name = :file COLLATE nocase
-            /* if :file is a directory, return all files in that directory */
-            OR lower(name) GLOB lower(:file || '/*')
-        )
-    )
+    OR artifact.branch = :branch -- only show versions from the specified branch
   )
   AND (
-    :version IS NULL -- if NULL, all versions are returned
-    OR EXISTS(
-      -- filter by version
-      SElECT 1
-      FROM tag,
-        tagxref
-      WHERE tag.tagname = 'sym-version'
-        AND tag.tagid = tagxref.tagid
-        AND tagxref.tagtype > 0
-        AND tagxref.rid = blob.rid
-        AND tagxref.value = :version
-    )
+    :file IS NULL -- if NULL, entries for all files are returned
+    /* if :file is a file, only return entries for that file */
+    OR artifact.file = :file COLLATE nocase
+    /* if :file is a directory, return entries for all files in it */
+    -- OR lower(artifact.file) GLOB lower(:file || '/*')
   )
-ORDER BY event.mtime DESC
+ORDER BY artifact.mtime DESC
+LIMIT coalesce(:limit, -1) -- -1 means no limit

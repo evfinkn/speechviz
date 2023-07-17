@@ -50,24 +50,23 @@ const lineRegex = /^.+$/gm; // matches every non-empty line
 /**
  * An object representing a version of a file.
  * @typedef {Object} VersionEntry
- * @property {string} uuid - The artifact ID of the file version. This can be used
- *    to retrieve the file from the repository.
- * @property {string} datetime - The date and time of the commit. This is in the
- *    local time of the server and has the format "YYYY-mm-dd HH:MM:SS.SSS".
- * @property {number} unixtime - The date and time of the commit in unix time. Unlike
- *    datetime, this is in UTC.
+ * @property {string} file - The file name.
+ * @property {string} id - The artifact ID of the file at this version. Can be
+ *    used to get the contents of the file at this version (see
+ *    {@link artifactCmd `fossil artifact`}).
+ * @property {string} commit - The checkin ID of the version. This can be used along
+ *    with the file name to get the contents of the file at this version (see
+ *    {@link catCmd `fossil cat`}).
  * @property {string} branch - The branch of the artifact. Note that the main branch
  *    is called "trunk".
- * @property {(string|number)=} version - The version of the artifact. This is set to
- *    `tags.version` when the entry is created, so it's only present if the artifact
- *    has a version tag. Note that this won't be "latest" if the artifact is the latest
- *    version unless the version tag is "latest". Note that this isn't an alias for
- *    `tags.version`, so it won't be updated if the version tag is changed.
- * @property {string} comment - The commit message.
+ * @property {string} message - The commit message.
  * @property {string} user - The user that committed the changes.
+ * @property {string} datetime - The date and time of the commit. This is in UTC and
+ *    has the format "YYYY-mm-dd HH:MM:SS.SSS".
+ * @property {number} unixtime - The date and time of the commit in unix time. Unlike
+ *    datetime, this is in UTC.
  * @property {!Object<string, ?(string|number)>} tags - The tags and properties of the
  *    commit. Tags are keys with a null value. Properties are keys with a non-null
- *    value. The `tags` object will always have a key equal to `branch` with a null
  *    value.
  */
 /**
@@ -120,8 +119,6 @@ class ProcessError extends Error {
  *    command fails, the promise is rejected with the error.
  */
 function fossilCmd(args, { splitLines = false, removeNewline = false } = {}) {
-  // FIXME: I wrote the functions using this assuming the last character wasn't a
-  //        newline, but it is (at least usually)
   return new Promise((resolve, reject) => {
     // cwd has to be the directory containing the fossil repo
     const fossil = spawn(fossilPath, args, { cwd: dataDir });
@@ -170,6 +167,10 @@ function fossilCmd(args, { splitLines = false, removeNewline = false } = {}) {
   }
 })();
 
+// create views the queries use (this won't error if they already exist)
+// no --readonly because we're creating views, which requires writing to the db
+fossilCmd(["sql", ".read ../queries/views.sql"]);
+
 /**
  * Joins multiple regexs into a single regex.
  * Useful because it allows splitting a regex into multiple lines for readability.
@@ -193,7 +194,7 @@ const grepLineMatchRegex = /(\d+):(.*)/; // line number (group 1), line (group 2
 /**
  * Parses the output of `fossil grep`.
  * `fossil grep` outputs lines in the following format:
- * ```
+ * ```plain
  * == YYYY-mm-dd HH:MM FILENAME ARTIFACT-ID checkin CHECKIN-ID
  * LINE-NUMBER:LINE
  * LINE-NUMBER:LINE
@@ -311,7 +312,7 @@ async function commitCmd(
     branch = null,
     version = null,
     tags = null,
-    date = null,
+    datetime = null,
   } = {}
 ) {
   // note: fossil commit works correctly even if file is an absolute path
@@ -339,8 +340,8 @@ async function commitCmd(
   }
   // FIXME: this doesn't work if the ancestor commit is more recent than date
   //        It could be fixed using --allow-older but I'm not sure I want that
-  // if (date !== null) {
-  //   args.push("--date-override", date);
+  // if (datetime !== null) {
+  //   args.push("--date-override", datetime);
   // }
   let output;
   const _commit = async () => {
@@ -369,7 +370,7 @@ async function commitCmd(
     }
   }
   // fossil commit outputs "New_Version: ARTIFACT-ID" so substring to get the id
-  const uuid = output.substring(13);
+  const commitId = output.substring(13);
   if (version !== null) {
     tags.version = version;
   }
@@ -377,10 +378,10 @@ async function commitCmd(
   await Promise.all(
     // use map instead of forEach so that we get an array of promises to await
     Object.entries(tags).map(([name, value]) => {
-      return tagCmd.add(name, uuid, value, { user, date });
+      return tagCmd.add(name, commitId, value, { user, datetime });
     })
   );
-  return uuid;
+  return commitId;
 }
 
 /**
@@ -390,26 +391,26 @@ async function commitCmd(
  */
 var tagCmd = {
   /**
-   * Adds a tag to an artifact using `fossil tag add`.
+   * Adds a tag to a checkin using `fossil tag add`.
    * @param {string} name - The name of the tag.
-   * @param {string} uuid - The ID of the artifact to tag.
+   * @param {string} checkinId - The ID of the checkin to tag.
    * @param {?string} value - The value of the tag.
    * @param {Object} options - Options for the command.
    * @param {boolean} [options.raw=false] - Whether to pass the `--raw` flag.
    * @param {boolean} [options.propagate=false] - Whether to pass the `--propagate`
    *    flag.
-   * @param {?string} options.date - The date and time to use for when the tag was
+   * @param {?string} options.datetime - The date and time to use for when the tag was
    *    added. If `null`, the current date and time will be used.
    * @param {string} [options.user="fossil.js"] - The user to add the tag as.
    * @returns {Promise<void>} A promise that resolves when the command is finished.
    */
   async add(
     name,
-    uuid,
+    checkinId,
     value = null,
     { raw = false, propagate = false, user = "fossil.js" } = {}
   ) {
-    const args = ["tag", "add", name, uuid];
+    const args = ["tag", "add", name, checkinId];
     if (value !== null) {
       // null is a valid value but passing it makes it a string, hence the if statement
       args.push(value);
@@ -422,8 +423,8 @@ var tagCmd = {
     }
     // FIXME: this doesn't work if the ancestor commit is more recent than date
     //        It could be fixed using --allow-older but I'm not sure I want that
-    // if (date !== null) {
-    //   args.push("--date-override", date);
+    // if (datetime !== null) {
+    //   args.push("--date-override", datetime);
     // }
     if (user !== null) {
       args.push("--user-override", user);
@@ -432,10 +433,10 @@ var tagCmd = {
   },
 
   /**
-   * Runs `fossil tag cancel` to remove a tag from an artifact.
+   * Runs `fossil tag cancel` to remove a tag from a checkin.
    * @param {string} name - The name of the tag to remove. Note that the name doesn't
    * need to be prefixed with `sym-` unlike when using `fossil tag add`.
-   * @param {string} uuid - The ID of the artifact to remove the tag from.
+   * @param {string} checkinId - The ID of the checkin to remove the tag from.
    * @param {Object} options - Options for the command.
    * @param {boolean} [options.raw=false] - Whether to pass the `--raw` flag.
    * @param {?string} options.date - The date and time to use for when the tag was
@@ -443,8 +444,8 @@ var tagCmd = {
    * @param {string} [options.user="fossil.js"] - The user to remove the tag as.
    * @returns {Promise<void>} A promise that resolves when the command is finished.
    */
-  async cancel(name, uuid, { raw = false, user = "fossil.js" } = {}) {
-    const args = ["tag", "cancel", name, uuid];
+  async cancel(name, checkinId, { raw = false, user = "fossil.js" } = {}) {
+    const args = ["tag", "cancel", name, checkinId];
     if (raw) {
       args.push("--raw");
     }
@@ -460,18 +461,19 @@ var tagCmd = {
   },
 
   /**
-   * Runs `fossil tag find` to find artifacts using a tag.
+   * Runs `fossil tag find` to find checkins using a tag.
+   *
    * Note that the command is run with the `--raw` flag.
-   * @param {string} name - The name of the tag. // TODO: needs prefixed with sym- ?
+   * @param {string} name - The name of the tag.
    * @param {Object} options - Options for the command.
-   * @param {?number} options.limit - The maximum number of artifacts to return. If
-   *    `null`, all artifacts will be returned.
+   * @param {?number} options.limit - The maximum number of checkins to return. If
+   *    `null`, all checkins will be returned.
    * @param {boolean} [options.prefixSym=true] - Whether to prefix the tag name with
    *    `sym-` before running the command. User-added tags are prefixed with `sym-`
    *    by fossil, so this needs to be `true` unless you're searching for a tag that
    *    was added internally by fossil.
    * @returns {Promise<string[]>} A promise that resolves to an array of artifact IDs.
-   *    If no artifacts are found, the promise resolves to an empty array.
+   *    If no checkins are found, the promise resolves to an empty array.
    */
   async find(name, { limit = null, prefixSym = true } = {}) {
     if (prefixSym) {
@@ -486,9 +488,9 @@ var tagCmd = {
 
   /**
    * Lists tags using `fossil tag list`.
-   * @param {?string} uuid - The ID of the artifact to list tags for. If `null`, all
-   *    tag names will be returned. Otherwise, the artifact's tags and values will be
-   *    returned.
+   * @param {?string} checkinId - The ID of the checkin to list tags for. If `null`,
+   *    all tag names will be returned. Otherwise, the checkin's tags and values will
+   *    be returned.
    * @param {Object} options - Options for the command.
    * @param {boolean} [options.raw=false] - Whether to pass the `--raw` flag.
    * @param {?("cancel"|"singleton"|"propagate")} options.type - The type of tags
@@ -497,14 +499,15 @@ var tagCmd = {
    * @param {?string} options.prefix - The prefix to filter tags by. If `null`, all
    *    tags will be returned.
    * @param {boolean} [options.parseNums=true] - Whether to parse numbers in tag values.
-   *    Only applies if `uuid` is not `null`. Numbers are parsed using `parseFloat`.
-   * @returns {Promise<string[]|Object<string, string>>} If `uuid` is `null`, a promise
-   *    that resolves to an array of tag names. Otherwise, a promise that resolves to an
-   *    object mapping tag names to values. If no tags are found, the promise resolves
-   *    to an empty array or object.
+   *    Only applies if `checkinId` is not `null`. Numbers are parsed using
+   *    `parseFloat`.
+   * @returns {Promise<string[]|Object<string, string>>} If `checkinId` is `null`, a
+   *    promise that resolves to an array of tag names. Otherwise, a promise that
+   *    resolves to an object mapping tag names to values. If no tags are found, the
+   *    promise resolves to an empty array or object.
    */
   async list(
-    uuid = null,
+    checkinId = null,
     {
       raw = false,
       type = null,
@@ -514,8 +517,8 @@ var tagCmd = {
     } = {}
   ) {
     const args = ["tag", "list"];
-    if (uuid !== null) {
-      args.push(uuid);
+    if (checkinId !== null) {
+      args.push(checkinId);
     }
     if (raw) {
       args.push("--raw");
@@ -530,7 +533,7 @@ var tagCmd = {
       args.push("--prefix", prefix);
     }
     const lines = await fossilCmd(args, { splitLines: true });
-    if (uuid === null) {
+    if (checkinId === null) {
       return lines; // if uuid is null, only tag names are output
     }
     const tags = {};
@@ -634,18 +637,18 @@ var stashCmd = {
 
   /**
    * Runs `fossil stash apply` to apply a stash.
-   * @param {number} id - The ID of the stash to apply.
+   * @param {number} stashId - The ID of the stash to apply.
    */
-  apply(id) {
-    return fossilCmd(["stash", "apply", id]);
+  apply(stashId) {
+    return fossilCmd(["stash", "apply", stashId]);
   },
 
   /**
    * Runs `fossil stash goto`, which updates to the baseline checkout for the stash and
    * then applies it.
    */
-  goto(id) {
-    return fossilCmd(["stash", "goto", id]);
+  goto(stashId) {
+    return fossilCmd(["stash", "goto", stashId]);
   },
 };
 
@@ -698,13 +701,21 @@ async function withBranch(branch, callback) {
   await updateCmd(originalBranch);
 }
 
+function catCmd(file, { checkin = null } = {}) {
+  const args = ["cat", file];
+  if (checkin) {
+    args.push("-r", checkin);
+  }
+  return fossilCmd(args);
+}
+
 /**
  * Returns the contents of an artifact using `fossil artifact`.
- * @param {string} uuid - The artifact ID of the file.
+ * @param {string} artifactId - The artifact ID of the file.
  * @returns {Promise<string>} A promise that resolves to the file contents.
  */
-function artifactCmd(uuid) {
-  return fossilCmd(["artifact", uuid]);
+function artifactCmd(artifactId) {
+  return fossilCmd(["artifact", artifactId]);
 }
 
 const changesFileRegex = /(\S+)\s+(\S+)/; // matches the change type and file name
@@ -744,12 +755,12 @@ async function changesCmd({ files = [], classify = false } = {}) {
 
 /**
  * Returns whether there are any changes in the repository.
- * @param {string[]} [files=[]] - The files to check for changes. If empty, all files
- *    will be checked.
+ * @param {...string} files - The files to check for changes. If empty, all files will
+ *    be checked.
  * @returns {Promise<boolean>} A promise that resolves to `true` if there are changes
  *    and `false` otherwise.
  */
-async function hasChanges(files = []) {
+async function hasChanges(...files) {
   const changes = await changesCmd({ files });
   return changes.length > 0;
 }
@@ -762,9 +773,9 @@ async function hasChanges(files = []) {
  * @param {Object} options - Options for the command.
  * @param {?string} options.branch - The branch to get the version history for.
  *    If `null`, every branch will be included.
- * @param {?string} options.version - The version to get the history for. If `null`,
- *    every version will be included. If `"latest"`, only the latest version will be
- *    included.
+ * @param {number} [options.limit=-1] - The maximum number of versions to get. -1 is
+ *    equivalent to no limit. Note that if `branch` is `null`, this limit will not be
+ *    applied to each branch individually.
  * @param {boolean} [options.parseNums=true] - Whether to parse numbers in tag values.
  *    Only applies if `uuid` is not `null`. Numbers are parsed using `parseFloat`.
  * @returns {Promise<VersionEntry[]>} A promise that resolves to an array of
@@ -774,7 +785,7 @@ async function hasChanges(files = []) {
  */
 function versionsCmd(
   file,
-  { branch = null, version = null, parseNums = true } = {}
+  { branch = null, limit = -1, parseNums = true } = {}
 ) {
   // FIXME: do something if versions not in repo?
   // file has to be relative to the directory the repository is in since that's the
@@ -786,17 +797,13 @@ function versionsCmd(
     const args = [
       "sql",
       "--readonly",
-      ".mode list", // prevents JSON output from being single-quoted
+      ".mode list", // prevents the JSON object output from being single-quoted
       `.param set :file '${file}'`,
       // SQL parses 'null' as NULL, so this still works when selecting all branches
       `.param set :branch '${branch}'`,
+      `.param set :limit '${limit}'`,
+      ".read ../queries/getVersions.sql",
     ];
-    if (version === "latest") {
-      args.push(".read ../queries/getLatestVersions.sql");
-    } else {
-      args.push(`.param set :version '${version}'`);
-      args.push(".read ../queries/getVersions.sql");
-    }
     const fossil = spawn(fossilPath, args, { cwd: dataDir });
     // we want to read the output line by line because each line is a JSON string
     const rl = readline.createInterface({
@@ -822,7 +829,7 @@ function versionsCmd(
       //   get: () => entry.tags.version,
       //   set: (value) => (entry.tags.version = value),
       // });
-      entry.version = entry.tags.version;
+      // entry.version = entry.tags.version;
 
       entries.push(entry);
     });
@@ -864,16 +871,16 @@ async function isInRepo(file) {
  * @returns {Promise<number>} A promise that resolves to the next version number. If
  *    the file has no previous versions, the promise resolves to 1.
  */
-async function getNextVersionNum(file, branch = "trunk") {
-  const versions = await versionsCmd(file, {
-    branch,
-    version: "latest",
-  });
-  if (versions.length === 0 || versions[0].version === undefined) {
-    return 1;
-  }
-  return versions[0].version + 1;
-}
+// async function getNextVersionNum(file, branch = "trunk") {
+//   const versions = await versionsCmd(file, {
+//     branch,
+//     version: "latest",
+//   });
+//   if (versions.length === 0 || versions[0].version === undefined) {
+//     return 1;
+//   }
+//   return versions[0].version + 1;
+// }
 
 module.exports = {
   add: addCmd,
@@ -887,8 +894,9 @@ module.exports = {
   changes: changesCmd,
   hasChanges,
   artifact: artifactCmd,
+  cat: catCmd,
   grep: grepCmd,
   versions: versionsCmd,
-  getNextVersionNum,
+  // getNextVersionNum,
   isInRepo,
 };
