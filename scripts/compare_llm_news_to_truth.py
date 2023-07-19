@@ -7,12 +7,6 @@ import sqlite3
 
 from scipy.io import wavfile
 
-# def calculate_overlap(segment1_start, segment1_end, segment2_start, segment2_end):
-#     overlap_start = max(segment1_start, segment2_start)
-#     overlap_end = min(segment1_end, segment2_end)
-#     overlap_duration = max(0, overlap_end - overlap_start)
-#     return overlap_duration
-
 
 def calculate_complement_times(time_tuples, duration):
     complement_times = []
