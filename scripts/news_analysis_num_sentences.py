@@ -257,7 +257,11 @@ def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
             route_dir(path, scan_dir=False, **kwargs)
 
 
-def main():
+def main(args):
+    route_file(*args.pop("path"), **args)
+
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
             "Group sentences based on number of sentences from transcription file."
@@ -289,9 +293,4 @@ def main():
     )
 
     args = vars(parser.parse_args())
-
-    route_file(*args.pop("path"), **args)
-
-
-if __name__ == "__main__":
-    main()
+    main(args)
