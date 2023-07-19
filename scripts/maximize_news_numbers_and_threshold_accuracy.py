@@ -110,7 +110,6 @@ for num_sentences in np.arange(1, 6):
             with open(result_file, mode="w", newline="") as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(header)
-        else:
-            with open(result_file, mode="a", newline="") as csvfile:
-                writer = csv.writer(csvfile)
-                writer.writerow([average, num_sentences, threshold])
+        with open(result_file, mode="a", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([average, num_sentences, threshold])
