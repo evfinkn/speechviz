@@ -73,7 +73,8 @@ app.get("/logout", (req, res) => {
 
 // A set of files to exclude file lists.
 // ".DS_STORE" is a hidden file on mac in all folders
-const excludedFiles = new Set([".DS_Store"]);
+// ".fslckout" is a hidden file in fossil repos
+const excludedFiles = new Set([".DS_Store", ".fslckout"]);
 const readdirAndFilter = (path) =>
   fs.readdirSync(path).filter((file) => !excludedFiles.has(file));
 
