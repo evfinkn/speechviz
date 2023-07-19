@@ -15,7 +15,6 @@ const readline = require("node:readline");
 const dataDir = path.resolve(__dirname, "../data");
 const isWindows = require("process").platform === "win32";
 const fossilPath = path.resolve(dataDir, isWindows ? "fossil.exe" : "fossil");
-const repoPath = path.resolve(dataDir, "speechviz.fossil");
 
 const relToDataDir = (file) => {
   if (path.isAbsolute(file)) {
@@ -105,6 +104,7 @@ class ProcessError extends Error {
 
 /**
  * Runs a `fossil` command.
+ * `dataDir` directory.
  * @param {!Array<string>} args - The arguments to pass to the command.
  * @param {Object} [options] - Options for the command.
  * @param {boolean} [options.splitLines=false] - Whether to split the output into
@@ -138,34 +138,6 @@ function fossilCmd(args, { splitLines = false, removeNewline = false } = {}) {
     fossil.on("error", (err) => reject(err));
   });
 }
-
-// initialize and open the fossil repo if not already done
-(async function () {
-  try {
-    const output = await fossilCmd([
-      "init",
-      "--project-name",
-      "speechviz",
-      repoPath,
-    ]);
-    console.log(output);
-  } catch (err) {
-    // fossil init fails if the repo already exists, so ignore err in that case
-    if (!(err instanceof ProcessError && err.exitCode === 1)) {
-      throw err;
-    }
-  }
-  try {
-    // force open the repo so that it doesn't complain that the directory isn't empty
-    const output = await fossilCmd(["open", "--force", repoPath]);
-    console.log(output);
-  } catch (err) {
-    // fossil open fails if the repo is already open, so ignore err in that case
-    if (!(err instanceof ProcessError && err.exitCode === 1)) {
-      throw err;
-    }
-  }
-})();
 
 // create views the queries use (this won't error if they already exist)
 // no --readonly because we're creating views, which requires writing to the db
