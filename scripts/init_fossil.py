@@ -112,11 +112,13 @@ def init_repo():
     if DATA_REPO.exists():
         logger.info("{} already exists", DATA_REPO.name)
     else:
-        log.run_and_log_subprocess([FOSSIL_PATH, "init", DATA_REPO], check=False)
+        log.run_and_log_subprocess(
+            [FOSSIL_PATH, "init", "--project-name", "speechviz", DATA_REPO], check=False
+        )
     # fossil open won't overwrite an existing checkout so we don't need an if for that
     log.run_and_log_subprocess(
-        # -f makes open work even if data/audio is not empty
-        [FOSSIL_PATH, "open", "-f", "--workdir", DATA_DIR / "audio", DATA_REPO],
+        # -f makes open work even if data isn't empty
+        [FOSSIL_PATH, "open", "-f", "--workdir", DATA_DIR, DATA_REPO],
         check=False,
     )
 
