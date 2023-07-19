@@ -3,6 +3,18 @@
 This file gives the specification of the format that `-annotations.json` files use.
 Said files contain the tree items that are imported into the interface.
 
+## Version 3
+
+This version is mostly the same as version 2, except that the array of tree items has been moved to the `annotations` property of an object with a `formatVersion` property.
+
+```json
+{
+  "formatVersion": 3,
+  // array of tree items in the same format as version 2
+  "annotations": []
+}
+```
+
 ## Version 2
 
 The file contains an array of objects representing tree items.
