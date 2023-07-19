@@ -39,6 +39,7 @@ const channelNames = await fetch(channelsFile)
 
 /**
  * `Object` containing global constants shared across the javascript files.
+ * @prop {URLSearchParams} urlParams - The query parameters in the url.
  * @prop {string} filename - The name of the media file including its extension.
  * @prop {string} basename - The name of the media file excluding its extension
  * @prop {!Element} media - The audio / video element being visualized.
@@ -57,6 +58,7 @@ const channelNames = await fetch(channelsFile)
 const globals = {};
 // would've defined these properties in the object (in the line above this) but then
 // VSCode IntelliSense showed them but not properties added later (like globals.peaks)
+globals.urlParams = urlParams;
 globals.filename = filename;
 globals.basename = basename;
 globals.media = document.getElementById("media");
