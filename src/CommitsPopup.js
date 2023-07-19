@@ -71,7 +71,11 @@ const CommitsPopup = class CommitsPopup {
   }
 
   async init() {
-    const versionsUrl = `versions/${globals.basename}-annotations.json`;
+    let versionsUrl;
+    if (globals.folder)
+      versionsUrl = `versions/${globals.folder}/${globals.basename}-annotations.json`;
+    else versionsUrl = `versions/${globals.basename}-annotations.json`;
+
     // Get the commits from the backend
     const versions = await fetch(versionsUrl)
       .then(checkResponseStatus)
