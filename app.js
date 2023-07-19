@@ -173,7 +173,9 @@ const addAndCommit = async (file) => {
   return null;
 };
 
-app.get("/versions/:file", async (req, res) => {
+// (*) allows any characters, including slashes, in the file parameter
+// this is necessary for when the file is in a subdirectory of the annotations folder
+app.get("/versions/:file(*)", async (req, res) => {
   // const { version = null, branch = null } = req.body;
   const { limit = -1, branch = null } = req.body;
   const file = path.join(__dirname, "data", "annotations", req.params.file);
@@ -187,7 +189,7 @@ app.get("/versions/:file", async (req, res) => {
   }
 });
 
-app.get("/annotations/:file", async (req, res) => {
+app.get("/annotations/:file(*)", async (req, res) => {
   const file = path.join(__dirname, "data", "annotations", req.params.file);
   try {
     // if the client has a commit hash (from a version entry), use that
