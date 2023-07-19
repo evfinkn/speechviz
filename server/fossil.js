@@ -81,29 +81,53 @@ const lineRegex = /^.+$/gm; // matches every non-empty line
  */
 class ProcessError extends Error {
   /**
+   * The command that was run and that failed.
+   * @type {string}
+   */
+  command;
+  /**
+   * The arguments that were passed to the command.
+   * @type {!Array<*>}
+   */
+  args;
+  /**
    * The exit code of the process.
    * @type {number}
    */
   exitCode;
   /**
-   * The output of the process.
+   * The stdout output of the process.
    * @type {string}
    */
-  output;
+  stdout;
+  /**
+   * The stderr output of the process.
+   * @type {string}
+   */
+  stderr;
 
   /**
+   * @param {string} command - The command that was run and that failed.
+   * @param {!Array<*>} args - The arguments that were passed to the command.
    * @param {number} exitCode - The exit code of the process.
-   * @param {string} output - The output of the process.
+   * @param {string} stdout - The stdout output of the process.
+   * @param {string} stderr - The stderr output of the process.
    */
-  constructor(exitCode, output) {
-    super(`Process exited with code ${exitCode}`);
+  constructor(command, args, exitCode, stdout, stderr) {
+    super(`Command "${command}" exited with code ${exitCode}`);
+    this.name = this.constructor.name;
+    this.command = command;
+    this.args = args;
     this.exitCode = exitCode;
-    this.output = output;
+    this.stdout = stdout;
+    this.stderr = stderr;
   }
 }
 
 /**
  * Runs a `fossil` command.
+ *
+ * Note that this function runs with the current working directory set to the
  * `dataDir` directory.
  * @param {!Array<string>} args - The arguments to pass to the command.
  * @param {Object} [options] - Options for the command.
@@ -122,17 +146,19 @@ function fossilCmd(args, { splitLines = false, removeNewline = false } = {}) {
   return new Promise((resolve, reject) => {
     // cwd has to be the directory containing the fossil repo
     const fossil = spawn(fossilPath, args, { cwd: dataDir });
-    let output = "";
-    fossil.stdout.on("data", (data) => (output += data));
+    let stdout = "";
+    let stderr = "";
+    fossil.stdout.on("data", (data) => (stdout += data));
+    fossil.stderr.on("data", (data) => (stderr += data));
     fossil.on("close", (code) => {
       if (code !== 0) {
-        reject(new ProcessError(code, output));
+        reject(new ProcessError("fossil", args, code, stdout, stderr));
       } else if (splitLines) {
-        resolve(output.match(lineRegex) || []);
-      } else if (removeNewline && output.endsWith("\n")) {
-        resolve(output.slice(0, -1));
+        resolve(stdout.match(lineRegex) || []);
+      } else if (removeNewline && stdout.endsWith("\n")) {
+        resolve(stdout.slice(0, -1));
       } else {
-        resolve(output);
+        resolve(stdout);
       }
     });
     fossil.on("error", (err) => reject(err));
@@ -777,6 +803,9 @@ function versionsCmd(
       ".read ../queries/getVersions.sql",
     ];
     const fossil = spawn(fossilPath, args, { cwd: dataDir });
+
+    let stderr = "";
+    fossil.stderr.on("data", (data) => (stderr += data));
     // we want to read the output line by line because each line is a JSON string
     const rl = readline.createInterface({
       input: fossil.stdout,
@@ -807,7 +836,8 @@ function versionsCmd(
     });
     fossil.on("close", (code) => {
       if (code !== 0) {
-        reject(new ProcessError(code));
+        const stdout = entries.map((entry) => JSON.stringify(entry)).join("\n");
+        reject(new ProcessError("fossil", args, code, stdout, stderr));
       }
       resolve(entries);
     });
