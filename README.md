@@ -82,12 +82,13 @@ docker build --build-arg \
     --build-arg cuda=true -t speechviz .
 ```
 
-You'll want to mount your data into the image. To create the data folder and
-database, run these 2 commands:
+You'll want to mount your data into the image. To create the data folder, repository,
+and database, run these 3 commands:
 
 ```bash
 npm run mkdir
 python3 scripts/db_init.py
+python3 scripts/init_fossil.py
 ```
 
 You can then start the container by running
@@ -122,6 +123,7 @@ cd speechviz
 npm install
 npm run mkdir
 python3 scripts/db_init.py
+python3 scripts/init_fossil.py
 ```
 
 ### Install script dependencies

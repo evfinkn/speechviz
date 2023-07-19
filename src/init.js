@@ -68,22 +68,39 @@ const originalGroups = {};
 const oldCreateTree = function (id, parent, children, snr) {
   if (!Array.isArray(children[0])) {
     // group of segments
+    // FIXME: temp fix, see createTreeItemFromObj
+    children.forEach((segment) => (segment.editable = true));
     if (id.includes("Speaker ")) {
       // group is speakers, which need popups
-      const group = new PeaksGroup(id, { parent, snr, copyTo: [] });
+      const group = new PeaksGroup(id, {
+        parent,
+        snr,
+        copyTo: ["Labeled.children"],
+      });
       peaks.segments.add(children).forEach((segment) => {
         new Segment(segment, {
           parent: group,
-          moveTo: [],
-          copyTo: [],
+          removable: true,
+          renamable: true,
+          moveTo: ["Speakers.children"],
+          copyTo: ["Labeled.children"],
         });
         originalGroups[segment.id] = id;
       });
     } else {
       // group is VAD or Non-VAD
-      const group = new PeaksGroup(id, { parent, snr, copyTo: [] });
+      const group = new PeaksGroup(id, {
+        parent,
+        snr,
+        copyTo: ["Labeled.children"],
+      });
       peaks.segments.add(children).forEach((segment) => {
-        new Segment(segment, { parent: group, copyTo: [] });
+        new Segment(segment, {
+          parent: group,
+          removable: true,
+          renamable: true,
+          copyTo: ["Labeled.children"],
+        });
       });
     }
   } else {
@@ -203,6 +220,16 @@ const createTreeItemFromObj = (obj, parent = null) => {
   delete options.children;
   const childrenOptions = options.childrenOptions;
   delete options.childrenOptions;
+
+  // FIXME: this is a temporary fix to make Speakers, VAD, and Non-VAD editable
+  //        remove this when process_audio.py is updated to use the new format
+  //        and there's a way to convert the old format to the new format
+  if (type === Segment) {
+    args[0].editable = true; // args[0] is the options object for Peaks
+    options.removable = true;
+    options.renamable = true;
+  }
+
   const treeItem = new type(...args, options);
   children?.forEach((child) => {
     // imported groups can have a property "childrenOptions" that will be
@@ -339,6 +366,95 @@ const output404OrError = (error, missing) => {
   }
 };
 
+// for copying a segment to its copyTo via dragging
+function dragToLabel(segment) {
+  let newX = 0,
+    newY = 0,
+    currentX = 0,
+    currentY = 0;
+  // when you hold mouse make segment follow cursor
+  segment.span.onmousedown = dragMouse;
+
+  function dragMouse() {
+    // on a new click reset listening for a where the mouse goes for copying
+    segment.copyTo[0].forEach((eachCopyTo) => {
+      eachCopyTo.li.onmouseover = undefined;
+    });
+    segment.li.style.position = "absolute";
+    window.event.preventDefault();
+    currentX = window.event.pageX;
+    currentY = window.event.pageY;
+
+    // account for different top when scrolled
+    segment.li.style.top =
+      segment.li.offsetTop - document.getElementById("column").scrollTop + "px";
+    segment.li.style.left =
+      segment.li.offsetLeft -
+      document.getElementById("column").scrollLeft +
+      "px";
+
+    // when you let go of mouse stop dragging
+    document.onmouseup = stopDragging;
+    document.onmousemove = dragSegment;
+  }
+
+  function dragSegment() {
+    // do not allow a segment to be dragged if it has its popup open
+    const popup = segment.li.children[segment.li.children.length - 1];
+    if (popup.style.display !== "block") {
+      window.event.preventDefault();
+      newX = currentX - window.event.pageX;
+      newY = currentY - window.event.pageY;
+      currentX = window.event.pageX;
+      currentY = window.event.pageY;
+      // move the segments position to track cursor
+      segment.li.style.top = segment.li.offsetTop - newY + "px";
+      segment.li.style.left = segment.li.offsetLeft - newX + "px";
+      if (
+        window.event.pageY - document.getElementById("column").scrollTop <
+        10
+      ) {
+        document.getElementById("column").scrollBy(0, -20);
+      }
+      // TODO: add downwards and maybe sideways scrolling, also
+      // make all 4 work for scrolling longer distances?
+    }
+  }
+
+  function stopDragging() {
+    document.onmouseup = null;
+    document.onmousemove = null;
+
+    segment.copyTo[0].forEach((eachCopyTo) => {
+      eachCopyTo.li.onmouseover = () => {
+        // if was dragged to a spot it can be copied to copy it there
+        copyThere(eachCopyTo);
+      };
+    });
+
+    function copyThere(dest) {
+      const copied = segment.copy(dest);
+      if (copied) {
+        undoStorage.push(new Actions.CopyAction(copied));
+        dest.sortBy("startTime");
+      }
+      dest.open();
+    }
+    // move it back
+    segment.li.style.top = "";
+    segment.li.style.left = "";
+    segment.li.style.position = "static";
+    // bug fix: if you drag something and don't copy it,
+    // if you hover over after it copies anyways. Remove event listeners
+    setTimeout(reset, 100);
+    function reset() {
+      segment.copyTo[0].forEach((eachCopyTo) => {
+        eachCopyTo.li.onmouseover = undefined;
+      });
+    }
+  }
+}
+
 const numChannels = channelNames.length;
 if (numChannels > 1) {
   if (!globals.mono) {
@@ -366,173 +482,88 @@ if (numChannels > 1) {
   document.getElementById("controls").append(channels.div);
 }
 
-const segmentsFile = getUrl("segments", basename, "-segments.json", folder);
-const segmentLoading = fetch(segmentsFile)
-  .then(checkResponseStatus)
-  .then((response) => response.json())
-  .then((segments) => {
-    const isOldFormat = Array.isArray(segments[0]);
-    // backwards compatibility for our old segments format
-    if (isOldFormat) {
-      for (const [group, children, snr] of segments) {
-        oldCreateTree(group, analysis, children, snr);
-      }
-    } else {
-      // the segments file is in the new format
-      createTreeItemFromObj(segments);
+// const loadAnnotations = async (annotsFile, { uuid, branch, version } = {}) => {
+const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
+  // await reinit();
+  // add branch, version, and uuid as query parameters if they are defined
+  const url = new URL(annotsFile, window.location.href);
+  if (commit) {
+    url.searchParams.set("commit", commit);
+  }
+  if (branch) {
+    url.searchParams.set("branch", branch);
+  }
+  // if (version) {
+  //   url.searchParams.set("version", version);
+  // }
+  let annots = await fetch(url)
+    .then(checkResponseStatus)
+    .then((response) => response.json())
+    .catch((error) => output404OrError(error, "annotations"));
+  if (annots === undefined) {
+    global.highestId = 0;
+    return; // no annotations found (the fetch failed), so just return
+  }
+  // If annots is an object, get the annotations from it. Otherwise, annots is an array
+  annots = annots?.annotations ?? annots;
+  const isOldFormat = Array.isArray(annots[0]);
+  // backwards compatibility for our old annots format
+  if (isOldFormat) {
+    for (const [group, children, snr] of annots) {
+      oldCreateTree(group, analysis, children, snr);
     }
+  } else {
+    // the annots file is in the new format
+    createTreeItemFromObj(annots);
+  }
 
-    // Set moveTo and copyTo for the added tree items
-    const speakers = Group.byId["Speakers"];
-    const vadAndNonVad = [
-      ...Group.byId["VAD"].children,
-      ...Group.byId["Non-VAD"].children,
-    ];
-    if (isOldFormat) {
-      speakers.children.forEach((speaker) => {
-        speaker.copyTo.push(labeled.children);
-        speaker.children.forEach((segment) => {
-          segment.moveTo.push(speakers.children);
-          segment.copyTo.push(labeled.children);
-        });
-      });
-      Group.byId["VAD"].copyTo = [labeled.children];
-      Group.byId["Non-VAD"].copyTo = [labeled.children];
-      vadAndNonVad.forEach((segment) => segment.copyTo.push(labeled.children));
-    } else {
-      // moveTo and copyTo for imported segments are arrays of strings like
-      // `["Speakers.children"]` and `["Labeled.children"]`. The TreeItems with these
-      // ids might not exist until all segments are imported, so that's why we update
-      // them here instead of in createTreeItemFromObj
-      for (const item of analysis.preorder()) {
-        item?.moveTo?.forEach((dest, i) => {
-          if (typeof dest === "string") {
-            // getNestedProp because string might be path to property,
-            // like "Speakers.children"
-            item.moveTo[i] = getNestedProp(TreeItem.byId, dest);
-          }
-        });
-        item?.copyTo?.forEach((dest, i) => {
-          if (typeof dest === "string") {
-            item.copyTo[i] = getNestedProp(TreeItem.byId, dest);
-          }
-        });
+  // moveTo and copyTo for imported annots are arrays of strings like
+  // `["Speakers.children"]` and `["Labeled.children"]`. The TreeItems with these
+  // ids might not exist until all annots are imported, so that's why we update
+  // them here instead of in createTreeItemFromObj
+  for (const item of analysis.preorder()) {
+    item?.moveTo?.forEach((dest, i) => {
+      if (typeof dest === "string") {
+        // getNestedProp because string might be path to property,
+        // like "Speakers.children"
+        item.moveTo[i] = getNestedProp(TreeItem.byId, dest);
       }
-    }
-
-    rankSnrs();
-    const ids = Object.keys(Segment.byId);
-    // since ids are of the form 'peaks.segment.#', parse the # from all of the ids
-    const idNums = ids.map((id) => parseInt(id.split(".").at(-1)));
-    globals.highestId = Math.max(...idNums); // used when saving to re-number segments
-
-    // after loading, toggle everything off (usually end up
-    // disabling most groups right away so just do it automatically)
-    analysis.children.forEach((child) => child.toggle(false));
-
-    // for copying a segment to its copyTo via dragging
-    function dragToLabel(segment) {
-      let newX = 0,
-        newY = 0,
-        currentX = 0,
-        currentY = 0;
-      // when you hold mouse make segment follow cursor
-      segment.span.onmousedown = dragMouse;
-
-      function dragMouse() {
-        // on a new click reset listening for a where the mouse goes for copying
-        segment.copyTo[0].forEach((eachCopyTo) => {
-          eachCopyTo.li.onmouseover = undefined;
-        });
-        segment.li.style.position = "absolute";
-        window.event.preventDefault();
-        currentX = window.event.pageX;
-        currentY = window.event.pageY;
-
-        // account for different top when scrolled
-        segment.li.style.top =
-          segment.li.offsetTop -
-          document.getElementById("column").scrollTop +
-          "px";
-        segment.li.style.left =
-          segment.li.offsetLeft -
-          document.getElementById("column").scrollLeft +
-          "px";
-
-        // when you let go of mouse stop dragging
-        document.onmouseup = stopDragging;
-        document.onmousemove = dragSegment;
-      }
-
-      function dragSegment() {
-        // do not allow a segment to be dragged if it has its popup open
-        const popup = segment.li.children[segment.li.children.length - 1];
-        if (popup.style.display !== "block") {
-          window.event.preventDefault();
-          newX = currentX - window.event.pageX;
-          newY = currentY - window.event.pageY;
-          currentX = window.event.pageX;
-          currentY = window.event.pageY;
-          // move the segments position to track cursor
-          segment.li.style.top = segment.li.offsetTop - newY + "px";
-          segment.li.style.left = segment.li.offsetLeft - newX + "px";
-          if (
-            window.event.pageY - document.getElementById("column").scrollTop <
-            10
-          ) {
-            document.getElementById("column").scrollBy(0, -20);
-          }
-          // TODO: add downwards and maybe sideways scrolling, also
-          // make all 4 work for scrolling longer distances?
-        }
-      }
-
-      function stopDragging() {
-        document.onmouseup = null;
-        document.onmousemove = null;
-
-        segment.copyTo[0].forEach((eachCopyTo) => {
-          eachCopyTo.li.onmouseover = () => {
-            // if was dragged to a spot it can be copied to copy it there
-            copyThere(eachCopyTo);
-          };
-        });
-
-        function copyThere(dest) {
-          const copied = segment.copy(dest);
-          if (copied) {
-            undoStorage.push(new Actions.CopyAction(copied));
-            dest.sortBy("startTime");
-          }
-          dest.open();
-        }
-        // move it back
-        segment.li.style.top = "";
-        segment.li.style.left = "";
-        segment.li.style.position = "static";
-        // bug fix: if you drag something and don't copy it,
-        // if you hover over after it copies anyways. Remove event listeners
-        setTimeout(reset, 100);
-        function reset() {
-          segment.copyTo[0].forEach((eachCopyTo) => {
-            eachCopyTo.li.onmouseover = undefined;
-          });
-        }
-      }
-    }
-
-    speakers.children.forEach((speaker) => {
-      speaker.children.forEach((segment) => dragToLabel(segment));
     });
+    item?.copyTo?.forEach((dest, i) => {
+      if (typeof dest === "string") {
+        item.copyTo[i] = getNestedProp(TreeItem.byId, dest);
+      }
+    });
+  }
 
-    vadAndNonVad.forEach((segment) => dragToLabel(segment));
+  rankSnrs();
+  const ids = Object.keys(Segment.byId);
+  // since ids are of the form 'peaks.segment.#', parse the # from all of the ids
+  const idNums = ids.map((id) => parseInt(id.split(".").at(-1)));
+  globals.highestId = Math.max(...idNums); // used when saving to re-number segments
 
-    speakers.children.forEach((speaker) => dragToLabel(speaker));
-  })
-  .catch((error) => {
-    output404OrError(error, "segments");
-    globals.highestId = 0;
+  // after loading, toggle everything off (usually end up
+  // disabling most groups right away so just do it automatically)
+  analysis.children.forEach((child) => child.toggle(false));
+
+  Group.byId["Speakers"].children.forEach((speaker) => {
+    dragToLabel(speaker);
+    speaker.children.forEach((segment) => dragToLabel(segment));
   });
+
+  const vadAndNonVad = [
+    ...Group.byId["VAD"].children,
+    ...Group.byId["Non-VAD"].children,
+  ];
+  vadAndNonVad.forEach((segment) => dragToLabel(segment));
+};
+
+const annotsFile = getUrl("annotations", basename, "-annotations.json", folder);
+const branch = globals.urlParams.get("branch");
+// const version = globals.urlParams.get("version");
+const commit = globals.urlParams.get("commit");
+// const annotsLoading = loadAnnotations(annotsFile, { branch, version, uuid });
+const annotsLoading = loadAnnotations(annotsFile, { branch, commit });
 
 const facesLoading = fetch(`/clustered-files/`)
   .then(checkResponseStatus)
@@ -547,7 +578,7 @@ const facesLoading = fetch(`/clustered-files/`)
 
     clusterfolders.forEach(async function (folderName) {
       var imagePath = images[folderName];
-      await segmentLoading; // the segments must be loaded to get speakers
+      await annotsLoading; // the segments must be loaded to get speakers
       new Face(folderName, {
         parent: clusters,
         assocWith: [Group.byId["Speakers"].children],
@@ -815,7 +846,9 @@ fetch("load", {
   .then((data) => {
     notes.value = data.notes || notes.value;
 
-    const regex = /Custom Segment /;
+    // ?<number> is a named capture group, allowing us to do match.group.number
+    // note that match.group.number is a string so it'll need converted
+    const customSegRegex = /Custom Segment (?<number>\d+)/;
     peaks.segments
       .add(data.segments, { overwrite: true })
       .forEach((segment) => {
@@ -849,15 +882,17 @@ fetch("load", {
         }
         parent.sortBy("startTime");
 
-        if (segment.labelText.match(regex)) {
-          segmentCounter++;
+        const match = customSegRegex.exec(segment.labelText);
+        if (match !== null) {
+          const number = parseInt(match.groups.number);
+          segmentCounter = Math.max(segmentCounter, number + 1);
         }
       });
 
     async function waitForFacesThenLoad() {
       // wait for the fetching of faces from file system to finish
       await facesLoading;
-      await segmentLoading;
+      await annotsLoading;
       // move faces to saved spot on tree
       data.faces.forEach((face) => {
         if (face.speaker !== -1) {
@@ -1208,5 +1243,3 @@ window.addEventListener("beforeunload", function (event) {
   (event || window.event).returnValue = confirmationMessage;
   return confirmationMessage;
 });
-
-export { save };

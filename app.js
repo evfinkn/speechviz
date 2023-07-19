@@ -16,10 +16,13 @@ const app = express();
 const Database = require("better-sqlite3");
 const db = new Database("speechviz.sqlite3");
 
+const fossil = require("./server/fossil");
+
 // use sessions
 const session = require("express-session");
 app.use(
   session({
+    name: "speechviz",
     secret: "clinic annotations here",
     resave: false,
     saveUninitialized: true,
@@ -73,7 +76,8 @@ app.get("/logout", (req, res) => {
 
 // A set of files to exclude file lists.
 // ".DS_STORE" is a hidden file on mac in all folders
-const excludedFiles = new Set([".DS_Store"]);
+// ".fslckout" is a hidden file in fossil repos
+const excludedFiles = new Set([".DS_Store", ".fslckout"]);
 const readdirAndFilter = (path) =>
   fs.readdirSync(path).filter((file) => !excludedFiles.has(file));
 
@@ -136,7 +140,142 @@ app.get("/users", (req, res) => {
   }
 });
 
-const dataSubdirs = readdirAndFilter("data");
+/**
+ * Adds a file to the repository if not added and / or commits it if it has changes.
+ * Used for adding and committing files that have been (re)processed externally.
+ * @param {string} file - The file to add or commit (if necessary).
+ * @returns {Promise<?string>} - The commit hash if a commit was made, null otherwise.
+ */
+const addAndCommit = async (file) => {
+  const inRepo = await fossil.isInRepo(file);
+  // !inRepo because file will need to be commit after adding
+  const needsCommit = !inRepo || (await fossil.hasChanges(file));
+  if (!inRepo) {
+    await fossil.add(file);
+  }
+  if (needsCommit) {
+    // get the datetime for when the file was updated
+    const mtimeMs = (await fs.promises.stat(file)).mtimeMs;
+    const date = new Date(mtimeMs).toISOString();
+
+    let message = `Reprocess ${path.basename(file)}`;
+    if (!inRepo) {
+      message = `Process ${path.basename(file)}`;
+    }
+
+    return await fossil.commit(file, {
+      message,
+      branch: "trunk",
+      // version: await fossil.getNextVersionNum(file, "trunk"),
+      date,
+    });
+  }
+  return null;
+};
+
+app.get("/versions/:file", async (req, res) => {
+  // const { version = null, branch = null } = req.body;
+  const { limit = -1, branch = null } = req.body;
+  const file = path.join(__dirname, "data", "annotations", req.params.file);
+  try {
+    await addAndCommit(file); // ensure the latest version of the file is in the repo
+    // const versionEntries = await fossil.versions(file, { version, branch });
+    const versionEntries = await fossil.versions(file, { limit, branch });
+    res.json(versionEntries);
+  } catch (err) {
+    res.status(500).send(err.toString());
+  }
+});
+
+app.get("/annotations/:file", async (req, res) => {
+  const file = path.join(__dirname, "data", "annotations", req.params.file);
+  try {
+    // if the client has a commit hash (from a version entry), use that
+    let commit = req.query.commit;
+    if (commit === undefined) {
+      // otherwise, get the commit from the file and version
+      await addAndCommit(file); // ensure the latest version of the file is in the repo
+      // branch is null so that we get the latest version from any branch
+      const { limit = 1, branch = null } = req.query;
+      // fossil.versions returns an array of version entries so get the first
+      const latestVer = (await fossil.versions(file, { limit, branch }))[0];
+      commit = latestVer.commit;
+    }
+    // get the annotations for the version
+    const annotations = await fossil.cat(file, { checkin: commit });
+    // can't use res.json because annotations is a string
+    res.type("json").send(annotations);
+  } catch (err) {
+    res.status(500).send(err.toString());
+  }
+});
+
+app.get("/branch/list", async (req, res) => {
+  try {
+    res.json(await fossil.branchList());
+  } catch (err) {
+    res.status(500).send(err.toString());
+  }
+});
+
+/**
+ * Commits annotations to the repository.
+ * @param {string} file - The file to commit annotations to.
+ * @param {string} branch - The branch to commit to.
+ * @param {object} annotations - The annotations to commit.
+ * @param {object} [options] - Options for the commit.
+ * @param {string} [options.user] - The user to commit as.
+ * @param {string} [options.message] - The commit message.
+ * @returns {Promise<fossil.VersionEntry>} - The version entry for the commit.
+ */
+const saveAnnotations = async (
+  file,
+  branch,
+  annotations,
+  { user, message } = {}
+) => {
+  // const version = await fossil.getNextVersionNum(file, branch);
+  const json = JSON.stringify(annotations, null, "\t");
+  return new Promise((resolve, reject) => {
+    const writeStream = fs.createWriteStream(file);
+    writeStream.on("error", reject);
+    // when the stream is finished writing, commit the file
+    writeStream.on("finish", async () => {
+      try {
+        await fossil.commit(file, {
+          message: message || `Updated annotations for ${file}`,
+          branch,
+          // version,
+          user,
+        });
+        // resolve with the version entry for the commit
+        // resolve((await fossil.versions(file, { branch, version }))[0]);
+        // FIXME: this won't (?) necessarily return the version entry for the commit
+        resolve((await fossil.versions(file, { branch }))[0]);
+      } catch (err) {
+        reject(err);
+      }
+    });
+    writeStream.write(json);
+    writeStream.end();
+  });
+};
+
+app.post("/annotations", async (req, res) => {
+  const user = req.session.user;
+  const file = path.join(__dirname, "data", "annotations", req.body.file);
+  const { annotations, branch = "trunk" } = req.body;
+  try {
+    const version = await saveAnnotations(file, annotations, user, branch);
+    res.json(version);
+  } catch (err) {
+    res.status(500).send(err.toString());
+  }
+});
+
+const dataSubdirs = readdirAndFilter("data").filter((file) => {
+  return file !== "annotations";
+});
 // matches any request that start with "/subdir" where subdir is
 // a subdirectory of the data directory
 // escape is there because regex interprets string as is and doesn't escape for you

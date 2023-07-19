@@ -450,6 +450,7 @@ def run_and_log_subprocess(
     check: bool = True,
     _level: LogLevel = "DEBUG",
     _depth: int = 0,
+    **kwargs,
 ) -> subprocess.CompletedProcess:
     subprocess_logger = logger.opt(depth=_depth + 1)
     subprocess_logger.log(_level, f"Running subprocess: {args}")
@@ -467,6 +468,7 @@ def run_and_log_subprocess(
         stderr=subprocess.STDOUT,
         text=True,
         check=False,
+        **kwargs,
     )
     timer.stop()
 
