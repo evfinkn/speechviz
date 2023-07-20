@@ -43,8 +43,10 @@ def prompt_open_llama(
     with open(segs_path, "r") as file:
         data = json.load(file)
 
+    annotations = data.get("annotations", [])
+
     found = False
-    for index, element in enumerate(data):
+    for index, element in enumerate(annotations):
         if element.get("arguments") == ["News"]:
             found = True
             break
