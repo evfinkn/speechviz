@@ -393,7 +393,7 @@ int main(int argc, char ** argv) {
         {
             static bool is_aborted = false; // NOTE: this should be atomic to avoid data race
 
-            wparams.encoder_begin_callback = [](struct whisper_context * /*ctx*/, void * user_data) {
+            wparams.encoder_begin_callback = [](whisper_context* /*ctx*/, whisper_state* /*state*/, void* user_data) -> bool {
                 bool is_aborted = *(bool*)user_data;
                 return !is_aborted;
             };
