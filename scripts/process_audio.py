@@ -123,6 +123,8 @@ def get_num_convo_turns(times):
 
 def samples_from_times(times, samples, sr):
     indices = (np.array(times) * sr).astype(int)
+    if len(indices) == 0:
+        return []
     samps = np.empty(np.sum(np.clip(indices[:, 1] - indices[:, 0], 0, None)))
     offset = 0
     for start, stop in indices:
