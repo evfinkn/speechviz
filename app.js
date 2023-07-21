@@ -214,7 +214,7 @@ app.get("/annotations/:file(*)", async (req, res) => {
 
 app.get("/branch/list", async (req, res) => {
   try {
-    res.json(await fossil.branchList());
+    res.json(await fossil.branch.list());
   } catch (err) {
     res.status(500).send(err.toString());
   }
