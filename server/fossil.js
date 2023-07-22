@@ -314,7 +314,7 @@ async function commitCmd(
   } = {}
 ) {
   // note: fossil commit works correctly even if file is an absolute path
-  const args = ["commit", "-m", `"${message}"`, "--user-override", user, file];
+  const args = ["commit", "-m", message, "--user-override", user, file];
   if (tags !== null) {
     // tags without values can be passed as options
     if (Array.isArray(tags)) {
