@@ -232,9 +232,8 @@ app.get("/branch/list", async (req, res) => {
  */
 const saveAnnotations = async (
   file,
-  branch,
   annotations,
-  { user, message } = {}
+  { branch, message, user } = {}
 ) => {
   // const version = await fossil.getNextVersionNum(file, branch);
   const json = JSON.stringify(annotations, null, "\t");
@@ -263,12 +262,16 @@ const saveAnnotations = async (
   });
 };
 
-app.post("/annotations", async (req, res) => {
+app.post("/annotations/:file(*)", async (req, res) => {
   const user = req.session.user;
-  const file = path.join(__dirname, "data", "annotations", req.body.file);
-  const { annotations, branch = "trunk" } = req.body;
+  const file = path.join(__dirname, "data", "annotations", req.params.file);
+  const { annotations, branch, message } = req.body;
   try {
-    const version = await saveAnnotations(file, annotations, user, branch);
+    const version = await saveAnnotations(file, annotations, {
+      user,
+      branch,
+      message,
+    });
     res.json(version);
   } catch (err) {
     res.status(500).send(err.toString());
