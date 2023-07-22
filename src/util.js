@@ -28,6 +28,28 @@ const htmlToElement = function (html) {
 };
 
 /**
+ * Generates HTMLElements from a template string.
+ * @param {TemplateStringsArray} strings - An array of strings surrounding the
+ *      values being interpolated into the template string.
+ * @param {...any} values - The values being interpolated into the template string.
+ * @returns {?(Element|Array.<Element>)} The `Element` or `Array` of `Element`s
+ *      represented by the template string. If the template string contains more
+ *      than one root element, an `Array` of `Element`s is returned. Otherwise, a
+ *      single `Element` is returned.
+ */
+const html = function (strings, ...values) {
+  // String.raw can be used like this to get the processed template string
+  // We use it here because we don't need the individual strings and values
+  const htmlString = String.raw({ raw: strings }, ...values);
+  const template = document.createElement("template");
+  template.innerHTML = htmlString;
+  if (template.content.children.length > 1) {
+    return [...template.content.children];
+  }
+  return template.content.firstElementChild;
+};
+
+/**
  * Compares two strings using natural sort order.
  * @param {string} a - The first string to compare.
  * @param {string} b - The second string to compare.
@@ -337,6 +359,7 @@ const getUrl = (subdir, basename, suffix, folder = null) => {
 export {
   getRandomColor,
   htmlToElement,
+  html,
   naturalCompare,
   compareProperty,
   sortByProp,
