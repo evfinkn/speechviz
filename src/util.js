@@ -221,9 +221,13 @@ const ResponseError = class ResponseError extends Error {
 
   /**
    * @param {Response} response - The `Response` object that caused this error.
+   * @param {string} [body=null] - The body of the response.
    */
-  constructor(response) {
-    const message = `${response.status} ${response.statusText}`;
+  constructor(response, body = null) {
+    let message = `${response.status} ${response.statusText}`;
+    if (body && body != response.statusText && body.length > 0) {
+      message += ` - ${body}`;
+    }
     super(message);
     this.name = "ResponseError";
     this.response = response;
@@ -234,15 +238,16 @@ const ResponseError = class ResponseError extends Error {
 
 /**
  * Checks the status of a fetch response, ensuring that the fetch was successful.
- * @param {!Object.<string, any>} res - The response from a fetch request to check.
- * @returns {!Object.<string, any>} The reference to the input response.
+ * @param {Response} res - The response to check.
+ * @returns {Response} The response, if it was successful.
  * @throws {ResponseError} If the response status status is unsuccessful. In other
  *      words, if `res.ok != true`.
  */
-const checkResponseStatus = function (res) {
+const checkResponseStatus = async function (res) {
   // !res.ok when res.status isn't in the range 200 - 299 (successful statuses)
   if (!res.ok) {
-    throw new ResponseError(res);
+    const body = await res.text();
+    throw new ResponseError(res, body);
   }
   return res;
 };
