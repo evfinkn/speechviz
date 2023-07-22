@@ -38,6 +38,18 @@ const channelNames = await fetch(channelsFile)
   .catch(() => []);
 
 /**
+ * @typedef {import("../server/fossil.js").VersionEntry} VersionEntry
+ * @prop {Date} datetime - The date and time of the commit.
+ * @prop {string} url - The url that will open the version in the interface.
+ */
+/**
+ * A list of versions of the media file. The array is sorted in reverse chronological
+ * order, so the first element is the latest version. Each version can be accessed
+ * by its index in the array or by its commit hash (as a property of the array).
+ * @typedef {Array.<VersionEntry>} VersionArray
+ */
+
+/**
  * `Object` containing global constants shared across the javascript files.
  * @prop {URLSearchParams} urlParams - The query parameters in the url.
  * @prop {string} filename - The name of the media file including its extension.
@@ -53,6 +65,12 @@ const channelNames = await fetch(channelsFile)
  * @prop {boolean} dirty - Whether there are unsaved changes.
  * @prop {string} folder - The name of the folder containing the media file, if any.
  * @prop {string} type - The type of media file (audio or video).
+ * @prop {!Array.<VersionEntry>} versions - The versions of the media file.
+ * @prop {!VersionEntry} currentVersion - The version of the media file that is
+ *      currently being viewed.
+ * @prop {!Set.<string>} fileBranches - The names of the branches that the media file
+ *      has commits on.
+ * @prop {!Set.<string>} allBranches - The names of the branches in the repository.
  * @type {!Object.<string, any>}
  */
 const globals = {};
@@ -68,6 +86,52 @@ globals.user = user;
 globals.dirty = false;
 globals.folder = folder;
 globals.type = type;
+
+const versionsFetchUrl = getUrl(
+  "versions",
+  basename,
+  "-annotations.json",
+  folder
+);
+
+/** @type {!Array<VersionEntry>} */
+const versions = await fetch(versionsFetchUrl)
+  .then(checkResponseStatus)
+  .then((response) => response.json());
+const versionUrl = new URL(window.location);
+versionUrl.searchParams.delete("branch");
+versions.forEach((ver) => {
+  // switch the URL to the version's commit
+  versionUrl.searchParams.set("commit", ver.commit);
+  ver.url = versionUrl.toString();
+  ver.datetime = new Date(ver.datetime); // convert from ISO string to Date object
+  versions[ver.commit] = ver; // add version to array by commit hash
+});
+globals.versions = versions;
+
+globals.fileBranches = new Set(versions.map((ver) => ver.branch));
+
+if (globals.urlParams.has("commit")) {
+  const commit = globals.urlParams.get("commit");
+  globals.currentVersion = versions.find((ver) => ver.commit === commit);
+} else {
+  // if no commit is specified in the URL, the interface shows the latest commit,
+  // either of any branch (if no branch is specified) or of the specified branch
+  const branch = globals.urlParams.get("branch");
+  if (branch === null) {
+    // latest version is always the first one in the array
+    globals.currentVersion = versions[0];
+  } else {
+    // latest version of a specified branch is always the first one on that branch
+    globals.currentVersion = versions.find((ver) => ver.branch === branch);
+  }
+}
+
+globals.allBranches = new Set(
+  await fetch("/branch/list")
+    .then(checkResponseStatus)
+    .then((response) => response.json())
+);
 
 const waveformFile = getUrl(
   "waveforms",
