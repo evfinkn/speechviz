@@ -878,7 +878,7 @@ fetch("load", {
     // the annotations (which is the new behavior), so we don't want to overwrite it
     // with the database value (which will happen if this file hasn't been saved
     // since the new annotations format was implemented)
-    notes.value = notes.value || data.notes;
+    notes.value = notes.value || data.notes || "";
 
     const regex = /Custom Segment /;
     peaks.segments
