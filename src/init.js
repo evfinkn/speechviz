@@ -484,87 +484,89 @@ if (numChannels > 1) {
   document.getElementById("controls").append(channels.div);
 }
 
-const loadStats = () => {
+const loadStats = async () => {
   const statsFile = getUrl("stats", basename, "-stats.csv", folder);
-  return fetch(statsFile)
-    .then(checkResponseStatus)
-    .then((response) => response.text())
-    .then((statCsv) => {
-      const stats = new Group("Stats", {
-        parent: analysis,
+  try {
+    const statCsv = await fetch(statsFile)
+      .then(checkResponseStatus)
+      .then((response) => response.text());
+    const stats = new Group("Stats", {
+      parent: analysis,
+      playable: false,
+    });
+
+    // https://gist.github.com/Jezternz/c8e9fafc2c114e079829974e3764db75
+    const csvStringToArray = (strData) => {
+      const objPattern = new RegExp(
+        '(\\,|\\r?\\n|\\r|^)(?:"([^"]*(?:""[^"]*)*)"|([^\\,\\r\\n]*))',
+        "gi"
+      );
+      let arrMatches = null;
+      const arrData = [[]];
+      while ((arrMatches = objPattern.exec(strData))) {
+        if (arrMatches[1].length && arrMatches[1] !== ",") arrData.push([]);
+        arrData[arrData.length - 1].push(
+          arrMatches[2]
+            ? arrMatches[2].replace(new RegExp('""', "g"), '"')
+            : arrMatches[3]
+        );
+      }
+      return arrData;
+    };
+    const arrays = csvStringToArray(statCsv);
+
+    let longestHeader = 0;
+    for (let i = 0; i < arrays[0].length; i++) {
+      if (arrays[0][i].length > longestHeader) {
+        longestHeader = arrays[0][i].length;
+      }
+    }
+
+    for (let i = 0; i < arrays[0].length; i++) {
+      let statToDisplay = `${arrays[0][i]}: ${arrays[1][i]}`;
+      if (arrays[0][i].length < longestHeader) {
+        const difference = longestHeader - arrays[0][i].length;
+        statToDisplay =
+          arrays[0][i] + " ".repeat(difference) + ": " + arrays[1][i];
+      }
+      new Stat(statToDisplay, {
+        parent: stats,
         playable: false,
       });
-
-      // https://gist.github.com/Jezternz/c8e9fafc2c114e079829974e3764db75
-      const csvStringToArray = (strData) => {
-        const objPattern = new RegExp(
-          '(\\,|\\r?\\n|\\r|^)(?:"([^"]*(?:""[^"]*)*)"|([^\\,\\r\\n]*))',
-          "gi"
-        );
-        let arrMatches = null;
-        const arrData = [[]];
-        while ((arrMatches = objPattern.exec(strData))) {
-          if (arrMatches[1].length && arrMatches[1] !== ",") arrData.push([]);
-          arrData[arrData.length - 1].push(
-            arrMatches[2]
-              ? arrMatches[2].replace(new RegExp('""', "g"), '"')
-              : arrMatches[3]
-          );
-        }
-        return arrData;
-      };
-      const arrays = csvStringToArray(statCsv);
-
-      let longestHeader = 0;
-      for (let i = 0; i < arrays[0].length; i++) {
-        if (arrays[0][i].length > longestHeader) {
-          longestHeader = arrays[0][i].length;
-        }
-      }
-
-      for (let i = 0; i < arrays[0].length; i++) {
-        let statToDisplay = `${arrays[0][i]}: ${arrays[1][i]}`;
-        if (arrays[0][i].length < longestHeader) {
-          const difference = longestHeader - arrays[0][i].length;
-          statToDisplay =
-            arrays[0][i] + " ".repeat(difference) + ": " + arrays[1][i];
-        }
-        new Stat(statToDisplay, {
-          parent: stats,
-          playable: false,
-        });
-      }
-    })
-    .catch((error) => output404OrError(error, "stats"));
+    }
+  } catch (error) {
+    output404OrError(error, "stats");
+  }
 };
 
-const loadWords = () => {
+const loadWords = async () => {
   const wordsFile = getUrl(
     "transcriptions",
     basename,
     "-transcription.json",
     folder
   );
-  return fetch(wordsFile)
-    .then(checkResponseStatus)
-    .then((response) => response.json())
-    .then((words) => {
-      const wordsGroup = new PeaksGroup("Words", {
-        parent: analysis,
-        playable: false,
-        color: "#00000000",
-      });
-      words.map((word) => {
-        // posibile bug in peaks.js, previously we let the color get set by wordsGroup,
-        // but in latest version we need to set it here because calling points.update
-        // doesn't update the color on the waveform
-        word["color"] = "#00000000";
-      });
-      peaks.points.add(words).forEach((word) => {
-        new Word(word, { parent: wordsGroup });
-      });
-    })
-    .catch((error) => output404OrError(error, "transcription"));
+  try {
+    const words = await fetch(wordsFile)
+      .then(checkResponseStatus)
+      .then((response) => response.json());
+    const wordsGroup = new PeaksGroup("Words", {
+      parent: analysis,
+      playable: false,
+      color: "#00000000",
+    });
+    words.map((word) => {
+      // posibile bug in peaks.js, previously we let the color get set by wordsGroup,
+      // but in latest version we need to set it here because calling points.update
+      // doesn't update the color on the waveform
+      word["color"] = "#00000000";
+    });
+    peaks.points.add(words).forEach((word) => {
+      new Word(word, { parent: wordsGroup });
+    });
+  } catch (error) {
+    output404OrError(error, "transcription");
+  }
 };
 
 // const loadAnnotations = async (annotsFile, { uuid, branch, version } = {}) => {
