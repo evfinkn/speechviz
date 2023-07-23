@@ -37,6 +37,34 @@ const media = globals.media;
 const peaks = globals.peaks;
 const basename = globals.basename;
 
+// used with replaceAll, which requires global flag
+// 1[2-9] matches 12-19, 2[0-4] matches 20-24, and 9312-9324 are circled numbers 1-15
+// (only need 1-15 because rankSnrs only goes up to 15)
+// I don't know if rankSnrs needed to use &#9312 instead of \u2460 (which would've
+// made the regex simpler: /[\u2460-\u246F] ?/gu) but I'm keeping it just in case
+const circleNumRegex = /&#93(1[2-9]|2[0-4]) ?/g;
+
+const idNumRegex = /(\d+)$/;
+const parseIdNum = (id) => {
+  const match = idNumRegex.exec(id);
+  return match && match[1] ? parseInt(match[1]) : null;
+};
+
+const getMaxValueEntry = (countsMap) => {
+  if (countsMap.size === 0) {
+    throw Error("countsMap is empty");
+  }
+  const entries = [...countsMap.entries()];
+  let [maxKey, maxCount] = entries.pop();
+  for (const [key, count] of entries) {
+    if (count > maxCount) {
+      maxKey = key;
+      maxCount = count;
+    }
+  }
+  return [maxKey, maxCount];
+};
+
 // typedefs (used for JSDoc, can help explain types)
 /**
  * A hex string in the form "#RRGGBB" that represents a color.
@@ -114,6 +142,104 @@ var TreeItem = class TreeItem {
   static exists(id) {
     // in a static method, `this` refers to the class, e.g. TreeItem
     return id in this.byId;
+  }
+
+  static #excludedOpts = new Set(["children", "attributes"]);
+  static #optsToSerialize = new Set(["childrenOptions", "moveTo", "copyTo"]);
+
+  /**
+   *
+   * @param {Object} obj
+   * @param {string} obj.type
+   * @param {Array} obj.arguments
+   * @param {!Object<string, *>} obj.options
+   */
+  static #extractChildrenOptions(obj) {
+    if (!obj?.options?.children) {
+      return obj; // no children to get options from, so return
+    }
+
+    const childrenOptions = obj.options.childrenOptions || {};
+
+    const optCounts = {};
+    obj.options.children.forEach((child) => {
+      if (!child.options) {
+        return;
+      }
+      Object.entries(child.options).forEach(([opt, val]) => {
+        if (TreeItem.#excludedOpts.has(opt)) {
+          return;
+        }
+        // for "childrenOptions", stringifying should be fine because properties of
+        // the toObject result are added in specific order
+        // stringifying "moveTo" and "copyTo" should work, but it's fine if it doesn't
+        if (TreeItem.#optsToSerialize.has(opt)) {
+          val = JSON.stringify(val);
+        }
+        if (typeof val === "object") {
+          return;
+        }
+        let valCounts = optCounts[opt];
+        if (!valCounts) {
+          valCounts = new Map();
+          optCounts[opt] = valCounts;
+        }
+        // using || is fine because if valCounts is 0, the right side is 0 anyway
+        const count = valCounts.get(val) || 0;
+        valCounts.set(val, count + 1);
+      });
+    });
+
+    const childrenCount = obj.options.children.length;
+    Object.entries(optCounts).forEach(([opt, valCounts]) => {
+      if (valCounts.size === 0) {
+        return;
+      }
+      const [mostUsedVal, useCount] = getMaxValueEntry(valCounts);
+      if (useCount > childrenCount / 2) {
+        childrenOptions[opt] = mostUsedVal;
+      }
+    });
+
+    if (Object.keys(childrenOptions).length === 0) {
+      return obj;
+    }
+    obj.options.childrenOptions = childrenOptions;
+    // TODO: make this loop children and then childrenOptions instead of vice versa
+    Object.entries(childrenOptions).forEach(([opt, val]) => {
+      if (val === undefined) {
+        // this could happen if some child's option is explicitly set to undefined
+        return;
+      }
+      obj.options.children.forEach((child) => {
+        if (!child.options) {
+          // see below if statement
+          child.options = { [opt]: undefined };
+        }
+        // we can ignore eslint because we know that child.options is a real object
+        // eslint-disable-next-line no-prototype-builtins
+        else if (!child.options.hasOwnProperty(opt)) {
+          // if child is missing the option, we want to explicitly set it to undefined
+          // so that it's not inherited from the parent
+          child.options[opt] = undefined;
+        } else if (child.options[opt] === val) {
+          delete child.options[opt];
+        } else if (TreeItem.#optsToSerialize.has(opt)) {
+          // right now, val is still a JSON string, so convert child.options[opt] to
+          // a JSON string to compare
+          if (val === JSON.stringify(child.options[opt])) {
+            delete child.options[opt];
+          }
+        }
+      });
+    });
+    TreeItem.#optsToSerialize.forEach((opt) => {
+      if (childrenOptions[opt]) {
+        childrenOptions[opt] = JSON.parse(childrenOptions[opt]);
+      }
+    });
+
+    return obj;
   }
 
   /**
@@ -214,6 +340,14 @@ var TreeItem = class TreeItem {
   attributes = null;
 
   /**
+   * A boolean indicating if the item is saveable.
+   * If `true`, `toObject` will return an object containing the arguments and options
+   * necessary to recreate the item. Otherwise, `toObject` will return `null`.
+   * @type {boolean}
+   */
+  saveable;
+
+  /**
    * The li element that is displayed and that contains all other elements if this
    * item is rendered. `null` otherwise.
    * @type {?Element}
@@ -299,6 +433,12 @@ var TreeItem = class TreeItem {
    * @param {boolean} [options.render=true] - If `true`, `render()` is called in
    *      the constructor. Otherwise, `render()` is not called and is left to the
    *      user to call.
+   * @param {?Object.<string, any>=} [options.attributes] - An object containing
+   *     miscellaneous attributes of the item.
+   * @param {boolean} [options.saveable=true] - Indicates if the item is saveable.
+   *     If `true`, `toObject` will return an object containing the arguments and
+   *     options necessary to recreate the item. Otherwise, `toObject` will return
+   *     `null`.
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
@@ -315,10 +455,14 @@ var TreeItem = class TreeItem {
       render = true,
       assocWith = null,
       attributes = null,
+      saveable = true,
     } = {}
   ) {
     this.id = id;
     this.addToById();
+
+    // this is a hack to make toObject work TODO: find a better way
+    this.children.id = `${this.id}.children`;
 
     this.#text = text || id;
     this.playable = playable;
@@ -329,6 +473,7 @@ var TreeItem = class TreeItem {
     this.copyTo = copyTo;
     this.assocWith = assocWith;
     this.attributes = attributes;
+    this.saveable = saveable;
     if (attributes) {
       for (const [key, value] of Object.entries(attributes)) {
         if (Attributes[key] === undefined) {
@@ -352,6 +497,65 @@ var TreeItem = class TreeItem {
     if (children) {
       this.addChildren(...children);
     }
+  }
+
+  toObject() {
+    if (!this.saveable) {
+      return null;
+    }
+    const options = {};
+    if (this.parent) {
+      options.parent = this.parent.id;
+    }
+    if (this.children?.length) {
+      const children = [];
+      this.children.forEach((child) => {
+        // not all children are guaranteed to define toObject(), hence the ?.()
+        const childJson = child.toObject?.();
+        if (childJson) {
+          // remove the parent property from the child's json since it's redundant
+          delete childJson.options.parent;
+          children.push(childJson);
+        }
+      });
+      if (children.length > 0) {
+        options.children = children;
+      }
+    }
+    if (this.text !== this.id) {
+      options.text = this.text;
+    }
+    if (this.playable) {
+      options.playable = true;
+    }
+    if (this.removable) {
+      options.removable = true;
+    }
+    if (this.renamable) {
+      options.renamable = true;
+    }
+    if (this.moveTo) {
+      // FIXME: this doesn't work because some items in moveTo are arrays of TreeItems
+      options.moveTo = this.moveTo.map((item) => item.id);
+    }
+    if (this.copyTo) {
+      // FIXME: see above
+      options.copyTo = this.copyTo.map((item) => item.id);
+    }
+    if (this.assocWith) {
+      // FIXME: see above
+      options.assocWith = this.assocWith.map((item) => item.id);
+    }
+    if (this.attributes) {
+      options.attributes = this.attributes;
+    }
+
+    const json = {
+      type: this.constructor.name,
+      arguments: [this.id],
+      options,
+    };
+    return TreeItem.#extractChildrenOptions(json);
   }
 
   // https://stackoverflow.com/a/68374307
@@ -1401,9 +1605,19 @@ var Group = class Group extends TreeItem {
       removable = false,
       moveTo = null,
       copyTo = null,
+      saveable = true,
     } = {}
   ) {
-    super(id, { parent, children, text, playable, removable, moveTo, copyTo });
+    super(id, {
+      parent,
+      children,
+      text,
+      playable,
+      removable,
+      moveTo,
+      copyTo,
+      saveable,
+    });
   }
 
   /** Sets the CSS styling of the group's elements. */
@@ -1595,9 +1809,19 @@ var CarouselGroup = class CarouselGroup extends Group {
       removable = false,
       moveTo = null,
       copyTo = null,
+      saveable = true,
     } = {}
   ) {
-    super(id, { parent, children, text, playable, removable, moveTo, copyTo });
+    super(id, {
+      parent,
+      children,
+      text,
+      playable,
+      removable,
+      moveTo,
+      copyTo,
+      saveable,
+    });
     this.leftButton = htmlToElement(
       `<a href="javascript:;" class="button-on">${arrowLeftIcon}</a>`
     );
@@ -1760,6 +1984,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
       copyTo = null,
       render = true,
       attributes = null,
+      saveable = true,
     } = {}
   ) {
     // catch options contained within the peaks item
@@ -1781,6 +2006,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
       copyTo,
       render: false,
       attributes,
+      saveable,
     });
     this.peaksItem = peaksItem;
     this.type = peaksItem.constructor.name === "Segment" ? "Segment" : "Point";
@@ -1788,10 +2014,35 @@ var PeaksItem = class PeaksItem extends TreeItem {
     if (render) {
       this.render();
     }
-    parent.addChildren(this);
+    parent?.addChildren?.(this);
 
     this.#editable = this.peaksItem.editable;
     this.currentlyEditable = this.peaksItem.editable;
+  }
+
+  toObject() {
+    if (!this.saveable) {
+      return null;
+    }
+    const json = super.toObject();
+    const { id, labelText, color } = this.peaksItem;
+    const peaksItemOpts = { id, labelText, color };
+    if (this.parent && labelText === `${this.parent.id}\n${this.text}`) {
+      peaksItemOpts.labelText = this.text;
+    }
+    // peaksItemOpts.labelText = labelText.replace(`${this.parent.id}\n`, "");
+    // Peaks defaults to editable = false, so adding false would be redundant
+    if (this.#editable) {
+      peaksItemOpts.editable = this.#editable;
+    }
+    if (this.type === "Segment") {
+      peaksItemOpts.startTime = this.peaksItem.startTime;
+      peaksItemOpts.endTime = this.peaksItem.endTime;
+    } else {
+      peaksItemOpts.time = this.peaksItem.time;
+    }
+    json.arguments = [peaksItemOpts];
+    return json;
   }
 
   /**
@@ -1915,6 +2166,9 @@ var PeaksItem = class PeaksItem extends TreeItem {
   remove() {
     if (this.parent.visible.has(this)) {
       this.#removeFromPeaks();
+      this.parent.visible.delete(this);
+    } else {
+      this.parent.hidden.delete(this);
     }
     super.remove();
   }
@@ -1935,7 +2189,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
   /**
    * Renames this Peaks.js item, replacing its text and labelText. Its id is
    * unchanged.
-   * @param {string} newId - The new id to give this item.
+   * @param {string} newText - The new text to give this item.
    */
   rename(newText) {
     super.text = newText;
@@ -1993,6 +2247,19 @@ var Segment = class Segment extends PeaksItem {
    */
   static byId = {};
 
+  // FIXME: explain more and better, mention also that this is for versioning
+  // Peaks.js uses a counter to assign ids to segments if they don't have one. However,
+  // we want to use our own ids to ensure proper numbering when loading after segments
+  // are removed and saved. For example, if we have segments 1, 2, and 3, and we remove
+  // segment 2, after saving and reloading, Peaks.js will assign segments 1 and 3 the
+  // ids 1 and 2, respectively.
+  /**
+   * Counter for the next id number to assign to a `Segment`. Always 1 greater than
+   * the largest id number of any `Segment` in the tree.
+   * @type {number}
+   */
+  static #idCounter = 0;
+
   /**
    * Names of properties to get in `getProperties`.
    * @type {!Array.<string>}
@@ -2006,6 +2273,17 @@ var Segment = class Segment extends PeaksItem {
     "labelText",
     "treeText",
   ];
+
+  static #getNextId() {
+    return `segment.${Segment.#idCounter++}`;
+  }
+
+  static #updateIdCounter(id) {
+    const idNum = parseIdNum(id);
+    if (idNum !== null && idNum >= Segment.#idCounter) {
+      Segment.#idCounter = idNum + 1;
+    }
+  }
 
   /**
    * @param {(!PeaksSegment|!PeaksSegmentOptions)} segment - The Peaks segment or the
@@ -2035,10 +2313,25 @@ var Segment = class Segment extends PeaksItem {
       moveTo = null,
       copyTo = null,
       attributes = null,
+      saveable = true,
     } = {}
   ) {
     if (segment.constructor.name !== "Segment") {
+      if (segment.id) {
+        Segment.#updateIdCounter(segment.id);
+      } else {
+        segment.id = Segment.#getNextId();
+        // this shouldn't happen, but just in case
+        while (Segment.byId[segment.id]) {
+          console.warn(
+            `Segment with generated id ${segment.id} already exists. Generating new id.`
+          );
+          segment.id = Segment.#getNextId();
+        }
+      }
       segment = peaks.segments.add(segment);
+    } else {
+      Segment.#updateIdCounter(segment.id);
     }
     super(segment, {
       parent,
@@ -2049,6 +2342,7 @@ var Segment = class Segment extends PeaksItem {
       moveTo,
       copyTo,
       attributes,
+      saveable,
     });
 
     this.updateDuration();
@@ -2057,6 +2351,18 @@ var Segment = class Segment extends PeaksItem {
     if (this.renamable || this.moveTo || this.copyTo) {
       this.popup = new Popup(this);
     }
+  }
+
+  toObject() {
+    if (!this.saveable) {
+      return null;
+    }
+    const json = super.toObject();
+    // playable will be in options since it's true, which is different than TreeItem's
+    // default (false). We want to remove it since it's not an option for Segment and
+    // it's redundant.
+    delete json.options.playable;
+    return json;
   }
 
   /**
@@ -2289,6 +2595,25 @@ var Point = class Point extends PeaksItem {
    */
   static byId = {};
 
+  // see Segment for explanation of why this is necessary
+  /**
+   * Counter for the next id number to assign to a `Point`. Always 1 greater than
+   * the largest id number of any `Point` in the tree.
+   * @type {number}
+   */
+  static #idCounter = 0;
+
+  static #getNextId() {
+    return `point.${Point.#idCounter++}`;
+  }
+
+  static #updateIdCounter(id) {
+    const idNum = parseIdNum(id);
+    if (idNum !== null && idNum >= Point.#idCounter) {
+      Point.#idCounter = idNum + 1;
+    }
+  }
+
   /**
    * @param {!PeaksPoint} point - The Peaks point being represented in the tree by
    *       the `Point`.
@@ -2320,10 +2645,25 @@ var Point = class Point extends PeaksItem {
       moveTo = null,
       copyTo = null,
       render = true,
+      saveable = true,
     } = {}
   ) {
     if (point.constructor.name !== "Point") {
+      if (point.id) {
+        Point.#updateIdCounter(point.id);
+      } else {
+        point.id = Point.#getNextId();
+        // this shouldn't happen, but just in case
+        while (Point.byId[point.id]) {
+          console.warn(
+            `Point with generated id ${point.id} already exists. Generating new id.`
+          );
+          point.id = Point.#getNextId();
+        }
+      }
       point = peaks.points.add(point);
+    } else {
+      Point.#updateIdCounter(point.id);
     }
     super(point, {
       parent,
@@ -2333,6 +2673,7 @@ var Point = class Point extends PeaksItem {
       moveTo,
       copyTo,
       render,
+      saveable,
     });
 
     if (this.renamable || this.moveTo || this.copyTo) {
@@ -2383,8 +2724,19 @@ var Word = class Word extends Point {
    *       in its nested content.
    * @throws {Error} If a `TreeItem` with `point.id` already exists.
    */
-  constructor(point, { parent = null } = {}) {
-    super(point, { parent, text: point.labelText, render: false });
+  constructor(point, { parent = null, saveable = true } = {}) {
+    super(point, { parent, saveable, text: point.labelText, render: false });
+  }
+
+  toObject() {
+    if (!this.saveable) {
+      return null;
+    }
+    const json = super.toObject();
+    // text will be in options because it's not this.id, but we don't need to save it
+    // because it's not an option for Word
+    delete json.options.text;
+    return json;
   }
 
   /**
@@ -2495,6 +2847,7 @@ var PeaksGroup = class PeaksGroup extends Group {
       colorable = false,
       moveTo = null,
       copyTo = null,
+      saveable = true,
     } = {}
   ) {
     // always have to call constructor for super class (TreeItem)
@@ -2507,6 +2860,7 @@ var PeaksGroup = class PeaksGroup extends Group {
       renamable,
       moveTo,
       copyTo,
+      saveable,
     });
 
     this.snr = snr;
@@ -2522,6 +2876,48 @@ var PeaksGroup = class PeaksGroup extends Group {
     if (renamable || moveTo || copyTo || colorable) {
       this.popup = new Popup(this);
     }
+  }
+
+  toObject() {
+    if (!this.saveable) {
+      return null;
+    }
+    const json = super.toObject();
+    // this.snr *could* be 0, so check if non-null explicitly instead of "if (this.snr)"
+    if (this.snr !== null) {
+      json.options.snr = this.snr;
+      // since this has an snr, it may have been ranked in init.js
+      // ranking adds a circled number to the group's
+      json.options.text = this.text.replaceAll(circleNumRegex, "");
+      if (json.options.text == this.id) {
+        delete json.options.text;
+      }
+    }
+    if (this.color) {
+      json.options.color = this.color;
+      json.options.children?.forEach((child) => {
+        // children are PeaksItems (or its subclasses), which usually will have the
+        // peaks item options in the first argument, (but might not if they're a
+        // subclass of PeaksItem)
+        if (child?.arguments?.[0]?.color === this.color) {
+          // if child has same color as group, don't save it because it's
+          // automatically assigned the group's color
+          delete child.arguments[0].color;
+        }
+      });
+    }
+    // only save colorable if it's true, since it's false by default
+    if (this.colorable) {
+      json.options.colorable = this.colorable;
+    }
+    // playable is true by default, so only save if it's false
+    if (this.playable) {
+      // if playable, it'll be in options since it's different than TreeItem's default
+      delete json.options.playable;
+    } else {
+      json.options.playable = this.playable;
+    }
+    return json;
   }
 
   /**
@@ -2771,6 +3167,7 @@ var Face = class Face extends TreeItem {
       removable,
       renamable,
       assocWith,
+      saveable: false,
     });
 
     // rel="noopener noreferrer" is there to avoid tab nabbing
@@ -2887,6 +3284,7 @@ var File = class File extends TreeItem {
       parent,
       text,
       renamable,
+      saveable: false,
     });
     this.currentFile = curFile;
     this.toggleTree(false);
@@ -2978,11 +3376,8 @@ var Stat = class Stat extends TreeItem {
    *      from the tree.
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
-  constructor(id, { parent = null, text = null } = {}) {
-    super(id, {
-      parent,
-      text,
-    });
+  constructor(id, { parent = null, text = null, saveable = true } = {}) {
+    super(id, { parent, text, saveable });
     this.checkbox.type = "hidden";
   }
 
