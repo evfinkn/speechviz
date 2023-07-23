@@ -324,16 +324,18 @@ const rankSnrs = () => {
 };
 
 const analysis = new Group("Analysis", { parent: tree, playable: true });
-const custom = new PeaksGroup("Custom", {
-  parent: analysis,
-  color: getRandomColor(),
-  colorable: true,
-});
-const labeled = new Group("Labeled", { parent: analysis, playable: true });
+// declare custom and labeled here so they can be accessed anywhere, but we
+// have to wait to define them until after the annotations are loaded in case
+// they're in the annotations
+let custom, labeled;
 
 if (folder !== undefined && folder !== null) {
   // in a folder
-  const files = new CarouselGroup("Files", { parent: tree, playable: false });
+  const files = new CarouselGroup("Files", {
+    parent: tree,
+    playable: false,
+    saveable: false,
+  });
   fetch(`${type}/${folder}`)
     .then(checkResponseStatus)
     .then((response) => response.json())
@@ -482,6 +484,89 @@ if (numChannels > 1) {
   document.getElementById("controls").append(channels.div);
 }
 
+const loadStats = () => {
+  const statsFile = getUrl("stats", basename, "-stats.csv", folder);
+  return fetch(statsFile)
+    .then(checkResponseStatus)
+    .then((response) => response.text())
+    .then((statCsv) => {
+      const stats = new Group("Stats", {
+        parent: analysis,
+        playable: false,
+      });
+
+      // https://gist.github.com/Jezternz/c8e9fafc2c114e079829974e3764db75
+      const csvStringToArray = (strData) => {
+        const objPattern = new RegExp(
+          '(\\,|\\r?\\n|\\r|^)(?:"([^"]*(?:""[^"]*)*)"|([^\\,\\r\\n]*))',
+          "gi"
+        );
+        let arrMatches = null;
+        const arrData = [[]];
+        while ((arrMatches = objPattern.exec(strData))) {
+          if (arrMatches[1].length && arrMatches[1] !== ",") arrData.push([]);
+          arrData[arrData.length - 1].push(
+            arrMatches[2]
+              ? arrMatches[2].replace(new RegExp('""', "g"), '"')
+              : arrMatches[3]
+          );
+        }
+        return arrData;
+      };
+      const arrays = csvStringToArray(statCsv);
+
+      let longestHeader = 0;
+      for (let i = 0; i < arrays[0].length; i++) {
+        if (arrays[0][i].length > longestHeader) {
+          longestHeader = arrays[0][i].length;
+        }
+      }
+
+      for (let i = 0; i < arrays[0].length; i++) {
+        let statToDisplay = `${arrays[0][i]}: ${arrays[1][i]}`;
+        if (arrays[0][i].length < longestHeader) {
+          const difference = longestHeader - arrays[0][i].length;
+          statToDisplay =
+            arrays[0][i] + " ".repeat(difference) + ": " + arrays[1][i];
+        }
+        new Stat(statToDisplay, {
+          parent: stats,
+          playable: false,
+        });
+      }
+    })
+    .catch((error) => output404OrError(error, "stats"));
+};
+
+const loadWords = () => {
+  const wordsFile = getUrl(
+    "transcriptions",
+    basename,
+    "-transcription.json",
+    folder
+  );
+  return fetch(wordsFile)
+    .then(checkResponseStatus)
+    .then((response) => response.json())
+    .then((words) => {
+      const wordsGroup = new PeaksGroup("Words", {
+        parent: analysis,
+        playable: false,
+        color: "#00000000",
+      });
+      words.map((word) => {
+        // posibile bug in peaks.js, previously we let the color get set by wordsGroup,
+        // but in latest version we need to set it here because calling points.update
+        // doesn't update the color on the waveform
+        word["color"] = "#00000000";
+      });
+      peaks.points.add(words).forEach((word) => {
+        new Word(word, { parent: wordsGroup });
+      });
+    })
+    .catch((error) => output404OrError(error, "transcription"));
+};
+
 // const loadAnnotations = async (annotsFile, { uuid, branch, version } = {}) => {
 const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
   // await reinit();
@@ -515,6 +600,28 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
   } else {
     // the annots file is in the new format
     createTreeItemFromObj(annots);
+  }
+
+  if (TreeItem.byId.Custom) {
+    custom = TreeItem.byId.Custom;
+  } else {
+    custom = new PeaksGroup("Custom", {
+      parent: analysis,
+      color: getRandomColor(),
+      colorable: true,
+    });
+  }
+  if (TreeItem.byId.Labeled) {
+    labeled = TreeItem.byId.Labeled;
+  } else {
+    labeled = new Group("Labeled", { parent: analysis, playable: true });
+  }
+
+  if (!TreeItem.byId.Stats) {
+    loadStats();
+  }
+  if (!TreeItem.byId.Words) {
+    loadWords();
   }
 
   // moveTo and copyTo for imported annots are arrays of strings like
@@ -589,33 +696,6 @@ const facesLoading = fetch(`/clustered-files/`)
   })
   .catch((error) => output404OrError(error, "clustered faces"));
 
-const wordsFile = getUrl(
-  "transcriptions",
-  basename,
-  "-transcription.json",
-  folder
-);
-fetch(wordsFile)
-  .then(checkResponseStatus)
-  .then((response) => response.json())
-  .then((words) => {
-    const wordsGroup = new PeaksGroup("Words", {
-      parent: analysis,
-      playable: false,
-      color: "#00000000",
-    });
-    words.map((word) => {
-      // posibile bug in peaks.js, previously we let the color get set by wordsGroup,
-      // but in latest version we need to set it here because calling points.update
-      // doesn't update the color on the waveform
-      word["color"] = "#00000000";
-    });
-    peaks.points.add(words).forEach((word) => {
-      new Word(word, { parent: wordsGroup });
-    });
-  })
-  .catch((error) => output404OrError(error, "transcription"));
-
 const poseRegex = /pose.*\.csv/;
 const poseContainer = document.getElementById("poses");
 if (poseContainer) {
@@ -649,58 +729,6 @@ if (poseContainer) {
     })
     .catch((error) => output404OrError(error, "pose data"));
 }
-
-const statsFile = getUrl("stats", basename, "-stats.csv", folder);
-fetch(statsFile)
-  .then(checkResponseStatus)
-  .then((response) => response.text())
-  .then((statCsv) => {
-    const stats = new Group("Stats", {
-      parent: analysis,
-      playable: false,
-    });
-
-    // https://gist.github.com/Jezternz/c8e9fafc2c114e079829974e3764db75
-    const csvStringToArray = (strData) => {
-      const objPattern = new RegExp(
-        '(\\,|\\r?\\n|\\r|^)(?:"([^"]*(?:""[^"]*)*)"|([^\\,\\r\\n]*))',
-        "gi"
-      );
-      let arrMatches = null;
-      const arrData = [[]];
-      while ((arrMatches = objPattern.exec(strData))) {
-        if (arrMatches[1].length && arrMatches[1] !== ",") arrData.push([]);
-        arrData[arrData.length - 1].push(
-          arrMatches[2]
-            ? arrMatches[2].replace(new RegExp('""', "g"), '"')
-            : arrMatches[3]
-        );
-      }
-      return arrData;
-    };
-    const arrays = csvStringToArray(statCsv);
-
-    let longestHeader = 0;
-    for (let i = 0; i < arrays[0].length; i++) {
-      if (arrays[0][i].length > longestHeader) {
-        longestHeader = arrays[0][i].length;
-      }
-    }
-
-    for (let i = 0; i < arrays[0].length; i++) {
-      let statToDisplay = `${arrays[0][i]}: ${arrays[1][i]}`;
-      if (arrays[0][i].length < longestHeader) {
-        const difference = longestHeader - arrays[0][i].length;
-        statToDisplay =
-          arrays[0][i] + " ".repeat(difference) + ": " + arrays[1][i];
-      }
-      new Stat(statToDisplay, {
-        parent: stats,
-        playable: false,
-      });
-    }
-  })
-  .catch((error) => output404OrError(error, "stats"));
 
 fetch("/isSplitChannel", {
   method: "POST",
@@ -831,11 +859,9 @@ document.getElementById("add-segment").addEventListener("click", function () {
   custom.open(); // open custom in tree to show newly added segment
 });
 
-const notes = document.getElementById("notes");
-
 const folderFile =
   folder !== undefined && folder !== null ? `${folder}/${filename}` : filename;
-
+// old loading, needed until faces are added to new annots format
 fetch("load", {
   method: "POST",
   headers: { "Content-Type": "application/json; charset=UTF-8" },
@@ -844,51 +870,12 @@ fetch("load", {
   .then(checkResponseStatus)
   .then((res) => res.json())
   .then((data) => {
-    notes.value = data.notes || notes.value;
-
-    // ?<number> is a named capture group, allowing us to do match.group.number
-    // note that match.group.number is a string so it'll need converted
-    const customSegRegex = /Custom Segment (?<number>\d+)/;
-    peaks.segments
-      .add(data.segments, { overwrite: true })
-      .forEach((segment) => {
-        let parent = segment.path.at(-1);
-        if (!(parent in PeaksGroup.byId)) {
-          // parent group doesn't exist yet so add it
-          parent = new PeaksGroup(parent, {
-            parent: Group.byId[segment.path.at(-2)],
-            removable: true,
-            renamable: true,
-            color: getRandomColor(),
-            colorable: true,
-            copyTo: [labeled.children],
-          });
-        } else {
-          parent = PeaksGroup.byId[parent];
-        }
-
-        if (segment.id in Segment.byId) {
-          // segment is a moved segment
-          const treeSegment = Segment.byId[segment.id];
-          treeSegment.segment = segment;
-          parent.addChildren(treeSegment);
-        } else {
-          new Segment(segment, {
-            parent: parent,
-            removable: true,
-            renamable: true,
-            moveTo: [labeled.children],
-          });
-        }
-        parent.sortBy("startTime");
-
-        const match = customSegRegex.exec(segment.labelText);
-        if (match !== null) {
-          const number = parseInt(match.groups.number);
-          segmentCounter = Math.max(segmentCounter, number + 1);
-        }
-      });
-
+    const notes = document.getElementById("notes");
+    // we prioritize notes.value because if notes has a value, then it was loaded from
+    // the annotations (which is the new behavior), so we don't want to overwrite it
+    // with the database value (which will happen if this file hasn't been saved
+    // since the new annotations format was implemented)
+    notes.value = notes.value || data.notes;
     async function waitForFacesThenLoad() {
       // wait for the fetching of faces from file system to finish
       await facesLoading;
@@ -928,125 +915,15 @@ peaks.on("segments.dragstart", function (event) {
   );
 });
 
-const recurseGetSegments = (group) => {
-  if (group instanceof PeaksGroup) {
-    return [...group.visible, ...group.hidden];
-  }
-  if (group instanceof Group) {
-    const segments = [];
-    group.children.forEach((child) =>
-      segments.push(...recurseGetSegments(child))
-    );
-    return segments;
-  }
-};
-
-const fileParagraph = document.getElementById("file");
-/**
- * Saves the custom segments, labeled speakers, and associated faces to the database.
- */
-const save = () => {
-  const faceRegex = /Speaker /;
-  const speakers = Object.values(PeaksGroup.byId).filter((speaker) =>
-    speaker.id.match(faceRegex)
-  );
-  const faces = [];
-  speakers.forEach((speaker) => {
-    // strip face and Speaker so we just have numbers to store
-    if (speaker.faceNum !== null) {
-      faces.push(
-        ...[
-          parseInt(speaker.id.replace("Speaker ", "")),
-          parseInt(speaker.faceNum.replace("face", "")),
-        ]
-      );
-    }
-  });
-
-  const removedFaces = Face.removed;
-
-  removedFaces.forEach((faceNum) =>
-    // Speaker -1 represents removed face, because it is impossible to have -1 speaker
-    faces.push(...[-1, faceNum])
-  );
-
-  // fileParagraph.innerHTML = `${filename} - Saving`;
-  const groupRegex =
-    /Speaker |\bVAD\b|\bNon-VAD\b|\bWords\b|\bSNR-Noise\b|\bNews\b/;
-  // only save groups that aren't from the pipeline
-  const groups = Object.values(PeaksGroup.byId).filter(
-    (group) => !group.id.match(groupRegex)
-  );
-  let segments = [];
-  // array.push(...) is faster than array.concat
-  groups.forEach((group) => segments.push(...recurseGetSegments(group)));
-
-  // need to copy the segment properties because
-  // otherwise, sending the actual segment causes error
-  // because peaks segments store the peaks instance, and
-  // the peaks instance stores the segments, infinite recursive error
-  segments = segments.map((segment) =>
-    segment.getProperties(["text", "duration", "color"])
-  );
-
-  // re-number the segments so there aren't gaps in ids from removed segments
-  let idCounter = globals.highestId + 1;
-  segments
-    .map((segment, index) => {
-      return { index: index, id: parseInt(segment.id.split(".").at(-1)) };
-    })
-    .sort((seg1, seg2) => seg1.id - seg2.id)
-    .map((seg) => segments[seg.index])
-    .forEach((segment) => {
-      segment.id = `peaks.segment.${idCounter++}`;
-    });
-
-  const customRegex = /Custom Segment /;
-  let customCounter = 1;
-  sortByProp(segments, "startTime").forEach((segment) => {
-    if (segment.labelText.match(customRegex)) {
-      segment.labelText = `Custom Segment ${customCounter}`;
-      segment.treeText = `Custom Segment ${customCounter}`;
-      customCounter++;
-    }
-  });
-
-  /** DEPRECATED: Things will be able to move between anything
-   *  i.e. speaker to vad, new method required
-  const movedSegments = recurseGetSegments(Group.byId["Speakers"])
-    .filter((segment) => segment.parent.id != originalGroups[segment.id])
-    .map((segment) => segment.getProperties(["text", "duration", "color"]));
-  segments.push(...movedSegments);
-  */
-
-  fetch("save", {
-    method: "POST",
-    headers: { "Content-Type": "application/json; charset=UTF-8" },
-    body: JSON.stringify({
-      user,
-      filename: folderFile,
-      segments,
-      notes: notes.value,
-      faces,
-    }),
-  })
-    .then(checkResponseStatus)
-    .then(() => {
-      fileParagraph.innerHTML = `${filename} - Saved`;
-      globals.dirty = false;
-    })
-    .catch((error) => {
-      fileParagraph.innerHTML = `${filename} - Error while saving`;
-      console.error(error);
-    });
-};
-
 // saves the segments
 const savePopup = new SavePopup();
 saveButton.addEventListener("click", function () {
+  if (!globals.dirty) {
+    notification.show("No changes to save.");
+    return;
+  }
   savePopup.show();
 });
-// document.querySelector('button[data-action="save"]').addEventListener("click", save);
 
 // setting to change the speed at which the media plays
 const speedButton = document.getElementById("speed-button");
