@@ -1,5 +1,5 @@
 import globals from "./globals.js";
-import { htmlToElement, checkResponseStatus } from "./util.js";
+import { html } from "./util.js";
 
 const getTimeAgoSpan = (date) => {
   const now = new Date();
@@ -35,6 +35,16 @@ const getTimeAgoSpan = (date) => {
 
 /** The popup containing extra settings for configuring the interface. */
 const CommitsPopup = class CommitsPopup {
+  static #makeVersionElement = (ver) => {
+    return html`<div class="commit">
+      <div class="message">
+        <a href="${ver.url}" class="commit-link">${ver.message}</a>
+      </div>
+      <span class="author-name">${ver.user}</span>
+      ${getTimeAgoSpan(ver.datetime)}
+    </div>`;
+  };
+
   /**
    * The div element that contains all other elements.
    * Displayed when the settings button is clicked.
@@ -48,84 +58,101 @@ const CommitsPopup = class CommitsPopup {
    */
   popupContent;
 
+  /** @type {!HTMLAnchorElement} */ closeButton;
+  /** @type {!HTMLSelectElement} */ branchSelect;
+  /** @type {!HTMLDivElement} */ commitsDiv;
+
+  /**
+   * The index of the current branch in the branch select dropdown.
+   * @type {number}
+   */
+  currentBranchIndex;
+
+  /**
+   * @type {import("./globals.js").VersionArray}
+   */
+  versions;
+
+  /**
+   * @type {Map<string, HTMLOptionElement>}
+   */
+  branchOptions;
+
   constructor() {
-    this.popup = htmlToElement("<div class='popup'></div>");
+    this.popup = html`<div class="popup"></div>`;
     document.body.append(this.popup);
 
-    const popupContent = htmlToElement("<div class='popup-content'></div>");
+    const popupContent = html`<div class="popup-content">
+      <a class="close">&times</a>
+      <select style="float: left;"></select>
+      <br />
+      <br />
+      <div class="commits"></div>
+    </div>`;
     this.popupContent = popupContent;
     this.popup.appendChild(popupContent);
+    this.closeButton = popupContent.children[0];
+    this.branchSelect = popupContent.children[1];
+    this.commitsDiv = popupContent.children[4];
+    this.closeButton.addEventListener("click", () => this.hide());
+    this.branchSelect.addEventListener("change", () => this.updateEntries());
 
-    // Create the branch dropdown
-    this.select = document.createElement("select");
-    this.select.style.float = "left"; // Float the dropdown to the left
-    popupContent.appendChild(this.select);
-
-    const closeButton = htmlToElement("<a class='close'>&times</a>");
-    popupContent.appendChild(closeButton);
-    popupContent.append(document.createElement("br"));
-    popupContent.append(document.createElement("br"));
-    closeButton.addEventListener("click", () => this.hide());
-
-    this.init();
-  }
-
-  async init() {
-    const versionsUrl = `versions/${globals.basename}-annotations.json`;
-    // Get the commits from the backend
-    const versions = await fetch(versionsUrl)
-      .then(checkResponseStatus)
-      .then((response) => response.json());
-    this.versions = versions;
-
-    // TODO: I don't know if branches needs to be a list
-    const branches = [...new Set(versions.map((ver) => ver.branch))];
-    this.branches = branches;
-    branches.forEach((branch) => {
-      const option = document.createElement("option");
-      option.text = branch;
-      this.select.add(option);
+    // define and then use forEach instead of using map so that we can
+    // add the commit hash as a property of the array within the forEach
+    this.versions = [];
+    globals.versions.forEach((ver) => {
+      ver = { ...ver }; // copy the object
+      ver.element = CommitsPopup.#makeVersionElement(ver);
+      this.commitsDiv.appendChild(ver.element);
+      this.versions.push(ver);
+      this.versions[ver.commit] = ver;
     });
 
-    if (globals.urlParams.has("commit")) {
-      const commit = globals.urlParams.get("commit");
-      this.currentVersion = versions.find((ver) => ver.commit === commit);
-    } else {
-      // if no commit is specified in the URL, the interface shows the latest commit,
-      // either of any branch (if no branch is specified) or of the specified branch
-      const branch = globals.urlParams.get("branch");
-      if (branch === null) {
-        this.currentVersion = versions[0];
-      } else {
-        this.currentVersion = versions.find((ver) => ver.branch === branch);
-      }
-    }
-    this.currentBranchIndex = branches.indexOf(this.currentVersion.branch);
-
-    const url = new URL(window.location);
-    url.searchParams.delete("branch");
-    versions.forEach((ver) => {
-      // switch the URL to the version's commit
-      url.searchParams.set("commit", ver.commit);
-      ver.datetime = new Date(ver.datetime); // convert from ISO string to Date object
-      ver.element = htmlToElement(`<div class="commit">
-        <div class="message">
-          <a href="${url.toString()}" class="commit-link">${ver.message}</a>
-        </div>
-        <span class="author-name">${ver.user}</span>
-        ${getTimeAgoSpan(ver.datetime)}
-      </div>`);
-      this.popupContent.append(ver.element);
+    this.branchOptions = new Map();
+    globals.fileBranches.forEach((branch) => {
+      const option = html`<option>${branch}</option>`;
+      this.branchSelect.add(option);
+      this.branchOptions.set(branch, option);
     });
 
-    this.currentVersion.element.style.border = "3px solid #a4f05d";
+    // Get the index of the current branch
+    this.currentBranchIndex = [...this.branchSelect.options].findIndex(
+      (option) => option.text === globals.currentVersion.branch
+    );
 
-    // Event listener for dropdown change
-    this.select.addEventListener("change", () => this.updateEntries());
+    const currentVersion = this.versions[globals.currentVersion.commit];
+    currentVersion.element.style.border = "3px solid #a4f05d";
   }
 
   updateEntries() {
-    const branch = this.select.value;
+    const branch = this.branchSelect.value;
+
+    if (this.versions.length !== globals.versions.length) {
+      // versions were saved so the missing versions are at the front of
+      // globals.versions (since they were the most recent versions)
+      const newVersions = globals.versions
+        .slice(0, globals.versions.length - this.versions.length)
+        .map((ver) => {
+          ver = { ...ver }; // copy the object
+          ver.element = CommitsPopup.#makeVersionElement(ver);
+          this.versions[ver.commit] = ver;
+          return ver;
+        });
+      this.versions.unshift(...newVersions); // add to front of array
+      this.commitsDiv.prepend(...newVersions.map((ver) => ver.element));
+    }
+
+    if (this.branchOptions.size !== globals.fileBranches.size) {
+      // new branches were added (when a user saved to a new branch)
+      globals.fileBranches.forEach((branch) => {
+        if (!this.branchOptions.has(branch)) {
+          const option = html`<option>${branch}</option>`;
+          this.branchSelect.add(option);
+          this.branchOptions.set(branch, option);
+        }
+      });
+    }
+
     this.versions.forEach((ver) => {
       ver.element.style.display = ver.branch === branch ? "block" : "none";
     });
@@ -134,7 +161,7 @@ const CommitsPopup = class CommitsPopup {
   /** Updates content and displays this popup. */
   show() {
     // default the dropdown to the current branch
-    this.select.selectedIndex = this.currentBranchIndex;
+    this.branchSelect.selectedIndex = this.currentBranchIndex;
     this.updateEntries();
     this.popup.style.display = "block";
   }
