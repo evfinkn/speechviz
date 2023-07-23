@@ -863,7 +863,8 @@ document.getElementById("add-segment").addEventListener("click", function () {
 
 const folderFile =
   folder !== undefined && folder !== null ? `${folder}/${filename}` : filename;
-// old loading, needed until faces are added to new annots format
+// old loading code for backwards compatibility (custom segments will be in database
+// until they're saved again)
 fetch("load", {
   method: "POST",
   headers: { "Content-Type": "application/json; charset=UTF-8" },
@@ -878,6 +879,46 @@ fetch("load", {
     // with the database value (which will happen if this file hasn't been saved
     // since the new annotations format was implemented)
     notes.value = notes.value || data.notes;
+
+    const regex = /Custom Segment /;
+    peaks.segments
+      .add(data.segments, { overwrite: true })
+      .forEach((segment) => {
+        let parent = segment.path.at(-1);
+        if (!(parent in PeaksGroup.byId)) {
+          // parent group doesn't exist yet so add it
+          parent = new PeaksGroup(parent, {
+            parent: Group.byId[segment.path.at(-2)],
+            removable: true,
+            renamable: true,
+            color: getRandomColor(),
+            colorable: true,
+            copyTo: [labeled.children],
+          });
+        } else {
+          parent = PeaksGroup.byId[parent];
+        }
+
+        if (segment.id in Segment.byId) {
+          // segment is a moved segment
+          const treeSegment = Segment.byId[segment.id];
+          treeSegment.segment = segment;
+          parent.addChildren(treeSegment);
+        } else {
+          new Segment(segment, {
+            parent: parent,
+            removable: true,
+            renamable: true,
+            moveTo: [labeled.children],
+          });
+        }
+        parent.sortBy("startTime");
+
+        if (segment.labelText.match(regex)) {
+          segmentCounter++;
+        }
+      });
+
     async function waitForFacesThenLoad() {
       // wait for the fetching of faces from file system to finish
       await facesLoading;
