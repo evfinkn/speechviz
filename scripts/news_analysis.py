@@ -35,16 +35,18 @@ def prompt_open_llama(
 
     segs_path = (
         data_dir
-        / "segments"
+        / "annotations"
         / parent_dir
-        / f"{path.stem.replace('-transcription', '')}-segments.json"
+        / f"{path.stem.replace('-transcription', '')}-annotations.json"
     )
 
     with open(segs_path, "r") as file:
         data = json.load(file)
 
+    annotations = data.get("annotations", [])
+
     found = False
-    for index, element in enumerate(data):
+    for index, element in enumerate(annotations):
         if element.get("arguments") == ["News"]:
             found = True
             break
@@ -122,24 +124,28 @@ def prompt_open_llama(
 
     segs_path = (
         data_dir
-        / "segments"
+        / "annotations"
         / parent_dir
-        / f"{path.stem.replace('-transcription', '')}-segments.json"
+        / f"{path.stem.replace('-transcription', '')}-annotations.json"
     )
 
     with open(segs_path, "r") as file:
         data = json.load(file)
 
+    annotations = data.get("annotations", [])
+
     found = False
-    for index, element in enumerate(data):
+    for index, element in enumerate(annotations):
         if element.get("arguments") == ["News"]:
             # replace previous news
-            data[index] = news
+            annotations[index] = news
             found = True
             break
     if not found:
         # add news for first time
-        data.append(news)
+        annotations.append(news)
+
+    data["annotations"] = annotations
 
     with open(segs_path, "w") as file:
         json.dump(data, file)
@@ -264,14 +270,15 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
-            "Group sentences based on number of sentences from transcription file."
+            "Group sentences based on number of sentences and time between words from"
+            " transcription file."
         )
     )
     parser.add_argument(
         "path",
         nargs="*",
         type=pathlib.Path,
-        help="Path to the JSON file",
+        help="Path to the annotations JSON file",
     )
     parser.add_argument(
         "--numbers",

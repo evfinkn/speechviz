@@ -1,13 +1,36 @@
 import argparse
+import json
 import pathlib
+from typing import Optional, Sequence
 
 import log
 import util
+from _types import PeaksGroup, TreeItem
 from constants import AUDIO_EXTS, SCRIPTS_DIR, VIDEO_EXTS
 from log import logger
 
 TRANSCRIBE_SCRIPT = SCRIPTS_DIR / "transcribe"
 BASE_MODEL = SCRIPTS_DIR / "models/whisper-base.en.bin"
+
+
+def format_tree_item(
+    item_type: str, arguments: Sequence, options: Optional[dict] = None
+) -> TreeItem:
+    item = {"type": item_type, "arguments": arguments}
+    if options is not None:
+        item["options"] = options
+    return item
+
+
+def format_peaks_group(name: str, options: Optional[dict] = None) -> PeaksGroup:
+    return format_tree_item("PeaksGroup", [name], options)
+
+
+def format_word(id: str, labelText: str, time: float, options: Optional[dict] = None):
+    # round start and end to save space in the json file and because many times from
+    # the pyannote pipelines look like 5.3071874999999995 and 109.99968750000001
+    word = {"id": id, "labelText": labelText, "time": time}
+    return format_tree_item("Word", [word], options)
 
 
 def route_dir(dir, scan_dir=True, **kwargs):
@@ -79,12 +102,14 @@ def transcribe(
     transcription_path = (
         transcriptions_dir / parent_dir / f"{path.stem}-transcription.json"
     )
+
     log.log_vars(
         log_separate_=True,
         data_dir=data_dir,
         parent_dir=parent_dir,
         transcription_path=transcription_path,
     )
+
     if transcription_path.exists() and not reprocess:
         logger.info(
             "{} has already been transcribed. To re-transcribe it, pass -r", path
@@ -111,6 +136,55 @@ def transcribe(
             transcription_path,
         ]
     )
+
+    # want to grab what transcribe.cpp output
+    # and add it to annotations
+    annotations_dir = data_dir / "annotations"
+    annotations_dir.mkdir(exist_ok=True)
+    annotations_path = annotations_dir / parent_dir / f"{path.stem}-annotations.json"
+
+    # open the transcription file to copy it over to annotations file
+    with open(transcription_path, "r") as transc_file:
+        transcription_output = json.load(transc_file)
+
+    all_words = []
+
+    point = 0
+
+    for obj in transcription_output:
+        label = obj["labelText"]
+        time = obj["time"]
+        all_words.append(format_word(f"point.{point}", label, time))
+        point += 1
+
+    words_options = {
+        "parent": "Analysis",
+        "children": all_words,
+    }
+    word_group = format_peaks_group("Words", words_options)
+
+    with open(annotations_path, "r") as annot_file:
+        annot_data = json.load(annot_file)
+
+    annotations = annot_data.get("annotations", [])
+
+    found = False
+
+    for index, element in enumerate(annotations):
+        if element.get("arguments") == ["Words"]:
+            # replace previous words
+            annotations[index] = word_group
+            found = True
+            break
+    if not found:
+        # add words for first time
+        annotations.append(word_group)
+
+    annot_data["annotations"] = annotations
+
+    with open(annotations_path, "w") as file:
+        json.dump(annot_data, file)
+
     logger.info("Transcription saved to {}", transcription_path)
     converted_path.unlink()
 

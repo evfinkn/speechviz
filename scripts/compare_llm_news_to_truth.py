@@ -43,13 +43,17 @@ def calculate_overlap_duration(time_tuples1, time_tuples2):
 
 def compare_annotations(json_file, output_file):
     for ancestor in json_file.parents:
-        if ancestor.name == "segments":
+        if ancestor.name == "annotations":
             if ancestor.parent.name == "data":
                 data_dir = ancestor.parent
                 parent_dir = json_file.parent.relative_to(ancestor)
                 break
+    else:
+        raise Exception(
+            "Input file must be a descendant of data/annotationsor data/video."
+        )
 
-    file_id = parent_dir / f"{json_file.stem.replace('-segments', '')}.wav"
+    file_id = parent_dir / f"{json_file.stem.replace('-annotations', '')}.wav"
 
     # Get the audio file path
     audio_file_path = file_id
@@ -59,7 +63,9 @@ def compare_annotations(json_file, output_file):
         data = json.load(file)
 
     automatic_segments = []
-    for element in data:
+    annotations = data.get("annotations", [])
+
+    for element in annotations:
         if element.get("arguments") == ["News"]:
             children = element.get("options", {}).get("children", [])
             for child in children:

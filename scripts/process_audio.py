@@ -123,6 +123,8 @@ def get_num_convo_turns(times):
 
 def samples_from_times(times, samples, sr):
     indices = (np.array(times) * sr).astype(int)
+    if len(indices) == 0:
+        return []
     samps = np.empty(np.sum(np.clip(indices[:, 1] - indices[:, 0], 0, None)))
     offset = 0
     for start, stop in indices:
@@ -326,7 +328,7 @@ def process_audio(
 
     # filepaths for the waveform, and segments files
     waveform_path = data_dir / "waveforms" / parent_dir / f"{path.stem}-waveform.json"
-    segs_path = data_dir / "segments" / parent_dir / f"{path.stem}-segments.json"
+    segs_path = data_dir / "annotations" / parent_dir / f"{path.stem}-annotations.json"
     stats_path = data_dir / "stats" / parent_dir / f"{path.stem}-stats.csv"
     channels_path = data_dir / "channels" / parent_dir / f"{path.stem}-channels.csv"
 
@@ -495,10 +497,49 @@ def process_audio(
         speech_pause = format_peaks_group("SNR-Noise", speech_pause_options)
 
         # save the segments
-        tree_items = [speakers, vad, non_vad, speech_pause]
+        tree_items = {
+            "formatVersion": 3,
+            "annotations": [speakers, vad, non_vad, speech_pause],
+        }
         logger.info("Saving segments to {}", segs_path)
-        with segs_path.open("w") as segs_file:
-            json.dump(tree_items, segs_file)
+
+        try:
+            with open(segs_path, "r") as annot_file:
+                annot_data = json.load(annot_file)
+            # just update the annotations if it is already in the
+            # updated format
+            if "formatVersion" in annot_data == 3:
+                annotations = annot_data.get("annotations", [])
+
+                def replaceElement(name, replacement):
+                    found = False
+                    for index, element in enumerate(annotations):
+                        if element.get("arguments") == [name]:
+                            # replace previous
+                            annotations[index] = replacement
+                            found = True
+                            break
+                    if not found:
+                        # add replacement for first time
+                        annotations.append(replacement)
+
+                replaceElement("Speakers", speakers)
+                replaceElement("VAD", vad)
+                replaceElement("Non-VAD", non_vad)
+                replaceElement("SNR-Noise", speech_pause)
+
+                annot_data["annotations"] = annotations
+
+                with segs_path.open("w") as segs_file:
+                    json.dump(annot_data, segs_file)
+            # otherwise rewrite as the new formats
+            else:
+                with segs_path.open("w") as segs_file:
+                    json.dump(tree_items, segs_file)
+        except FileNotFoundError or json.JSONDecodeError:
+            # file doesn't exist yet or empty json file
+            with segs_path.open("w") as segs_file:
+                json.dump(tree_items, segs_file)
 
         logger.trace("Calculating stats")
 
