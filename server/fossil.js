@@ -75,6 +75,16 @@ const lineRegex = /^.+$/gm; // matches every non-empty line
  * @property {string} file - The name of the file that was changed.
  */
 
+// callbacks
+/**
+ * @callback withStashCallback
+ * @param {number} stashId - The ID of the stash.
+ */
+/**
+ * @callback withBranchCallback
+ * @param {string} originalBranch - The original branch.
+ */
+
 /**
  * An error thrown when a process exits with a non-zero exit code.
  * @extends Error
@@ -655,14 +665,15 @@ var stashCmd = {
  *
  * The changes are stashed using `fossil stash save` and then applied after the
  * callback is run.
- * @param {Function} callback - The callback to run.
+ * @param {withStashCallback} callback - The callback to run. It is passed the stash
+ *    ID as an argument.
  * @param {string[]} [files=[]] - The files to stash or ignore.
  * @param {Object} [options={}] - Options for the stash save command.
  * @see stashCmd.save
  */
 async function withStash(callback, files = [], options = {}) {
   const stashId = await stashCmd.save(files, options);
-  await callback();
+  await callback(stashId);
   await stashCmd.apply(stashId);
 }
 
@@ -689,13 +700,14 @@ function updateCmd(version, { setmtime = false } = {}) {
  * The branch is checked out using `fossil update` and then the original branch is
  * checked out after the callback is run.
  * @param {string} branch - The branch to check out.
- * @param {Function} callback - The callback to run.
+ * @param {withBranchCallback} callback - The callback to run. It is passed the
+ *    original branch as an argument.
  * @see updateCmd
  */
 async function withBranch(branch, callback) {
   const originalBranch = await branchCmd.current();
   await updateCmd(branch);
-  await callback();
+  await callback(originalBranch);
   await updateCmd(originalBranch);
 }
 
