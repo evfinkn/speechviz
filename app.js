@@ -227,7 +227,6 @@ const saveAnnotations = async (
   annotations,
   { branch, message, user } = {}
 ) => {
-  // const version = await fossil.getNextVersionNum(file, branch);
   const json = JSON.stringify(annotations, null, "\t");
   return new Promise((resolve, reject) => {
     const writeStream = fs.createWriteStream(file);
