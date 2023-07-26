@@ -177,7 +177,7 @@ const addAndCommit = async (file) => {
 // this is necessary for when the file is in a subdirectory of the annotations folder
 app.get("/versions/:file(*)", async (req, res) => {
   // const { version = null, branch = null } = req.body;
-  const { limit = -1, branch = null } = req.body;
+  const { limit = -1, branch = null } = req.query;
   const file = path.join(__dirname, "data", "annotations", req.params.file);
   try {
     await addAndCommit(file); // ensure the latest version of the file is in the repo
@@ -197,10 +197,11 @@ app.get("/annotations/:file(*)", async (req, res) => {
     if (commit === undefined) {
       // otherwise, get the commit from the file and version
       await addAndCommit(file); // ensure the latest version of the file is in the repo
-      // branch is null so that we get the latest version from any branch
-      const { limit = 1, branch = null } = req.query;
-      // fossil.versions returns an array of version entries so get the first
-      const latestVer = (await fossil.versions(file, { limit, branch }))[0];
+      // branch defaults to null so that we get the latest version from any branch
+      const branch = req.query.branch || null;
+      // fossil.versions returns an array of version entries (even if limit is 1)
+      // so we need to get the first element of the array
+      const latestVer = (await fossil.versions(file, { limit: 1, branch }))[0];
       commit = latestVer.commit;
     }
     // get the annotations for the version
