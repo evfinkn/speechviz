@@ -157,18 +157,11 @@ const addAndCommit = async (file) => {
     // get the datetime for when the file was updated
     const mtimeMs = (await fs.promises.stat(file)).mtimeMs;
     const date = new Date(mtimeMs).toISOString();
-
     let message = `Reprocess ${path.basename(file)}`;
     if (!inRepo) {
       message = `Process ${path.basename(file)}`;
     }
-
-    return await fossil.commit(file, {
-      message,
-      branch: "trunk",
-      // version: await fossil.getNextVersionNum(file, "trunk"),
-      date,
-    });
+    return await fossil.commit(file, { message, branch: "trunk", date });
   }
   return null;
 };
@@ -176,12 +169,10 @@ const addAndCommit = async (file) => {
 // (*) allows any characters, including slashes, in the file parameter
 // this is necessary for when the file is in a subdirectory of the annotations folder
 app.get("/versions/:file(*)", async (req, res) => {
-  // const { version = null, branch = null } = req.body;
   const { limit = -1, branch = null } = req.query;
   const file = path.join(__dirname, "data", "annotations", req.params.file);
   try {
     await addAndCommit(file); // ensure the latest version of the file is in the repo
-    // const versionEntries = await fossil.versions(file, { version, branch });
     const versionEntries = await fossil.versions(file, { limit, branch });
     res.json(versionEntries);
   } catch (err) {
@@ -247,11 +238,8 @@ const saveAnnotations = async (
         await fossil.commit(file, {
           message: message || `Updated annotations for ${file}`,
           branch,
-          // version,
           user,
         });
-        // resolve with the version entry for the commit
-        // resolve((await fossil.versions(file, { branch, version }))[0]);
         // FIXME: this won't (?) necessarily return the version entry for the commit
         resolve((await fossil.versions(file, { branch }))[0]);
       } catch (err) {

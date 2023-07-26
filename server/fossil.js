@@ -62,8 +62,8 @@ const lineRegex = /^.+$/gm; // matches every non-empty line
  * @property {string} user - The user that committed the changes.
  * @property {string} datetime - The date and time of the commit. This is in UTC and
  *    has the format "YYYY-mm-dd HH:MM:SS.SSS".
- * @property {number} unixtime - The date and time of the commit in unix time. Unlike
- *    datetime, this is in UTC.
+ * @property {number} unixtime - The date and time of the commit in unix time. This is
+ *    in UTC.
  * @property {!Object<string, ?(string|number)>} tags - The tags and properties of the
  *    commit. Tags are keys with a null value. Properties are keys with a non-null
  *    value.
@@ -302,8 +302,6 @@ function addCmd(file) {
  * @param {string} [options.user="fossil.js"] - The user to commit as.
  * @param {?string} options.branch - The branch to commit to. If `null`, the 'trunk'
  *    branch will be used. If the branch doesn't exist, it will be created.
- * @param {?string} options.version - The version to tag the commit with. If `null`,
- *    no version tag will be added.
  * @param {?(string[]|Object<string, string>)} options.tags - The tags to add to the
  *    commit. If `null`, no tags will be added. If an array, each tag will be added
  *    with no value. If an object, each key will be added as a tag with the value
@@ -318,7 +316,6 @@ async function commitCmd(
     message = "Automatic commit by fossil.js",
     user = "fossil.js",
     branch = null,
-    version = null,
     tags = null,
     datetime = null,
   } = {}
@@ -379,9 +376,6 @@ async function commitCmd(
   }
   // fossil commit outputs "New_Version: ARTIFACT-ID" so substring to get the id
   const commitId = output.substring(13);
-  if (version !== null) {
-    tags.version = version;
-  }
   // add tags with values to the commit
   await Promise.all(
     // use map instead of forEach so that we get an array of promises to await
@@ -802,8 +796,7 @@ function versionsCmd(
   // path stored in the database
   file = relToDataDir(file);
   return new Promise((resolve, reject) => {
-    // this outputs a JSON string that can be parsed into a VersionEntry object (without
-    // the file property)
+    // this outputs a JSON string that can be parsed into a VersionEntry object
     const args = [
       "sql",
       "--readonly",
@@ -827,7 +820,6 @@ function versionsCmd(
     const entries = [];
     rl.on("line", (line) => {
       const entry = JSON.parse(line);
-
       if (parseNums) {
         Object.entries(entry.tags).forEach(([key, value]) => {
           const num = parseFloat(value);
@@ -836,14 +828,6 @@ function versionsCmd(
           }
         });
       }
-
-      // // define version as a getter for entry.tags.version
-      // Object.defineProperty(entry, "version", {
-      //   get: () => entry.tags.version,
-      //   set: (value) => (entry.tags.version = value),
-      // });
-      // entry.version = entry.tags.version;
-
       entries.push(entry);
     });
     fossil.on("close", (code) => {
@@ -873,29 +857,6 @@ async function isInRepo(file) {
   }
 }
 
-/**
- * Gets the next version number for a file.
- *
- * The next version of `file` is the version number of the latest version on `branch`
- * plus 1. If `file` has no previous versions, the next version is 1.
- * @param {string} file - The file to get the next version for. It should be a
- *    path relative to the speechviz/data directory. If it is not, it will be converted
- *    to one.
- * @param {?string} [branch="trunk"] - The branch to get the next version for.
- * @returns {Promise<number>} A promise that resolves to the next version number. If
- *    the file has no previous versions, the promise resolves to 1.
- */
-// async function getNextVersionNum(file, branch = "trunk") {
-//   const versions = await versionsCmd(file, {
-//     branch,
-//     version: "latest",
-//   });
-//   if (versions.length === 0 || versions[0].version === undefined) {
-//     return 1;
-//   }
-//   return versions[0].version + 1;
-// }
-
 module.exports = {
   add: addCmd,
   commit: commitCmd,
@@ -911,6 +872,5 @@ module.exports = {
   cat: catCmd,
   grep: grepCmd,
   versions: versionsCmd,
-  // getNextVersionNum,
   isInRepo,
 };

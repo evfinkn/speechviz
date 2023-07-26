@@ -569,9 +569,7 @@ const loadWords = async () => {
   }
 };
 
-// const loadAnnotations = async (annotsFile, { uuid, branch, version } = {}) => {
 const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
-  // await reinit();
   // add branch, version, and uuid as query parameters if they are defined
   const url = new URL(annotsFile, window.location.href);
   if (commit) {
@@ -580,9 +578,6 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
   if (branch) {
     url.searchParams.set("branch", branch);
   }
-  // if (version) {
-  //   url.searchParams.set("version", version);
-  // }
   let annots = await fetch(url)
     .then(checkResponseStatus)
     .then((response) => response.json())
@@ -669,9 +664,7 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
 
 const annotsFile = getUrl("annotations", basename, "-annotations.json", folder);
 const branch = globals.urlParams.get("branch");
-// const version = globals.urlParams.get("version");
 const commit = globals.urlParams.get("commit");
-// const annotsLoading = loadAnnotations(annotsFile, { branch, version, uuid });
 const annotsLoading = loadAnnotations(annotsFile, { branch, commit });
 
 const facesLoading = fetch(`/clustered-files/`)
