@@ -1123,7 +1123,11 @@ window.addEventListener("keydown", function (event) {
     // following comments use "ctrl + __", same as "cmd + __" for mac
     if (event.key == "s") {
       // ctrl + s is save shortcut
-      commitsPopup.show();
+      if (!globals.dirty) {
+        notification.show("No changes to save.");
+        return;
+      }
+      savePopup.show();
       event.preventDefault(); // prevent default action when this shortcut is pressed
     } else if (event.key == "z") {
       if (event.shiftKey) {
