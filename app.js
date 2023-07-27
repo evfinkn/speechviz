@@ -142,34 +142,47 @@ app.get("/users", (req, res) => {
 
 /**
  * Adds a file to the repository if not added and / or commits it if it has changes.
- * Used for adding and committing files that have been (re)processed externally.
+ * Used for adding and committing files that have been (re)processed externally (e.g.,
+ * by the pipeline) to ensure the changes are tracked in the fossil repository.
  * @param {string} file - The file to add or commit (if necessary).
  * @returns {Promise<?string>} - The commit hash if a commit was made, null otherwise.
  */
 const addAndCommit = async (file) => {
   const inRepo = await fossil.isInRepo(file);
-  // !inRepo because file will need to be commit after adding
+  // !inRepo because file will need to be commit after adding (hasChanges would detect
+  // the ADDED change, but since we already know it's not in the repo, we can avoid
+  // spawning an additional process)
   const needsCommit = !inRepo || (await fossil.hasChanges(file));
   if (!inRepo) {
     await fossil.add(file);
   }
   if (needsCommit) {
-    // get the datetime for when the file was updated
+    // get the datetime for when the file was updated so the commit reflects the
+    // actual time the file was (re)processed
     const mtimeMs = (await fs.promises.stat(file)).mtimeMs;
+    // use toISOString because fossil expects YYYY-MM-DDTHH:mm:ss.sssZ (ISO 8601)
     const date = new Date(mtimeMs).toISOString();
     let message = `Reprocess ${path.basename(file)}`;
     if (!inRepo) {
       message = `Process ${path.basename(file)}`;
     }
+    // just commit to trunk because it's the main, default branch
     return await fossil.commit(file, { message, branch: "trunk", date });
   }
-  return null;
+  return null; // no commit was made, so no commit hash to return
 };
 
+// GET /versions/:file(*)?limit=n&branch=branchName
+// Returns the version history of the specified file, optionally limited to the
+// specified number of versions and/or the specified branch.
 // (*) allows any characters, including slashes, in the file parameter
 // this is necessary for when the file is in a subdirectory of the annotations folder
+// if we ever upgrade to express 5.x, "(*)" will be incorrect and need to be replaced
+// with "(.*)": https://github.com/expressjs/express/issues/2495
 app.get("/versions/:file(*)", async (req, res) => {
-  const { limit = -1, branch = null } = req.query;
+  console.log(req.query);
+  const { limit = -1, branch = null } = req.query; // limit -1 means no limit
+  // req.params.file is the matched value of :file(*)
   const file = path.join(__dirname, "data", "annotations", req.params.file);
   try {
     await addAndCommit(file); // ensure the latest version of the file is in the repo
@@ -180,13 +193,16 @@ app.get("/versions/:file(*)", async (req, res) => {
   }
 });
 
+// GET /annotations/:file(*)?commit=commitHash&branch=branchName
+// Returns the contents of the specified file, optionally from the specified commit
+// or branch.
 app.get("/annotations/:file(*)", async (req, res) => {
   const file = path.join(__dirname, "data", "annotations", req.params.file);
   try {
     // if the client has a commit hash (from a version entry), use that
     let commit = req.query.commit;
+    // otherwise, get the commit from the file and version
     if (commit === undefined) {
-      // otherwise, get the commit from the file and version
       await addAndCommit(file); // ensure the latest version of the file is in the repo
       // branch defaults to null so that we get the latest version from any branch
       const branch = req.query.branch || null;
@@ -195,7 +211,6 @@ app.get("/annotations/:file(*)", async (req, res) => {
       const latestVer = (await fossil.versions(file, { limit: 1, branch }))[0];
       commit = latestVer.commit;
     }
-    // get the annotations for the version
     const annotations = await fossil.cat(file, { checkin: commit });
     // can't use res.json because annotations is a string
     res.type("json").send(annotations);
@@ -204,6 +219,8 @@ app.get("/annotations/:file(*)", async (req, res) => {
   }
 });
 
+// GET /branch/list
+// Returns the list of branches in the fossil repository.
 app.get("/branch/list", async (req, res) => {
   try {
     res.json(await fossil.branch.list());
@@ -216,8 +233,8 @@ app.get("/branch/list", async (req, res) => {
  * Commits annotations to the repository.
  * @param {string} file - The file to commit annotations to.
  * @param {string} branch - The branch to commit to.
- * @param {object} annotations - The annotations to commit.
- * @param {object} [options] - Options for the commit.
+ * @param {Object<string, any>} annotations - The annotations to commit.
+ * @param {Object<string, any>} [options] - Options for the commit.
  * @param {string} [options.user] - The user to commit as.
  * @param {string} [options.message] - The commit message.
  * @returns {Promise<fossil.VersionEntry>} - The version entry for the commit.
@@ -227,8 +244,13 @@ const saveAnnotations = async (
   annotations,
   { branch, message, user } = {}
 ) => {
+  // FIXME: I used "\t" for the indent because I think fossil uses line-based diffs
+  //        and using "\t" makes the json use multiple lines (so only the changed lines
+  //        will be different) but I'm not actually sure that's how it works. Need to
+  //        test this.
   const json = JSON.stringify(annotations, null, "\t");
   return new Promise((resolve, reject) => {
+    // createWriteStream is used instead of writeFile for better performance
     const writeStream = fs.createWriteStream(file);
     writeStream.on("error", reject);
     // when the stream is finished writing, commit the file
@@ -250,6 +272,9 @@ const saveAnnotations = async (
   });
 };
 
+// POST /annotations/:file(*)
+// Saves the annotations to the specified file. The annotations (and optionally the
+// branch and commit message) are in the request body as JSON.
 app.post("/annotations/:file(*)", async (req, res) => {
   const user = req.session.user;
   const file = path.join(__dirname, "data", "annotations", req.params.file);
