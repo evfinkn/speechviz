@@ -1121,6 +1121,7 @@ window.addEventListener("keydown", function (event) {
   // ctrl key for windows, meta key is command for mac
   if (event.ctrlKey || event.metaKey) {
     // following comments use "ctrl + __", same as "cmd + __" for mac
+    event.preventDefault(); // prevent default action when this shortcut is pressed
     if (event.key == "s") {
       // ctrl + s is save shortcut
       if (!globals.dirty) {
@@ -1128,7 +1129,6 @@ window.addEventListener("keydown", function (event) {
         return;
       }
       savePopup.show();
-      event.preventDefault(); // prevent default action when this shortcut is pressed
     } else if (event.key == "z") {
       if (event.shiftKey) {
         // ctrl + shift + z is redo shortcut
