@@ -3344,6 +3344,15 @@ var File = class File extends TreeItem {
     // take out mono if the previous file was viewing the mono version in
     // case this file doesn't have a mono version
     tempWindowLocationHref = tempWindowLocationHref.replace("&mono=True", "");
+    // Find the position of "&commit=" in the string
+
+    const index = tempWindowLocationHref.indexOf("&commit=");
+
+    // If "&commit=" is found, remove everything after it
+    if (index !== -1) {
+      tempWindowLocationHref = tempWindowLocationHref.substring(0, index);
+    }
+
     window.location.href = tempWindowLocationHref;
   }
 };
