@@ -586,6 +586,9 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
     global.highestId = 0;
     return; // no annotations found (the fetch failed), so just return
   }
+  if (annots?.notes) {
+    document.getElementById("notes").value = annots.notes;
+  }
   // If annots is an object, get the annotations from it. Otherwise, annots is an array
   annots = annots?.annotations ?? annots;
   const isOldFormat = Array.isArray(annots[0]);
