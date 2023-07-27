@@ -1122,8 +1122,8 @@ window.addEventListener("keydown", function (event) {
   // ctrl key for windows, meta key is command for mac
   if (event.ctrlKey || event.metaKey) {
     // following comments use "ctrl + __", same as "cmd + __" for mac
-    event.preventDefault(); // prevent default action when this shortcut is pressed
     if (event.key == "s") {
+      event.preventDefault(); // prevent default action when this shortcut is pressed
       // ctrl + s is save shortcut
       if (!globals.dirty) {
         notification.show("No changes to save.");
