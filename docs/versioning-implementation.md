@@ -46,7 +46,7 @@ The following endpoints are used to interact with the version history:
 
   - `?limit=n` can be used to limit the number of versions returned. It defaults to -1
     (no limit).
-  - `?branch=branch` can be used to only return versions on the given branch. When
+  - `?branch=branchName` can be used to only return versions on the given branch. When
     omitted, versions from all branches are returned.
 
   The response is a JSON array of objects containing info about each version. See
@@ -68,9 +68,9 @@ The following endpoints are used to interact with the version history:
 - `GET /annotations/:file` returns the JSON contents of the file at a given version.
   The following query parameters specify which version of annotations to return:
 
-  - `?commit=commit` specifies the version to return. It must be a valid Fossil commit
-    hash.
-  - `?branch=branch` can be used to return the latest version on the given branch.
+  - `?commit=commitHash` specifies the version to return. It must be a valid Fossil
+    commit hash.
+  - `?branch=branchName` can be used to return the latest version on the given branch.
     `?branch` is ignored when `?commit` is specified. When both `?commit` and `?branch`
     are omitted, the latest version of the file on any branch is returned.
 
@@ -146,6 +146,12 @@ In addition to the above commands, _fossil.js_ provides the following functions:
   Fossil uses internally to store artifacts, commits, etc.
   _[views.sql](queries/views.sql)_ and _[getVersions.sql](queries/getVersions.sql)_
   are the SQL queries used by this function.
+
+The basic process of all of these functions is:
+
+1. Build the command to run from the given arguments.
+1. Run the command using `child_process.spawn`.
+1. Return the output of the command (after parsing it if necessary).
 
 ## Why Fossil?
 
