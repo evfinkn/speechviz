@@ -14,9 +14,9 @@ SELECT json_object(
     'user',
     artifact.user,
     'datetime',
-    datetime(artifact.mtime, 'subsec'),
+    datetime(artifact.mtime),
     'unixtime',
-    unixepoch(artifact.mtime, 'subsec'),
+    unixepoch(artifact.mtime),
     'tags',
     (
       SELECT json_group_object(tag.tagname, tag.value)
