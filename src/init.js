@@ -865,7 +865,8 @@ fetch("load", {
 })
   .then(checkResponseStatus)
   .then((res) => res.json())
-  .then((data) => {
+  .then(async (data) => {
+    await annotsLoading;
     const notes = document.getElementById("notes");
     // we prioritize notes.value because if notes has a value, then it was loaded from
     // the annotations (which is the new behavior), so we don't want to overwrite it
