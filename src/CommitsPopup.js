@@ -120,8 +120,15 @@ const CommitsPopup = class CommitsPopup {
       (option) => option.text === globals.currentVersion.branch
     );
 
-    const currentVersion = this.versions[globals.currentVersion.commit];
-    currentVersion.element.style.border = "3px solid #a4f05d";
+    this.setCurrentVersion();
+  }
+
+  setCurrentVersion() {
+    if (this.currentVersion) {
+      this.currentVersion.element.style.border = "";
+    }
+    this.currentVersion = this.versions[globals.currentVersion.commit];
+    this.currentVersion.element.style.border = "3px solid #a4f05d";
   }
 
   updateEntries() {
@@ -151,6 +158,10 @@ const CommitsPopup = class CommitsPopup {
           this.branchOptions.set(branch, option);
         }
       });
+    }
+
+    if (this.currentVersion.commit !== globals.currentVersion.commit) {
+      this.setCurrentVersion();
     }
 
     this.versions.forEach((ver) => {
