@@ -591,6 +591,12 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
   }
   // If annots is an object, get the annotations from it. Otherwise, annots is an array
   annots = annots?.annotations ?? annots;
+
+  // If the text changes in notes, there is something to save
+  document.getElementById("notes").addEventListener("input", function () {
+    globals.dirty = true;
+  });
+
   const isOldFormat = Array.isArray(annots[0]);
   // backwards compatibility for our old annots format
   if (isOldFormat) {
