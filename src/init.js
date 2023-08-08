@@ -555,12 +555,38 @@ const loadWords = async () => {
       playable: false,
       color: "#00000000",
     });
+
+    let x = 0;
+    let top = 1;
+    const newline = "\n";
+
     words.map((word) => {
       // posibile bug in peaks.js, previously we let the color get set by wordsGroup,
       // but in latest version we need to set it here because calling points.update
       // doesn't update the color on the waveform
       word["color"] = "#00000000";
+
+      // // -   -   -
+      // //  - - - - -
+      // //   -   -   -
+      // // stagger middle
+      if (x % 2 === 1) word.labelText = `${newline.repeat(1)}${word.labelText}`;
+      // don't stagger
+      else if (top === 1) top = 0;
+      // stagger bottom
+      else {
+        top = 1;
+        word.labelText = `${newline.repeat(2)}${word.labelText}`;
+      }
+
+      // // -  -  -
+      // //  -  -  -
+      // //   -  -  -
+      // word.labelText = `${newline.repeat(x % 3)}${word.labelText}`;
+
+      x += 1;
     });
+
     peaks.points.add(words).forEach((word) => {
       new Word(word, { parent: wordsGroup });
     });
