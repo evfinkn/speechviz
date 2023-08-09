@@ -3,7 +3,6 @@ const path = require("path");
 const fs = require("fs");
 const logger = require("morgan");
 const cookieParser = require("cookie-parser");
-const bodyParser = require("body-parser");
 
 const index = require("./routes/index-route");
 const clusteredFaces = require("./routes/face-cluster-route");
@@ -54,8 +53,9 @@ function checkAuthentification(req, res, next) {
 }
 
 app.use(logger("dev"));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
+// urlencoded is needed for the login form
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(checkAuthentification);
@@ -469,18 +469,17 @@ const resetMoved = db.transaction((filename, user, highestId) => {
   }
 });
 
-app.use(express.json()); // <==== parse request body as JSON
 app.post("/isSplitChannel", (req, res) => {
   const folder = req.body.folder;
   const basename = req.body.basename;
   let waveforms;
-  if (folder !== null && folder !== null)
+  if (folder) {
     waveforms = readdirAndFilter(`data/waveforms/${folder}`);
-  else waveforms = readdirAndFilter("data/waveforms");
+  } else {
+    waveforms = readdirAndFilter("data/waveforms");
+  }
   // if it has a -mono waveform it must be a split-channel file
-  if (waveforms.indexOf(`${basename}-waveform-mono.json`) !== -1)
-    res.send(true);
-  else res.send(false);
+  res.send(waveforms.indexOf(`${basename}-waveform-mono.json`) !== -1);
 });
 
 app.use("/reset-moved/", (req, res) => {
