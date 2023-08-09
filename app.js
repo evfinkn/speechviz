@@ -116,28 +116,8 @@ app.get("/clustered-files", (req, res) => {
   res.status(404).send("Not Found");
 });
 
-app.get("/filelist", (req, res) => {
-  const files = {};
-  files.audio = readdirAndFilter("data/audio");
-  files.video = readdirAndFilter("data/video");
-  files.cluster = readdirAndFilter("data/faceClusters");
-  res.send(files);
-});
-
 app.get("/user", (req, res) => {
   res.send(req.session.user);
-});
-app.get("/users", (req, res) => {
-  if (req.session.user == "admin") {
-    res.send(
-      db
-        .prepare("SELECT user FROM users")
-        .all()
-        .map((user) => user.user)
-    );
-  } else {
-    res.send([req.session.user]);
-  }
 });
 
 /**
