@@ -42,22 +42,10 @@ html(lang="en")
                   .dropdown
                     button#speed-button Speed
                     #speed-dropdown.dropdown-content.speed-content
-                      button.spdbtn 0.25x
-                      br
-                      button.spdbtn 0.5x
-                      br
-                      button.spdbtn 0.75x
-                      br
-                      button.spdbtn 1x
-                      br
-                      button.spdbtn 1.25x
-                      br
-                      button.spdbtn 1.5x
-                      br
-                      button.spdbtn 1.75x
-                      br
-                      button.spdbtn 2x
-                      br
+                      //- use a for loop to generate the speed buttons from 0.25 to 2
+                      - for (var i = 0.25; i <= 2; i += 0.25)
+                        button.spdbtn #{ i }x
+                        br
                   a#zoomin.icon.button-off(
                     href="javascript:;",
                     title="Zoom in"
