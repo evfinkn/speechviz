@@ -166,7 +166,6 @@ const addAndCommit = async (file) => {
 // if we ever upgrade to express 5.x, "(*)" will be incorrect and need to be replaced
 // with "(.*)": https://github.com/expressjs/express/issues/2495
 app.get("/versions/:file(*)", async (req, res) => {
-  console.log(req.query);
   const { limit = -1, branch = null } = req.query; // limit -1 means no limit
   // req.params.file is the matched value of :file(*)
   const file = path.join(__dirname, "data", "annotations", req.params.file);
