@@ -247,8 +247,11 @@ const saveAnnotations = async (
           branch,
           user,
         });
-        // FIXME: this won't (?) necessarily return the version entry for the commit
-        resolve((await fossil.versions(file, { branch }))[0]);
+        // unless the server has commit something else after the commit above,
+        // the latest version will be the one we just committed
+        // (we should handle this better in the future, but the same issue exists
+        // elsewhere in the code so for now it's fine)
+        resolve((await fossil.versions(file, { branch, limit: 1 }))[0]);
       } catch (err) {
         reject(err);
       }
