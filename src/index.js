@@ -3,7 +3,7 @@ import { html, checkResponseStatus } from "./util.js";
 /**
  * Opens the main interface to visualize the specified file.
  * @param {string} fileName - The name of the file / folder to open.
- * @param {string} type - The type of file to open. Either `"audio"` or `"video"`.
+ * @param {("audio"|"video"|"views")} type - The type of file to open.
  */
 const openViz = function (fileName, type) {
   let url = `/viz?type=${type}`;
@@ -17,16 +17,18 @@ const openViz = function (fileName, type) {
 };
 
 /**
- * Creates a div containing a radio input and a label.
- * @param {string} id - The string to use for the input's id and value attributes
- *      and the label's text.
+ * Creates a label with a radio input as its first child.
+ * @param {string} id - The string to use for the input's id.
  * @param {string} name - The string to use for the input's name attribute.
+ * @param {string} [value=id] - The string to use for the input's value attribute and
+ *    the label's text.
+ * @returns {!HTMLLabelElement} The created label element containing the radio input.
  */
-const createRadioDiv = function (id, name) {
-  return html`<div>
-        <input type="radio" id="${id}" name="${name}" value="${id}"></input>
-        <label for="${id}">${id}</label>
-    </div>`;
+const createRadio = function (id, name, value = id) {
+  return html`<label>
+        <input type="radio" id="${id}" name="${name}" value="${value}"></input>
+        ${value}
+    </label>`;
 };
 
 const initAudioSelection = async () => {
@@ -35,14 +37,14 @@ const initAudioSelection = async () => {
   checkResponseStatus(response);
   const audioFiles = await response.json();
   audioFiles.forEach((audioFile) => {
-    const div = createRadioDiv(audioFile, "audio-selection");
-    div.firstElementChild.addEventListener("change", function () {
+    const label = createRadio(audioFile, "audio-selection");
+    label.firstElementChild.addEventListener("change", function () {
       // uncheck manually because otherwise after using back button to go
       // back to this page, the radio button will still be checked
       this.checked = false;
       openViz(this.value, "audio");
     });
-    audioFieldset.append(div);
+    audioFieldset.append(label);
   });
 };
 
@@ -52,13 +54,31 @@ const initVideoSelection = async () => {
   checkResponseStatus(response);
   const videoFiles = await response.json();
   videoFiles.forEach((videoFile) => {
-    const div = createRadioDiv(videoFile, "video-selection");
-    div.firstElementChild.addEventListener("change", function () {
+    const label = createRadio(videoFile, "video-selection");
+    label.firstElementChild.addEventListener("change", function () {
       this.checked = false;
       openViz(this.value, "video");
     });
-    videoFieldset.append(div);
+    videoFieldset.append(label);
   });
+};
+
+const initViewSelection = async () => {
+  const viewFieldset = document.getElementById("view-selection");
+  const response = await fetch("/views");
+  checkResponseStatus(response);
+  const viewFiles = await response.json();
+  viewFiles
+    .filter((viewFile) => !viewFile.endsWith("-times.csv"))
+    .forEach((viewFile) => {
+      // viewFile matches corresponding audio folder name, so give it a different id
+      const label = createRadio(`${viewFile}-view`, "view-selection", viewFile);
+      label.firstElementChild.addEventListener("change", function () {
+        this.checked = false;
+        openViz(this.value, "views");
+      });
+      viewFieldset.append(label);
+    });
 };
 
 const initFaceSelection = async () => {
@@ -68,23 +88,26 @@ const initFaceSelection = async () => {
   const faceFolders = await response.json();
   faceFolders.forEach((faceFolder) => {
     // faceFolder matches corresponding video file name, so give it a different id
-    const div = createRadioDiv(faceFolder + " Clusters", "face-selection");
-    div.firstElementChild.addEventListener("change", function () {
+    const label = createRadio(
+      `${faceFolder}-cluster`,
+      "face-selection",
+      faceFolder
+    );
+    label.firstElementChild.addEventListener("change", function () {
       this.checked = false;
       // when radio button clicked, show each cluster folder to choose which to view
       // remove its different id, go to correct folder
       window.location.assign(
-        `/clustered-faces?` +
-          `dir=${this.value.replace(" Clusters", "")}` +
-          `&inFaceFolder=false`
+        `/clustered-faces?dir=${this.value}&inFaceFolder=false`
       );
     });
-    faceFieldset.append(div);
+    faceFieldset.append(label);
   });
 };
 
 initAudioSelection();
 initVideoSelection();
+initViewSelection();
 initFaceSelection();
 
 const accordians = document.getElementsByClassName("accordion");
