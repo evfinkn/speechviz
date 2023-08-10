@@ -40,15 +40,21 @@ app.set("view engine", "pug");
  */
 function checkAuthentification(req, res, next) {
   const reqUrl = req.originalUrl;
-  if (reqUrl.startsWith("/login")) {
+  if (reqUrl.startsWith("/login") || req?.session?.authenticated) {
+    // If the user is authenticated, then we can continue to the next handler
+    // Otherwise if the user is trying to login, we need to let them through
     next();
   } else {
-    if (!req.session || !req.session.authenticated) {
-      // will redirect to requested url after successful login
-      res.redirect(`/login?referer=${reqUrl}`);
-    } else {
-      next();
-    } // authenticated
+    // not authenticated so redirect to login page
+    let loginUrl = "/login";
+    // only add the requested url as a parameter if it isn't "/"
+    // because "/" is the default when no referer is given
+    if (reqUrl !== "/") {
+      // reqUrl needs to be encoded so that characters like "&" don't break the url
+      // encodeURI doesn't encode "&" so we need to use encodeURIComponent
+      loginUrl += `?referer=${encodeURIComponent(reqUrl)}`;
+    }
+    res.redirect(loginUrl);
   }
 }
 
