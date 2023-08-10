@@ -16,3 +16,4 @@ pre-commit
 orjson
 pyyaml
 loguru
+pydub
