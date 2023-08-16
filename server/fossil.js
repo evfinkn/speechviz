@@ -123,7 +123,13 @@ class ProcessError extends Error {
    * @param {string} stderr - The stderr output of the process.
    */
   constructor(command, args, exitCode, stdout, stderr) {
-    super(`Command "${command}" exited with code ${exitCode}`);
+    const message =
+      "Process exited with non-zero exit code." +
+      `\nCommand: ${command} ${args.join(" ")}` +
+      `\nExit code: ${exitCode}` +
+      `\nstdout: ${stdout === "" ? "none" : stdout}` +
+      `\nstderr: ${stderr}`;
+    super(message);
     this.name = this.constructor.name;
     this.command = command;
     this.args = args;
