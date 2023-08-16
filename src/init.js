@@ -594,8 +594,6 @@ const loadWords = async () => {
     let top = true;
     const newline = "\n";
 
-    console.log(words);
-
     words.map((word) => {
       // posibile bug in peaks.js, previously we let the color get set by wordsGroup,
       // but in latest version we need to set it here because calling points.update
