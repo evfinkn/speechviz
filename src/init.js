@@ -230,6 +230,40 @@ const createTreeItemFromObj = (obj, parent = null) => {
     options.renamable = true;
   }
 
+  // stagger words for readability
+  if (args[0] === "Words") {
+    let count = 0;
+    let top = true;
+    const newline = "\n";
+
+    children?.forEach((child) => {
+      // // -   -   -
+      // //  - - - - -
+      // //   -   -   -
+      // // stagger middle
+      if (count % 2 === 1)
+        child.arguments[0].labelText = `${newline.repeat(1)}${
+          child.arguments[0].labelText
+        }`;
+      // don't stagger
+      else if (top) top = false;
+      // stagger bottom
+      else {
+        top = 1;
+        child.arguments[0].labelText = `${newline.repeat(2)}${
+          child.arguments[0].labelText
+        }`;
+      }
+      // // -  -  -
+      // //  -  -  -
+      // //   -  -  -
+      // child.arguments[0].labelText = `${newline.repeat(count % 3)}${
+      //  child.arguments[0].labelText
+      // }`;
+      count += 1;
+    });
+  }
+
   const treeItem = new type(...args, options);
   children?.forEach((child) => {
     // imported groups can have a property "childrenOptions" that will be
@@ -556,9 +590,11 @@ const loadWords = async () => {
       color: "#00000000",
     });
 
-    let x = 0;
-    let top = 1;
+    let count = 0;
+    let top = true;
     const newline = "\n";
+
+    console.log(words);
 
     words.map((word) => {
       // posibile bug in peaks.js, previously we let the color get set by wordsGroup,
@@ -570,9 +606,10 @@ const loadWords = async () => {
       // //  - - - - -
       // //   -   -   -
       // // stagger middle
-      if (x % 2 === 1) word.labelText = `${newline.repeat(1)}${word.labelText}`;
+      if (count % 2 === 1)
+        word.labelText = `${newline.repeat(1)}${word.labelText}`;
       // don't stagger
-      else if (top === 1) top = 0;
+      else if (top) top = false;
       // stagger bottom
       else {
         top = 1;
@@ -584,7 +621,7 @@ const loadWords = async () => {
       // //   -  -  -
       // word.labelText = `${newline.repeat(x % 3)}${word.labelText}`;
 
-      x += 1;
+      count += 1;
     });
 
     peaks.points.add(words).forEach((word) => {
