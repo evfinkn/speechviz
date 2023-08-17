@@ -9,6 +9,15 @@
     - [VRS files](#vrs-files)
     - [Speech recognition](#speech-recognition)
     - [Face detection and clustering](#face-detection-and-clustering)
+  - [University of Iowa specific](#university-of-iowa-specific)
+    - [Add survey data to stats tree on interface](#add-survey-data-to-stats)
+  - [Combine folders of data](#combine-folders)
+    - [Combine stats](#combine-stats)
+    - [Combine audio](#combine-audio)
+  - [Large Language Model Scripts](#llm)
+    - [Auto Annotate News](#auto-annotate-news)
+    - [Compare Manual to Auto News](#compare-manual-news-annotation-to-llm-annotations)
+    - [Maximize Auto News Accuracy](#maximize-accuracy-with-different-parameters)
   - [Interface](#interface)
 
 ## Processing
@@ -112,7 +121,7 @@ cd ..
 python3 setup.py install
 ```
 
-A rather annoying bug can occur where the version of your gcc compiler is higher than
+A bug can occur where the version of your gcc compiler is higher than
 versions compatible with cuda. If you get a message saying `DLIB WILL NOT USE CUDA`,
 try changing `cmake` and `python3` lines to the following respectively:
 
@@ -183,6 +192,57 @@ too few, lower epsilon.
 This will make a few folders in a folder given to outputs. `Face-1` is faces that it
 found to be noise, and `Face0`, `Face1`, etc. are folders containing the faces it
 thinks are the same person.
+
+## University of Iowa specific
+Some scripts are specific to a study conducted by the University of Iowa on hearing aids. Below are some instructions on how to use these scripts and specifications of what they do.
+
+### Add survey data to stats
+If you have a file of the survey data from the uiowa study, you can add it to the interface by running
+```bash
+python3 scripts/add_survey_to_stats.py path/to/survey data/stats/folder
+```
+where path/to/survey is the path to the file containing the survey data. The file should be a csv file with the following columns:run, type, eVal. and where stats folder is the folder containing the stats files. This will add the survey data to the stats files in the stats folder.
+
+## Combine folders
+
+### Combine stats
+With this script you can combine all the stats files of a folder with one another into one large csv file allowing for comparison of the various stats collected (i.e. snr, number of conversattion turns, etc.) between all files in that folder.
+```bash
+python3 scripts/combine_stats.py data/stats/folder output/file/path
+```
+where data/stats/folder is the path to the folder containing all the seperate stats files. This will create a file called output/file/path (or whatever you substitute it with) that has all the stats in one folder.
+
+### Combine audio
+With this script you can combine all the audio files of a folder into one audio file allowing for annotations made from this file to be back propagated to all the files that make it up (in development).
+```bash
+python scripts/concat_audio.py data/audio/folder
+```
+where data/audio/folder is the path to the folder containing all the seperate audio files. This will create a file called data/views/folder.wav. 
+
+
+## LLM
+For the LLM scripts, one must download a quantized llm that uses the standard alpaca prompt template (or rewrite the prompts the scripts use to match your llms prompt). The exact model used when coding this (open-llama-7B-open-instruct.ggmlv3.q6_K.bin) can be downloaded here https://huggingface.co/TheBloke/open-llama-7b-open-instruct-GGML and should be placed in scripts/models.
+
+### Auto annotate news
+To automatically generate annotations on files for what is suspected to be news, one must first perform speech recognition as detailed above. The llm takes in the transcript and decides if it is more likely to be news or not news (other). If the llm thinks it is news, it will annotate the part of the file where that transcript starts and ends as news. To run this script, run
+```bash
+python3 scripts/news_analysis.py data/transcription/folder
+```
+where data/transcription/folder is the path to the folder containing the transcription file. This will automatically update the annotation file for that file to reflect what is thought to be news on the interface
+
+### Compare manual news annotation to llm annotations
+If you wish to compare the accuracy of the llm's news annotations with manual annotations you have done via the interface (where you add a label that contains News in the name, i.e. ManualNews, and give the segments added to it the same name,i.e. ManualNews1 etc.) you can run
+```bash
+python3 scripts/compare_llm_news_to_truth.py data/annotations/file
+```
+where data/annotations file is the path to the annotations file/folder you wish to compare the accuracy of. This will output the accuracy of the llm's news annotations compared to the manual annotations at the file scripts/output/llmMatchPercentages.csv.
+
+### Maximize accuracy with different parameters
+If you have manual news annotations to compare and want to find what parrameters on news_analysis.py result in the highest accuracy you can use this script as an example (needs to be updated to whatever files you annotated manually) and look at the results. It does a combination of news_analyis.py with different parameters, followed by compare_llm_news_to_truth.py and analyze_llm_match_percentages.py to output into one csv at scripts/output/llmMatchPercentages.csv. To run this script, run
+```bash
+python3 scripts/maximize_news_numbers_and_threshold_accuracy.py
+```
+This will output the average accuracy of all the llm's news annotations compared to all the manual annotations at the file scripts/output/llmMatchPercentages.csv and you can see which is highest and use that.
 
 ## Interface
 
