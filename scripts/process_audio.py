@@ -277,6 +277,7 @@ def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
         if path.name == "data":
             route_dir(path / "audio", scan_dir=scan_dir, **kwargs)
             route_dir(path / "video", scan_dir=scan_dir, **kwargs)
+            route_dir(path / "views", scan_dir=scan_dir, **kwargs)
         else:
             route_dir(path, scan_dir=False, **kwargs)
 
@@ -317,14 +318,20 @@ def process_audio(
     )
 
     for ancestor in path.parents:
-        if ancestor.name == "audio" or ancestor.name == "video":
+        if (
+            ancestor.name == "audio"
+            or ancestor.name == "video"
+            or ancestor.name == "views"
+        ):
             if ancestor.parent.name == "data":
                 data_dir = ancestor.parent
                 parent_dir = path.parent.relative_to(ancestor)
                 break
     # an else for a for loop is executed if break is never reached
     else:
-        raise ValueError("Input file must be a descendant of data/audio or data/video.")
+        raise ValueError(
+            "Input file must be a descendant of data/audio, data/video, or data/views"
+        )
 
     # filepaths for the waveform, and segments files
     waveform_path = data_dir / "waveforms" / parent_dir / f"{path.stem}-waveform.json"
