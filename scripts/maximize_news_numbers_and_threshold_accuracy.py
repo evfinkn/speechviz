@@ -42,6 +42,23 @@ transcription_file_paths = [
     "data/transcriptions/SWII1005/run48-transcription.json",
 ]
 
+# add in the first 15 files of each folder as I hand annotated those as well
+# for folder in range(1001, 1012):
+#     folder_prefix = f"SWII{folder:04d}"
+#     for run_number in range(15):
+#         file_path =
+#           f"data/transcriptions/{folder_prefix}/run{run_number}-transcription.json"
+#         transcription_file_paths.append(file_path)
+
+for folder in range(1001, 1006):
+    folder_prefix = f"SWII{folder:04d}"
+    for run_number in range(15):
+        file_path = (
+            f"data/transcriptions/{folder_prefix}/run{run_number}-transcription.json"
+        )
+        transcription_file_paths.append(file_path)
+
+
 segment_file_paths = [
     "data/annotations/SWII1008/run200-annotations.json",
     "data/annotations/SWII1003/run122-annotations.json",
@@ -75,6 +92,19 @@ segment_file_paths = [
     "data/annotations/SWII1005/run48-annotations.json",
 ]
 
+# add in the first 15 files of each folder as I hand annotated those as well
+# for folder in range(1001, 1012):
+#     folder_prefix = f"SWII{folder:04d}"
+#     for run_number in range(15):
+#         file_path =
+#           f"data/annotations/{folder_prefix}/run{run_number}-annotations.json"
+#         segment_file_paths.append(file_path)
+for folder in range(1001, 1006):
+    folder_prefix = f"SWII{folder:04d}"
+    for run_number in range(15):
+        file_path = f"data/annotations/{folder_prefix}/run{run_number}-annotations.json"
+        segment_file_paths.append(file_path)
+
 # try to find the best threshold and/or number of sentences to group by
 # for accuracy in detecting news
 
@@ -88,7 +118,7 @@ result_file = "scripts/output/maximize_news_accuracy.csv"
 
 
 for num_sentences in np.arange(1, 6):
-    for threshold in np.arange(0.5, 2.1, 0.1):
+    for threshold in np.arange(0.5, 3.1, 0.2):
         for file in transcription_file_paths:
             news_analysis.main(
                 {
