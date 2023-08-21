@@ -290,7 +290,7 @@ if __name__ == "__main__":
         "path",
         nargs="*",
         type=pathlib.Path,
-        help="Path to the transcription JSON file",
+        help="Path to the transcriptions JSON file",
     )
     parser.add_argument(
         "--numbers",
