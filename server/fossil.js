@@ -8,6 +8,7 @@
 //    don't conflict with other functions, e.g., `versions` and `versionsCmd`, `branch`
 //    and `branchCmd`, etc.
 
+const fs = require("fs");
 const path = require("path");
 const { spawn } = require("node:child_process");
 
@@ -450,6 +451,31 @@ async function commitCmd(
     })
   );
   return commitId;
+}
+
+// this function isn't in fossilUtil because it isn't speechviz-specific
+/**
+ * Writes content to a file and commits it to the repository.
+ * @param {string} file - The file to write to and commit.
+ * @param {string} content - The content to write to the file.
+ * @param {Object} commitOptions - Options for the commit.
+ * @returns {Promise<string>} - A promise that resolves to the commit hash.
+ */
+function writeAndCommit(file, content, commitOptions) {
+  return new Promise((resolve, reject) => {
+    // createWriteStream is used instead of writeFile for better performance
+    const writeStream = fs.createWriteStream(file);
+    writeStream.on("error", reject);
+    writeStream.on("finish", () => {
+      try {
+        resolve(commitCmd(file, commitOptions));
+      } catch (err) {
+        reject(err);
+      }
+    });
+    writeStream.write(content);
+    writeStream.end();
+  });
 }
 
 /**
@@ -972,6 +998,7 @@ async function isInRepo(file) {
 module.exports = {
   add: addCmd,
   commit: commitCmd,
+  writeAndCommit,
   branch: branchCmd,
   update: updateCmd,
   withBranch,
