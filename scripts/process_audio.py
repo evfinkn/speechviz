@@ -538,15 +538,15 @@ def process_audio(
                 annot_data["annotations"] = annotations
 
                 with segs_path.open("w") as segs_file:
-                    json.dump(annot_data, segs_file)
+                    json.dump(annot_data, segs_file, indent=2)
             # otherwise rewrite as the new formats
             else:
                 with segs_path.open("w") as segs_file:
-                    json.dump(tree_items, segs_file)
+                    json.dump(tree_items, segs_file, indent=2)
         except FileNotFoundError or json.JSONDecodeError:
             # file doesn't exist yet or empty json file
             with segs_path.open("w") as segs_file:
-                json.dump(tree_items, segs_file)
+                json.dump(tree_items, segs_file, indent=2)
 
         logger.trace("Calculating stats")
 
