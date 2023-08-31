@@ -49,8 +49,7 @@ const getItemsById = (treeItem, exclude = null, itemsById = {}) => {
   // segments have an object with an id property as the first argument,
   // but other types like groups just have the id as the first argument
   if (treeItem?.arguments == undefined) {
-    console.log("in getItemsById, treeItem.arguments is undefined:");
-    console.log(treeItem);
+    console.log("in getItemsById, treeItem.arguments is undefined");
     return itemsById;
   }
   const id = treeItem.arguments[0]?.id ?? treeItem.arguments[0];
@@ -59,12 +58,16 @@ const getItemsById = (treeItem, exclude = null, itemsById = {}) => {
   }
   if (exclude === null) {
     itemsById[id] = treeItem;
+    console.log("calling getItemsById (since exclude === null) on:");
+    console.log(treeItem);
     treeItem?.options?.children?.forEach((child) => {
       getItemsById(child, exclude, itemsById);
     });
   } else if (!exclude[id]) {
     itemsById[id] = treeItem;
   } else if (treeItem?.options?.children) {
+    console.log("calling getItemsById (since exclude[id]) on:");
+    console.log(treeItem);
     // only need to check children if this item isn't new (i.e., it's in exclude)
     // because new items will have all new children, so checking them is redundant
     treeItem.options.children.forEach((child) => {
@@ -287,6 +290,8 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
   // handle formatVersion 2 and 3 (see format-specification.md)
   const oldAnnots = oldAnnotations?.annotations ?? oldAnnotations;
   const oldItemsById = {};
+  console.log("calling getItemsById on oldAnnots:");
+  console.log(oldAnnots);
   oldAnnots.forEach((item) => getItemsById(item, undefined, oldItemsById));
   // Special case for Words because they might not be in the initial annotations, and
   // we know we don't want to propagate them if they're new.
@@ -302,6 +307,8 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
   annots.forEach((item) => updateSegmentIds(item, annotsFilename));
   // newItemsById has all new items beyond the initial items created by the pipeline
   const newItemsById = {};
+  console.log("calling getItemsById on annots:");
+  console.log(annots);
   annots.forEach((item) => getItemsById(item, oldItemsById, newItemsById));
   // filter out new segments (e.g., segments added to an existing group like Speaker 1)
   // because the group to propagate them to is unclear
@@ -319,6 +326,8 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
     // filter out old segments that were propagated to avoid duplicates and id conflicts
     fileAnnots = filterOldPropagatedSegments(fileAnnots, annotsFilename);
     const fileItemsById = {};
+    console.log("calling getItemsById on fileAnnots:");
+    console.log(fileAnnots);
     fileAnnots.forEach((item) => getItemsById(item, undefined, fileItemsById));
 
     // create a copy of newGroups because getGroupOverlapping modifies groups in place
