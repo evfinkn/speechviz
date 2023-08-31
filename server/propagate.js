@@ -48,6 +48,11 @@ const parseCsv = (readStream, config = {}) => {
 const getItemsById = (treeItem, exclude = null, itemsById = {}) => {
   // segments have an object with an id property as the first argument,
   // but other types like groups just have the id as the first argument
+  if (treeItem.arguments === undefined) {
+    console.log("in getItemsById, treeItem.arguments is undefined:");
+    console.log(treeItem);
+    return itemsById;
+  }
   const id = treeItem.arguments[0]?.id ?? treeItem.arguments[0];
   if (!(typeof id === "string")) {
     return itemsById;
@@ -71,6 +76,11 @@ const getItemsById = (treeItem, exclude = null, itemsById = {}) => {
 
 const updateSegmentIds = (item, filename) => {
   if (item.type === "Segment") {
+    if (!item?.arguments?.[0]?.id) {
+      console.log("in updateSegmentIds, item.arguments[0].id is undefined:");
+      console.log(item);
+      return;
+    }
     item.arguments[0].id = `${filename}-${item.arguments[0].id}`;
   } else if (item?.options?.children) {
     item.options.children.forEach((child) => updateSegmentIds(child, filename));
@@ -90,7 +100,7 @@ const filterOldPropagatedSegments = (item, filename) => {
   } else if (item?.options?.children?.length > 0) {
     if (item.type === "PeaksGroup") {
       item.options.children = item.options.children.filter((child) => {
-        if (!child.arguments[0].id) {
+        if (!child?.arguments?.[0]?.id) {
           // if the last commit was from processing the file, the segments won't
           // have ids (and are therefore not propagated segments)
           return true;
@@ -144,6 +154,11 @@ const getGroupOverlapping = (group, fileItemsById, interval) => {
   group.options.children = group.options.children ?? [];
   if (group.type === "PeaksGroup") {
     group.options.children = group.options.children.filter((segment) => {
+      if (segment.arguments === undefined) {
+        console.log("in getGroupOverlapping, segment.arguments is undefined:");
+        console.log(segment);
+        return false;
+      }
       const segmentArgs = segment.arguments[0];
       const segmentInterval = [segmentArgs.startTime, segmentArgs.endTime];
       return isOverlapping(interval, segmentInterval);
@@ -166,6 +181,11 @@ const adjustSegmentTimes = (group, interval) => {
     const startOffset = interval[0];
     const end = interval[1] - startOffset;
     group.options.children.forEach((segment) => {
+      if (segment.arguments === undefined) {
+        console.log("in adjustSegmentTimes, segment.arguments is undefined:");
+        console.log(segment);
+        return;
+      }
       const segmentProps = segment.arguments[0];
       segmentProps.startTime -= startOffset;
       segmentProps.endTime -= startOffset;
@@ -185,6 +205,11 @@ const adjustSegmentTimes = (group, interval) => {
 
 const getPath = (item) => {
   if (item.parent) {
+    if (item.parent.arguments === undefined) {
+      console.log("in getPath, item.parent.arguments is undefined:");
+      console.log(item.parent);
+      return [[], {}];
+    }
     const id = item.parent.arguments[0];
     const [pathIds, pathById] = getPath(item.parent, path);
     pathIds.push(id);
@@ -224,7 +249,17 @@ const mergeInto = (item, other) => {
     other.options.children.push(...item.options.children);
   } else if (item?.options?.children && other?.options) {
     item.options.children.forEach((itemChild) => {
+      if (itemChild.arguments === undefined) {
+        console.log("in mergeInto, itemChild.arguments is undefined:");
+        console.log(itemChild);
+        return;
+      }
       const otherChild = other.options.children.find((otherChild) => {
+        if (otherChild.arguments === undefined) {
+          console.log("in mergeInto, otherChild.arguments is undefined:");
+          console.log(otherChild);
+          return;
+        }
         return otherChild.arguments[0] === itemChild.arguments[0];
       });
       if (otherChild) {
@@ -323,6 +358,11 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
       }
 
       const index = parentChildren.findIndex((child) => {
+        if (child.arguments === undefined) {
+          console.log("in propagate, child.arguments is undefined:");
+          console.log(child);
+          return false;
+        }
         return child.arguments[0] === group.arguments[0];
       });
       if (index === -1) {
