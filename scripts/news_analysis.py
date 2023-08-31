@@ -19,6 +19,7 @@ def prompt_open_llama(
     path: pathlib.Path,
     numbers,
     threshold,
+    model,
     reprocess=False,
 ):
     for ancestor in path.parents:
@@ -61,6 +62,18 @@ def prompt_open_llama(
 
     grouped_sentences = group_sentences(data, numbers, threshold)
 
+    # llama 2 takes different instruction set
+    # if model == "scripts/models/ggml-model-q4_0.bin":
+    #     prompt_template = (
+    #         "{instruction}\n\nClassifying the transcript as "
+    #         "news or other in only one word, it is "
+    #     )
+    # else:
+    #     prompt_template = (
+    #         "Below is an instruction that describes a task. Write a response that"
+    #         " appropriately completes the request.\n\n###"
+    #         " Instruction:\n{instruction}\n\n### Response:"
+    #     )
     prompt_template = (
         "Below is an instruction that describes a task. Write a response that"
         " appropriately completes the request.\n\n###"
@@ -95,7 +108,6 @@ def prompt_open_llama(
 
         output = llm(inputt, max_tokens=100)
 
-        # print(inputt)
         print(output.get("choices")[0].get("text"))
 
         matches_other = re.findall(
@@ -298,6 +310,20 @@ if __name__ == "__main__":
         action="store_true",
         help="Reprocess transcriptions detected to have already been processed",
     )
+    parser.add_argument(
+        "-m",
+        "--model",
+        type=str,
+        default="scripts/models/open-llama-13b-open-instruct.ggmlv3.q6_K.bin",
+        help="Pass in an llm model to classify news/other",
+    )
 
     args = vars(parser.parse_args())
+
+    print(args["model"])
+
+    llm = Llama(
+        model_path=args["model"],
+        verbose=False,
+    )
     main(args)
