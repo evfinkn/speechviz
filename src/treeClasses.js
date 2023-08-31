@@ -17,6 +17,7 @@ import Picker from "vanilla-picker";
 import globals from "./globals.js";
 import { undoStorage, Actions } from "./UndoRedo.js";
 import { Attribute, Attributes } from "./Attribute.js";
+import IdCounter from "./IdCounter.js";
 import {
   htmlToElement,
   compareProperty,
@@ -43,12 +44,6 @@ const basename = globals.basename;
 // I don't know if rankSnrs needed to use &#9312 instead of \u2460 (which would've
 // made the regex simpler: /[\u2460-\u246F] ?/gu) but I'm keeping it just in case
 const circleNumRegex = /&#93(1[2-9]|2[0-4]) ?/g;
-
-const idNumRegex = /(\d+)$/;
-const parseIdNum = (id) => {
-  const match = idNumRegex.exec(id);
-  return match && match[1] ? parseInt(match[1]) : null;
-};
 
 const getMaxValueEntry = (countsMap) => {
   if (countsMap.size === 0) {
@@ -2247,18 +2242,7 @@ var Segment = class Segment extends PeaksItem {
    */
   static byId = {};
 
-  // FIXME: explain more and better, mention also that this is for versioning
-  // Peaks.js uses a counter to assign ids to segments if they don't have one. However,
-  // we want to use our own ids to ensure proper numbering when loading after segments
-  // are removed and saved. For example, if we have segments 1, 2, and 3, and we remove
-  // segment 2, after saving and reloading, Peaks.js will assign segments 1 and 3 the
-  // ids 1 and 2, respectively.
-  /**
-   * Counter for the next id number to assign to a `Segment`. Always 1 greater than
-   * the largest id number of any `Segment` in the tree.
-   * @type {number}
-   */
-  static #idCounter = 0;
+  static #idCounter = new IdCounter("segment.%d");
 
   /**
    * Names of properties to get in `getProperties`.
@@ -2273,17 +2257,6 @@ var Segment = class Segment extends PeaksItem {
     "labelText",
     "treeText",
   ];
-
-  static #getNextId() {
-    return `segment.${Segment.#idCounter++}`;
-  }
-
-  static #updateIdCounter(id) {
-    const idNum = parseIdNum(id);
-    if (idNum !== null && idNum >= Segment.#idCounter) {
-      Segment.#idCounter = idNum + 1;
-    }
-  }
 
   /**
    * @param {(!PeaksSegment|!PeaksSegmentOptions)} segment - The Peaks segment or the
@@ -2318,20 +2291,20 @@ var Segment = class Segment extends PeaksItem {
   ) {
     if (segment.constructor.name !== "Segment") {
       if (segment.id) {
-        Segment.#updateIdCounter(segment.id);
+        Segment.#idCounter.update(segment.id);
       } else {
-        segment.id = Segment.#getNextId();
+        segment.id = Segment.#idCounter.next();
         // this shouldn't happen, but just in case
         while (Segment.byId[segment.id]) {
           console.warn(
             `Segment with generated id ${segment.id} already exists. Generating new id.`
           );
-          segment.id = Segment.#getNextId();
+          segment.id = Segment.#idCounter.next();
         }
       }
       segment = peaks.segments.add(segment);
     } else {
-      Segment.#updateIdCounter(segment.id);
+      Segment.#idCounter.update(segment.id);
     }
     super(segment, {
       parent,
@@ -2595,24 +2568,7 @@ var Point = class Point extends PeaksItem {
    */
   static byId = {};
 
-  // see Segment for explanation of why this is necessary
-  /**
-   * Counter for the next id number to assign to a `Point`. Always 1 greater than
-   * the largest id number of any `Point` in the tree.
-   * @type {number}
-   */
-  static #idCounter = 0;
-
-  static #getNextId() {
-    return `point.${Point.#idCounter++}`;
-  }
-
-  static #updateIdCounter(id) {
-    const idNum = parseIdNum(id);
-    if (idNum !== null && idNum >= Point.#idCounter) {
-      Point.#idCounter = idNum + 1;
-    }
-  }
+  static #idCounter = new IdCounter("point.%d");
 
   /**
    * @param {!PeaksPoint} point - The Peaks point being represented in the tree by
@@ -2650,20 +2606,20 @@ var Point = class Point extends PeaksItem {
   ) {
     if (point.constructor.name !== "Point") {
       if (point.id) {
-        Point.#updateIdCounter(point.id);
+        Point.#idCounter.update(point.id);
       } else {
-        point.id = Point.#getNextId();
+        point.id = Point.#idCounter.next();
         // this shouldn't happen, but just in case
         while (Point.byId[point.id]) {
           console.warn(
             `Point with generated id ${point.id} already exists. Generating new id.`
           );
-          point.id = Point.#getNextId();
+          point.id = Point.#idCounter.next();
         }
       }
       point = peaks.points.add(point);
     } else {
-      Point.#updateIdCounter(point.id);
+      Point.#idCounter.update(point.id);
     }
     super(point, {
       parent,

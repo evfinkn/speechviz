@@ -21,6 +21,7 @@ import { Channels } from "./ChannelAudio.js";
 import { FiltersPopup } from "./FiltersPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
 import { notification } from "./Notification.js";
+import IdCounter from "./IdCounter.js";
 import {
   arrayMean,
   objectMap,
@@ -363,6 +364,9 @@ const analysis = new Group("Analysis", { parent: tree, playable: true });
 // they're in the annotations
 let custom, labeled;
 
+// counts number of custom segments added, used for custom segment's labelText
+const customSegIdCounter = new IdCounter("Custom Segment %d", 1);
+
 if (folder !== undefined && folder !== null) {
   // in a folder
   const files = new CarouselGroup("Files", {
@@ -671,6 +675,11 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
 
   if (TreeItem.byId.Custom) {
     custom = TreeItem.byId.Custom;
+    // update the custom segment id counter so that new custom segments don't
+    // have the same text as an existing custom segment
+    custom.children.forEach((segment) => {
+      customSegIdCounter.update(segment.text);
+    });
   } else {
     custom = new PeaksGroup("Custom", {
       parent: analysis,
@@ -896,11 +905,9 @@ document
     addLabel(labelInput);
   });
 
-// counts number of custom segments added, used for custom segment's labelText
-let segmentCounter = 1;
 const audioDuration = peaks.player.getDuration();
 document.getElementById("add-segment").addEventListener("click", function () {
-  const label = "Custom Segment " + segmentCounter++;
+  const label = customSegIdCounter.next();
   const curTime = peaks.player.getCurrentTime();
   // endTime is either 2.5 seconds after current time
   // or the end of the audio (whichever's shortest)
@@ -947,7 +954,6 @@ fetch("load", {
     // only add database segments if custom segments weren't loaded from annotations
     // (since new format stores custom segments there)
     if (custom.children.length === 0 && labeled.children.length === 0) {
-      const regex = /Custom Segment /;
       peaks.segments
         .add(data.segments, { overwrite: true })
         .forEach((segment) => {
@@ -981,9 +987,8 @@ fetch("load", {
           }
           parent.sortBy("startTime");
 
-          if (segment.labelText.match(regex)) {
-            segmentCounter++;
-          }
+          // if the segment isn't a custom segment, the counter won't be updated
+          customSegIdCounter.update(segment.labelText);
         });
     }
 
