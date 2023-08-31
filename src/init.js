@@ -944,44 +944,48 @@ fetch("load", {
     // since the new annotations format was implemented)
     notes.value = notes.value || data.notes || "";
 
-    const regex = /Custom Segment /;
-    peaks.segments
-      .add(data.segments, { overwrite: true })
-      .forEach((segment) => {
-        let parent = segment.path.at(-1);
-        if (!(parent in PeaksGroup.byId)) {
-          // parent group doesn't exist yet so add it
-          parent = new PeaksGroup(parent, {
-            parent: Group.byId[segment.path.at(-2)],
-            removable: true,
-            renamable: true,
-            color: getRandomColor(),
-            colorable: true,
-            copyTo: [labeled.children],
-          });
-        } else {
-          parent = PeaksGroup.byId[parent];
-        }
+    // only add database segments if custom segments weren't loaded from annotations
+    // (since new format stores custom segments there)
+    if (custom.children.length === 0 && labeled.children.length === 0) {
+      const regex = /Custom Segment /;
+      peaks.segments
+        .add(data.segments, { overwrite: true })
+        .forEach((segment) => {
+          let parent = segment.path.at(-1);
+          if (!(parent in PeaksGroup.byId)) {
+            // parent group doesn't exist yet so add it
+            parent = new PeaksGroup(parent, {
+              parent: Group.byId[segment.path.at(-2)],
+              removable: true,
+              renamable: true,
+              color: getRandomColor(),
+              colorable: true,
+              copyTo: [labeled.children],
+            });
+          } else {
+            parent = PeaksGroup.byId[parent];
+          }
 
-        if (segment.id in Segment.byId) {
-          // segment is a moved segment
-          const treeSegment = Segment.byId[segment.id];
-          treeSegment.segment = segment;
-          parent.addChildren(treeSegment);
-        } else {
-          new Segment(segment, {
-            parent: parent,
-            removable: true,
-            renamable: true,
-            moveTo: [labeled.children],
-          });
-        }
-        parent.sortBy("startTime");
+          if (segment.id in Segment.byId) {
+            // segment is a moved segment
+            const treeSegment = Segment.byId[segment.id];
+            treeSegment.segment = segment;
+            parent.addChildren(treeSegment);
+          } else {
+            new Segment(segment, {
+              parent: parent,
+              removable: true,
+              renamable: true,
+              moveTo: [labeled.children],
+            });
+          }
+          parent.sortBy("startTime");
 
-        if (segment.labelText.match(regex)) {
-          segmentCounter++;
-        }
-      });
+          if (segment.labelText.match(regex)) {
+            segmentCounter++;
+          }
+        });
+    }
 
     async function waitForFacesThenLoad() {
       // wait for the fetching of faces from file system to finish

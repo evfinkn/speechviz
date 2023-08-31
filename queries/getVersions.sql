@@ -38,5 +38,10 @@ WHERE (
     /* if :file is a directory, return entries for all files in it */
     -- OR lower(artifact.file) GLOB lower(:file || '/*')
   )
-ORDER BY artifact.mtime DESC
+ORDER BY CASE
+    /* https://stackoverflow.com/a/758660 */
+    /* ordering by -mtime DESC is the same as ordering by mtime ASC */
+    WHEN :order = 'asc' THEN -artifact.mtime
+    ELSE artifact.mtime -- default to ordering by mtime DESC
+  END DESC
 LIMIT coalesce(:limit, -1) -- -1 means no limit

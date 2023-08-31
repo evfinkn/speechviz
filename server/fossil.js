@@ -8,6 +8,7 @@
 //    don't conflict with other functions, e.g., `versions` and `versionsCmd`, `branch`
 //    and `branchCmd`, etc.
 
+const fs = require("fs");
 const path = require("path");
 const { spawn } = require("node:child_process");
 
@@ -452,6 +453,31 @@ async function commitCmd(
   return commitId;
 }
 
+// this function isn't in fossilUtil because it isn't speechviz-specific
+/**
+ * Writes content to a file and commits it to the repository.
+ * @param {string} file - The file to write to and commit.
+ * @param {string} content - The content to write to the file.
+ * @param {Object} commitOptions - Options for the commit.
+ * @returns {Promise<string>} - A promise that resolves to the commit hash.
+ */
+function writeAndCommit(file, content, commitOptions) {
+  return new Promise((resolve, reject) => {
+    // createWriteStream is used instead of writeFile for better performance
+    const writeStream = fs.createWriteStream(file);
+    writeStream.on("error", reject);
+    writeStream.on("finish", () => {
+      try {
+        resolve(commitCmd(file, commitOptions));
+      } catch (err) {
+        reject(err);
+      }
+    });
+    writeStream.write(content);
+    writeStream.end();
+  });
+}
+
 /**
  * Contains subcommands for `fossil tag` to control tags and properties.
  * @namespace
@@ -879,6 +905,8 @@ async function hasChanges(files = []) {
  * @param {number} [options.limit=-1] - The maximum number of versions to get. -1 is
  *    equivalent to no limit. Note that if `branch` is `null`, this limit will not be
  *    applied to each branch individually but to the total number of versions.
+ * @param {("asc"|"desc")} [options.order="desc"] - The order to get the versions in.
+ *   "asc" is oldest to newest, "desc" is newest to oldest.
  * @param {boolean} [options.parseNums=true] - Whether to parse numbers in tag values.
  *    Numbers are parsed using `parseFloat`.
  * @returns {!Promise<!VersionEntry[]>} A promise that resolves to an array of
@@ -886,14 +914,14 @@ async function hasChanges(files = []) {
  */
 async function versionsCmd(
   file,
-  { branch = null, limit = -1, parseNums = true } = {}
+  { branch = null, limit = -1, order = "desc", parseNums = true } = {}
 ) {
   // file has to be relative to the directory the repository is in since that's the
   // path stored in the database
   if (path.isAbsolute(file)) {
     file = path.relative(dataDir, file);
   }
-  const params = { file, branch, limit };
+  const params = { file, branch, limit, order };
   const lines = await sqlCmd(".read ../queries/getVersions.sql", params);
   return lines.map((line) => {
     const entry = JSON.parse(line);
@@ -907,6 +935,48 @@ async function versionsCmd(
     }
     return entry;
   });
+}
+
+/**
+ * Gets the oldest version of a file.
+ *
+ * Note that this doesn't return the contents of the oldest version, just the
+ * information about it.
+ * @param {string} file - The file to get the oldest version of. It should be a path
+ *    relative to the speechviz/data directory. If it is not, it will be converted to
+ *    one.
+ * @param {Object} options - Options for the command.
+ * @param {?string} [options.branch=null] - The branch to get the oldest version of.
+ *    If `null`, the oldest version from any branch will be returned.
+ * @param {boolean} [options.parseNums=true] - Whether to parse numbers in tag values.
+ *    Numbers are parsed using `parseFloat`.
+ * @returns {!Promise<!VersionEntry>} A promise that resolves to the VersionEntry for
+ *    the oldest version of the file.
+ */
+async function oldestVersion(file, { branch = null, parseNums = true } = {}) {
+  return (
+    await versionsCmd(file, { branch, limit: 1, order: "asc", parseNums })
+  )[0];
+}
+
+/**
+ * Gets the latest version of a file.
+ *
+ * Note that this doesn't return the contents of the latest version, just the
+ * information about it.
+ * @param {string} file - The file to get the latest version of. It should be a path
+ *    relative to the speechviz/data directory. If it is not, it will be converted to
+ *    one.
+ * @param {Object} options - Options for the command.
+ * @param {?string} [options.branch=null] - The branch to get the latest version of.
+ *    If `null`, the latest version from any branch will be returned.
+ * @param {boolean} [options.parseNums=true] - Whether to parse numbers in tag values.
+ *    Numbers are parsed using `parseFloat`.
+ * @returns {!Promise<!VersionEntry>} A promise that resolves to the VersionEntry for
+ *    the latest version of the file.
+ */
+async function latestVersion(file, { branch = null, parseNums = true } = {}) {
+  return (await versionsCmd(file, { branch, limit: 1, parseNums }))[0];
 }
 
 /**
@@ -928,6 +998,7 @@ async function isInRepo(file) {
 module.exports = {
   add: addCmd,
   commit: commitCmd,
+  writeAndCommit,
   branch: branchCmd,
   update: updateCmd,
   withBranch,
@@ -940,5 +1011,7 @@ module.exports = {
   cat: catCmd,
   grep: grepCmd,
   versions: versionsCmd,
+  oldestVersion,
+  latestVersion,
   isInRepo,
 };
