@@ -17,6 +17,8 @@ const db = new Database("speechviz.sqlite3");
 
 const fossil = require("./server/fossil");
 
+const dataDir = path.join(__dirname, "data");
+
 // use sessions
 const session = require("express-session");
 app.use(
@@ -168,7 +170,7 @@ const addAndCommit = async (file) => {
 app.get("/versions/:file(*)", async (req, res) => {
   const { limit = -1, branch = null } = req.query; // limit -1 means no limit
   // req.params.file is the matched value of :file(*)
-  const file = path.join(__dirname, "data", "annotations", req.params.file);
+  const file = path.join(dataDir, "annotations", req.params.file);
   try {
     await addAndCommit(file); // ensure the latest version of the file is in the repo
     const versionEntries = await fossil.versions(file, { limit, branch });
@@ -182,7 +184,7 @@ app.get("/versions/:file(*)", async (req, res) => {
 // Returns the contents of the specified file, optionally from the specified commit
 // or branch.
 app.get("/annotations/:file(*)", async (req, res) => {
-  const file = path.join(__dirname, "data", "annotations", req.params.file);
+  const file = path.join(dataDir, "annotations", req.params.file);
   try {
     // if the client has a commit hash (from a version entry), use that
     let commit = req.query.commit;
@@ -265,7 +267,7 @@ const saveAnnotations = async (
 // branch and commit message) are in the request body as JSON.
 app.post("/annotations/:file(*)", async (req, res) => {
   const user = req.session.user;
-  const file = path.join(__dirname, "data", "annotations", req.params.file);
+  const file = path.join(dataDir, "annotations", req.params.file);
   const { annotations, branch, message } = req.body;
   try {
     const version = await saveAnnotations(file, annotations, {
