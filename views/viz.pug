@@ -39,13 +39,6 @@ html(lang="en")
                     option(value="50")
                     option(value="100")
                     option(value="150")
-                  .dropdown
-                    button#speed-button Speed
-                    #speed-dropdown.dropdown-content.speed-content
-                      //- use a for loop to generate the speed buttons from 0.25 to 2
-                      - for (var i = 0.25; i <= 2; i += 0.25)
-                        button.spdbtn #{ i }x
-                        br
                   a#zoomin.icon.button-off(
                     href="javascript:;",
                     title="Zoom in"
@@ -70,7 +63,7 @@ html(lang="en")
                     title="Settings",
                     style="padding-left: 20px"
                   )
-                  br
+                  //- br
                   //- button#filters filters
                   br
                   button#versions versions
@@ -79,6 +72,26 @@ html(lang="en")
                   div
                     input#add-label-input(type="text", placeholder="label")
                     button#add-label-button Add Label
+                  br
+                  input#speed-slider(
+                    type="range",
+                    min="0.25",
+                    max="2",
+                    step="0.25",
+                    list="speed-ticks",
+                    value="1",
+                    autocomplete="off"
+                  )
+                  //- add whitespace to visually separate the label from the slider
+                  | &nbsp;&nbsp;
+                  //- vertical-align: top to align the label with the slider
+                  label#speed-label(
+                    for="speed-slider",
+                    style="vertical-align: top"
+                  ) 1.00x Speed
+                  datalist#speed-ticks
+                    - for (var i = 0.5; i < 2; i += 0.5)
+                      option(value=i)
               #column4.column4
                 textarea#notes(
                   rows="15",

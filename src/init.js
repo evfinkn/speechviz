@@ -1041,19 +1041,13 @@ saveButton.addEventListener("click", function () {
   savePopup.show();
 });
 
-// setting to change the speed at which the media plays
-const speedButton = document.getElementById("speed-button");
-const speedDropdown = document.getElementById("speed-dropdown");
-speedButton.addEventListener("click", function () {
-  speedDropdown.classList.toggle("show");
+const speedSlider = document.getElementById("speed-slider");
+const speedLabel = document.getElementById("speed-label");
+speedSlider.addEventListener("input", function () {
+  const speed = parseFloat(this.value);
+  media.playbackRate = speed;
+  speedLabel.innerHTML = `${speed.toFixed(2)}x Speed`;
 });
-
-const spdbtns = document.getElementsByClassName("spdbtn");
-for (let i = 0; i < spdbtns.length; i++) {
-  spdbtns[i].addEventListener("click", function () {
-    media.playbackRate = parseFloat(this.innerHTML.replace("x", ""));
-  });
-}
 
 // button for popup containing the settings that aren't usually changed
 const settingsButton = document.getElementById("settings");
@@ -1075,20 +1069,6 @@ commitsButton.addEventListener("click", function () {
 // filtersButton.addEventListener("click", function () {
 //   filtersPopup.show();
 // });
-
-// https://www.w3schools.com/howto/howto_js_dropdown.asp
-// Close the dropdown if the user clicks outside of it
-const dropdowns = document.getElementsByClassName("dropdown-content");
-window.onclick = function (event) {
-  if (!speedButton.contains(event.target)) {
-    for (let i = 0; i < dropdowns.length; i++) {
-      const openDropdown = dropdowns[i];
-      if (openDropdown.classList.contains("show")) {
-        openDropdown.classList.remove("show");
-      }
-    }
-  }
-};
 
 const contextMenus = [...document.getElementsByClassName("contextmenu")];
 

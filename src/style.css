@@ -407,45 +407,6 @@ li {
   cursor: pointer;
 }
 
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #f1f1f1;
-  overflow: auto;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-}
-
-#speed-button {
-  background-color: #3478f6;
-  color: white;
-  padding: 10px;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
-}
-
-#speed-button:hover,
-#speed-button:focus {
-  background-color: rgb(42, 100, 214);
-}
-
-.speed-content {
-  text-align: center;
-  width: 50px;
-}
-
-.spdbtn {
-  min-height: 25px;
-  font-size: 10px;
-  width: 100%;
-}
-
 .volume-input {
   width: 3.5em;
 }
