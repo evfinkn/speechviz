@@ -18,7 +18,7 @@ import SettingsPopup from "./SettingsPopup.js";
 import CommitsPopup from "./CommitsPopup.js";
 import SavePopup from "./SavePopup.js";
 import { Channels } from "./ChannelAudio.js";
-import { FiltersPopup } from "./FiltersPopup.js";
+// import { FiltersPopup } from "./FiltersPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
 import { notification } from "./Notification.js";
 import IdCounter from "./IdCounter.js";
@@ -1070,11 +1070,11 @@ commitsButton.addEventListener("click", function () {
   commitsPopup.show();
 });
 
-const filtersButton = document.getElementById("filters");
-const filtersPopup = new FiltersPopup();
-filtersButton.addEventListener("click", function () {
-  filtersPopup.show();
-});
+// const filtersButton = document.getElementById("filters");
+// const filtersPopup = new FiltersPopup();
+// filtersButton.addEventListener("click", function () {
+//   filtersPopup.show();
+// });
 
 // https://www.w3schools.com/howto/howto_js_dropdown.asp
 // Close the dropdown if the user clicks outside of it
