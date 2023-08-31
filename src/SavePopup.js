@@ -152,19 +152,28 @@ const SavePopup = class SavePopup {
       globals.folder
     );
     const annotsUrl = new URL(annotsFile, window.location.href);
+
+    // this is only used if globals.type === "views"
+    // don't need to worry about globals.folder since view can't be in a folder
+    const propagateFile = `/propagate/${globals.basename}-annotations.json`;
+    const propagateUrl = new URL(propagateFile, window.location.href);
+
+    const headers = { "Content-Type": "application/json; charset=UTF-8" };
     const body = JSON.stringify({ branch, message, annotations });
 
     let newVersion;
     // use try-catch instead of .catch() because we want to return if there's
     // an error, can't do that with .catch() because it's a callback
     try {
-      newVersion = await fetch(annotsUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json; charset=UTF-8" },
-        body,
-      })
+      newVersion = await fetch(annotsUrl, { method: "POST", headers, body })
         .then(checkResponseStatus)
         .then((res) => res.json());
+
+      if (globals.type === "views") {
+        await fetch(propagateUrl, { method: "POST", headers, body }).then(
+          checkResponseStatus
+        );
+      }
     } catch (err) {
       console.error(err);
       notification.show("Error saving changes.", "alert");

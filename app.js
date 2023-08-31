@@ -17,6 +17,7 @@ const db = new Database("speechviz.sqlite3");
 
 const fossil = require("./server/fossil");
 const fossilUtil = require("./server/fossilUtil");
+const propagate = require("./server/propagate");
 
 const dataDir = path.join(__dirname, "data");
 
@@ -196,6 +197,21 @@ app.post("/annotations/:file(*)", async (req, res) => {
     // elsewhere in the code so for now it's fine)
     const version = await fossil.latestVersion(file, { branch });
     res.json(version);
+  } catch (err) {
+    res.status(500).send(err.toString());
+  }
+});
+
+// POST /propagate/:file(*)
+// Propagates the new TreeItems in the annotations to the files the view was
+// created from and saves the new annotations to the file.
+app.post("/propagate/:file(*)", async (req, res) => {
+  const user = req.session.user;
+  const file = req.params.file;
+  const { annotations, branch, message } = req.body;
+  try {
+    await propagate(file, annotations, { user, branch, message });
+    res.status(200).end();
   } catch (err) {
     res.status(500).send(err.toString());
   }
