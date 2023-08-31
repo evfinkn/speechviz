@@ -48,7 +48,7 @@ const parseCsv = (readStream, config = {}) => {
 const getItemsById = (treeItem, exclude = null, itemsById = {}) => {
   // segments have an object with an id property as the first argument,
   // but other types like groups just have the id as the first argument
-  if (treeItem.arguments === undefined) {
+  if (treeItem?.arguments == undefined) {
     console.log("in getItemsById, treeItem.arguments is undefined:");
     console.log(treeItem);
     return itemsById;
@@ -154,7 +154,7 @@ const getGroupOverlapping = (group, fileItemsById, interval) => {
   group.options.children = group.options.children ?? [];
   if (group.type === "PeaksGroup") {
     group.options.children = group.options.children.filter((segment) => {
-      if (segment.arguments === undefined) {
+      if (segment?.arguments == undefined) {
         console.log("in getGroupOverlapping, segment.arguments is undefined:");
         console.log(segment);
         return false;
@@ -181,7 +181,7 @@ const adjustSegmentTimes = (group, interval) => {
     const startOffset = interval[0];
     const end = interval[1] - startOffset;
     group.options.children.forEach((segment) => {
-      if (segment.arguments === undefined) {
+      if (segment?.arguments == undefined) {
         console.log("in adjustSegmentTimes, segment.arguments is undefined:");
         console.log(segment);
         return;
@@ -205,7 +205,7 @@ const adjustSegmentTimes = (group, interval) => {
 
 const getPath = (item) => {
   if (item.parent) {
-    if (item.parent.arguments === undefined) {
+    if (item?.parent?.arguments == undefined) {
       console.log("in getPath, item.parent.arguments is undefined:");
       console.log(item.parent);
       return [[], {}];
@@ -249,13 +249,13 @@ const mergeInto = (item, other) => {
     other.options.children.push(...item.options.children);
   } else if (item?.options?.children && other?.options) {
     item.options.children.forEach((itemChild) => {
-      if (itemChild.arguments === undefined) {
+      if (itemChild?.arguments == undefined) {
         console.log("in mergeInto, itemChild.arguments is undefined:");
         console.log(itemChild);
         return;
       }
       const otherChild = other.options.children.find((otherChild) => {
-        if (otherChild.arguments === undefined) {
+        if (otherChild?.arguments == undefined) {
           console.log("in mergeInto, otherChild.arguments is undefined:");
           console.log(otherChild);
           return;
@@ -357,8 +357,14 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
         parentChildren = fileItemsById[id].options.children;
       }
 
+      if (group?.arguments == undefined) {
+        console.log("in propagate, group.arguments is undefined:");
+        console.log(group);
+        continue;
+      }
+
       const index = parentChildren.findIndex((child) => {
-        if (child.arguments === undefined) {
+        if (child?.arguments == undefined) {
           console.log("in propagate, child.arguments is undefined:");
           console.log(child);
           return false;
