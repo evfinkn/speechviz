@@ -114,21 +114,6 @@ var TreeItem = class TreeItem {
   static icons = groupIcons;
 
   /**
-   * Names of properties to get in `getProperties`.
-   * @type {!string[]}
-   * @see getProperties
-   * @static
-   */
-  static properties = [
-    "id",
-    "text",
-    "duration",
-    "removable",
-    "renamable",
-    "path",
-  ];
-
-  /**
    * Checks if a `TreeItem` by the given id exists.
    * @param {string} id - The id to check the existence of.
    * @returns {boolean} `true` if a TreeItem with `id` exists. Otherwise, `false`.
@@ -655,26 +640,6 @@ var TreeItem = class TreeItem {
    */
   get path() {
     return this.ancestors?.map((ancestor) => ancestor.id);
-  }
-
-  /**
-   * Gets the properties of this item specified by `properties`.
-   * @param {?Array.<string>=} exclude - Names of properties to exclude from the
-   *      returned `Object`.
-   * @returns {!Object.<string, any>} An `Object` containing this item's properties.
-   * @see properties
-   */
-  getProperties(exclude = null) {
-    exclude = exclude == null ? [] : exclude;
-    const obj = {};
-    this.constructors.forEach((ctor) =>
-      ctor.properties.forEach((property) => {
-        if (!exclude.includes(property)) {
-          obj[property] = this[property];
-        }
-      })
-    );
-    return obj;
   }
 
   *preorder(/** @type {?Array.<TreeItem>} */ exclude = null) {
@@ -2245,20 +2210,6 @@ var Segment = class Segment extends PeaksItem {
   static #idCounter = new IdCounter("segment.%d");
 
   /**
-   * Names of properties to get in `getProperties`.
-   * @type {!Array.<string>}
-   * @static
-   */
-  static properties = [
-    "startTime",
-    "endTime",
-    "editable",
-    "color",
-    "labelText",
-    "treeText",
-  ];
-
-  /**
    * @param {(!PeaksSegment|!PeaksSegmentOptions)} segment - The Peaks segment or the
    *      options to create it.
    * @param {?Object.<string, any>=} options - Options to customize the segment.
@@ -2717,13 +2668,6 @@ var PeaksGroup = class PeaksGroup extends Group {
    * @static
    */
   static byId = {};
-
-  /**
-   * Names of properties to get in `getProperties`.
-   * @type {!Array.<string>}
-   * @static
-   */
-  static properties = ["snr", "color", "colorable"];
 
   /**
    * The signal-to-noise ratio (SNR) of this `PeaksGroup` if it has one.
@@ -3321,14 +3265,6 @@ var Stat = class Stat extends TreeItem {
    * @static
    */
   static byId = {};
-
-  /**
-   * Names of properties to get in `getProperties`.
-   * @type {!string[]}
-   * @see getProperties
-   * @static
-   */
-  static properties = ["treeText"];
 
   /**
    * @param {string} id - The unique identifier to give the `Stat`.
