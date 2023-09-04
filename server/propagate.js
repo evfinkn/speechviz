@@ -46,28 +46,25 @@ const parseCsv = (readStream, config = {}) => {
 };
 
 const getItemsById = (treeItem, exclude = null, itemsById = {}) => {
-  // segments have an object with an id property as the first argument,
-  // but other types like groups just have the id as the first argument
-  if (treeItem?.arguments == undefined) {
-    console.log("in getItemsById, treeItem.arguments is undefined");
+  // for whatever reason undefined was showing up in fileAnnots, so this is a
+  // workaround to avoid errors
+  if (treeItem == undefined) {
     return itemsById;
   }
+  // segments have an object with an id property as the first argument,
+  // but other types like groups just have the id as the first argument
   const id = treeItem.arguments[0]?.id ?? treeItem.arguments[0];
   if (!(typeof id === "string")) {
     return itemsById;
   }
   if (exclude === null) {
     itemsById[id] = treeItem;
-    console.log("calling getItemsById (since exclude === null) on:");
-    console.log(treeItem);
     treeItem?.options?.children?.forEach((child) => {
       getItemsById(child, exclude, itemsById);
     });
   } else if (!exclude[id]) {
     itemsById[id] = treeItem;
   } else if (treeItem?.options?.children) {
-    console.log("calling getItemsById (since exclude[id]) on:");
-    console.log(treeItem);
     // only need to check children if this item isn't new (i.e., it's in exclude)
     // because new items will have all new children, so checking them is redundant
     treeItem.options.children.forEach((child) => {
@@ -320,6 +317,7 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
   const files = [];
   for (const { file, interval } of filePieces) {
     let fileAnnotations = JSON.parse(
+      // catAnnotations will commit the file if it has uncommitted changes
       await fossilUtil.catAnnotations(file, { branch })
     );
     let fileAnnots = fileAnnotations?.annotations ?? fileAnnotations;

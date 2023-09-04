@@ -531,6 +531,7 @@ const loadStats = async () => {
     const stats = new Group("Stats", {
       parent: analysis,
       playable: false,
+      saveable: false,
     });
 
     // https://gist.github.com/Jezternz/c8e9fafc2c114e079829974e3764db75
@@ -567,10 +568,7 @@ const loadStats = async () => {
         statToDisplay =
           arrays[0][i] + " ".repeat(difference) + ": " + arrays[1][i];
       }
-      new Stat(statToDisplay, {
-        parent: stats,
-        playable: false,
-      });
+      new Stat(statToDisplay, { parent: stats, saveable: false });
     }
   } catch (error) {
     output404OrError(error, "stats");

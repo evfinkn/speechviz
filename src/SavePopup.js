@@ -141,7 +141,9 @@ const SavePopup = class SavePopup {
     const analysisChildren = TreeItem.byId.Analysis.children;
     const annotations = {
       formatVersion: 3,
-      annotations: analysisChildren.map((child) => child.toObject()),
+      annotations: analysisChildren
+        .map((child) => child.toObject())
+        .filter((obj) => obj), // filter out nulls
       notes: document.getElementById("notes").value,
     };
 
