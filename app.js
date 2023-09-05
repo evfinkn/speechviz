@@ -61,8 +61,8 @@ function checkAuthentification(req, res, next) {
     res.redirect(loginUrl);
   }
 }
-
 app.use(logger("dev"));
+app.use(express.json({ limit: "50mb" }));
 app.use(express.json());
 // urlencoded is needed for the login form
 app.use(express.urlencoded({ extended: false }));
