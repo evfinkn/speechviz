@@ -32,7 +32,7 @@
     "mime": "^3.0.0",
     "morgan": "^1.10.0",
     "papaparse": "^5.4.1",
-    "peaks.js": "git+https://research-git.uiowa.edu/uiowa-audiology-reu-2022/peaks.js#v3.0.0-beta.11",
+    "peaks.js": "git+https://research-git.uiowa.edu/uiowa-audiology-reu-2022/peaks.js#v3.0.0",
     "plotly.js-gl2d-dist": "^2.18.1",
     "pug": "^3.0.2",
     "split.js": "^1.6.5",
