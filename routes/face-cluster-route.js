@@ -1,13 +1,13 @@
-var express = require("express");
-var router = express.Router();
+const express = require("express");
+const router = express.Router();
 const fs = require("fs");
 
 /* GET home page. */
 router.get("/", (req, res) => {
-  var inFace = req.query.inFaceFolder == "false" ? false : true;
+  const inFace = req.query.inFaceFolder == "false" ? false : true;
   req.session.inFaceFolder = inFace; // for app.js to know what we request
 
-  var faceFolder;
+  let faceFolder;
   if (req.query.faceFolder !== undefined) {
     // face folder changed
     faceFolder = req.query.faceFolder;
@@ -18,7 +18,7 @@ router.get("/", (req, res) => {
     faceFolder = req.session.faceFolder;
   }
 
-  var folder;
+  let folder;
   if (req.query.dir !== undefined) {
     // video we are looking at changed
     folder = req.query.dir;
@@ -27,7 +27,7 @@ router.get("/", (req, res) => {
     // keep the same dir
     folder = req.session.dir;
   }
-  var dir = "faceClusters/" + folder + "/";
+  const dir = "faceClusters/" + folder + "/";
 
   if (!inFace) {
     // user needs to pick which face folder to view

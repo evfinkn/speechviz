@@ -1,6 +1,6 @@
-var express = require("express");
-var router = express.Router();
-var db = require("better-sqlite3")("speechviz.sqlite3");
+const express = require("express");
+const router = express.Router();
+const db = require("better-sqlite3")("speechviz.sqlite3");
 
 const redirectToReferer = function (referer, res) {
   referer = referer ? decodeURIComponent(referer) : "/";
