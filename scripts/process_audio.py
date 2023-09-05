@@ -537,16 +537,24 @@ def process_audio(
 
                 annot_data["annotations"] = annotations
 
+                # get rid of any undefined
+                no_undef_annot_data = [x for x in annot_data if x is not None]
+
                 with segs_path.open("w") as segs_file:
-                    json.dump(annot_data, segs_file, indent=2)
+                    json.dump(no_undef_annot_data, segs_file, indent=2)
             # otherwise rewrite as the new formats
             else:
+                # get rid of any undefined
+                no_undef_tree_items = [x for x in tree_items if x is not None]
                 with segs_path.open("w") as segs_file:
-                    json.dump(tree_items, segs_file, indent=2)
+                    json.dump(no_undef_tree_items, segs_file, indent=2)
         except FileNotFoundError or json.JSONDecodeError:
             # file doesn't exist yet or empty json file
+
+            # get rid of any undefined
+            no_undef_tree_items = [x for x in tree_items if x is not None]
             with segs_path.open("w") as segs_file:
-                json.dump(tree_items, segs_file, indent=2)
+                json.dump(no_undef_tree_items, segs_file, indent=2)
 
         logger.trace("Calculating stats")
 
