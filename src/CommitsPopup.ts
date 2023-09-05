@@ -1,9 +1,14 @@
-import globals from "./globals.js";
+import globals from "./globals";
 import { html } from "./util.js";
+import type {Version} from "./globals"
+
+interface VersionPopup extends Version {
+  element: Element | Element[], /** The popup containing extra settings for configuring the interface. */
+}
 
 const getTimeAgoSpan = (date) => {
   const now = new Date();
-  const diff = Math.abs(now - date);
+  const diff = Math.abs(now.getTime() - date);
   const minutes = Math.floor(diff / 1000 / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
@@ -41,7 +46,7 @@ const CommitsPopup = class CommitsPopup {
         <a href="${ver.url}" class="commit-link">${ver.message}</a>
       </div>
       <span class="author-name">${ver.user}</span>
-      ${getTimeAgoSpan(ver.datetime)}
+      ${getTimeAgoSpan(new Date(ver.datetime))}
     </div>`;
   };
 
@@ -78,6 +83,11 @@ const CommitsPopup = class CommitsPopup {
    */
   branchOptions;
 
+  /**
+   * @type {import("./globals.js").VersionEntry}
+   */
+  currentVersion: any;
+
   constructor() {
     this.popup = html`<div class="popup"></div>`;
     document.body.append(this.popup);
@@ -89,18 +99,18 @@ const CommitsPopup = class CommitsPopup {
       <br />
       <div class="commits"></div>
     </div>`;
-    this.popupContent = popupContent;
-    this.popup.appendChild(popupContent);
-    this.closeButton = popupContent.children[0];
-    this.branchSelect = popupContent.children[1];
-    this.commitsDiv = popupContent.children[4];
+    this.popupContent = popupContent as HTMLElement;
+    this.popup.appendChild(this.popupContent);
+    this.closeButton = this.popupContent.querySelector('.close') as HTMLElement;
+    this.branchSelect = this.popupContent.querySelector('select') as HTMLSelectElement;
+    this.commitsDiv = this.popupContent.querySelector('.commits') as HTMLElement;
     this.closeButton.addEventListener("click", () => this.hide());
     this.branchSelect.addEventListener("change", () => this.updateEntries());
 
     // define and then use forEach instead of using map so that we can
     // add the commit hash as a property of the array within the forEach
     this.versions = [];
-    globals.versions.forEach((ver) => {
+    globals.versions.forEach((ver:VersionPopup) => {
       ver = { ...ver }; // copy the object
       ver.element = CommitsPopup.#makeVersionElement(ver);
       this.commitsDiv.appendChild(ver.element);
@@ -139,7 +149,7 @@ const CommitsPopup = class CommitsPopup {
       // globals.versions (since they were the most recent versions)
       const newVersions = globals.versions
         .slice(0, globals.versions.length - this.versions.length)
-        .map((ver) => {
+        .map((ver:VersionPopup) => {
           ver = { ...ver }; // copy the object
           ver.element = CommitsPopup.#makeVersionElement(ver);
           this.versions[ver.commit] = ver;

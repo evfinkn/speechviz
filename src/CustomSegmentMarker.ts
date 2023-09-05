@@ -8,6 +8,10 @@ import { Text } from "konva/lib/shapes/Text.js";
  * drag handle is higher.
  */
 const CustomSegmentMarker = class CustomSegmentMarker {
+  _options: any;
+  _label: any;
+  _handle: Rect;
+  _line: Line<{ x: number; y: number; stroke: any; strokeWidth: number; }>;
   // Code is practically exactly the code for the default segment marker
   // in Peaks, with 1 or 2 lines changed to make the handle higher.
 

@@ -1,6 +1,7 @@
-import Peaks from "peaks.js";
-import createSegmentMarker from "./CustomSegmentMarker.js";
+import Peaks, { PeaksInstance } from "peaks.js";
+import createSegmentMarker from "./CustomSegmentMarker";
 import { checkResponseStatus, removeExtension, getUrl } from "./util.js";
+import type {VersionEntry} from  "../server/fossil.js";
 
 // query parameters that appear in url, such as ?file=audio.mp3
 const urlParams = new URLSearchParams(window.location.search);
@@ -73,19 +74,35 @@ const channelNames = await fetch(channelsFile)
  * @prop {!Set.<string>} allBranches - The names of the branches in the repository.
  * @type {!Object.<string, any>}
  */
-const globals = {};
-// would've defined these properties in the object (in the line above this) but then
-// VSCode IntelliSense showed them but not properties added later (like globals.peaks)
-globals.urlParams = urlParams;
-globals.filename = filename;
-globals.basename = basename;
-globals.media = document.getElementById("media");
-globals.channelNames = channelNames;
-globals.mono = mono;
-globals.user = user;
-globals.dirty = false;
-globals.folder = folder;
-globals.type = type;
+interface Globals {
+  urlParams: URLSearchParams;
+  filename: string;
+  basename: string;
+  media: Element | null;
+  channelNames: string[];
+  mono: boolean;
+  user: string;
+  dirty: boolean;
+  folder: string;
+  type: string;
+  versions?: [Version];
+  fileBranches?: Set<string>;
+  currentVersion?: Version;
+  allBranches?: Set<string>;
+  peaks?: PeaksInstance;
+}
+
+/**
+ * Interface representing a version of the media file.
+ * @prop {string} url - The URL that will open the version in the interface.
+ */
+export interface Version extends VersionEntry {
+  url: string,
+}
+
+const globals:Globals = {
+  urlParams: urlParams, filename: filename, basename: basename, media: document.getElementById("media"), channelNames: channelNames, mono: mono, user: user, dirty: false, folder: folder, type: type,
+};
 
 const versionsFetchUrl = getUrl(
   "versions",
@@ -94,22 +111,21 @@ const versionsFetchUrl = getUrl(
   folder
 );
 
-/** @type {!Array<VersionEntry>} */
+/** @type {!Array<Version>} */
 const versions = await fetch(versionsFetchUrl)
   .then(checkResponseStatus)
   .then((response) => response.json());
-const versionUrl = new URL(window.location);
+const versionUrl = new URL(window.location.href);
 versionUrl.searchParams.delete("branch");
-versions.forEach((ver) => {
+versions.forEach((ver:Version) => {
   // switch the URL to the version's commit
   versionUrl.searchParams.set("commit", ver.commit);
   ver.url = versionUrl.toString();
-  ver.datetime = new Date(ver.datetime); // convert from ISO string to Date object
   versions[ver.commit] = ver; // add version to array by commit hash
 });
 globals.versions = versions;
 
-globals.fileBranches = new Set(versions.map((ver) => ver.branch));
+globals.fileBranches = new Set(versions.map((ver:Version) => ver.branch));
 
 if (globals.urlParams.has("commit")) {
   const commit = globals.urlParams.get("commit");
@@ -145,7 +161,7 @@ const options = {
     container: document.getElementById("zoomview-container"),
     waveformColor: "rgba(0,0,0,0.2)",
     playheadClickTolerance: 3,
-    wheelMode: "scroll",
+    wheelMode: "scroll" as "scroll",
   },
   overview: {
     container: document.getElementById("overview-container"),
