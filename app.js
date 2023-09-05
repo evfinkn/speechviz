@@ -88,14 +88,17 @@ app.get("/logout", (req, res) => {
 // ".DS_STORE" is a hidden file on mac in all folders
 // ".fslckout" is a hidden file in fossil repos
 const excludedFiles = new Set([".DS_Store", ".fslckout"]);
-const readdirAndFilter = (path) =>
-  fs.readdirSync(path).filter((file) => !excludedFiles.has(file));
+const readdirAndFilter = async (path) => {
+  const files = await fs.promises.readdir(path);
+  return files.filter((file) => !excludedFiles.has(file));
+};
 
-app.get("/clustered-files", (req, res) => {
-  if (fs.readdirSync("data/faceClusters/").includes(req.session.dir)) {
+app.get("/clustered-files", async (req, res) => {
+  const faceClusters = await readdirAndFilter("data/faceClusters/");
+  if (faceClusters.includes(req.session.dir)) {
     const files = {};
     const commonDir = "data/faceClusters/" + req.session.dir + "/";
-    files.cluster = readdirAndFilter(commonDir);
+    files.cluster = await readdirAndFilter(commonDir);
     files.inFaceFolder = req.session.inFaceFolder;
     files.dir = req.session.dir;
     if (req.session.inFaceFolder == true) {
@@ -104,8 +107,8 @@ app.get("/clustered-files", (req, res) => {
     } else {
       // serve an image from each cluster to viz for display
       const imageFiles = {};
-      files.cluster.forEach(function (folder) {
-        const images = readdirAndFilter(commonDir + folder);
+      for (const folder of files.cluster) {
+        const images = await readdirAndFilter(commonDir + folder);
         let noImageYet = true;
         while (noImageYet) {
           // grab first image in cluster and send to viz
@@ -115,7 +118,7 @@ app.get("/clustered-files", (req, res) => {
             imageFiles[folder] = fileName;
           }
         }
-      });
+      }
 
       files.images = imageFiles;
       files.dir = req.session.dir;
@@ -217,7 +220,8 @@ app.post("/propagate/:file(*)", async (req, res) => {
   }
 });
 
-const dataSubdirs = readdirAndFilter("data").filter((file) => {
+// can't use await readdirAndFilter because this isn't in an async function
+const dataSubdirs = fs.readdirSync("data").filter((file) => {
   return file !== "annotations";
 });
 // matches any request that start with "/subdir" where subdir is
@@ -225,22 +229,22 @@ const dataSubdirs = readdirAndFilter("data").filter((file) => {
 // escape is there because regex interprets string as is and doesn't escape for you
 // eslint-disable-next-line no-useless-escape
 const dataSubdirRegex = new RegExp(`\/(${dataSubdirs.join("|")})`);
-app.get(dataSubdirRegex, (req, res) => {
+app.get(dataSubdirRegex, async (req, res) => {
   const url = "data" + req.url;
-  fs.promises
-    .stat(url)
-    .then((stat) => {
-      // if it's a directory, return list of file names in that directory
-      if (stat.isDirectory()) {
-        return res.send(readdirAndFilter(url));
-      }
-      // if it's a file, return the file
-      else {
-        return res.sendFile(url, { root: __dirname });
-      }
-    })
+  try {
+    const stat = await fs.promises.stat(url);
+    // if it's a directory, return list of file names in that directory
+    if (stat.isDirectory()) {
+      return res.send(await readdirAndFilter(url));
+    }
+    // if it's a file, return the file
+    else {
+      return res.sendFile(url, { root: __dirname });
+    }
+  } catch (err) {
     // catch error from stat when file doesn't exist
-    .catch(() => res.status(404).send("Not Found"));
+    return res.status(404).send("Not Found");
+  }
 });
 
 const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
@@ -395,14 +399,14 @@ const resetMoved = db.transaction((filename, user, highestId) => {
   }
 });
 
-app.post("/isSplitChannel", (req, res) => {
+app.post("/isSplitChannel", async (req, res) => {
   const folder = req.body.folder;
   const basename = req.body.basename;
   let waveforms;
   if (folder) {
-    waveforms = readdirAndFilter(`data/waveforms/${folder}`);
+    waveforms = await readdirAndFilter(`data/waveforms/${folder}`);
   } else {
-    waveforms = readdirAndFilter("data/waveforms");
+    waveforms = await readdirAndFilter("data/waveforms");
   }
   // if it has a -mono waveform it must be a split-channel file
   res.send(waveforms.indexOf(`${basename}-waveform-mono.json`) !== -1);
