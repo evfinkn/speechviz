@@ -3,15 +3,10 @@ const router = express.Router();
 const fs = require("fs");
 const mime = require("mime/lite");
 
-// A set of files to exclude file lists.
-// ".DS_STORE" is a hidden file on mac in all folders
-// ".fslckout" is a hidden file in fossil repos
-const excludedFiles = new Set([".DS_Store", ".fslckout"]);
-const readdirAndFilter = (path) =>
-  fs.readdirSync(path).filter((file) => !excludedFiles.has(file));
+const { readdirAndFilter } = require("../server/io");
 
 /* GET home page. */
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   const { file, folder, type } = req.query;
   // for displaying clustered faces
   if (file) {
@@ -29,7 +24,7 @@ router.get("/", (req, res) => {
     // redirect to the first file in the folder
     const folderPath = `data/${type}/${folder}`;
     try {
-      const files = readdirAndFilter(folderPath);
+      const files = await readdirAndFilter(folderPath);
       const url =
         files.length === 0
           ? "/" // folder is empty so nothing to show

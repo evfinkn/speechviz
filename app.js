@@ -18,6 +18,7 @@ const db = new Database("speechviz.sqlite3");
 const fossil = require("./server/fossil");
 const fossilUtil = require("./server/fossilUtil");
 const propagate = require("./server/propagate");
+const { readdirAndFilter } = require("./server/io");
 
 const dataDir = path.join(__dirname, "data");
 
@@ -83,15 +84,6 @@ app.get("/logout", (req, res) => {
   res.redirect("/login");
   return;
 });
-
-// A set of files to exclude file lists.
-// ".DS_STORE" is a hidden file on mac in all folders
-// ".fslckout" is a hidden file in fossil repos
-const excludedFiles = new Set([".DS_Store", ".fslckout"]);
-const readdirAndFilter = async (path) => {
-  const files = await fs.promises.readdir(path);
-  return files.filter((file) => !excludedFiles.has(file));
-};
 
 app.get("/clustered-files", async (req, res) => {
   const faceClusters = await readdirAndFilter("data/faceClusters/");

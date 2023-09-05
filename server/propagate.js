@@ -6,18 +6,9 @@ const Papa = require("papaparse");
 const fossil = require("./fossil");
 const fossilUtil = require("./fossilUtil");
 
-const dataDir = path.join(__dirname, "../data");
+const { write } = require("./io");
 
-const write = (file, content) => {
-  return new Promise((resolve, reject) => {
-    // createWriteStream is used instead of writeFile for better performance
-    const writeStream = fs.createWriteStream(file);
-    writeStream.on("error", reject);
-    writeStream.on("finish", resolve);
-    writeStream.write(content);
-    writeStream.end();
-  });
-};
+const dataDir = path.join(__dirname, "../data");
 
 const parseCsv = (readStream, config = {}) => {
   return new Promise((resolve, reject) => {

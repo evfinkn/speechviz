@@ -8,9 +8,10 @@
 //    don't conflict with other functions, e.g., `versions` and `versionsCmd`, `branch`
 //    and `branchCmd`, etc.
 
-const fs = require("fs");
 const path = require("path");
 const { spawn } = require("node:child_process");
+
+const { write } = require("./io");
 
 // fossil.js is in speechviz/server, hence the ../ to get to speechviz/data
 const dataDir = path.resolve(__dirname, "../data");
@@ -461,21 +462,9 @@ async function commitCmd(
  * @param {Object} commitOptions - Options for the commit.
  * @returns {Promise<string>} - A promise that resolves to the commit hash.
  */
-function writeAndCommit(file, content, commitOptions) {
-  return new Promise((resolve, reject) => {
-    // createWriteStream is used instead of writeFile for better performance
-    const writeStream = fs.createWriteStream(file);
-    writeStream.on("error", reject);
-    writeStream.on("finish", () => {
-      try {
-        resolve(commitCmd(file, commitOptions));
-      } catch (err) {
-        reject(err);
-      }
-    });
-    writeStream.write(content);
-    writeStream.end();
-  });
+async function writeAndCommit(file, content, commitOptions) {
+  await write(file, content);
+  return commitCmd(file, commitOptions);
 }
 
 /**
