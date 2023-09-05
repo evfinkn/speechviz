@@ -14,3 +14,4 @@ scripts/combineAndPadAudio.py
 logs
 scripts/output/llmMatchPercentages.csv
 scripts/output/maximize_news_accuracy.csv
+built

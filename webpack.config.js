@@ -9,15 +9,29 @@ module.exports = {
   mode: "development",
   entry: {
     init: "./src/init.js",
-    index: "/src/index.js",
-    faceCluster: "/src/faceCluster.js",
+    index: "./src/index.js",
+    faceCluster: "./src/faceCluster.ts",
   },
   stats: "errors-only",
   output: {
     filename: "[name].js",
     path: path.resolve(__dirname, "public/js"),
   },
+  // Enable sourcemaps for debugging webpack's output.
+  devtool: "source-map",
   experiments: {
     topLevelAwait: true,
+  },
+  resolve: {
+    extensions: [".ts", ".tsx", ".js"],
+  },
+  module: {
+    rules: [
+      // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
+      { test: /\.tsx?$/, loader: "ts-loader", exclude: /node_modules/ },
+      // All output '.js' files will have any sourcemaps
+      // re-processed by 'source-map-loader'.
+      { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
+    ],
   },
 };
