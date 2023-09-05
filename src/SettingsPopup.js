@@ -1,4 +1,4 @@
-import globals from "./globals.js";
+import globals from "./globals.ts";
 import { Segment } from "./treeClasses.js";
 import { checkResponseStatus, htmlToElement } from "./util.js";
 

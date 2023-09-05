@@ -1,4 +1,4 @@
-import globals from "./globals.js";
+import globals from "./globals.ts";
 import { TreeItem } from "./treeClasses.js";
 import { notification } from "./Notification.js";
 import { html, checkResponseStatus, getUrl } from "./util.js";

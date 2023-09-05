@@ -131,6 +131,7 @@ const Rule = class Rule {
     this.expectsNextRule = expectsNextRule;
     this.nextRule = nextRule;
     this.nextRuleType = nextRuleType;
+    this.select = undefined;
   }
 
   /**

@@ -1,7 +1,7 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import throttle from "lodash/throttle";
 import { default as getNestedProp } from "lodash/get";
-import globals from "./globals.js";
+import globals from "./globals.ts";
 import {
   TreeItem,
   Group,
@@ -15,9 +15,9 @@ import {
 } from "./treeClasses.js";
 import { GraphIMU } from "./graphicalClasses.js";
 import SettingsPopup from "./SettingsPopup.js";
-import CommitsPopup from "./CommitsPopup.js";
+import CommitsPopup from "./CommitsPopup.ts";
 import SavePopup from "./SavePopup.js";
-import { Channels } from "./ChannelAudio.js";
+import { Channels } from "./ChannelAudio.ts";
 // import { FiltersPopup } from "./FiltersPopup.js";
 import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
 import { notification } from "./Notification.js";

@@ -1,4 +1,4 @@
-import { Type, Attributes } from "./Attribute.js";
+import { Type, Attributes } from "./Attribute.ts";
 import { Rules } from "./Rule.js";
 import { TreeItem } from "./treeClasses.js";
 import { htmlToElement } from "./util.js";

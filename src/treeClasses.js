@@ -14,9 +14,9 @@
 // Popup functionality in TreeItem?
 
 import Picker from "vanilla-picker";
-import globals from "./globals.js";
+import globals from "./globals.ts";
 import { undoStorage, Actions } from "./UndoRedo.js";
-import { Attribute, Attributes } from "./Attribute.js";
+import { Attribute, Attributes } from "./Attribute.ts";
 import IdCounter from "./IdCounter.js";
 import {
   htmlToElement,
