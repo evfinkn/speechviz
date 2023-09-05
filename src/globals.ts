@@ -1,7 +1,7 @@
 import Peaks, { PeaksInstance } from "peaks.js";
 import createSegmentMarker from "./CustomSegmentMarker";
 import { checkResponseStatus, removeExtension, getUrl } from "./util.js";
-import type {VersionEntry} from  "../server/fossil.js";
+import type { VersionEntry } from "../server/fossil.js";
 
 // query parameters that appear in url, such as ?file=audio.mp3
 const urlParams = new URLSearchParams(window.location.search);
@@ -85,7 +85,7 @@ interface Globals {
   dirty: boolean;
   folder: string;
   type: string;
-  versions?: [Version];
+  versions?: Version[];
   fileBranches?: Set<string>;
   currentVersion?: Version;
   allBranches?: Set<string>;
@@ -97,11 +97,20 @@ interface Globals {
  * @prop {string} url - The URL that will open the version in the interface.
  */
 export interface Version extends VersionEntry {
-  url: string,
+  url: string;
 }
 
-const globals:Globals = {
-  urlParams: urlParams, filename: filename, basename: basename, media: document.getElementById("media"), channelNames: channelNames, mono: mono, user: user, dirty: false, folder: folder, type: type,
+const globals: Globals = {
+  urlParams: urlParams,
+  filename: filename,
+  basename: basename,
+  media: document.getElementById("media"),
+  channelNames: channelNames,
+  mono: mono,
+  user: user,
+  dirty: false,
+  folder: folder,
+  type: type,
 };
 
 const versionsFetchUrl = getUrl(
@@ -117,7 +126,7 @@ const versions = await fetch(versionsFetchUrl)
   .then((response) => response.json());
 const versionUrl = new URL(window.location.href);
 versionUrl.searchParams.delete("branch");
-versions.forEach((ver:Version) => {
+versions.forEach((ver: Version) => {
   // switch the URL to the version's commit
   versionUrl.searchParams.set("commit", ver.commit);
   ver.url = versionUrl.toString();
@@ -125,7 +134,7 @@ versions.forEach((ver:Version) => {
 });
 globals.versions = versions;
 
-globals.fileBranches = new Set(versions.map((ver:Version) => ver.branch));
+globals.fileBranches = new Set(versions.map((ver: Version) => ver.branch));
 
 if (globals.urlParams.has("commit")) {
   const commit = globals.urlParams.get("commit");

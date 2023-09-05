@@ -1,9 +1,10 @@
 import globals from "./globals";
 import { html } from "./util.js";
-import type {Version} from "./globals"
+import type { Version } from "./globals";
 
 interface VersionPopup extends Version {
-  element: Element | Element[], /** The popup containing extra settings for configuring the interface. */
+  /** The popup containing extra settings for configuring the interface. */
+  element: Element | Element[];
 }
 
 const getTimeAgoSpan = (date) => {
@@ -101,16 +102,20 @@ const CommitsPopup = class CommitsPopup {
     </div>`;
     this.popupContent = popupContent as HTMLElement;
     this.popup.appendChild(this.popupContent);
-    this.closeButton = this.popupContent.querySelector('.close') as HTMLElement;
-    this.branchSelect = this.popupContent.querySelector('select') as HTMLSelectElement;
-    this.commitsDiv = this.popupContent.querySelector('.commits') as HTMLElement;
+    this.closeButton = this.popupContent.querySelector(".close") as HTMLElement;
+    this.branchSelect = this.popupContent.querySelector(
+      "select"
+    ) as HTMLSelectElement;
+    this.commitsDiv = this.popupContent.querySelector(
+      ".commits"
+    ) as HTMLElement;
     this.closeButton.addEventListener("click", () => this.hide());
     this.branchSelect.addEventListener("change", () => this.updateEntries());
 
     // define and then use forEach instead of using map so that we can
     // add the commit hash as a property of the array within the forEach
     this.versions = [];
-    globals.versions.forEach((ver:VersionPopup) => {
+    globals.versions.forEach((ver: VersionPopup) => {
       ver = { ...ver }; // copy the object
       ver.element = CommitsPopup.#makeVersionElement(ver);
       this.commitsDiv.appendChild(ver.element);
@@ -149,7 +154,7 @@ const CommitsPopup = class CommitsPopup {
       // globals.versions (since they were the most recent versions)
       const newVersions = globals.versions
         .slice(0, globals.versions.length - this.versions.length)
-        .map((ver:VersionPopup) => {
+        .map((ver: VersionPopup) => {
           ver = { ...ver }; // copy the object
           ver.element = CommitsPopup.#makeVersionElement(ver);
           this.versions[ver.commit] = ver;
