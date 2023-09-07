@@ -1,9 +1,10 @@
-const express = require("express");
-const router = express.Router();
-const fs = require("fs");
-const mime = require("mime/lite");
+import express from "express";
+import fs from "fs";
+// .js extension needed because mime doesn't have an "exports" field
+import mime from "mime/lite.js";
+import { readdirAndFilter } from "../server/io.js";
 
-const { readdirAndFilter } = require("../server/io");
+const router = express.Router();
 
 /* GET home page. */
 router.get("/", async (req, res) => {
@@ -51,4 +52,4 @@ router.get("/", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

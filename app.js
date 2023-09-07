@@ -1,29 +1,31 @@
-const express = require("express");
-const path = require("path");
-const fs = require("fs");
-const logger = require("morgan");
-const cookieParser = require("cookie-parser");
+import express from "express";
+import path from "path";
+import url from "url";
+import fs from "fs/promises";
+import logger from "morgan";
+import cookieParser from "cookie-parser";
 
-const index = require("./routes/index-route");
-const clusteredFaces = require("./routes/face-cluster-route");
-const viz = require("./routes/viz-route");
-const login = require("./routes/login-route");
-const changePassword = require("./routes/change-password-route");
-const settings = require("./routes/settings-route");
+import index from "./routes/index-route.js";
+import clusteredFaces from "./routes/face-cluster-route.js";
+import viz from "./routes/viz-route.js";
+import login from "./routes/login-route.js";
+import changePassword from "./routes/change-password-route.js";
+import settings from "./routes/settings-route.js";
 const app = express();
 
-const Database = require("better-sqlite3");
+import Database from "better-sqlite3";
 const db = new Database("speechviz.sqlite3");
 
-const fossil = require("./server/fossil");
-const fossilUtil = require("./server/fossilUtil");
-const propagate = require("./server/propagate");
-const { readdirAndFilter } = require("./server/io");
+import fossil from "./server/fossil.js";
+import fossilUtil from "./server/fossilUtil.js";
+import propagate from "./server/propagate.js";
+import { readdirAndFilter } from "./server/io.js";
 
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, "data");
 
 // use sessions
-const session = require("express-session");
+import session from "express-session";
 app.use(
   session({
     name: "speechviz",
@@ -212,8 +214,7 @@ app.post("/propagate/:file(*)", async (req, res) => {
   }
 });
 
-// can't use await readdirAndFilter because this isn't in an async function
-const dataSubdirs = fs.readdirSync("data").filter((file) => {
+const dataSubdirs = (await readdirAndFilter("data")).filter((file) => {
   return file !== "annotations";
 });
 // matches any request that start with "/subdir" where subdir is
@@ -224,7 +225,7 @@ const dataSubdirRegex = new RegExp(`\/(${dataSubdirs.join("|")})`);
 app.get(dataSubdirRegex, async (req, res) => {
   const url = "data" + req.url;
   try {
-    const stat = await fs.promises.stat(url);
+    const stat = await fs.stat(url);
     // if it's a directory, return list of file names in that directory
     if (stat.isDirectory()) {
       return res.send(await readdirAndFilter(url));
@@ -443,4 +444,4 @@ app.use(function (err, req, res) {
   res.render("error");
 });
 
-module.exports = app;
+export default app;

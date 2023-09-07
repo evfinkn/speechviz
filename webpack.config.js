@@ -1,11 +1,8 @@
-// https://stackoverflow.com/a/50052194
-// import { dirname, resolve } from 'path';
-// import { fileURLToPath } from 'url';
+import path from "path";
+import url from "url";
 
-// const __dirname = dirname(fileURLToPath(import.meta.url));
-const path = require("path");
-
-module.exports = {
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+export default {
   mode: "development",
   entry: {
     init: "./src/init.js",
@@ -19,5 +16,16 @@ module.exports = {
   },
   experiments: {
     topLevelAwait: true,
+  },
+  module: {
+    rules: [
+      {
+        // solves issue with webpack not being able
+        // to resolve imports without extensions
+        resolve: {
+          fullySpecified: false,
+        },
+      },
+    ],
   },
 };

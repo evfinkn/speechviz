@@ -1,6 +1,8 @@
-const express = require("express");
+import express from "express";
+import Database from "better-sqlite3";
+
 const router = express.Router();
-const db = require("better-sqlite3")("speechviz.sqlite3");
+const db = Database("speechviz.sqlite3");
 
 router.get("/", (req, res) =>
   res.render("change-password", { retry: "retry" in req.query })
@@ -31,4 +33,4 @@ router.get("/credentials", (req, res) => {
 
   res.redirect("/change-password?retry"); // incorrect login
 });
-module.exports = router;
+export default router;

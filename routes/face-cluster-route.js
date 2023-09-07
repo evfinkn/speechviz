@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import fs from "fs";
+
 const router = express.Router();
-const fs = require("fs");
 
 /* GET home page. */
 router.get("/", (req, res) => {
@@ -50,4 +51,4 @@ router.get("/", (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,13 +1,14 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import url from "url";
 
-const Papa = require("papaparse");
+import Papa from "papaparse";
 
-const fossil = require("./fossil");
-const fossilUtil = require("./fossilUtil");
+import fossil from "./fossil.js";
+import fossilUtil from "./fossilUtil.js";
+import { write } from "./io.js";
 
-const { write } = require("./io");
-
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, "../data");
 
 const parseCsv = (readStream, config = {}) => {
@@ -399,4 +400,4 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
   await fossil.commit(files, propagateOptions);
 };
 
-module.exports = propagate;
+export default propagate;

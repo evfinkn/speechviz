@@ -8,15 +8,18 @@
 //    don't conflict with other functions, e.g., `versions` and `versionsCmd`, `branch`
 //    and `branchCmd`, etc.
 
-const path = require("path");
-const { spawn } = require("node:child_process");
+import path from "path";
+import url from "url";
+import { spawn } from "child_process";
+import process from "process";
 
-const { write } = require("./io");
+import { write } from "./io.js";
 
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 // fossil.js is in speechviz/server, hence the ../ to get to speechviz/data
 const dataDir = path.resolve(__dirname, "../data");
 // platform is "win32" even on 64-bit Windows
-const isWindows = require("process").platform === "win32";
+const isWindows = process.platform === "win32";
 const fossilPath = path.resolve(dataDir, isWindows ? "fossil.exe" : "fossil");
 
 // This is much simpler than a regex with every possible line ending.
@@ -984,7 +987,27 @@ async function isInRepo(file) {
   }
 }
 
-module.exports = {
+export {
+  addCmd as add,
+  commitCmd as commit,
+  writeAndCommit,
+  branchCmd as branch,
+  updateCmd as update,
+  withBranch,
+  tagCmd as tag,
+  stashCmd as stash,
+  withStash,
+  changesCmd as changes,
+  hasChanges,
+  artifactCmd as artifact,
+  catCmd as cat,
+  versionsCmd as versions,
+  oldestVersion,
+  latestVersion,
+  isInRepo,
+};
+
+export default {
   add: addCmd,
   commit: commitCmd,
   writeAndCommit,

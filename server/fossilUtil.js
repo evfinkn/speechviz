@@ -1,7 +1,7 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
-const fossil = require("./fossil");
+import fossil from "./fossil.js";
 
 /**
  * Adds a file to the repository if not added and / or commits it if it has changes.
@@ -45,4 +45,5 @@ const catAnnotations = async (file, { commit, branch = null } = {}) => {
   return fossil.cat(file, { checkin: commit });
 };
 
-module.exports = { addAndCommit, catAnnotations };
+export { addAndCommit, catAnnotations };
+export default { addAndCommit, catAnnotations };

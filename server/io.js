@@ -1,4 +1,4 @@
-const { promises: fs, createWriteStream } = require("fs");
+import { promises as fs, createWriteStream } from "fs";
 
 const write = (path, content) => {
   return new Promise((resolve, reject) => {
@@ -19,7 +19,6 @@ const readdirAndFilter = async (path) => {
   return files.filter((file) => !excludedFiles.has(file));
 };
 
-module.exports = {
-  write,
-  readdirAndFilter,
-};
+// export write and readdirAndFilter
+export { write, readdirAndFilter };
+export default { write, readdirAndFilter };
