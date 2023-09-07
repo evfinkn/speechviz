@@ -22,7 +22,7 @@ import propagate from "./server/propagate.js";
 import { readdirAndFilter } from "./server/io.js";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, "data");
+const dataDir = await fs.realpath(path.join(__dirname, "data"));
 
 // use sessions
 import session from "express-session";
