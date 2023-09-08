@@ -5,7 +5,7 @@
 
 import * as Plotly from "plotly.js-gl2d-dist";
 import globals from "./globals.js";
-import { getRandomColor } from "./util";
+import { getRandomColor } from "./util.js";
 
 const media = globals.media;
 

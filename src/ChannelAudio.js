@@ -1,4 +1,4 @@
-import { htmlToElement } from "./util";
+import { htmlToElement } from "./util.js";
 
 const Channel = class Channel {
   /**

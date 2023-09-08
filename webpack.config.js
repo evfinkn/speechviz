@@ -17,15 +17,4 @@ export default {
   experiments: {
     topLevelAwait: true,
   },
-  module: {
-    rules: [
-      {
-        // solves issue with webpack not being able
-        // to resolve imports without extensions
-        resolve: {
-          fullySpecified: false,
-        },
-      },
-    ],
-  },
 };

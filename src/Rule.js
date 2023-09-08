@@ -1,4 +1,4 @@
-import { htmlToElement } from "./util";
+import { htmlToElement } from "./util.js";
 
 /**
  * Casts the value(s) to the given type.

@@ -1,6 +1,6 @@
 import Split from "split.js"; // library for resizing columns by dragging
-import throttle from "lodash/throttle";
-import { default as getNestedProp } from "lodash/get";
+import throttle from "lodash/throttle.js";
+import { default as getNestedProp } from "lodash/get.js";
 import globals from "./globals.js";
 import {
   TreeItem,
