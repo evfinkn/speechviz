@@ -3,7 +3,7 @@ default_language_version:
 exclude: (docs\/js|patches)\/
 repos:
   - repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 23.7.0
     hooks:
     - id: black
       args: [--preview]
@@ -12,24 +12,24 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.7.1
+    rev: v3.0.3
     hooks:
       - id: prettier
         files: \.(css|html|js|md|pug)$
         additional_dependencies:
-          - prettier@2.8.1
-          - "@prettier/plugin-pug@2.3.0"
+          - prettier@3.0.3
+          - "@prettier/plugin-pug@3.0.0"
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.31.0
+    rev: v8.49.0
     hooks:
       - id: eslint
         additional_dependencies:
-          - eslint@8.31.0
-          - eslint-config-prettier@8.5.0
+          - eslint@8.49.0
+          - eslint-config-prettier@9.0.0
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
