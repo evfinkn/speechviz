@@ -13,52 +13,43 @@ def init_database():
     c = conn.cursor()
 
     # create audiofiles table
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS audiofiles(
+    c.execute("""CREATE TABLE IF NOT EXISTS audiofiles(
         id INTEGER PRIMARY KEY,
         audiofile TEXT,
         UNIQUE(audiofile)
-    )"""
-    )
+    )""")
     conn.commit()
 
     # create users table
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS users(
+    c.execute("""CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY,
         user TEXT,
         password TEXT,
         UNIQUE(user)
-    )"""
-    )
+    )""")
 
     # add 'user' to users
     c.execute("INSERT INTO users(user, password) VALUES('user', 'pass')")
     conn.commit()
 
     # create labels table
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS labels(
+    c.execute("""CREATE TABLE IF NOT EXISTS labels(
         id INTEGER PRIMARY KEY,
         label TEXT,
         UNIQUE(label)
-    )"""
-    )
+    )""")
     conn.commit()
 
     # create paths table
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS paths(
+    c.execute("""CREATE TABLE IF NOT EXISTS paths(
         id INTEGER PRIMARY KEY,
         path TEXT,
         UNIQUE(path)
-    )"""
-    )
+    )""")
     conn.commit()
 
     # create annotations table
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS annotations(
+    c.execute("""CREATE TABLE IF NOT EXISTS annotations(
         fileId INTEGER,
         userId INTEGER,
         startTime REAL,
@@ -73,33 +64,28 @@ def init_database():
         FOREIGN KEY(userId) references users(id),
         FOREIGN KEY(labelId) references labels(id),
         FOREIGN KEY(pathId) references paths(id)
-    )"""
-    )
+    )""")
     conn.commit()
 
     # create notes table
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS notes(
+    c.execute("""CREATE TABLE IF NOT EXISTS notes(
         fileId INTEGER,
         userId INTEGER,
         notes TEXT,
         FOREIGN KEY(fileId) references audiofiles(id),
         FOREIGN KEY(userId) references users(id)
-    )"""
-    )
+    )""")
     conn.commit()
 
     # create faces table
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS faces(
+    c.execute("""CREATE TABLE IF NOT EXISTS faces(
         fileId INTEGER,
         userId INTEGER,
         speaker INTEGER,
         faceNum INTEGER,
         FOREIGN KEY(fileId) references audiofiles(id),
         FOREIGN KEY(userId) references users(id)
-    )"""
-    )
+    )""")
     conn.commit()
 
     conn.close()

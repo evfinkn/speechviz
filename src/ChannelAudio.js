@@ -146,7 +146,7 @@ const Channel = class Channel {
   constructor(
     name,
     audioContext,
-    { volume = 100, volumeStep = 1, volumeMax = 100 } = {}
+    { volume = 100, volumeStep = 1, volumeMax = 100 } = {},
   ) {
     this.name = name;
     this.audioContext = audioContext;
@@ -174,11 +174,11 @@ const Channel = class Channel {
 
     this.slider.addEventListener(
       "input",
-      () => (this.volume = this.slider.value)
+      () => (this.volume = this.slider.value),
     );
     this.input.addEventListener(
       "input",
-      () => (this.volume = this.input.value)
+      () => (this.volume = this.input.value),
     );
 
     this.muteButton = htmlToElement("<button>Mute</button>");
@@ -196,7 +196,7 @@ const Channel = class Channel {
       this.slider,
       this.input,
       this.muteButton,
-      this.soloButton
+      this.soloButton,
     );
   }
 
@@ -257,7 +257,7 @@ const Channels = class Channels {
     this.source = source;
 
     this.channels = channelNames.map(
-      (name) => new Channel(name, audioContext, channelOptions)
+      (name) => new Channel(name, audioContext, channelOptions),
     );
     this.splitter = audioContext.createChannelSplitter(channelNames.length);
 

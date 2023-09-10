@@ -1,7 +1,7 @@
 import globals from "./globals.js";
-import { TreeItem } from "./treeClasses.js";
 import { notification } from "./Notification.js";
-import { html, checkResponseStatus, getUrl } from "./util.js";
+import { TreeItem } from "./treeClasses.js";
+import { checkResponseStatus, getUrl, html } from "./util.js";
 
 /** The popup containing extra settings for configuring the interface. */
 const SavePopup = class SavePopup {
@@ -74,7 +74,7 @@ const SavePopup = class SavePopup {
       this.branchSelect.add(option);
     });
     this.currentBranchIndex = [...this.branchSelect.options].findIndex(
-      (option) => option.text === globals.currentVersion.branch
+      (option) => option.text === globals.currentVersion.branch,
     );
 
     this.closeButton.addEventListener("click", () => this.hide());
@@ -151,7 +151,7 @@ const SavePopup = class SavePopup {
       "annotations",
       globals.basename,
       "-annotations.json",
-      globals.folder
+      globals.folder,
     );
     const annotsUrl = new URL(annotsFile, window.location.href);
 
@@ -173,7 +173,7 @@ const SavePopup = class SavePopup {
 
       if (globals.type === "views") {
         await fetch(propagateUrl, { method: "POST", headers, body }).then(
-          checkResponseStatus
+          checkResponseStatus,
         );
       }
     } catch (err) {

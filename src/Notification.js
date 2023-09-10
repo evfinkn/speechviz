@@ -1,5 +1,5 @@
-import { htmlToElement } from "./util.js";
 import { notifIcons } from "./icon.js";
+import { htmlToElement } from "./util.js";
 
 const Notification = class Notification {
   /**
@@ -28,10 +28,10 @@ const Notification = class Notification {
     this.div = htmlToElement(`<div class="notification"></div>`);
     this.icon = htmlToElement(notifIcons.info); // default icon
     this.messageSpan = htmlToElement(
-      `<span class="notification-message"></span>`
+      `<span class="notification-message"></span>`,
     );
     this.closeButton = htmlToElement(
-      `<a href="javascript:;" class="icon notification-close">${notifIcons.x}</a>`
+      `<a href="javascript:;" class="icon notification-close">${notifIcons.x}</a>`,
     );
     this.closeButton.addEventListener("click", () => this.hide());
     this.div.append(this.icon, this.messageSpan, this.closeButton);

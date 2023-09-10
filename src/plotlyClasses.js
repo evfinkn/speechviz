@@ -4,6 +4,7 @@
 // it doesn't make sense to include it yet.
 
 import * as Plotly from "plotly.js-gl2d-dist";
+
 import globals from "./globals.js";
 import { getRandomColor } from "./util.js";
 
@@ -102,7 +103,7 @@ var TimeSeries = class TimeSeries {
         x: this.x,
         y: y,
         line: { color: getRandomColor() },
-      })
+      }),
     );
     Plotly.newPlot(this.container, data, {}, { staticPlot: true });
     const [ymin, ymax] = this.container.layout.yaxis.range;
@@ -114,7 +115,7 @@ var TimeSeries = class TimeSeries {
       {
         y: [[ymin, ymax]],
       },
-      [0]
+      [0],
     );
     this.animate();
   }
@@ -130,7 +131,7 @@ var TimeSeries = class TimeSeries {
       {
         x: [[time, time]],
       },
-      [0]
+      [0],
     );
     window.requestAnimationFrame(() => this.animate());
   }

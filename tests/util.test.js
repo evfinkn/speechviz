@@ -1,5 +1,5 @@
-import { beforeEach, describe, test, expect, jest } from "@jest/globals";
 import * as util from "../src/util";
+import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
 const toBeCaseInsensitive = function toBeCaseInsensitive(received, expected) {
   const pass =
@@ -298,10 +298,10 @@ describe("binarySearch", () => {
 });
 
 const successfulFetch = jest.fn(() =>
-  Promise.resolve({ ok: true, status: 200 })
+  Promise.resolve({ ok: true, status: 200 }),
 );
 const unsuccessfulFetch = jest.fn(() =>
-  Promise.resolve({ ok: false, status: 0 })
+  Promise.resolve({ ok: false, status: 0 }),
 );
 
 describe("checkResponseStatus", () => {

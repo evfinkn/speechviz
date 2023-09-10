@@ -1,4 +1,4 @@
-import { promises as fs, createWriteStream } from "fs";
+import { createWriteStream, promises as fs } from "fs";
 
 const write = (path, content) => {
   return new Promise((resolve, reject) => {

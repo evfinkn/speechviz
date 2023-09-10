@@ -14,25 +14,26 @@
 // Popup functionality in TreeItem?
 
 import Picker from "vanilla-picker";
-import globals from "./globals.js";
-import { undoStorage, Actions } from "./UndoRedo.js";
+
 import { Attribute, Attributes } from "./Attribute.js";
-import IdCounter from "./IdCounter.js";
+import globals from "./globals.js";
 import {
-  htmlToElement,
-  compareProperty,
-  toggleButton,
-  propertiesEqual,
-  getRandomColor,
-  removeExtension,
-  mappingToString,
-} from "./util.js";
-import {
-  groupIcons,
-  segmentIcons,
   arrowLeftIcon,
   arrowRightIcon,
+  groupIcons,
+  segmentIcons,
 } from "./icon.js";
+import IdCounter from "./IdCounter.js";
+import { Actions, undoStorage } from "./UndoRedo.js";
+import {
+  compareProperty,
+  getRandomColor,
+  htmlToElement,
+  mappingToString,
+  propertiesEqual,
+  removeExtension,
+  toggleButton,
+} from "./util.js";
 
 const media = globals.media;
 const peaks = globals.peaks;
@@ -436,7 +437,7 @@ var TreeItem = class TreeItem {
       assocWith = null,
       attributes = null,
       saveable = true,
-    } = {}
+    } = {},
   ) {
     this.id = id;
     this.addToById();
@@ -696,7 +697,7 @@ var TreeItem = class TreeItem {
 
     if (this.rendered) {
       this.playButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>`
+        `<a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>`,
       );
       // use () => this.play() instead of just this.play so that
       // "this" refers to the TreeItem and not the button getting clicked
@@ -705,14 +706,14 @@ var TreeItem = class TreeItem {
       this.span.after(this.playButton);
 
       this.loopButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>`
+        `<a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>`,
       );
       // need to use () => so that we can pass loop = true
       this.loopButton.addEventListener("click", () => this.play(true));
       this.playButton.after(this.loopButton);
 
       this.pauseButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.pause}</a>`
+        `<a href="javascript:;" class="button-on">${this.constructor.icons.pause}</a>`,
       );
       this.pauseButton.addEventListener("click", () => this.pause());
     }
@@ -727,7 +728,7 @@ var TreeItem = class TreeItem {
 
     if (this.rendered) {
       this.removeButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`
+        `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`,
       );
       this.removeButton.addEventListener("click", () => {
         undoStorage.push(new Actions.RemoveAction(this));
@@ -847,12 +848,12 @@ var TreeItem = class TreeItem {
   switchToPauseButton(loop) {
     if (!this.rendered) {
       throw new Error(
-        `TreeItem ${this.id} is not rendered and therefore has no buttons to switch.`
+        `TreeItem ${this.id} is not rendered and therefore has no buttons to switch.`,
       );
     }
     if (!this.playable) {
       throw new Error(
-        `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`
+        `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`,
       );
     }
     if (loop) {
@@ -869,12 +870,12 @@ var TreeItem = class TreeItem {
   switchBackToPlayLoopButtons() {
     if (!this.rendered) {
       throw new Error(
-        `TreeItem ${this.id} is not rendered and therefore has no buttons to switch.`
+        `TreeItem ${this.id} is not rendered and therefore has no buttons to switch.`,
       );
     }
     if (!this.playable) {
       throw new Error(
-        `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`
+        `TreeItem ${this.id} is not playable and therefore has no buttons to switch.`,
       );
     }
     if (this.playButton.parentElement === null) {
@@ -991,7 +992,7 @@ var TreeItem = class TreeItem {
   sortBy(prop, { reverse = false, reappend = true } = {}) {
     return this.sort(
       (child1, child2) => compareProperty(child1, child2, prop),
-      { reverse, reappend }
+      { reverse, reappend },
     );
   }
 
@@ -1258,7 +1259,7 @@ var Popup = class Popup {
       renameInput.addEventListener("keypress", (event) => {
         if (event.key === "Enter") {
           undoStorage.push(
-            new Actions.RenameAction(treeItem, renameInput.value)
+            new Actions.RenameAction(treeItem, renameInput.value),
           );
           this.hide();
         }
@@ -1269,7 +1270,7 @@ var Popup = class Popup {
     if (treeItem.moveTo) {
       popupContent.append(document.createElement("br"));
       this.moveDiv = htmlToElement(
-        `<div><h3>Move ${text} to another group</h3></div>`
+        `<div><h3>Move ${text} to another group</h3></div>`,
       );
       popupContent.append(this.moveDiv);
     }
@@ -1277,7 +1278,7 @@ var Popup = class Popup {
     if (treeItem.copyTo) {
       popupContent.append(document.createElement("br"));
       this.copyDiv = htmlToElement(
-        `<div><h3>Copy ${text} to another group</h3></div>`
+        `<div><h3>Copy ${text} to another group</h3></div>`,
       );
       popupContent.append(this.copyDiv);
     }
@@ -1285,14 +1286,14 @@ var Popup = class Popup {
     if (treeItem.assocWith) {
       popupContent.append(document.createElement("br"));
       this.assocDiv = htmlToElement(
-        `<div><h3>Associate ${text} with a speaker</h3></div>`
+        `<div><h3>Associate ${text} with a speaker</h3></div>`,
       );
       popupContent.append(this.assocDiv);
     }
 
     if (treeItem.colorable) {
       const colorDiv = htmlToElement(
-        `<div><h3>Pick a new color for ${text}</h3></div>`
+        `<div><h3>Pick a new color for ${text}</h3></div>`,
       );
       this.colorDiv = colorDiv;
       const colorPicker = new Picker({
@@ -1303,13 +1304,13 @@ var Popup = class Popup {
       this.colorPicker = colorPicker;
       colorPicker.onDone = (color) => {
         undoStorage.push(
-          new Actions.ColorAction(treeItem, color.hex.substring(0, 7))
+          new Actions.ColorAction(treeItem, color.hex.substring(0, 7)),
         );
         this.hide();
       };
 
       const randomColorButton = htmlToElement(
-        "<button>Set to random color</button>"
+        "<button>Set to random color</button>",
       );
       this.randomColorButton = randomColorButton;
       colorDiv.append(randomColorButton);
@@ -1451,7 +1452,7 @@ var Popup = class Popup {
     const radioDiv = htmlToElement(
       "<div><label>" +
         `<input type="radio" name="${this.treeItem.id}-radios"` +
-        `autocomplete="off"> ${dest.id}</label><br></div>`
+        `autocomplete="off"> ${dest.id}</label><br></div>`,
     );
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
@@ -1473,7 +1474,7 @@ var Popup = class Popup {
     const radioDiv = htmlToElement(
       "<div><label>" +
         `<input type="radio" name="${this.treeItem.id}-radios"` +
-        `autocomplete="off"> ${dest.id}</label><br></div>`
+        `autocomplete="off"> ${dest.id}</label><br></div>`,
     );
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
@@ -1500,7 +1501,7 @@ var Popup = class Popup {
     const radioDiv = htmlToElement(
       "<div><label>" +
         `<input type="radio" name="${this.treeItem.id}-radios"` +
-        `autocomplete="off"> ${dest.id}</label><br></div>`
+        `autocomplete="off"> ${dest.id}</label><br></div>`,
     );
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
@@ -1566,7 +1567,7 @@ var Group = class Group extends TreeItem {
       moveTo = null,
       copyTo = null,
       saveable = true,
-    } = {}
+    } = {},
   ) {
     super(id, {
       parent,
@@ -1686,7 +1687,7 @@ var Group = class Group extends TreeItem {
           this.switchBackToPlayLoopButtons();
           this.removeEventListener("ended", endedHandler);
         },
-        { once: true }
+        { once: true },
       );
     }
   }
@@ -1698,7 +1699,7 @@ var Group = class Group extends TreeItem {
   pause() {
     if (!this.playable) {
       throw new Error(
-        `Group ${this.id} is not playable and therefore can't be paused.`
+        `Group ${this.id} is not playable and therefore can't be paused.`,
       );
     }
 
@@ -1770,7 +1771,7 @@ var CarouselGroup = class CarouselGroup extends Group {
       moveTo = null,
       copyTo = null,
       saveable = true,
-    } = {}
+    } = {},
   ) {
     super(id, {
       parent,
@@ -1783,7 +1784,7 @@ var CarouselGroup = class CarouselGroup extends Group {
       saveable,
     });
     this.leftButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${arrowLeftIcon}</a>`
+      `<a href="javascript:;" class="button-on">${arrowLeftIcon}</a>`,
     );
     // this puts the left button before any other buttons
     this.span.after(this.leftButton);
@@ -1794,7 +1795,7 @@ var CarouselGroup = class CarouselGroup extends Group {
       this.children.at(leftIndex).openFile();
     });
     this.rightButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${arrowRightIcon}</a>`
+      `<a href="javascript:;" class="button-on">${arrowRightIcon}</a>`,
     );
     this.leftButton.after(this.rightButton);
     this.rightButton.addEventListener("click", () => {
@@ -1945,7 +1946,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
       render = true,
       attributes = null,
       saveable = true,
-    } = {}
+    } = {},
   ) {
     // catch options contained within the peaks item
     text = text || peaksItem.treeText;
@@ -2238,7 +2239,7 @@ var Segment = class Segment extends PeaksItem {
       copyTo = null,
       attributes = null,
       saveable = true,
-    } = {}
+    } = {},
   ) {
     if (segment.constructor.name !== "Segment") {
       if (segment.id) {
@@ -2248,7 +2249,8 @@ var Segment = class Segment extends PeaksItem {
         // this shouldn't happen, but just in case
         while (Segment.byId[segment.id]) {
           console.warn(
-            `Segment with generated id ${segment.id} already exists. Generating new id.`
+            `Segment with generated id ${segment.id} already exists.` +
+              " Generating new id.",
           );
           segment.id = Segment.#idCounter.next();
         }
@@ -2465,7 +2467,7 @@ var Segment = class Segment extends PeaksItem {
     // only copy if the new parent doesn't already have a copy of the segment
     if (
       !copyParent.children.some((child) =>
-        propertiesEqual(this.segment, child.segment, ["startTime", "endTime"])
+        propertiesEqual(this.segment, child.segment, ["startTime", "endTime"]),
       )
     ) {
       const newSegment = peaks.segments.add({
@@ -2553,7 +2555,7 @@ var Point = class Point extends PeaksItem {
       copyTo = null,
       render = true,
       saveable = true,
-    } = {}
+    } = {},
   ) {
     if (point.constructor.name !== "Point") {
       if (point.id) {
@@ -2563,7 +2565,7 @@ var Point = class Point extends PeaksItem {
         // this shouldn't happen, but just in case
         while (Point.byId[point.id]) {
           console.warn(
-            `Point with generated id ${point.id} already exists. Generating new id.`
+            `Point with generated id ${point.id} already exists. Generating new id.`,
           );
           point.id = Point.#idCounter.next();
         }
@@ -2748,7 +2750,7 @@ var PeaksGroup = class PeaksGroup extends Group {
       moveTo = null,
       copyTo = null,
       saveable = true,
-    } = {}
+    } = {},
   ) {
     // always have to call constructor for super class (TreeItem)
     super(id, {
@@ -2880,7 +2882,7 @@ var PeaksGroup = class PeaksGroup extends Group {
   updateSpanTitle() {
     if (this.snr && this.duration != 0) {
       this.span.title = `SNR: ${this.snr.toFixed(
-        2
+        2,
       )}\nDuration: ${this.duration.toFixed(2)}`;
     } else {
       super.updateSpanTitle();
@@ -2903,7 +2905,7 @@ var PeaksGroup = class PeaksGroup extends Group {
     this.hidden.forEach((peaksItem) =>
       // rename with the same text because renaming adds the parent's id to this
       // peaks item's labelText, so we need to update from the old parent's id
-      peaksItem.rename(peaksItem.text)
+      peaksItem.rename(peaksItem.text),
     );
     this.visible.forEach((peaksItem) => peaksItem.rename(peaksItem.text));
     return true;
@@ -3057,7 +3059,7 @@ var Face = class Face extends TreeItem {
       assocWith = null,
       dir = null,
       imagePath = null,
-    } = {}
+    } = {},
   ) {
     // (can't use 'this' until after super() call,
     // so can't get rid of playButton, etc. until after super())
@@ -3077,7 +3079,7 @@ var Face = class Face extends TreeItem {
         ` style="text-decoration:none;"` +
         ` target="_blank" rel="noopener noreferrer"` +
         ` class="button-on">` +
-        `${this.constructor.icons.image}</a>`
+        `${this.constructor.icons.image}</a>`,
     );
     this.nested.before(this.linkButton);
 
@@ -3085,7 +3087,7 @@ var Face = class Face extends TreeItem {
     this.imageLi = htmlToElement(
       `<li><img src='faceClusters/${dir}/${id}/${imagePath}'` +
         ` width = 100 height = 100` +
-        ` alt="Example image of face"/></li>`
+        ` alt="Example image of face"/></li>`,
     );
     // store previous html of image to reset its position when the image is clicked
     this.imageLi.addEventListener("click", () => {
@@ -3120,7 +3122,7 @@ var Face = class Face extends TreeItem {
    */
   readd(parent = null) {
     Face.removed = Face.removed.filter(
-      (faceNum) => faceNum === parseInt(this.id.replace("face", ""))
+      (faceNum) => faceNum === parseInt(this.id.replace("face", "")),
     );
     super.readd(parent);
   }
@@ -3178,7 +3180,7 @@ var File = class File extends TreeItem {
    */
   constructor(
     filename,
-    { parent = null, text = null, renamable = false, curFile } = {}
+    { parent = null, text = null, renamable = false, curFile } = {},
   ) {
     super(filename, {
       parent,
@@ -3239,7 +3241,7 @@ var File = class File extends TreeItem {
     let tempWindowLocationHref = window.location.href;
     tempWindowLocationHref = tempWindowLocationHref.replace(
       `file=${basename}`,
-      `file=${this.basename}`
+      `file=${this.basename}`,
     );
     // take out mono if the previous file was viewing the mono version in
     // case this file doesn't have a mono version

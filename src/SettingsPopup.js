@@ -187,7 +187,7 @@ const SettingsPopup = class SettingsPopup {
       showDragHandlesDiv.firstElementChild.firstElementChild;
     this.showDragHandlesInput.addEventListener("change", function () {
       Object.values(Segment.byId).forEach((segment) =>
-        segment.toggleDragHandles(this.checked)
+        segment.toggleDragHandles(this.checked),
       );
     });
 
@@ -264,14 +264,14 @@ const SettingsPopup = class SettingsPopup {
       if (
         confirm(
           "This will reset all moved speaker segments.\n" +
-            "Are you sure you want to continue?"
+            "Are you sure you want to continue?",
         )
       ) {
         fetch("reset-moved", fetchOptions)
           .then(checkResponseStatus)
           .then(() => window.location.reload())
           .catch((error) =>
-            console.error(`Error while resetting moved: ${error}`)
+            console.error(`Error while resetting moved: ${error}`),
           );
       }
     });
@@ -282,14 +282,14 @@ const SettingsPopup = class SettingsPopup {
       if (
         confirm(
           "This will delete ALL saved segments, notes, and faces for this file.\n" +
-            "Are you sure you want to continue?"
+            "Are you sure you want to continue?",
         )
       ) {
         fetch("reset", fetchOptions)
           .then(checkResponseStatus)
           .then(() => window.location.reload())
           .catch((error) =>
-            console.error(`Error while resetting moved: ${error}`)
+            console.error(`Error while resetting moved: ${error}`),
           );
       }
     });

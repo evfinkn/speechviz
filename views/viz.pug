@@ -90,6 +90,8 @@ html(lang="en")
                     style="vertical-align: top"
                   ) 1.00x Speed
                   datalist#speed-ticks
+                    //- ignore the for loop line to fix bug in prettier / plugin-pug
+                    //- prettier-ignore
                     - for (var i = 0.5; i < 2; i += 0.5)
                       option(value=i)
                   br

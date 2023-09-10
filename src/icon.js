@@ -22,17 +22,17 @@ const widthHeight17 = { width: 17, height: 17 };
 const segmentPlayPauseOptions = Object.assign(
   {},
   playAndPauseOptions,
-  widthHeight12
+  widthHeight12,
 );
 const segmentLoopOptions = Object.assign(
   {},
   loopRemoveImageOptions,
-  widthHeight12
+  widthHeight12,
 );
 const segmentRemoveOptions = Object.assign(
   {},
   loopRemoveImageOptions,
-  widthHeight15
+  widthHeight15,
 );
 const faceImgOptions = Object.assign({}, loopRemoveImageOptions, widthHeight15);
 
@@ -57,17 +57,17 @@ const segmentIcons = {
 const groupPlayPauseOptions = Object.assign(
   {},
   playAndPauseOptions,
-  widthHeight15
+  widthHeight15,
 );
 const groupLoopOptions = Object.assign(
   {},
   loopRemoveImageOptions,
-  widthHeight15
+  widthHeight15,
 );
 const groupRemoveOptions = Object.assign(
   {},
   loopRemoveImageOptions,
-  widthHeight17
+  widthHeight17,
 );
 
 const groupPlayIcon = feather.icons.play.toSvg(groupPlayPauseOptions);
@@ -142,7 +142,7 @@ const arrowOptions = Object.assign(
     stroke: "inherit",
     style: "vertical-align:middle;",
   },
-  widthHeight17
+  widthHeight17,
 );
 const arrowLeftIcon = feather.icons["arrow-left"].toSvg(arrowOptions);
 const arrowRightIcon = feather.icons["arrow-right"].toSvg(arrowOptions);

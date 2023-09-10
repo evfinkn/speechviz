@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import minimist from "minimist";
 import http from "http";
 import os from "os";
-import forceSSL from "express-force-ssl";
 
 import app from "../app.js";
+import forceSSL from "express-force-ssl";
+import minimist from "minimist";
 
 const args = minimist(process.argv.slice(2));
 app.use(forceSSL);
@@ -47,7 +47,7 @@ function onError(error) {
     case "EACCES":
       console.log(
         "Non-privileged users can't listen on ports below 1024.\n" +
-          "Run the server using sudo or use a different port."
+          "Run the server using sudo or use a different port.",
       );
       process.exit(1);
     case "EADDRINUSE": // eslint-disable-line no-fallthrough

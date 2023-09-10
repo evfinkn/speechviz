@@ -102,7 +102,7 @@ const filterOldPropagatedSegments = (item, filename) => {
     } else {
       item.options.children = filterOldPropagatedSegments(
         item.options.children,
-        filename
+        filename,
       );
     }
     return item.options.children.length === 0 ? null : item;
@@ -274,7 +274,7 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
   const oldAnnotations = JSON.parse(
     await fossilUtil.catAnnotations(annotsFile, {
       commit: oldestVersion.commit,
-    })
+    }),
   );
   // handle formatVersion 2 and 3 (see format-specification.md)
   const oldAnnots = oldAnnotations?.annotations ?? oldAnnotations;
@@ -302,7 +302,7 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
   // filter out new segments (e.g., segments added to an existing group like Speaker 1)
   // because the group to propagate them to is unclear
   const newGroups = Object.values(newItemsById).filter(
-    (item) => item.type !== "Segment"
+    (item) => item.type !== "Segment",
   );
 
   // for of instead of forEach because we need to use await
@@ -310,7 +310,7 @@ const propagate = async (file, annotations, { user, branch, message } = {}) => {
   for (const { file, interval } of filePieces) {
     let fileAnnotations = JSON.parse(
       // catAnnotations will commit the file if it has uncommitted changes
-      await fossilUtil.catAnnotations(file, { branch })
+      await fossilUtil.catAnnotations(file, { branch }),
     );
     let fileAnnots = fileAnnotations?.annotations ?? fileAnnotations;
     // filter out old segments that were propagated to avoid duplicates and id conflicts

@@ -8,10 +8,10 @@
 //    don't conflict with other functions, e.g., `versions` and `versionsCmd`, `branch`
 //    and `branchCmd`, etc.
 
-import path from "path";
-import url from "url";
 import { spawn } from "child_process";
+import path from "path";
 import process from "process";
+import url from "url";
 
 import { write } from "./io.js";
 
@@ -206,7 +206,7 @@ function fossilCmd(args, { splitLines = false, removeNewline = false } = {}) {
 function sqlCmd(
   statements,
   params = {},
-  { mode = "list", readonly = true, splitLines = true } = {}
+  { mode = "list", readonly = true, splitLines = true } = {},
 ) {
   const args = ["sql"];
   if (readonly) {
@@ -385,7 +385,7 @@ async function commitCmd(
     branch,
     tags,
     datetime,
-  } = {}
+  } = {},
 ) {
   if (!Array.isArray(files)) {
     files = [files];
@@ -402,7 +402,7 @@ async function commitCmd(
       // Filter out null values to pass as options to the command.
       // The rest will be added later using tag.add (--tag doesn't support values)
       const noValueTags = Object.entries(tags).filter(
-        ([, value]) => value === null
+        ([, value]) => value === null,
       );
       noValueTags.forEach((tag) => {
         args.push("--tag", tag);
@@ -452,7 +452,7 @@ async function commitCmd(
     // use map instead of forEach so that we get an array of promises to await
     Object.entries(tags).map(([name, value]) => {
       return tagCmd.add(name, commitId, value, { user, datetime });
-    })
+    }),
   );
   return commitId;
 }
@@ -497,7 +497,7 @@ var tagCmd = {
     tagname,
     checkinId,
     value = null,
-    { raw = false, propagate = false, user = "fossil.js" } = {}
+    { raw = false, propagate = false, user = "fossil.js" } = {},
   ) {
     const args = ["tag", "add", "--user-override", user, tagname, checkinId];
     if (value !== null) {
@@ -603,7 +603,7 @@ var tagCmd = {
    */
   async list(
     checkinId,
-    { raw = false, type, inverse = false, prefix, parseNums = true } = {}
+    { raw = false, type, inverse = false, prefix, parseNums = true } = {},
   ) {
     const args = ["tag", "list"];
     if (checkinId) {
@@ -709,7 +709,7 @@ var stashCmd = {
    */
   async save(
     files = [],
-    { inverse = false, message = "Stashed by fossil.js" } = {}
+    { inverse = false, message = "Stashed by fossil.js" } = {},
   ) {
     if (!Array.isArray(files)) {
       files = [files];
@@ -906,7 +906,7 @@ async function hasChanges(files = []) {
  */
 async function versionsCmd(
   file,
-  { branch = null, limit = -1, order = "desc", parseNums = true } = {}
+  { branch = null, limit = -1, order = "desc", parseNums = true } = {},
 ) {
   // file has to be relative to the directory the repository is in since that's the
   // path stored in the database

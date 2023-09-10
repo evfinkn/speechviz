@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
 import globals from "./globals.js";
 import { binarySearch } from "./util.js";
 
@@ -409,7 +410,11 @@ var GraphIMU = class GraphIMU {
     for (let i = 0; i < this.numGlasses; i++) {
       // index of the data's time closest to the video's current time
       const index = Math.abs(
-        binarySearch(this.timestamps[i], media.currentTime, (t1, t2) => t1 - t2)
+        binarySearch(
+          this.timestamps[i],
+          media.currentTime,
+          (t1, t2) => t1 - t2,
+        ),
       );
       if (index >= this.quaternions[i].length) {
         return; // prevent out of bounds errors

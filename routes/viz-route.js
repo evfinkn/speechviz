@@ -1,8 +1,9 @@
-import express from "express";
 import fs from "fs";
+
+import { readdirAndFilter } from "../server/io.js";
+import express from "express";
 // .js extension needed because mime doesn't have an "exports" field
 import mime from "mime/lite.js";
-import { readdirAndFilter } from "../server/io.js";
 
 const router = express.Router();
 

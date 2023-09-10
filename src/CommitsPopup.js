@@ -117,7 +117,7 @@ const CommitsPopup = class CommitsPopup {
 
     // Get the index of the current branch
     this.currentBranchIndex = [...this.branchSelect.options].findIndex(
-      (option) => option.text === globals.currentVersion.branch
+      (option) => option.text === globals.currentVersion.branch,
     );
 
     this.setCurrentVersion();

@@ -121,7 +121,7 @@ const Rule = class Rule {
       expectsNextRule = false,
       nextRule = null,
       nextRuleType = null,
-    } = {}
+    } = {},
   ) {
     this.name = name;
     this.rule = rule;
@@ -189,7 +189,7 @@ const Rule = class Rule {
       this.valueInputs = [];
       for (let i = 0; i < this.expectedNumberOfValues; i++) {
         const input = htmlToElement(
-          `<input type="text" placeholder="${this.type}">`
+          `<input type="text" placeholder="${this.type}">`,
         );
         this.valueInputs.push(input);
         // if (i < this.expectedNumberOfValues - 1) {
@@ -205,37 +205,37 @@ const Rule = class Rule {
 const isLess = new Rule("is less than", (attr, val) => attr < val);
 const isLessEqual = new Rule(
   "is less than or equal to",
-  (attr, val) => attr <= val
+  (attr, val) => attr <= val,
 );
 const isGreater = new Rule("is greater than", (attr, val) => attr > val);
 const isGreaterEqual = new Rule(
   "is greater than or equal to",
-  (attr, val) => attr >= val
+  (attr, val) => attr >= val,
 );
 const isEqualTo = new Rule("is equal to", (attr, val) => attr === val);
 const isNotEqualTo = new Rule("is not equal to", (attr, val) => attr !== val);
 const isInRange = new Rule(
   "is in the range",
-  (attr, min, max) => min <= attr && attr <= max
+  (attr, min, max) => min <= attr && attr <= max,
 );
 isInRange.stringsBetweenValues = ["to"];
 isInRange.expectedNumberOfValues = 2;
 const includes = new Rule("includes", (attr, val) => attr.includes(val));
 const doesNotInclude = new Rule(
   "does not include",
-  (attr, val) => !attr.includes(val)
+  (attr, val) => !attr.includes(val),
 );
 const itemAtIndex = new Rule(
   "item at index",
   (attr, index) => attr.at(index),
-  "number"
+  "number",
 );
 itemAtIndex.expectsNextRule = true;
 const indexOf = new Rule("index of", (attr, val) => attr.indexOf(val));
 indexOf.expectsNextRule = true;
 indexOf.nextRuleType = "number";
 const lastIndexOf = new Rule("last index of", (attr, val) =>
-  attr.lastIndexOf(val)
+  attr.lastIndexOf(val),
 );
 lastIndexOf.expectsNextRule = true;
 lastIndexOf.nextRuleType = "number";
@@ -248,12 +248,12 @@ length.nextRuleType = "number";
 const hasKey = new Rule(
   "has key",
   (attr, key) => Object.hasOwn(attr, key),
-  "string"
+  "string",
 );
 const doesNotHaveKey = new Rule(
   "does not have key",
   (attr, key) => !Object.hasOwn(attr, key),
-  "string"
+  "string",
 );
 const valueAtKey = new Rule("value at key", (attr, key) => attr[key], "string");
 valueAtKey.expectsNextRule = true;

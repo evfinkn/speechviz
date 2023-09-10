@@ -1,5 +1,5 @@
-import express from "express";
 import Database from "better-sqlite3";
+import express from "express";
 
 const router = express.Router();
 const db = Database("speechviz.sqlite3");

@@ -25,7 +25,7 @@ fetch("/clustered-files")
           window.location.replace(
             `/clustered-faces?faceFolder=` +
               `${this.value.replace("cluster", "")}` +
-              `&inFaceFolder=true`
+              `&inFaceFolder=true`,
           );
         });
         fieldset.append(div);

@@ -39,7 +39,7 @@ TIMING_LEVEL = logger.level(
     no=13,
     # color=logger.level("INFO").color,
     color="<magenta><bold>",
-    icon="\U0001F551",
+    icon="\U0001f551",
 )
 
 

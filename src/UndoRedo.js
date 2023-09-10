@@ -1,6 +1,6 @@
 import globals from "./globals.js";
+import { redoIcon, undoIcon } from "./icon.js";
 import { toggleButton } from "./util.js";
-import { undoIcon, redoIcon } from "./icon.js";
 
 const filename = globals.filename;
 const fileParagraph = document.getElementById("file");

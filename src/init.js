@@ -1,40 +1,41 @@
-import Split from "split.js"; // library for resizing columns by dragging
-import throttle from "lodash/throttle.js";
 import { default as getNestedProp } from "lodash/get.js";
-import globals from "./globals.js";
-import {
-  TreeItem,
-  Group,
-  CarouselGroup,
-  Segment,
-  PeaksGroup,
-  Face,
-  Word,
-  File,
-  Stat,
-} from "./treeClasses.js";
-import { GraphIMU } from "./graphicalClasses.js";
-import SettingsPopup from "./SettingsPopup.js";
-import CommitsPopup from "./CommitsPopup.js";
-import SavePopup from "./SavePopup.js";
+import throttle from "lodash/throttle.js";
+import Split from "split.js"; // library for resizing columns by dragging
+
 import { Channels } from "./ChannelAudio.js";
-// import { FiltersPopup } from "./FiltersPopup.js";
-import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
-import { notification } from "./Notification.js";
+import CommitsPopup from "./CommitsPopup.js";
+import globals from "./globals.js";
+import { GraphIMU } from "./graphicalClasses.js";
+import { saveIcon, settingsIcon, zoomInIcon, zoomOutIcon } from "./icon.js";
 import IdCounter from "./IdCounter.js";
+import { notification } from "./Notification.js";
+import SavePopup from "./SavePopup.js";
+import SettingsPopup from "./SettingsPopup.js";
+import {
+  CarouselGroup,
+  Face,
+  File,
+  Group,
+  PeaksGroup,
+  Segment,
+  Stat,
+  TreeItem,
+  Word,
+} from "./treeClasses.js";
+// import { FiltersPopup } from "./FiltersPopup.js";
+import { Actions, redoStorage, undoStorage } from "./UndoRedo.js";
 import {
   arrayMean,
-  objectMap,
+  checkResponseStatus,
   getRandomColor,
+  getUrl,
   naturalCompare,
+  objectMap,
+  parseNumericalCsv,
+  ResponseError,
   sortByProp,
   toggleButton,
-  ResponseError,
-  checkResponseStatus,
-  parseNumericalCsv,
-  getUrl,
 } from "./util.js";
-import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
 
 const peaks = globals.peaks;
 const user = globals.user;
@@ -294,7 +295,7 @@ const createTreeItemFromObj = (obj, parent = null) => {
  */
 const rankSnrs = () => {
   const groups = Object.values(PeaksGroup.byId).filter(
-    (group) => group.snr !== null
+    (group) => group.snr !== null,
   );
   if (groups.length == 0) {
     return; // no groups have SNRs
@@ -330,10 +331,10 @@ const rankSnrs = () => {
   // calculate standard deviations
   const standardDeviation = (num, mean) => (num - mean) ** 2;
   const snrStdDev = Math.sqrt(
-    arrayMean(Object.values(snrs), standardDeviation, snrMean)
+    arrayMean(Object.values(snrs), standardDeviation, snrMean),
   );
   const durStdDev = Math.sqrt(
-    arrayMean(Object.values(durations), standardDeviation, durMean)
+    arrayMean(Object.values(durations), standardDeviation, durMean),
   );
 
   // calculate z scores
@@ -379,12 +380,12 @@ if (folder !== undefined && folder !== null) {
     .then((response) => response.json())
     .then((fileList) => {
       fileList.forEach(
-        (file) => new File(file, { parent: files, curFile: filename })
+        (file) => new File(file, { parent: files, curFile: filename }),
       );
       File.byId[filename].toggleTree(true); // turn on button for current file
       // sort in natural sort order
       files.sort((file1, file2) =>
-        naturalCompare(file1.filename, file2.filename)
+        naturalCompare(file1.filename, file2.filename),
       );
     })
     .catch((error) => output404OrError(error, "folder grabbing runs"));
@@ -538,7 +539,7 @@ const loadStats = async () => {
     const csvStringToArray = (strData) => {
       const objPattern = new RegExp(
         '(\\,|\\r?\\n|\\r|^)(?:"([^"]*(?:""[^"]*)*)"|([^\\,\\r\\n]*))',
-        "gi"
+        "gi",
       );
       let arrMatches = null;
       const arrData = [[]];
@@ -547,7 +548,7 @@ const loadStats = async () => {
         arrData[arrData.length - 1].push(
           arrMatches[2]
             ? arrMatches[2].replace(new RegExp('""', "g"), '"')
-            : arrMatches[3]
+            : arrMatches[3],
         );
       }
       return arrData;
@@ -580,7 +581,7 @@ const loadWords = async () => {
     "transcriptions",
     basename,
     "-transcription.json",
-    folder
+    folder,
   );
   try {
     const words = await fetch(wordsFile)
@@ -792,7 +793,7 @@ if (poseContainer) {
       }
     })
     .then((responses) =>
-      Promise.all(responses.map((response) => response.text()))
+      Promise.all(responses.map((response) => response.text())),
     )
     .then((texts) => texts.map((text) => parseNumericalCsv(text)))
     .then((data) => {
@@ -1024,8 +1025,8 @@ peaks.on("segments.dragstart", function (event) {
   // the segment will have the new start and end times
   peaks.once("segments.dragend", () =>
     undoStorage.push(
-      new Actions.DragSegmentAction(segment, oldStartTime, oldEndTime)
-    )
+      new Actions.DragSegmentAction(segment, oldStartTime, oldEndTime),
+    ),
   );
 });
 

@@ -1,6 +1,7 @@
 import Peaks from "peaks.js";
+
 import createSegmentMarker from "./CustomSegmentMarker.js";
-import { checkResponseStatus, removeExtension, getUrl } from "./util.js";
+import { checkResponseStatus, getUrl, removeExtension } from "./util.js";
 
 // query parameters that appear in url, such as ?file=audio.mp3
 const urlParams = new URLSearchParams(window.location.search);
@@ -91,7 +92,7 @@ const versionsFetchUrl = getUrl(
   "versions",
   basename,
   "-annotations.json",
-  folder
+  folder,
 );
 
 /** @type {!Array<VersionEntry>} */
@@ -130,14 +131,14 @@ if (globals.urlParams.has("commit")) {
 globals.allBranches = new Set(
   await fetch("/branch/list")
     .then(checkResponseStatus)
-    .then((response) => response.json())
+    .then((response) => response.json()),
 );
 
 const waveformFile = getUrl(
   "waveforms",
   basename,
   mono ? "-waveform-mono.json" : "-waveform.json",
-  folder
+  folder,
 );
 const options = {
   // options passed to Peaks

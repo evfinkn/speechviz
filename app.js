@@ -1,38 +1,40 @@
-import express from "express";
+import fs from "fs/promises";
 import path from "path";
 import url from "url";
-import fs from "fs/promises";
-import logger from "morgan";
-import cookieParser from "cookie-parser";
-
-import index from "./routes/index-route.js";
-import clusteredFaces from "./routes/face-cluster-route.js";
-import viz from "./routes/viz-route.js";
-import login from "./routes/login-route.js";
-import changePassword from "./routes/change-password-route.js";
-import settings from "./routes/settings-route.js";
-const app = express();
 
 import Database from "better-sqlite3";
-const db = new Database("speechviz.sqlite3");
+import cookieParser from "cookie-parser";
+import express from "express";
+// use sessions
+import session from "express-session";
+import logger from "morgan";
 
 import fossil from "./server/fossil.js";
 import fossilUtil from "./server/fossilUtil.js";
-import propagate from "./server/propagate.js";
 import { readdirAndFilter } from "./server/io.js";
+import propagate from "./server/propagate.js";
+
+import changePassword from "./routes/change-password-route.js";
+import clusteredFaces from "./routes/face-cluster-route.js";
+import index from "./routes/index-route.js";
+import login from "./routes/login-route.js";
+import settings from "./routes/settings-route.js";
+import viz from "./routes/viz-route.js";
+
+const app = express();
+
+const db = new Database("speechviz.sqlite3");
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const dataDir = await fs.realpath(path.join(__dirname, "data"));
 
-// use sessions
-import session from "express-session";
 app.use(
   session({
     name: "speechviz",
     secret: "clinic annotations here",
     resave: false,
     saveUninitialized: true,
-  })
+  }),
 );
 
 // view engine setup
@@ -246,7 +248,7 @@ const insertFile = db.prepare("INSERT INTO audiofiles(audiofile) VALUES(?)");
 const selectUserId = db.prepare("SELECT id FROM users WHERE user=?");
 
 const deleteSegments = db.prepare(
-  "DELETE FROM annotations WHERE fileId=? AND userId=?"
+  "DELETE FROM annotations WHERE fileId=? AND userId=?",
 );
 const deleteNotes = db.prepare("DELETE FROM notes WHERE fileId=? AND userId=?");
 const deleteFaces = db.prepare("DELETE FROM faces WHERE fileId=? AND userId=?");
@@ -260,13 +262,13 @@ const insertPath = db.prepare("INSERT INTO paths(path) VALUES(?)");
 const insertSegment = db.prepare(
   "INSERT INTO " + // eslint-disable-next-line max-len
     "annotations(fileId,userId,startTime,endTime,editable,labelId,id,pathId,treeText,removable) " +
-    "VALUES(?,?,?,?,?,?,?,?,?,?)"
+    "VALUES(?,?,?,?,?,?,?,?,?,?)",
 );
 const insertNotes = db.prepare(
-  "INSERT INTO notes(fileId,userId,notes) VALUES(?,?,?)"
+  "INSERT INTO notes(fileId,userId,notes) VALUES(?,?,?)",
 );
 const insertFace = db.prepare(
-  "INSERT INTO faces(fileId,userId,speaker,faceNum) VALUES(?,?,?,?)"
+  "INSERT INTO faces(fileId,userId,speaker,faceNum) VALUES(?,?,?,?)",
 );
 
 const save = db.transaction((filename, user, segments, notes, faces) => {
@@ -321,7 +323,7 @@ app.use("/save/", (req, res) => {
     req.body["user"],
     req.body["segments"],
     req.body["notes"],
-    req.body["faces"]
+    req.body["faces"],
   );
   res.end();
 });
@@ -329,18 +331,18 @@ app.use("/save/", (req, res) => {
 const selectSegments = db.prepare(
   "SELECT " +
     "startTime,endTime,editable,labelId,id,pathId,treeText,removable " +
-    "FROM annotations WHERE fileId=? AND userId=?"
+    "FROM annotations WHERE fileId=? AND userId=?",
 );
 
 const selectLabel = db.prepare("SELECT label FROM labels WHERE id=?");
 const selectPath = db.prepare("SELECT path FROM paths WHERE id=?");
 
 const selectNotes = db.prepare(
-  "SELECT notes FROM notes WHERE fileId=? AND userId=?"
+  "SELECT notes FROM notes WHERE fileId=? AND userId=?",
 );
 
 const selectFaces = db.prepare(
-  "SELECT speaker,faceNum FROM faces WHERE fileId=? AND userId=?"
+  "SELECT speaker,faceNum FROM faces WHERE fileId=? AND userId=?",
 );
 
 const load = db.transaction((filename, user) => {
