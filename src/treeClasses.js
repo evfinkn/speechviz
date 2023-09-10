@@ -331,33 +331,33 @@ var TreeItem = class TreeItem {
   /**
    * The li element that is displayed and that contains all other elements if this
    * item is rendered. `null` otherwise.
-   * @type {?Element}
+   * @type {?HTMLLIElement}
    */
   li = null;
 
   /**
    * The input element of the checkbox used to toggle this item if this item is
    * rendered. `null` otherwise.
-   * @type {?Element}
+   * @type {?HTMLInputElement}
    */
   checkbox = null;
 
   /**
    * The span element containing the text shown in `li` if this item is rendered.
    * `null` otherwise.
-   * @type {?Element}
+   * @type {?HTMLSpanElement}
    */
   span = null;
 
   /**
    * The a element of the play button if this item is playable. Otherwise, `null`.
-   * @type {?Element}
+   * @type {?HTMLAnchorElement}
    */
   playButton = null;
 
   /**
    * The a element of the loop button if this item is playable. Otherwise, `null`.
-   * @type {?Element}
+   * @type {?HTMLAnchorElement}
    */
   loopButton = null;
 
@@ -365,14 +365,14 @@ var TreeItem = class TreeItem {
    * The a element of the pause button if this item is playable. Otherwise, `null`.
    * The play and loop buttons are switched out with this when they're clicked,
    * so it's only displayed when the item is playing.
-   * @type {?Element}
+   * @type {?HTMLAnchorElement}
    */
   pauseButton = null;
 
   /**
    * The a element of the remove button.
    * `null` if this item isn't removable.
-   * @type {?Element}
+   * @type {?HTMLAnchorElement}
    */
   removeButton = null;
 
@@ -386,7 +386,7 @@ var TreeItem = class TreeItem {
   /**
    * The ul element containing the nested content (the children) of this item if
    * this item is rendered. `null` otherwise.
-   * @type {?Element}
+   * @type {?HTMLUListElement}
    */
   nested = null;
 
@@ -1161,7 +1161,7 @@ var Popup = class Popup {
   /**
    * The div element that contains all other elements.
    * Displayed when `treeItem` is clicked (and this popup currently has content).
-   * @type {!Element}
+   * @type {!HTMLDivElement}
    */
   popup;
 
@@ -1169,35 +1169,35 @@ var Popup = class Popup {
   // Sarita made it, so that's how I made the class. They might be able to be combined
   /**
    * The div element containing the actual content of the popup.
-   * @type {!Element}
+   * @type {!HTMLDivElement}
    */
   popupContent;
 
   /**
    * The div element containing `renameInput` if `treeItem.renamable`.
    * Otherwise, `null`.
-   * @type {?Element}
+   * @type {?HTMLDivElement}
    */
   renameDiv = null;
 
   /**
    * The text input element used to rename `treeItem` if `treeItem.renamable`.
    * Otherwise, `null`.
-   * @type {?Element}
+   * @type {?HTMLInputElement}
    */
   renameInput = null;
 
   /**
    * The div element containing the radio buttons used to move `treeItem`
    * if `treeItem.moveTo`. Otherwise, `null`.
-   * @type {?Element}
+   * @type {?HTMLDivElement}
    */
   moveDiv = null;
 
   /**
    * The div element containing the radio buttons used to copy `treeItem`
    * if `treeItem.copyTo`. Otherwise, `null`.
-   * @type {?Element}
+   * @type {?HTMLDivElement}
    */
   copyDiv = null;
 
@@ -1205,14 +1205,14 @@ var Popup = class Popup {
    * The div element containing the radio buttons used to associate
    * `treeItem` if `treeItem.assocWith`.
    * Otherwise, `null`.
-   * @type {?Element}
+   * @type {?HTMLDivElement}
    */
   assocDiv = null;
 
   /**
    * The div element containing `colorPicker` if `treeItem.colorable`.
    * Otherwise, `null`.
-   * @type {?Element}
+   * @type {?HTMLDivElement}
    */
   colorDiv = null;
 
@@ -1226,7 +1226,7 @@ var Popup = class Popup {
   /**
    * The button element used to set `treeItem` to a random color if
    * `treeItem.colorable`. Otherwise, `null`.
-   * @type {?Element}
+   * @type {?HTMLButtonElement}
    */
   randomColorButton = null;
 
@@ -1726,7 +1726,7 @@ var CarouselGroup = class CarouselGroup extends Group {
    * `children` is selected. If multiple items are selected, the first selected item is
    * used. If there are no items in `children` or no items are selected, nothing
    * happens.
-   * @type {!Element}
+   * @type {!HTMLAnchorElement}
    */
   leftButton;
 
@@ -1737,7 +1737,7 @@ var CarouselGroup = class CarouselGroup extends Group {
    * `children` is selected. If multiple items are selected, the first selected item is
    * used. If there are no items in `children` or no items are selected, nothing
    * happens.
-   * @type {!Element}
+   * @type {!HTMLAnchorElement}
    */
   rightButton;
 
@@ -2706,6 +2706,7 @@ var PeaksGroup = class PeaksGroup extends Group {
 
   /**
    * Face number this face is associated with, for saving purposes
+   * @type {?number}
    */
   faceNum = null;
 
@@ -3017,17 +3018,19 @@ var Face = class Face extends TreeItem {
 
   /**
    * Button that links to a page with every single face in this cluster
-   * @type {string}
+   * @type {HTMLAnchorElement}
    */
   linkButton;
 
   /**
    * Li for the image shown for a face
+   * @type {HTMLLIElement}
    */
   imageLi;
 
   /**
    * Speaker number this face is associated with
+   * @type {number}
    */
   speakerNum = null;
 
