@@ -1,5 +1,5 @@
 import { notifIcons } from "./icon.js";
-import { htmlToElement } from "./util.js";
+import { html } from "./util.js";
 
 const Notification = class Notification {
   /**
@@ -25,14 +25,14 @@ const Notification = class Notification {
   #timeoutID = null;
 
   constructor() {
-    this.div = htmlToElement(`<div class="notification"></div>`);
-    this.icon = htmlToElement(notifIcons.info); // default icon
-    this.messageSpan = htmlToElement(
-      `<span class="notification-message"></span>`,
-    );
-    this.closeButton = htmlToElement(
-      `<a href="javascript:;" class="icon notification-close">${notifIcons.x}</a>`,
-    );
+    this.div = html`<div class="notification"></div>`;
+    this.icon = html`${notifIcons.info}`; // default icon
+    this.messageSpan = html`<span class="notification-message"></span>`;
+    this.closeButton = html`<a
+      href="javascript:;"
+      class="icon notification-close"
+      >${notifIcons.x}</a
+    >`;
     this.closeButton.addEventListener("click", () => this.hide());
     this.div.append(this.icon, this.messageSpan, this.closeButton);
     document.body.append(this.div);

@@ -2,7 +2,7 @@ import { Attributes, Type } from "./Attribute.js";
 import { minusIcon, plusIcon } from "./icon.js";
 import { Rules } from "./Rule.js";
 import { TreeItem } from "./treeClasses.js";
-import { htmlToElement } from "./util.js";
+import { html } from "./util.js";
 
 // The idea for the layout and concept of the filtering was inspired by
 // Apple's various smart collections in their apps, such as Smart Albums in
@@ -51,9 +51,7 @@ const FilterElement = class FilterElement {
 
   constructor(parent) {
     this.li = document.createElement("li");
-    this.checkbox = htmlToElement(
-      `<input type="checkbox" autocomplete="off" checked>`,
-    );
+    this.checkbox = html`<input type="checkbox" autocomplete="off" checked />`;
     this.li.appendChild(this.checkbox);
     this.attributeSelect = document.createElement("select");
     for (const attribute of Object.keys(Attributes)) {
@@ -68,9 +66,9 @@ const FilterElement = class FilterElement {
       this.generateRuleElements(this.attribute.type);
     });
     this.attribute = Attributes[this.attributeSelect.value];
-    this.removeButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${minusIcon}</a>`,
-    );
+    this.removeButton = html`<a href="javascript:;" class="button-on"
+      >${minusIcon}</a
+    >`;
     this.removeButton.addEventListener("click", () => {
       this.li.remove();
       parent.removeFilter(this);
@@ -203,46 +201,44 @@ const FiltersPopup = class FiltersPopup {
   filters;
 
   constructor() {
-    this.popup = htmlToElement("<div class='popup'></div>");
+    this.popup = html`<div class="popup"></div>`;
     document.body.append(this.popup);
 
-    const popupContent = htmlToElement(
-      "<div class='popup-content' style='width:70%;'></div>",
-    );
+    const popupContent = html`<div
+      class="popup-content"
+      style="width:70%;"
+    ></div>`;
     this.popupContent = popupContent;
     this.popup.appendChild(popupContent);
 
-    const title = htmlToElement("<h2>Filters</h2>");
+    const title = html`<h2>Filters</h2>`;
     popupContent.appendChild(title);
 
-    const topDiv = htmlToElement("<div class='space-between'></div>");
+    const topDiv = html`<div class="space-between"></div>`;
     popupContent.appendChild(topDiv);
 
-    const matchType = htmlToElement(
-      `<label>
-        <input type="checkbox" autochecked="off" checked></input>
-         Match <select></select> of the following rules:
-      </label>`,
-    );
+    const matchType = html`<label>
+      <input type="checkbox" autochecked="off" checked />
+      Match
+      <select>
+        <option value="all">all</option>
+        <option value="any">any</option>
+      </select>
+      of the following rules:
+    </label>`;
     const [doFilteringCheckbox, matchTypeSelect] = matchType.children;
     this.doFilteringCheckbox = doFilteringCheckbox;
     doFilteringCheckbox.addEventListener("change", () => {
       this.ul.classList.toggle("grayed-out", !doFilteringCheckbox.checked);
     });
     this.matchTypeSelect = matchTypeSelect;
-    matchTypeSelect.appendChild(
-      htmlToElement("<option value='all'>all</option>"),
-    );
-    matchTypeSelect.appendChild(
-      htmlToElement("<option value='any'>any</option>"),
-    );
     topDiv.appendChild(matchType);
 
     this.filters = [];
 
-    const addButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${plusIcon}</a>`,
-    );
+    const addButton = html`<a href="javascript:;" class="button-on"
+      >${plusIcon}</a
+    >`;
     topDiv.appendChild(addButton);
     addButton.addEventListener("click", () => {
       const filterElement = new FilterElement(this);
@@ -253,16 +249,16 @@ const FiltersPopup = class FiltersPopup {
     this.ul = document.createElement("ul");
     popupContent.appendChild(this.ul);
 
-    const bottomDiv = htmlToElement(
-      "<div style='display:flex;justify-content:flex-end;'></div>",
-    );
+    const bottomDiv = html`<div
+      style="display:flex;justify-content:flex-end;"
+    ></div>`;
     popupContent.appendChild(bottomDiv);
 
-    const cancelButton = htmlToElement("<button>Cancel</button>");
+    const cancelButton = html`<button>Cancel</button>`;
     bottomDiv.appendChild(cancelButton);
     cancelButton.addEventListener("click", () => this.hide());
 
-    const applyButton = htmlToElement("<button>Apply</button>");
+    const applyButton = html`<button>Apply</button>`;
     bottomDiv.appendChild(applyButton);
     applyButton.addEventListener("click", () => {
       this.applyFilters();

@@ -1,6 +1,6 @@
 import globals from "./globals.js";
 import { Segment } from "./treeClasses.js";
-import { checkResponseStatus, htmlToElement } from "./util.js";
+import { checkResponseStatus, html } from "./util.js";
 
 const peaks = globals.peaks;
 const overview = peaks.views.getView("overview");
@@ -111,14 +111,14 @@ const SettingsPopup = class SettingsPopup {
   resetAllButton;
 
   constructor() {
-    this.popup = htmlToElement("<div class='popup'></div>");
+    this.popup = html`<div class="popup"></div>`;
     document.body.append(this.popup);
 
-    const popupContent = htmlToElement("<div class='popup-content'></div>");
+    const popupContent = html`<div class="popup-content"></div>`;
     this.popupContent = popupContent;
     this.popup.appendChild(popupContent);
 
-    const closeButton = htmlToElement("<a class='close'>&times</a>");
+    const closeButton = html`<a class="close">&times</a>`;
     popupContent.appendChild(closeButton);
     closeButton.addEventListener("click", () => this.hide());
 
@@ -138,11 +138,11 @@ const SettingsPopup = class SettingsPopup {
       10: 5,
     };
 
-    const amplitudeDiv = htmlToElement(`<div>
-            <label>
-              Amplitude scale <input type='range' min='0' max='10' step='1'>
-            </label>
-        </div>`);
+    const amplitudeDiv = html`<div>
+      <label>
+        Amplitude scale <input type="range" min="0" max="10" step="1" />
+      </label>
+    </div>`;
     popupContent.append(amplitudeDiv);
 
     this.amplitudeInput = amplitudeDiv.firstElementChild.firstElementChild;
@@ -153,9 +153,9 @@ const SettingsPopup = class SettingsPopup {
     });
 
     // setting to enable auto-scroll (peaks viewer moves forward with audio)
-    const autoScrollDiv = htmlToElement(`<div>
-            <label><input type='checkbox' checked> Auto scroll</label>
-        </div>`);
+    const autoScrollDiv = html`<div>
+      <label><input type="checkbox" checked /> Auto scroll</label>
+    </div>`;
     popupContent.append(autoScrollDiv);
 
     this.autoScrollInput = autoScrollDiv.firstElementChild.firstElementChild;
@@ -164,9 +164,9 @@ const SettingsPopup = class SettingsPopup {
     });
 
     // setting to enable seeking (clicking peaks to jump to a time)
-    const enableSeekDiv = htmlToElement(`<div>
-            <label><input type='checkbox' checked> Enable click to seek</label>
-        </div>`);
+    const enableSeekDiv = html`<div>
+      <label><input type="checkbox" checked /> Enable click to seek</label>
+    </div>`;
     popupContent.append(enableSeekDiv);
 
     this.enableSeekInput = enableSeekDiv.firstElementChild.firstElementChild;
@@ -176,11 +176,11 @@ const SettingsPopup = class SettingsPopup {
     });
 
     // setting to show segments' drag handles
-    const showDragHandlesDiv = htmlToElement(`<div>
-            <label>
-              <input type='checkbox' checked> Show segments' time drag handles
-            </label>
-        </div>`);
+    const showDragHandlesDiv = html`<div>
+      <label>
+        <input type="checkbox" checked /> Show segments' time drag handles
+      </label>
+    </div>`;
     popupContent.append(showDragHandlesDiv);
 
     this.showDragHandlesInput =
@@ -192,11 +192,9 @@ const SettingsPopup = class SettingsPopup {
     });
 
     // setting to enable segment dragging
-    const enableSegmentDraggingDiv = htmlToElement(`<div>
-            <label>
-              <input type='checkbox'> Enable segment dragging
-            </label>
-        </div>`);
+    const enableSegmentDraggingDiv = html`<div>
+      <label><input type="checkbox" /> Enable segment dragging</label>
+    </div>`;
     popupContent.append(enableSegmentDraggingDiv);
 
     this.enableSegmentDraggingInput =
@@ -206,11 +204,11 @@ const SettingsPopup = class SettingsPopup {
     });
 
     // setting to enable seeking (clicking peaks to jump to a time)
-    const aspectRatioDiv = htmlToElement(`<div>
-            <label>
-              <input type='checkbox' checked> Keep video aspect ratio on resize
-            </label>
-        </div>`);
+    const aspectRatioDiv = html`<div>
+      <label>
+        <input type="checkbox" checked /> Keep video aspect ratio on resize
+      </label>
+    </div>`;
     popupContent.append(aspectRatioDiv);
 
     this.maintainVideoAspectRatio =
@@ -230,11 +228,12 @@ const SettingsPopup = class SettingsPopup {
       // if we are already mono start it checked
       checkBoxInit = `<input id='switchMono' type='checkbox' checked>`;
     }
-    const switchMonoDiv = htmlToElement(`<div>
-            <label>
-              ${checkBoxInit} <span id='switchMonoText'> Display mono waveforms </span>
-            </label>
-        </div>`);
+    const switchMonoDiv = html`<div>
+      <label>
+        ${checkBoxInit}
+        <span id="switchMonoText"> Display mono waveforms </span>
+      </label>
+    </div>`;
     popupContent.append(switchMonoDiv);
     this.switchMono = switchMonoDiv.firstElementChild.firstElementChild;
     this.switchMono.addEventListener("change", function () {
@@ -259,7 +258,7 @@ const SettingsPopup = class SettingsPopup {
 
     // resets all of the pipeline segments that
     // have been moved from one group to another
-    this.resetMovedButton = htmlToElement("<button>Reset moved</button>");
+    this.resetMovedButton = html`<button>Reset moved</button>`;
     this.resetMovedButton.addEventListener("click", function () {
       if (
         confirm(
@@ -277,7 +276,7 @@ const SettingsPopup = class SettingsPopup {
     });
 
     // deletes all saved segments
-    this.resetAllButton = htmlToElement("<button>Reset all</button>");
+    this.resetAllButton = html`<button>Reset all</button>`;
     this.resetAllButton.addEventListener("click", function () {
       if (
         confirm(

@@ -1,4 +1,4 @@
-import { htmlToElement } from "./util.js";
+import { html } from "./util.js";
 
 /**
  * Casts the value(s) to the given type.
@@ -188,9 +188,7 @@ const Rule = class Rule {
     if (this.valueInputs === null) {
       this.valueInputs = [];
       for (let i = 0; i < this.expectedNumberOfValues; i++) {
-        const input = htmlToElement(
-          `<input type="text" placeholder="${this.type}">`,
-        );
+        const input = html`<input type="text" placeholder="${this.type}" />`;
         this.valueInputs.push(input);
         // if (i < this.expectedNumberOfValues - 1) {
         //   elements.push(document.createTextNode(this.stringsBetweenValues[i]));

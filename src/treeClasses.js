@@ -28,7 +28,7 @@ import { Actions, undoStorage } from "./UndoRedo.js";
 import {
   compareProperty,
   getRandomColor,
-  htmlToElement,
+  html,
   mappingToString,
   propertiesEqual,
   removeExtension,
@@ -696,25 +696,25 @@ var TreeItem = class TreeItem {
     this.duration = 0;
 
     if (this.rendered) {
-      this.playButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>`,
-      );
+      this.playButton = html`<a href="javascript:;" class="button-on"
+        >${this.constructor.icons.play}</a
+      >`;
       // use () => this.play() instead of just this.play so that
       // "this" refers to the TreeItem and not the button getting clicked
       this.playButton.addEventListener("click", () => this.play());
       // this puts the play button before any other buttons
       this.span.after(this.playButton);
 
-      this.loopButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>`,
-      );
+      this.loopButton = html`<a href="javascript:;" class="button-on"
+        >${this.constructor.icons.loop}</a
+      >`;
       // need to use () => so that we can pass loop = true
       this.loopButton.addEventListener("click", () => this.play(true));
       this.playButton.after(this.loopButton);
 
-      this.pauseButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.pause}</a>`,
-      );
+      this.pauseButton = html`<a href="javascript:;" class="button-on"
+        >${this.constructor.icons.pause}</a
+      >`;
       this.pauseButton.addEventListener("click", () => this.pause());
     }
   }
@@ -727,9 +727,9 @@ var TreeItem = class TreeItem {
     this.removable = true;
 
     if (this.rendered) {
-      this.removeButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`,
-      );
+      this.removeButton = html`<a href="javascript:;" class="button-on"
+        >${this.constructor.icons.remove}</a
+      >`;
       this.removeButton.addEventListener("click", () => {
         undoStorage.push(new Actions.RemoveAction(this));
       });
@@ -746,11 +746,11 @@ var TreeItem = class TreeItem {
 
     // since subclasses use this method, use this.constructor.icons to use the icons of
     // whatever class is being initialized (i.e. Group, TreeItem, Segment, etc.)
-    const li = htmlToElement(`<li>
-            <input type="checkbox" autocomplete="off" checked>
-            <span>${this.#text}</span>
-            <ul class="nested active"></ul>
-        </li>`);
+    const li = html`<li>
+      <input type="checkbox" autocomplete="off" checked />
+      <span>${this.#text}</span>
+      <ul class="nested active"></ul>
+    </li>`;
     this.li = li;
 
     this.checkbox = li.children[0];
@@ -1234,9 +1234,9 @@ var Popup = class Popup {
    * @param {!TreeItem} treeItem - The `TreeItem` to create the `Popup` for.
    */
   constructor(treeItem) {
-    this.popup = htmlToElement("<div class='popup'></div>");
+    this.popup = html`<div class="popup"></div>`;
 
-    const popupContent = htmlToElement("<div class='popup-content'></div>");
+    const popupContent = html`<div class="popup-content"></div>`;
     this.popupContent = popupContent;
     this.popup.appendChild(popupContent);
 
@@ -1246,14 +1246,14 @@ var Popup = class Popup {
     const text = treeItem.text;
     this.#text = text; // set this.#text and not this.text so it doesn't call setter
 
-    const closeButton = htmlToElement("<a class='close'>&times</a>");
+    const closeButton = html`<a class="close">&times</a>`;
     popupContent.appendChild(closeButton);
     closeButton.addEventListener("click", () => this.hide());
 
     if (treeItem.renamable) {
-      const renameDiv = htmlToElement(`<div><h3>Rename ${text}</h3></div>`);
+      const renameDiv = html`<div><h3>Rename ${text}</h3></div>`;
       this.renameDiv = renameDiv;
-      const renameInput = htmlToElement(`<input type="text" value="${text}">`);
+      const renameInput = html`<input type="text" value="${text}" />`;
       this.renameInput = renameInput;
       renameDiv.append(renameInput);
       renameInput.addEventListener("keypress", (event) => {
@@ -1269,32 +1269,26 @@ var Popup = class Popup {
 
     if (treeItem.moveTo) {
       popupContent.append(document.createElement("br"));
-      this.moveDiv = htmlToElement(
-        `<div><h3>Move ${text} to another group</h3></div>`,
-      );
+      this.moveDiv = html`<div><h3>Move ${text} to another group</h3></div>`;
       popupContent.append(this.moveDiv);
     }
 
     if (treeItem.copyTo) {
       popupContent.append(document.createElement("br"));
-      this.copyDiv = htmlToElement(
-        `<div><h3>Copy ${text} to another group</h3></div>`,
-      );
+      this.copyDiv = html`<div><h3>Copy ${text} to another group</h3></div>`;
       popupContent.append(this.copyDiv);
     }
 
     if (treeItem.assocWith) {
       popupContent.append(document.createElement("br"));
-      this.assocDiv = htmlToElement(
-        `<div><h3>Associate ${text} with a speaker</h3></div>`,
-      );
+      this.assocDiv = html`<div>
+        <h3>Associate ${text} with a speaker</h3>
+      </div>`;
       popupContent.append(this.assocDiv);
     }
 
     if (treeItem.colorable) {
-      const colorDiv = htmlToElement(
-        `<div><h3>Pick a new color for ${text}</h3></div>`,
-      );
+      const colorDiv = html`<div><h3>Pick a new color for ${text}</h3></div>`;
       this.colorDiv = colorDiv;
       const colorPicker = new Picker({
         parent: colorDiv,
@@ -1309,9 +1303,7 @@ var Popup = class Popup {
         this.hide();
       };
 
-      const randomColorButton = htmlToElement(
-        "<button>Set to random color</button>",
-      );
+      const randomColorButton = html`<button>Set to random color</button>`;
       this.randomColorButton = randomColorButton;
       colorDiv.append(randomColorButton);
       randomColorButton.addEventListener("click", () => {
@@ -1449,11 +1441,17 @@ var Popup = class Popup {
    *      button is clicked.
    */
   addMoveRadio(dest) {
-    const radioDiv = htmlToElement(
-      "<div><label>" +
-        `<input type="radio" name="${this.treeItem.id}-radios"` +
-        `autocomplete="off"> ${dest.id}</label><br></div>`,
-    );
+    const radioDiv = html`<div>
+      <label>
+        <input
+          type="radio"
+          name="${this.treeItem.id}-radios"
+          autocomplete="off"
+        />
+        ${dest.id}
+      </label>
+      <br />
+    </div>`;
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
     this.moveDiv.append(radioDiv);
@@ -1471,11 +1469,17 @@ var Popup = class Popup {
    *      button is clicked.
    */
   addCopyRadio(dest) {
-    const radioDiv = htmlToElement(
-      "<div><label>" +
-        `<input type="radio" name="${this.treeItem.id}-radios"` +
-        `autocomplete="off"> ${dest.id}</label><br></div>`,
-    );
+    const radioDiv = html`<div>
+      <label>
+        <input
+          type="radio"
+          name="${this.treeItem.id}-radios"
+          autocomplete="off"
+        />
+        ${dest.id}
+      </label>
+      <br />
+    </div>`;
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
     this.copyDiv.append(radioDiv);
@@ -1498,11 +1502,17 @@ var Popup = class Popup {
    *      when the radio button is clicked.
    */
   addAssocRadio(dest) {
-    const radioDiv = htmlToElement(
-      "<div><label>" +
-        `<input type="radio" name="${this.treeItem.id}-radios"` +
-        `autocomplete="off"> ${dest.id}</label><br></div>`,
-    );
+    const radioDiv = html`<div>
+      <label>
+        <input
+          type="radio"
+          name="${this.treeItem.id}-radios"
+          autocomplete="off"
+        />
+        ${dest.id}
+      </label>
+      <br />
+    </div>`;
     const radioButton = radioDiv.firstElementChild.firstElementChild;
 
     this.assocDiv.append(radioDiv);
@@ -1783,9 +1793,9 @@ var CarouselGroup = class CarouselGroup extends Group {
       copyTo,
       saveable,
     });
-    this.leftButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${arrowLeftIcon}</a>`,
-    );
+    this.leftButton = html`<a href="javascript:;" class="button-on"
+      >${arrowLeftIcon}</a
+    >`;
     // this puts the left button before any other buttons
     this.span.after(this.leftButton);
     this.leftButton.addEventListener("click", () => {
@@ -1794,9 +1804,9 @@ var CarouselGroup = class CarouselGroup extends Group {
       // .at() to wrap around to the last index if leftIndex is -1
       this.children.at(leftIndex).openFile();
     });
-    this.rightButton = htmlToElement(
-      `<a href="javascript:;" class="button-on">${arrowRightIcon}</a>`,
-    );
+    this.rightButton = html`<a href="javascript:;" class="button-on"
+      >${arrowRightIcon}</a
+    >`;
     this.leftButton.after(this.rightButton);
     this.rightButton.addEventListener("click", () => {
       const currentIndex = this.children.findIndex((child) => child.checked);
@@ -3076,22 +3086,25 @@ var Face = class Face extends TreeItem {
     });
 
     // rel="noopener noreferrer" is there to avoid tab nabbing
-    this.linkButton = htmlToElement(
-      `<a href="/clustered-faces?faceFolder=` +
-        `${this.id}&inFaceFolder="true"` +
-        ` style="text-decoration:none;"` +
-        ` target="_blank" rel="noopener noreferrer"` +
-        ` class="button-on">` +
-        `${this.constructor.icons.image}</a>`,
-    );
+    this.linkButton = html`<a
+      href="/clustered-faces?faceFolder=${this.id}&inFaceFolder=true"
+      style="text-decoration:none;"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="button-on"
+      >${this.constructor.icons.image}</a
+    >`;
     this.nested.before(this.linkButton);
 
     // change width and height here if you want a different sized image to show
-    this.imageLi = htmlToElement(
-      `<li><img src='faceClusters/${dir}/${id}/${imagePath}'` +
-        ` width = 100 height = 100` +
-        ` alt="Example image of face"/></li>`,
-    );
+    this.imageLi = html`<li>
+      <img
+        src="faceClusters/${dir}/${id}/${imagePath}"
+        width="100px"
+        height="100px"
+        alt="Example image of face"
+      />
+    </li>`;
     // store previous html of image to reset its position when the image is clicked
     this.imageLi.addEventListener("click", () => {
       undoStorage.push(new Actions.UnassociateAction(this));

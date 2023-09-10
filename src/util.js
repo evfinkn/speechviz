@@ -17,17 +17,6 @@ const getRandomColor = function () {
 };
 
 /**
- * Generates an HTMLElement from a string containing HTML.
- * @param {string} html - The `string` containing the HTML.
- * @returns {?Element} The `Element` represented by `html`.
- */
-const htmlToElement = function (html) {
-  const template = document.createElement("template");
-  template.innerHTML = html;
-  return template.content.firstElementChild;
-};
-
-/**
  * Generates HTMLElements from a template string.
  * @param {TemplateStringsArray} strings - An array of strings surrounding the
  *      values being interpolated into the template string.
@@ -358,7 +347,6 @@ const getUrl = (subdir, basename, suffix, folder = null) => {
 
 export {
   getRandomColor,
-  htmlToElement,
   html,
   naturalCompare,
   compareProperty,

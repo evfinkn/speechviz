@@ -1,4 +1,4 @@
-import { htmlToElement } from "./util.js";
+import { html } from "./util.js";
 
 fetch("/clustered-files")
   .then((res) => {
@@ -16,18 +16,28 @@ fetch("/clustered-files")
 
     if (clusterfolders?.length !== 0 && !fileList.inFaceFolder) {
       clusterfolders.forEach(function (folderName) {
-        const div = htmlToElement(`<div>
-            <input type="radio" id="${folderName}cluster" name="file-selection"
-            value="${folderName}cluster"></input>
-            <label for="${folderName}cluster">${folderName}</label></div>`);
-        div.firstElementChild.addEventListener("change", function () {
-          // when radio button clicked, open that video file in viz
-          window.location.replace(
-            `/clustered-faces?faceFolder=` +
-              `${this.value.replace("cluster", "")}` +
-              `&inFaceFolder=true`,
-          );
-        });
+        const div = html`<div>
+          <label>
+            <input
+              type="radio"
+              id="${folderName}cluster"
+              name="file-selection"
+              value="${folderName}cluster"
+            />
+            ${folderName}
+          </label>
+        </div>`;
+        div.firstElementChild.firstElementChild.addEventListener(
+          "change",
+          function () {
+            // when radio button clicked, open that video file in viz
+            window.location.replace(
+              `/clustered-faces?faceFolder=` +
+                `${this.value.replace("cluster", "")}` +
+                `&inFaceFolder=true`,
+            );
+          },
+        );
         fieldset.append(div);
       });
     }

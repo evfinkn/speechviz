@@ -1,4 +1,4 @@
-import { htmlToElement } from "./util.js";
+import { html } from "./util.js";
 
 const Channel = class Channel {
   /**
@@ -154,23 +154,23 @@ const Channel = class Channel {
     this.gainNode = audioContext.createGain();
     this.gainNode.gain.value = volume / 100;
 
-    this.label = htmlToElement(`<label>${name}</label>`);
-    this.slider = htmlToElement(`<input
+    this.label = html`<label>${name}</label>`;
+    this.slider = html`<input
       type="range"
       min="0"
       max="${volumeMax}"
       value="${volume}"
       step="${volumeStep}"
       list="volume-ticks"
-    />`);
-    this.input = htmlToElement(`<input
+    />`;
+    this.input = html`<input
       class="volume-input"
       type="number"
       min="0"
       max="${volumeMax}"
       value="${volume}"
       step="${volumeStep}"
-    />`);
+    />`;
 
     this.slider.addEventListener(
       "input",
@@ -181,7 +181,7 @@ const Channel = class Channel {
       () => (this.volume = this.input.value),
     );
 
-    this.muteButton = htmlToElement("<button>Mute</button>");
+    this.muteButton = html`<button>Mute</button>`;
     this.muteButton.addEventListener("click", () => {
       if (this.muted) {
         this.unmute();
@@ -190,7 +190,7 @@ const Channel = class Channel {
       }
     });
 
-    this.soloButton = htmlToElement("<button>Solo</button>");
+    this.soloButton = html`<button>Solo</button>`;
 
     this.label.append(
       this.slider,
