@@ -75,10 +75,11 @@ const channelNames = await fetch(channelsFile)
  * @type {!Object.<string, any>}
  */
 interface Globals {
+  highestId: number;
   urlParams: URLSearchParams;
   filename: string;
   basename: string;
-  media: Element | null;
+  media: HTMLMediaElement | null;
   channelNames: string[];
   mono: boolean;
   user: string;
@@ -104,13 +105,14 @@ const globals: Globals = {
   urlParams: urlParams,
   filename: filename,
   basename: basename,
-  media: document.getElementById("media"),
+  media: document.getElementById("media") as HTMLMediaElement,
   channelNames: channelNames,
   mono: mono,
   user: user,
   dirty: false,
   folder: folder,
   type: type,
+  highestId: 0,
 };
 
 const versionsFetchUrl = getUrl(

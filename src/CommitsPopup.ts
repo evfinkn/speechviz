@@ -1,5 +1,5 @@
 import globals from "./globals";
-import { html } from "./util.js";
+import { html } from "./util";
 import type { Version } from "./globals";
 
 interface VersionPopup extends Version {

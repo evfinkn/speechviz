@@ -1,4 +1,4 @@
-import { html, checkResponseStatus } from "./util.js";
+import { html, checkResponseStatus } from "./util";
 
 /**
  * Opens the main interface to visualize the specified file.
@@ -24,11 +24,11 @@ const openViz = function (fileName, type) {
  *    the label's text.
  * @returns {!HTMLLabelElement} The created label element containing the radio input.
  */
-const createRadio = function (id, name, value = id) {
+const createRadio = function (id, name, value = id): Element {
   return html`<label>
         <input type="radio" id="${id}" name="${name}" value="${value}"></input>
         ${value}
-    </label>`;
+    </label>` as Element;
 };
 
 const initAudioSelection = async () => {
@@ -37,7 +37,7 @@ const initAudioSelection = async () => {
   checkResponseStatus(response);
   const audioFiles = await response.json();
   audioFiles.forEach((audioFile) => {
-    const label = createRadio(audioFile, "audio-selection");
+    const label = createRadio(audioFile, "audio-selection") as Element;
     label.firstElementChild.addEventListener("change", function () {
       // uncheck manually because otherwise after using back button to go
       // back to this page, the radio button will still be checked

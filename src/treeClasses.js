@@ -344,7 +344,7 @@ var TreeItem = class TreeItem {
   /**
    * The span element containing the text shown in `li` if this item is rendered.
    * `null` otherwise.
-   * @type {?Element}
+   * @type {?HTMLElement}
    */
   span = null;
 
@@ -2295,6 +2295,9 @@ var Segment = class Segment extends PeaksItem {
    */
   get segment() {
     return this.peaksItem;
+  }
+  set segment(segment) {
+    this.peaksItem = segment;
   }
 
   /**

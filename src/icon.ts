@@ -1,4 +1,4 @@
-const feather = require("feather-icons");
+import feather from "feather-icons";
 
 /**
  * An `Object` containing the icons for play, pause, loop, remove, and
