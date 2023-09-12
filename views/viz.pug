@@ -1,114 +1,101 @@
-doctype html
-html(lang="en")
-  head
-    meta(charset="UTF-8")
-    title Speechviz
-    link(rel="stylesheet", type="text/css", href="css/style.css")
-  body
-    .navbar
-      a(href="/") Back to file selection
-      p#file #{ file } - Saved
-      a#user(href="/settings") #{ user }
-    .row.split
-      #column.column
-        ul#tree(style="padding-left: 0px")
-      #column2.column2
-        #waveform-container
-          if (type === "audio" || type === "views")
-            //- put the waveform above the media
+extends layout
+
+block content
+  .navbar
+    a(href="/") Back to file selection
+    p#file #{ file } - Saved
+    a#user(href="/settings") #{ user }
+  .row.split
+    #column.column: ul#tree(style="padding-left: 0px")
+    #column2.column2
+      #waveform-container
+        if (type === "audio" || type === "views")
+          //- put the waveform above the media
+          #zoomview-container
+          #overview-container
+          audio#media(controls="controls")
+            source(src=path, type=mimetype)
+            | Your browser does not support the audio element.
+        else
+          //- put the media above the waveform
+          #visual(style="overflow: hidden")
+            video#media(style="object-fit: cover", controls="controls")
+              source(src=path, type=mimetype)
+              | Your browser does not support the video element.
+          #poses(style="display: none")
+          div
             #zoomview-container
             #overview-container
-            audio#media(controls="controls")
-              source(src=path, type=mimetype)
-              | Your browser does not support the audio element.
-          else
-            //- put the media above the waveform
-            #visual(style="overflow: hidden")
-              video#media(style="object-fit: cover", controls="controls")
-                source(src=path, type=mimetype)
-                | Your browser does not support the video element.
-            #poses(style="display: none")
-            div
-              #zoomview-container
-              #overview-container
-          #media-controls
-            .row
-              #column3.column3
-                #controls
-                  datalist#volume-ticks
-                    option(value="50")
-                    option(value="100")
-                    option(value="150")
-                  a#zoomin.icon.button-off(
-                    href="javascript:;",
-                    title="Zoom in"
-                  )
-                  a#zoomout.icon.button-on(
-                    href="javascript:;",
-                    title="Zoom out"
-                  )
-                  a#undo.icon.button-on(
-                    href="javascript:;",
-                    title="Undo",
-                    style="padding-left: 20px"
-                  )
-                  a#redo.icon.button-on(href="javascript:;", title="Redo")
-                  a#save.icon.button-on(
-                    href="javascript:;",
-                    title="Save",
-                    style="padding-left: 20px"
-                  )
-                  a#settings.icon.button-on(
-                    href="javascript:;",
-                    title="Settings",
-                    style="padding-left: 20px"
-                  )
-                  //- br
-                  //- button#filters filters
-                  br
-                  button#versions versions
-                  div
-                    button#add-segment Add Segment
-                  div
-                    input#add-label-input(type="text", placeholder="label")
-                    button#add-label-button Add Label
-                  br
-                  input#speed-slider(
-                    type="range",
-                    min="0.25",
-                    max="2",
-                    step="0.25",
-                    list="speed-ticks",
-                    value="1",
-                    autocomplete="off"
-                  )
-                  //- add whitespace to visually separate the label from the slider
-                  | &nbsp;&nbsp;
-                  //- vertical-align: top to align the label with the slider
-                  label#speed-label(
-                    for="speed-slider",
-                    style="vertical-align: top"
-                  ) 1.00x Speed
-                  datalist#speed-ticks
-                    //- ignore the for loop line to fix bug in prettier / plugin-pug
-                    //- prettier-ignore
-                    - for (var i = 0.5; i < 2; i += 0.5)
-                      option(value=i)
-                  br
-                  br
-              #column4.column4
-                textarea#notes(
-                  rows="15",
-                  cols="45",
-                  placeholder="This is for any notes you wish to jot down"
-                )
-    #checkbox-contextmenu.contextmenu
-      #collapse.item Collapse/expand without toggling
-      #invert.item Invert children's toggle
-      #unselect.item Unselect everything else
-    #peakssegment-contextmenu.contextmenu
-      #show-in-tree.item Show in tree
-      #split-segment.item.editonly Split segment
-      #merge-segments.item.editonly Merge segments
+        #media-controls
+          .row
+            #column3.column3: #controls
+              datalist#volume-ticks
+                option(value="50")
+                option(value="100")
+                option(value="150")
+              a#zoomin.icon.button-off(href="javascript:;", title="Zoom in")
+              a#zoomout.icon.button-on(href="javascript:;", title="Zoom out")
+              a#undo.icon.button-on(
+                href="javascript:;",
+                title="Undo",
+                style="padding-left: 20px"
+              )
+              a#redo.icon.button-on(href="javascript:;", title="Redo")
+              a#save.icon.button-on(
+                href="javascript:;",
+                title="Save",
+                style="padding-left: 20px"
+              )
+              a#settings.icon.button-on(
+                href="javascript:;",
+                title="Settings",
+                style="padding-left: 20px"
+              )
+              //- br
+              //- button#filters filters
+              br
+              button#versions versions
+              div: button#add-segment Add Segment
+              div
+                input#add-label-input(type="text", placeholder="label")
+                button#add-label-button Add Label
+              br
+              input#speed-slider(
+                type="range",
+                min="0.25",
+                max="2",
+                step="0.25",
+                list="speed-ticks",
+                value="1",
+                autocomplete="off"
+              )
+              //- add whitespace to visually separate the label from the slider
+              | &nbsp;&nbsp;
+              //- vertical-align: top to align the label with the slider
+              label#speed-label(
+                for="speed-slider",
+                style="vertical-align: top"
+              ) 1.00x Speed
+              datalist#speed-ticks
+                //- ignore the for loop line to fix bug in prettier / plugin-pug
+                //- prettier-ignore
+                - for (var i = 0.5; i < 2; i += 0.5)
+                  option(value=i)
+              br
+              br
+            #column4.column4
+              textarea#notes(
+                rows="15",
+                cols="45",
+                placeholder="This is for any notes you wish to jot down"
+              )
+  #checkbox-contextmenu.contextmenu
+    #collapse.item Collapse/expand without toggling
+    #invert.item Invert children's toggle
+    #unselect.item Unselect everything else
+  #peakssegment-contextmenu.contextmenu
+    #show-in-tree.item Show in tree
+    #split-segment.item.editonly Split segment
+    #merge-segments.item.editonly Merge segments
 
-    script(type="application/javascript", src="js/init.js")
+  script(type="application/javascript", src="js/init.js")

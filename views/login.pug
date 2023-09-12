@@ -1,37 +1,22 @@
-doctype html
-html(lang="en")
-  head
-    meta(charset="UTF-8")
-    title Speechviz
-    link(rel="stylesheet", type="text/css", href="css/style.css")
-  body#loginBody
-    .loginFormBG
-      #speechvizHeader
-        h1#loginHeader Speechviz
-      form.loginForm(action="/login/credentials", method="post")
-        if retry
-          p.loginRetry= "Invalid user/password combination. Please try again"
-        else
-          p.spaceHolder= "Invalid user/password combination. Please try again"
-        table#loginTable
-          tr
-            td.loginText.tableRow= "User:"
-          tr.loginTextbox
-            td.tableRow
-              input.loginInput(type="text", name="user")
-          tr
-            td.loginText.tableRow= "Password:"
-          tr.loginTextbox
-            td.tableRow
-              input.loginInput(type="password", name="password")
-          if referer
-            tr
-              td.tableRow
-                input.loginInput(type="hidden", name="referer", value=referer)
-          tr
-            td.tableRow
-              input#loginButton(
-                type="submit",
-                name="login",
-                value="    LOGIN    "
-              )
+extends layout
+
+block body
+  body#loginBody: .loginFormBG
+    #speechvizHeader: h1#loginHeader Speechviz
+    form.loginForm(action="/login/credentials", method="post")
+      if retry
+        p.loginRetry Invalid user/password combination. Please try again
+      else
+        p.spaceHolder Invalid user/password combination. Please try again
+      table#loginTable
+        tr: td.loginText.tableRow User:
+        tr.loginTextbox: td.tableRow
+          input.loginInput(type="text", name="user")
+        tr: td.loginText.tableRow Password:
+        tr.loginTextbox: td.tableRow
+          input.loginInput(type="password", name="password")
+        if referer
+          tr: td.tableRow
+            input.loginInput(type="hidden", name="referer", value=referer)
+        tr: td.tableRow
+          input#loginButton(type="submit", name="login", value="    LOGIN    ")
