@@ -1,7 +1,7 @@
 import Peaks, { PeaksInstance } from "peaks.js";
 import createSegmentMarker from "./CustomSegmentMarker";
-import { checkResponseStatus, removeExtension, getUrl } from "./util.js";
-import type { VersionEntry } from "../server/fossil.js";
+import { checkResponseStatus, removeExtension, getUrl } from "./util";
+import type { VersionEntry } from "../server/fossil";
 
 // query parameters that appear in url, such as ?file=audio.mp3
 const urlParams = new URLSearchParams(window.location.search);

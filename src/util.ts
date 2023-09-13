@@ -44,7 +44,7 @@ const html = function (strings, ...values) {
   const template = document.createElement("template");
   template.innerHTML = htmlString;
   if (template.content.children.length > 1) {
-    return [...template.content.children];
+    return Array.from(template.content.children);
   }
   return template.content.firstElementChild;
 };
@@ -92,8 +92,10 @@ const compareProperty = function (obj1, obj2, property) {
  *      sorted.
  */
 const sortByProp = function (array, property, { reverse = false } = {}) {
-  reverse = reverse ? -1 : 1;
-  array.sort((obj1, obj2) => compareProperty(obj1, obj2, property) * reverse);
+  const reverseNum = reverse ? -1 : 1;
+  array.sort(
+    (obj1, obj2) => compareProperty(obj1, obj2, property) * reverseNum
+  );
   return array;
 };
 

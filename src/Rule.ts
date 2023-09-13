@@ -51,7 +51,7 @@ const Rule = class Rule {
    * "string", "boolean".
    * @type {?string}
    */
-  type = null;
+  type: "number" | "string" | "boolean" = null;
 
   /**
    * The number of values that the rule expects.
@@ -94,6 +94,7 @@ const Rule = class Rule {
    * @type {?HTMLInputElement[]}
    */
   valueInputs = null;
+  select: any;
 
   /**
    * @param {string} name - The name of the rule displayed in the select element.
@@ -226,11 +227,9 @@ const doesNotInclude = new Rule(
   "does not include",
   (attr, val) => !attr.includes(val)
 );
-const itemAtIndex = new Rule(
-  "item at index",
-  (attr, index) => attr.at(index),
-  "number"
-);
+const itemAtIndex = new Rule("item at index", (attr, index) => attr.at(index), {
+  type: "number",
+});
 itemAtIndex.expectsNextRule = true;
 const indexOf = new Rule("index of", (attr, val) => attr.indexOf(val));
 indexOf.expectsNextRule = true;
@@ -246,21 +245,25 @@ const length = new Rule("length", (attr) => attr.length);
 length.expectedNumberOfValues = 0;
 length.expectsNextRule = true;
 length.nextRuleType = "number";
-const hasKey = new Rule(
-  "has key",
-  (attr, key) => Object.hasOwn(attr, key),
-  "string"
-);
+const hasKey = new Rule("has key", (attr, key) => Object.hasOwn(attr, key), {
+  type: "string",
+});
 const doesNotHaveKey = new Rule(
   "does not have key",
   (attr, key) => !Object.hasOwn(attr, key),
-  "string"
+  { type: "string" }
 );
-const valueAtKey = new Rule("value at key", (attr, key) => attr[key], "string");
+const valueAtKey = new Rule("value at key", (attr, key) => attr[key], {
+  type: "string",
+});
 valueAtKey.expectsNextRule = true;
-const isTrue = new Rule("is true", (attr) => attr === true, "boolean");
+const isTrue = new Rule("is true", (attr) => attr === true, {
+  type: "boolean",
+});
 isTrue.expectedNumberOfValues = 0;
-const isFalse = new Rule("is false", (attr) => attr === false, "boolean");
+const isFalse = new Rule("is false", (attr) => attr === false, {
+  type: "boolean",
+});
 isFalse.expectedNumberOfValues = 0;
 
 /**

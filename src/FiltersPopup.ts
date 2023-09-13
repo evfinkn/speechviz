@@ -1,5 +1,5 @@
 import { Type, Attributes } from "./Attribute";
-import { Rules } from "./Rule";
+import { Rules, Rule } from "./Rule";
 import { TreeItem } from "./treeClasses";
 import { htmlToElement } from "./util";
 import { plusIcon, minusIcon } from "./icon";
@@ -106,7 +106,9 @@ const FilterElement = class FilterElement {
     if (!select) {
       select = document.createElement("select");
 
-      for (const rule of Object.values(Rules[attributeType.type])) {
+      for (const rule of Object.values(
+        Rules[attributeType.type] as typeof Rule[]
+      )) {
         const option = document.createElement("option");
         option.value = rule.name;
         option.innerText = rule.name;

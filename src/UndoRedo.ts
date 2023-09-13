@@ -40,6 +40,7 @@ const UndoStorage = class UndoStorage extends Array {
     // Therefore, remove the save indicator from the file name on the interface
     fileParagraph.innerHTML = filename;
     globals.dirty = true;
+    return this.length;
   }
 
   /** Undoes the most recently made change. */
@@ -70,6 +71,7 @@ const RedoStorage = class RedoStorage extends Array {
     if (this.length !== 0) {
       toggleButton(redoButton, true);
     }
+    return this.length;
   }
 
   redo() {
