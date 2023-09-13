@@ -8,8 +8,8 @@ const path = require("path");
 module.exports = {
   mode: "development",
   entry: {
-    init: "./src/init.js",
-    index: "./src/index.js",
+    init: "./src/init.ts",
+    index: "./src/index.ts",
     faceCluster: "./src/faceCluster.ts",
   },
   stats: "errors-only",

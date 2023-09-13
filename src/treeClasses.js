@@ -14,10 +14,10 @@
 // Popup functionality in TreeItem?
 
 import Picker from "vanilla-picker";
-import globals from "./globals.ts";
-import { undoStorage, Actions } from "./UndoRedo.js";
-import { Attribute, Attributes } from "./Attribute.ts";
-import IdCounter from "./IdCounter.js";
+import globals from "./globals";
+import { undoStorage, Actions } from "./UndoRedo";
+import { Attribute, Attributes } from "./Attribute";
+import IdCounter from "./IdCounter";
 import {
   htmlToElement,
   compareProperty,
@@ -26,13 +26,13 @@ import {
   getRandomColor,
   removeExtension,
   mappingToString,
-} from "./util.js";
+} from "./util";
 import {
   groupIcons,
   segmentIcons,
   arrowLeftIcon,
   arrowRightIcon,
-} from "./icon.js";
+} from "./icon";
 
 const media = globals.media;
 const peaks = globals.peaks;

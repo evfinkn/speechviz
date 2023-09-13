@@ -12,17 +12,17 @@ import {
   Word,
   File,
   Stat,
-} from "./treeClasses.js";
+} from "./treeClasses";
 import { Segment as PeaksSegment, Point } from "peaks.js";
-import { GraphIMU } from "./graphicalClasses.js";
-import SettingsPopup from "./SettingsPopup.js";
-import CommitsPopup from "./CommitsPopup.js";
-import SavePopup from "./SavePopup.js";
-import { Channels } from "./ChannelAudio.js";
+import { GraphIMU } from "./graphicalClasses";
+import SettingsPopup from "./SettingsPopup";
+import CommitsPopup from "./CommitsPopup";
+import SavePopup from "./SavePopup";
+import { Channels } from "./ChannelAudio";
 // import { FiltersPopup } from "./FiltersPopup.js";
-import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
-import { notification } from "./Notification.js";
-import IdCounter from "./IdCounter.js";
+import { undoStorage, redoStorage, Actions } from "./UndoRedo";
+import { notification } from "./Notification";
+import IdCounter from "./IdCounter";
 import {
   arrayMean,
   objectMap,
@@ -34,8 +34,8 @@ import {
   checkResponseStatus,
   parseNumericalCsv,
   getUrl,
-} from "./util.js";
-import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
+} from "./util";
+import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon";
 
 const peaks = globals.peaks;
 const user = globals.user;

@@ -1,5 +1,5 @@
-import { htmlToElement } from "./util.js";
-import { notifIcons } from "./icon.js";
+import { htmlToElement } from "./util";
+import { notifIcons } from "./icon";
 
 const Notification = class Notification {
   /**
