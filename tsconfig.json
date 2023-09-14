@@ -3,11 +3,13 @@
       "outDir": "./built",
       "allowJs": true,
       "allowSyntheticDefaultImports": true,
-      "lib": ["ES2021", "dom"],
+      "lib": ["ES2022", "dom"],
       "module": "ES2022",
       "moduleResolution": "node",
       "target": "ES2021",
-      "skipLibCheck": true
+      "skipLibCheck": true,
+      "typeRoots": ["./node_modules/@types", "./node_modules/peaks.js"],
+      "types": ["peaks.js"]
     },
     "include": [
       "./src/**/*"

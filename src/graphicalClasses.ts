@@ -1,8 +1,8 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import globals from "./globals.js";
-import { binarySearch } from "./util.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import globals from "./globals";
+import { binarySearch } from "./util";
 
 const media = globals.media;
 
@@ -37,7 +37,7 @@ var Disposer = class Disposer extends Set {
       disposables.forEach((d) => this.add(d));
     }
     if (disposable == undefined) {
-      return;
+      return this;
     }
     if (Array.isArray(disposable)) {
       disposable.forEach((d) => this.add(d));
@@ -52,6 +52,7 @@ var Disposer = class Disposer extends Set {
     } else if (disposable.dispose != undefined) {
       super.add(disposable);
     }
+    return this;
   }
 
   /**
@@ -209,7 +210,7 @@ var GraphIMU = class GraphIMU {
 
   /**
    * @param {!Element} container - The div element to append the graph's canvas to.
-   * @param {!Array.<Array.<number>>} data - The pose data to visualize.
+   * @param {!Array.Array.<Array.<number>>} data - The pose data to visualize.
    * @param {?Object=} options - Options to customize the graph.
    * @param {number=} options.width - The width of the graph. If `null`, the width of
    *      `container` is used.

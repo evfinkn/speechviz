@@ -1,7 +1,7 @@
 import Split from "split.js"; // library for resizing columns by dragging
 import throttle from "lodash/throttle";
 import { default as getNestedProp } from "lodash/get";
-import globals from "./globals.js";
+import globals from "./globals";
 import {
   TreeItem,
   Group,
@@ -12,16 +12,17 @@ import {
   Word,
   File,
   Stat,
-} from "./treeClasses.js";
-import { GraphIMU } from "./graphicalClasses.js";
-import SettingsPopup from "./SettingsPopup.js";
-import CommitsPopup from "./CommitsPopup.js";
-import SavePopup from "./SavePopup.js";
-import { Channels } from "./ChannelAudio.js";
+} from "./treeClasses";
+import { Segment as PeaksSegment, Point } from "peaks.js";
+import { GraphIMU } from "./graphicalClasses";
+import SettingsPopup from "./SettingsPopup";
+import CommitsPopup from "./CommitsPopup";
+import SavePopup from "./SavePopup";
+import { Channels } from "./ChannelAudio";
 // import { FiltersPopup } from "./FiltersPopup.js";
-import { undoStorage, redoStorage, Actions } from "./UndoRedo.js";
-import { notification } from "./Notification.js";
-import IdCounter from "./IdCounter.js";
+import { undoStorage, redoStorage, Actions } from "./UndoRedo";
+import { notification } from "./Notification";
+import IdCounter from "./IdCounter";
 import {
   arrayMean,
   objectMap,
@@ -33,8 +34,8 @@ import {
   checkResponseStatus,
   parseNumericalCsv,
   getUrl,
-} from "./util.js";
-import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon.js";
+} from "./util";
+import { zoomInIcon, zoomOutIcon, saveIcon, settingsIcon } from "./icon";
 
 const peaks = globals.peaks;
 const user = globals.user;
@@ -66,7 +67,7 @@ Split(["#column", "#column2"], {
 //       probably be moved to Segment as a property
 const originalGroups = {};
 
-const oldCreateTree = function (id, parent, children, snr) {
+const oldCreateTree = function (id, parent, children: PeaksSegment[], snr) {
   if (!Array.isArray(children[0])) {
     // group of segments
     // FIXME: temp fix, see createTreeItemFromObj
@@ -107,6 +108,7 @@ const oldCreateTree = function (id, parent, children, snr) {
   } else {
     // group of groups
     const group = new Group(id, { parent, playable: true });
+    // @ts-ignore: Deprecated code; fixing not required
     for (const [child, childChildren, childSNR] of children) {
       oldCreateTree(child, group, childChildren, childSNR);
     }
@@ -250,7 +252,7 @@ const createTreeItemFromObj = (obj, parent = null) => {
       else if (top) top = false;
       // stagger bottom
       else {
-        top = 1;
+        top = true;
         child.arguments[0].labelText = `${newline.repeat(2)}${
           child.arguments[0].labelText
         }`;
@@ -378,9 +380,10 @@ if (folder !== undefined && folder !== null) {
     .then(checkResponseStatus)
     .then((response) => response.json())
     .then((fileList) => {
-      fileList.forEach(
-        (file) => new File(file, { parent: files, curFile: filename })
-      );
+      fileList.forEach((file: string) => {
+        //@ts-ignore for some reason ts gets mad due to TreeItem not taking curFile, even though that shouldn't matter
+        new File(file, { parent: files, curFile: filename });
+      });
       File.byId[filename].toggleTree(true); // turn on button for current file
       // sort in natural sort order
       files.sort((file1, file2) =>
@@ -421,9 +424,9 @@ function dragToLabel(segment) {
       eachCopyTo.li.onmouseover = undefined;
     });
     segment.li.style.position = "absolute";
-    window.event.preventDefault();
-    currentX = window.event.pageX;
-    currentY = window.event.pageY;
+    (window.event as MouseEvent).preventDefault();
+    const currentX = (window.event as MouseEvent as MouseEvent).pageX;
+    const currentY = (window.event as MouseEvent as MouseEvent).pageY;
 
     // account for different top when scrolled
     segment.li.style.top =
@@ -442,16 +445,17 @@ function dragToLabel(segment) {
     // do not allow a segment to be dragged if it has its popup open
     const popup = segment.li.children[segment.li.children.length - 1];
     if (popup.style.display !== "block") {
-      window.event.preventDefault();
-      newX = currentX - window.event.pageX;
-      newY = currentY - window.event.pageY;
-      currentX = window.event.pageX;
-      currentY = window.event.pageY;
+      (window.event as MouseEvent).preventDefault();
+      newX = currentX - (window.event as MouseEvent).pageX;
+      newY = currentY - (window.event as MouseEvent).pageY;
+      currentX = (window.event as MouseEvent).pageX;
+      currentY = (window.event as MouseEvent).pageY;
       // move the segments position to track cursor
       segment.li.style.top = segment.li.offsetTop - newY + "px";
       segment.li.style.left = segment.li.offsetLeft - newX + "px";
       if (
-        window.event.pageY - document.getElementById("column").scrollTop <
+        (window.event as MouseEvent).pageY -
+          document.getElementById("column").scrollTop <
         10
       ) {
         document.getElementById("column").scrollBy(0, -20);
@@ -612,7 +616,7 @@ const loadWords = async () => {
       else if (top) top = false;
       // stagger bottom
       else {
-        top = 1;
+        top = true;
         word.labelText = `${newline.repeat(2)}${word.labelText}`;
       }
 
@@ -624,7 +628,7 @@ const loadWords = async () => {
       count += 1;
     });
 
-    peaks.points.add(words).forEach((word) => {
+    peaks.points.add(words as Point[]).forEach((word) => {
       new Word(word, { parent: wordsGroup });
     });
   } catch (error) {
@@ -632,7 +636,10 @@ const loadWords = async () => {
   }
 };
 
-const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
+const loadAnnotations = async (
+  annotsFile,
+  { commit, branch }: { commit?: string; branch?: string } = {}
+) => {
   // add branch, version, and uuid as query parameters if they are defined
   const url = new URL(annotsFile, window.location.href);
   if (commit) {
@@ -646,11 +653,11 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
     .then((response) => response.json())
     .catch((error) => output404OrError(error, "annotations"));
   if (annots === undefined) {
-    global.highestId = 0;
+    globals.highestId = 0;
     return; // no annotations found (the fetch failed), so just return
   }
   if (annots?.notes) {
-    document.getElementById("notes").value = annots.notes;
+    (document.getElementById("notes") as HTMLInputElement).value = annots.notes;
   }
   // If annots is an object, get the annotations from it. Otherwise, annots is an array
   annots = annots?.annotations ?? annots;
@@ -782,7 +789,7 @@ if (poseContainer) {
         // create a fake 404 Not Found response so that
         // outputHelpfulFetchErrorMessage on the caught error
         // correctly outputs "No pose data for media."
-        const response = Response(null, { status: 404 });
+        const response = new Response(null, { status: 404 });
         throw new ResponseError(response);
       } else {
         // filter out non-pose files
@@ -812,7 +819,8 @@ fetch("/isSplitChannel", {
   .then((trueOrFalse) => {
     // if it is not a split channel, don't allow switching between mono and split
     if (trueOrFalse !== "true") {
-      document.getElementById("switchMono").type = "hidden";
+      (document.getElementById("switchMono") as HTMLInputElement).type =
+        "hidden";
       document.getElementById("switchMonoText").hidden = true;
     }
   });
@@ -942,23 +950,26 @@ fetch("load", {
   .then((res) => res.json())
   .then(async (data) => {
     await annotsLoading;
-    const notes = document.getElementById("notes");
+    const notes: HTMLTextAreaElement | null = document.getElementById(
+      "notes"
+    ) as HTMLTextAreaElement;
     // we prioritize notes.value because if notes has a value, then it was loaded from
     // the annotations (which is the new behavior), so we don't want to overwrite it
     // with the database value (which will happen if this file hasn't been saved
     // since the new annotations format was implemented)
-    notes.value = notes.value || data.notes || "";
+    if (notes) notes.value = notes.value || data.notes || "";
 
     // only add database segments if custom segments weren't loaded from annotations
     // (since new format stores custom segments there)
     if (custom.children.length === 0 && labeled.children.length === 0) {
       peaks.segments
-        .add(data.segments, { overwrite: true })
-        .forEach((segment) => {
-          let parent = segment.path.at(-1);
-          if (!(parent in PeaksGroup.byId)) {
+        .add(data.segments as PeaksSegment[], { overwrite: true })
+        .forEach((segment: PeaksSegment & { path: string[] }) => {
+          let parentId = segment.path.at(-1);
+          let parent;
+          if (!(parentId in PeaksGroup.byId)) {
             // parent group doesn't exist yet so add it
-            parent = new PeaksGroup(parent, {
+            parent = new PeaksGroup(parentId, {
               parent: Group.byId[segment.path.at(-2)],
               removable: true,
               renamable: true,
@@ -967,7 +978,7 @@ fetch("load", {
               copyTo: [labeled.children],
             });
           } else {
-            parent = PeaksGroup.byId[parent];
+            parent = PeaksGroup.byId[parentId];
           }
 
           if (segment.id in Segment.byId) {
@@ -1039,7 +1050,7 @@ saveButton.addEventListener("click", function () {
   savePopup.show();
 });
 
-const speedSlider = document.getElementById("speed-slider");
+const speedSlider = document.getElementById("speed-slider") as HTMLInputElement;
 const speedLabel = document.getElementById("speed-label");
 speedSlider.addEventListener("input", function () {
   const speed = parseFloat(this.value);
@@ -1068,7 +1079,7 @@ commitsButton.addEventListener("click", function () {
 //   filtersPopup.show();
 // });
 
-const contextMenus = [...document.getElementsByClassName("contextmenu")];
+const contextMenus = Array.from(document.getElementsByClassName("contextmenu"));
 
 const closeContextMenu = (/** @type {HTMLElement} */ menu) => {
   // reset what id the context menu is for, then hide it
@@ -1079,7 +1090,7 @@ const closeContextMenu = (/** @type {HTMLElement} */ menu) => {
 // close context menu when anywhere else is clicked
 document.body.addEventListener("click", (e) => {
   contextMenus.forEach((menu) => {
-    if (e.target.offsetParent != menu) {
+    if ((e.target as HTMLElement).offsetParent != menu) {
       closeContextMenu(menu);
     }
   });
@@ -1140,11 +1151,11 @@ peaks.on("segments.contextmenu", function (event) {
   segmentMenu.style.left = `${evt.clientX}px`;
   segmentMenu.style.display = "block";
   // hide button's that edit segments if the segment is not editable
-  for (const item of segmentMenu.children) {
+  for (const item of Array.from(segmentMenu.children)) {
     if (!item.classList.contains("editonly") || segment.editable) {
-      item.style.display = "block";
+      if (item instanceof HTMLElement) item.style.display = "block";
     } else {
-      item.style.display = "none";
+      if (item instanceof HTMLElement) item.style.display = "none";
     }
   }
 });
@@ -1215,6 +1226,6 @@ window.addEventListener("beforeunload", function (event) {
   const confirmationMessage =
     "You have unsaved changes. If you leave before saving, these changes will be lost.";
   // returnValue and return for cross compatibility
-  (event || window.event).returnValue = confirmationMessage;
+  (event || (window.event as MouseEvent)).returnValue = confirmationMessage;
   return confirmationMessage;
 });

@@ -1,7 +1,7 @@
-import globals from "./globals.js";
-import { TreeItem } from "./treeClasses.js";
-import { notification } from "./Notification.js";
-import { html, checkResponseStatus, getUrl } from "./util.js";
+import globals from "./globals";
+import { TreeItem } from "./treeClasses";
+import { notification } from "./Notification";
+import { html, checkResponseStatus, getUrl } from "./util";
 
 /** The popup containing extra settings for configuring the interface. */
 const SavePopup = class SavePopup {
@@ -16,7 +16,7 @@ const SavePopup = class SavePopup {
    * The div element containing the actual content of the popup.
    * @type {!HTMLDivElement}
    */
-  popupContent;
+  popupContent: HTMLDivElement;
 
   /** @type {!HTMLAnchorElement} */ closeButton;
   /** @type {!HTMLSelectElement} */ branchSelect;
@@ -56,7 +56,7 @@ const SavePopup = class SavePopup {
       <br />
       <br />
       <button>Save</button>
-    </div>`;
+    </div>` as HTMLDivElement;
 
     this.popupContent = popupContent;
     this.popup.appendChild(popupContent);
@@ -64,7 +64,7 @@ const SavePopup = class SavePopup {
     this.closeButton = popupContent.children[0];
     this.branchSelect = popupContent.children[1];
     this.newBranchCheckbox = popupContent.children[4].firstElementChild;
-    const newBranchLabel = popupContent.children[6];
+    const newBranchLabel = popupContent.children[6] as HTMLElement;
     this.newBranchInput = newBranchLabel.firstElementChild;
     this.commitMessageTextarea = popupContent.children[8].firstElementChild;
     this.saveButton = popupContent.children[11];
@@ -144,7 +144,7 @@ const SavePopup = class SavePopup {
       annotations: analysisChildren
         .map((child) => child.toObject())
         .filter((obj) => obj), // filter out nulls
-      notes: document.getElementById("notes").value,
+      notes: (document.getElementById("notes") as HTMLInputElement).value,
     };
 
     const annotsFile = getUrl(
@@ -182,7 +182,7 @@ const SavePopup = class SavePopup {
       return;
     }
 
-    const newVersionUrl = new URL(window.location);
+    const newVersionUrl = new URL(window.location.href);
     newVersionUrl.searchParams.delete("branch");
     newVersionUrl.searchParams.set("commit", newVersion.commit);
     newVersion.url = newVersionUrl.toString();

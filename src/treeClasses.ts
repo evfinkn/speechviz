@@ -14,10 +14,10 @@
 // Popup functionality in TreeItem?
 
 import Picker from "vanilla-picker";
-import globals from "./globals.js";
-import { undoStorage, Actions } from "./UndoRedo.js";
-import { Attribute, Attributes } from "./Attribute.js";
-import IdCounter from "./IdCounter.js";
+import globals from "./globals";
+import { undoStorage, Actions } from "./UndoRedo";
+import { Attribute, Attributes } from "./Attribute";
+import IdCounter from "./IdCounter";
 import {
   htmlToElement,
   compareProperty,
@@ -26,13 +26,13 @@ import {
   getRandomColor,
   removeExtension,
   mappingToString,
-} from "./util.js";
+} from "./util";
 import {
   groupIcons,
   segmentIcons,
   arrowLeftIcon,
   arrowRightIcon,
-} from "./icon.js";
+} from "./icon";
 
 const media = globals.media;
 const peaks = globals.peaks;
@@ -59,6 +59,33 @@ const getMaxValueEntry = (countsMap) => {
   }
   return [maxKey, maxCount];
 };
+
+// type used by the various implementations of ToObject
+interface ToObjectTreeItem {
+  children?: typeof TreeItem[];
+  parent?: string;
+  text?: string;
+  playable?: boolean;
+  removable?: boolean;
+  renamable?: boolean;
+  moveTo?: typeof TreeItem[];
+  copyTo?: typeof TreeItem[];
+  assocWith?: typeof TreeItem[];
+  attributes?: any;
+  options?: ToObjectTreeItem;
+  arguments?: {
+    id?: string;
+    labelText?: string;
+    color?: string;
+    editable?: boolean;
+    startTime?: number;
+    endTime?: number;
+    time?: number;
+  }[];
+  snr?: number;
+  color?: string;
+  colorable?: boolean;
+}
 
 // typedefs (used for JSDoc, can help explain types)
 /**
@@ -141,7 +168,7 @@ var TreeItem = class TreeItem {
 
     const childrenOptions = obj.options.childrenOptions || {};
 
-    const optCounts = {};
+    const optCounts: { [opt: string]: Map<string, number> } = {};
     obj.options.children.forEach((child) => {
       if (!child.options) {
         return;
@@ -165,8 +192,8 @@ var TreeItem = class TreeItem {
           optCounts[opt] = valCounts;
         }
         // using || is fine because if valCounts is 0, the right side is 0 anyway
-        const count = valCounts.get(val) || 0;
-        valCounts.set(val, count + 1);
+        const count = valCounts.get(val as string) || 0;
+        valCounts.set(val as string, count + 1);
       });
     });
 
@@ -226,34 +253,34 @@ var TreeItem = class TreeItem {
    * The unique identifier of this item.
    * @type {string}
    */
-  id;
+  id: string;
 
   /**
    * The `TreeItem` that contains this item in its nested content.
    * `null` if this item is the root of the tree.
    * @type {?TreeItem}
    */
-  #parent = null;
+  #parent: TreeItem | null = null;
 
   /**
    * An array of `TreeItem`s contained in this item's nested content.
    * @type {!TreeItem[]}
    */
-  children = [];
+  children: (TreeItem[] & { id?: string }) | null = [];
 
   /**
    * The text shown in `span` (and therefore in the tree).
    * This will still have a value if this item hasn't been rendered.
    * @type {string}
    */
-  #text;
+  #text: string;
 
   /**
    * A `boolean` indicating if this item is checked / enabled.
    * This will still have a value if this item hasn't been rendered.
    * @type {boolean}
    */
-  #checked = true;
+  #checked: boolean = true;
 
   /**
    * A `boolean` indicating if this item can be played and looped.
@@ -344,7 +371,7 @@ var TreeItem = class TreeItem {
   /**
    * The span element containing the text shown in `li` if this item is rendered.
    * `null` otherwise.
-   * @type {?Element}
+   * @type {?HTMLElement}
    */
   span = null;
 
@@ -389,6 +416,10 @@ var TreeItem = class TreeItem {
    */
   nested = null;
 
+  // this is here for subclasses to define a style method
+  // if they want to apply specific CSS styles
+  style?();
+
   /**
    * @param {string} id - The unique identifier to give the `TreeItem`.
    * @param {?Object.<string, any>=} options - Options to customize the `TreeItem`.
@@ -422,7 +453,7 @@ var TreeItem = class TreeItem {
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
-    id,
+    id: string,
     {
       parent = null,
       children = null,
@@ -436,6 +467,19 @@ var TreeItem = class TreeItem {
       assocWith = null,
       attributes = null,
       saveable = true,
+    }: {
+      parent?: TreeItem | null;
+      children?: TreeItem[] & { id: string };
+      text?: string | null;
+      playable?: boolean;
+      removable?: boolean;
+      renamable?: boolean;
+      moveTo?: TreeItem[] | null;
+      copyTo?: TreeItem[] | null;
+      render?: boolean;
+      assocWith?: string | null;
+      attributes?: any;
+      saveable?: boolean;
     } = {}
   ) {
     this.id = id;
@@ -468,7 +512,7 @@ var TreeItem = class TreeItem {
 
     if (parent) {
       if (parent instanceof Node && this.rendered) {
-        parent.append(this.li);
+        parent.appendChild(this.li);
       } else {
         parent.addChildren(this);
       }
@@ -479,11 +523,11 @@ var TreeItem = class TreeItem {
     }
   }
 
-  toObject() {
+  toObject(): ToObjectTreeItem {
     if (!this.saveable) {
       return null;
     }
-    const options = {};
+    const options: ToObjectTreeItem = {};
     if (this.parent) {
       options.parent = this.parent.id;
     }
@@ -696,25 +740,31 @@ var TreeItem = class TreeItem {
 
     if (this.rendered) {
       this.playButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.play}</a>`
+        `<a href="javascript:;" class="button-on">${TreeItem.icons.play}</a>`
       );
       // use () => this.play() instead of just this.play so that
       // "this" refers to the TreeItem and not the button getting clicked
-      this.playButton.addEventListener("click", () => this.play());
+      this.playButton.addEventListener("click", () => {
+        if ("play" in this && typeof this.play === "function") this.play();
+      });
       // this puts the play button before any other buttons
       this.span.after(this.playButton);
 
       this.loopButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.loop}</a>`
+        `<a href="javascript:;" class="button-on">${TreeItem.icons.loop}</a>`
       );
       // need to use () => so that we can pass loop = true
-      this.loopButton.addEventListener("click", () => this.play(true));
+      this.loopButton.addEventListener("click", () => {
+        if ("play" in this && typeof this.play === "function") this.play(true);
+      });
       this.playButton.after(this.loopButton);
 
       this.pauseButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.pause}</a>`
+        `<a href="javascript:;" class="button-on">${TreeItem.icons.pause}</a>`
       );
-      this.pauseButton.addEventListener("click", () => this.pause());
+      this.pauseButton.addEventListener("click", () => {
+        if ("pause" in this && typeof this.pause === "function") this.pause();
+      });
     }
   }
 
@@ -727,7 +777,7 @@ var TreeItem = class TreeItem {
 
     if (this.rendered) {
       this.removeButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${this.constructor.icons.remove}</a>`
+        `<a href="javascript:;" class="button-on">${TreeItem.icons.remove}</a>`
       );
       this.removeButton.addEventListener("click", () => {
         undoStorage.push(new Actions.RemoveAction(this));
@@ -1252,10 +1302,12 @@ var Popup = class Popup {
     if (treeItem.renamable) {
       const renameDiv = htmlToElement(`<div><h3>Rename ${text}</h3></div>`);
       this.renameDiv = renameDiv;
-      const renameInput = htmlToElement(`<input type="text" value="${text}">`);
+      const renameInput = htmlToElement(
+        `<input type="text" value="${text}">`
+      ) as HTMLInputElement;
       this.renameInput = renameInput;
       renameDiv.append(renameInput);
-      renameInput.addEventListener("keypress", (event) => {
+      renameInput.addEventListener("keypress", (event: KeyboardEvent) => {
         if (event.key === "Enter") {
           undoStorage.push(
             new Actions.RenameAction(treeItem, renameInput.value)
@@ -1293,7 +1345,7 @@ var Popup = class Popup {
     if (treeItem.colorable) {
       const colorDiv = htmlToElement(
         `<div><h3>Pick a new color for ${text}</h3></div>`
-      );
+      ) as HTMLElement;
       this.colorDiv = colorDiv;
       const colorPicker = new Picker({
         parent: colorDiv,
@@ -1453,7 +1505,8 @@ var Popup = class Popup {
         `<input type="radio" name="${this.treeItem.id}-radios"` +
         `autocomplete="off"> ${dest.id}</label><br></div>`
     );
-    const radioButton = radioDiv.firstElementChild.firstElementChild;
+    const radioButton = radioDiv.firstElementChild
+      .firstElementChild as HTMLInputElement;
 
     this.moveDiv.append(radioDiv);
 
@@ -1475,7 +1528,8 @@ var Popup = class Popup {
         `<input type="radio" name="${this.treeItem.id}-radios"` +
         `autocomplete="off"> ${dest.id}</label><br></div>`
     );
-    const radioButton = radioDiv.firstElementChild.firstElementChild;
+    const radioButton = radioDiv.firstElementChild
+      .firstElementChild as HTMLInputElement;
 
     this.copyDiv.append(radioDiv);
 
@@ -1502,7 +1556,8 @@ var Popup = class Popup {
         `<input type="radio" name="${this.treeItem.id}-radios"` +
         `autocomplete="off"> ${dest.id}</label><br></div>`
     );
-    const radioButton = radioDiv.firstElementChild.firstElementChild;
+    const radioButton = radioDiv.firstElementChild
+      .firstElementChild as HTMLInputElement;
 
     this.assocDiv.append(radioDiv);
 
@@ -1549,6 +1604,8 @@ var Group = class Group extends TreeItem {
    *      and looped.
    * @param {boolean} [options.removable=false] - Indicates if the group can be removed
    *      from the tree.
+   * @param {boolean} [options.renamable=false] - Indicates if the group can be
+   *      renamed.
    * @param {?Array.<TreeItem>=} [options.moveTo] - An array of the `TreeItem`s
    *      that the group can be moved to. `null` if the group isn't moveable.
    * @param {?Array.<TreeItem>=} [options.copyTo] - An array of the `TreeItem`s
@@ -1563,6 +1620,7 @@ var Group = class Group extends TreeItem {
       text = null,
       playable = false,
       removable = false,
+      renamable = false,
       moveTo = null,
       copyTo = null,
       saveable = true,
@@ -1574,6 +1632,7 @@ var Group = class Group extends TreeItem {
       text,
       playable,
       removable,
+      renamable,
       moveTo,
       copyTo,
       saveable,
@@ -1662,12 +1721,13 @@ var Group = class Group extends TreeItem {
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#syntax
       ({ value, done } = checkedChildren.next());
       if (!done) {
-        value.play();
+        if (value && "play" in value && typeof value.play === "function")
+          value.play();
         // if it propagates, parents will think this group has ended playback
         event.stopPropagation();
       } else {
         this.switchBackToPlayLoopButtons();
-        this.removeEventListener("ended", endedHandler);
+        this.removeEventListener("ended", endedHandler, {});
         // don't stopProgagation here because we can just let the
         // event propagate to indicate this group has ended instead
         // of needing to create a whole new event
@@ -1676,15 +1736,16 @@ var Group = class Group extends TreeItem {
 
     if (!done) {
       this.switchToPauseButton(loop);
-      value.play();
-      this.addEventListener("ended", endedHandler);
+      if (value && "play" in value && typeof value.play === "function")
+        value.play();
+      this.addEventListener("ended", endedHandler, {});
 
       this.addEventListener(
         "manualpause",
         () => {
           media.pause();
           this.switchBackToPlayLoopButtons();
-          this.removeEventListener("ended", endedHandler);
+          this.removeEventListener("ended", endedHandler, {});
         },
         { once: true }
       );
@@ -1791,7 +1852,8 @@ var CarouselGroup = class CarouselGroup extends Group {
       const currentIndex = this.children.findIndex((child) => child.checked);
       const leftIndex = currentIndex - 1;
       // .at() to wrap around to the last index if leftIndex is -1
-      this.children.at(leftIndex).openFile();
+      const childFile = this.children.at(leftIndex);
+      if (childFile instanceof File) childFile.openFile();
     });
     this.rightButton = htmlToElement(
       `<a href="javascript:;" class="button-on">${arrowRightIcon}</a>`
@@ -1801,7 +1863,8 @@ var CarouselGroup = class CarouselGroup extends Group {
       const currentIndex = this.children.findIndex((child) => child.checked);
       // if currentIndex is the last index, this will wrap around to 0
       const rightIndex = (currentIndex + 1) % this.children.length;
-      this.children.at(rightIndex).openFile();
+      const childFile = this.children.at(rightIndex);
+      if (childFile instanceof File) childFile.openFile();
     });
   }
 };
@@ -1986,7 +2049,15 @@ var PeaksItem = class PeaksItem extends TreeItem {
     }
     const json = super.toObject();
     const { id, labelText, color } = this.peaksItem;
-    const peaksItemOpts = { id, labelText, color };
+    const peaksItemOpts: {
+      id?: string;
+      labelText?: string;
+      color?: string;
+      editable?: boolean;
+      startTime?: number;
+      endTime?: number;
+      time?: number;
+    } = { id, labelText, color };
     if (this.parent && labelText === `${this.parent.id}\n${this.text}`) {
       peaksItemOpts.labelText = this.text;
     }
@@ -2124,10 +2195,10 @@ var PeaksItem = class PeaksItem extends TreeItem {
 
   /** Removes this segment / point from the tree and Peaks waveform. */
   remove() {
-    if (this.parent.visible.has(this)) {
+    if (this.parent instanceof PeaksGroup && this.parent.visible.has(this)) {
       this.#removeFromPeaks();
       this.parent.visible.delete(this);
-    } else {
+    } else if (this.parent instanceof PeaksGroup) {
       this.parent.hidden.delete(this);
     }
     super.remove();
@@ -2179,14 +2250,14 @@ var PeaksItem = class PeaksItem extends TreeItem {
     if (this.checked) {
       // add item to peaks
       this.#addToPeaks();
-      this.parent.hidden.delete(this);
-      this.parent.visible.add(this);
+      if (this.parent instanceof PeaksGroup) this.parent.hidden.delete(this);
+      if (this.parent instanceof PeaksGroup) this.parent.visible.add(this);
       this.updateEditable();
     } else {
       // remove item from peaks
       this.#removeFromPeaks();
-      this.parent.visible.delete(this);
-      this.parent.hidden.add(this);
+      if (this.parent instanceof PeaksGroup) this.parent.visible.delete(this);
+      if (this.parent instanceof PeaksGroup) this.parent.hidden.add(this);
     }
 
     return true;
@@ -2295,6 +2366,9 @@ var Segment = class Segment extends PeaksItem {
    */
   get segment() {
     return this.peaksItem;
+  }
+  set segment(segment) {
+    this.peaksItem = segment;
   }
 
   /**
@@ -2834,7 +2908,9 @@ var PeaksGroup = class PeaksGroup extends Group {
       throw new Error(`TreeItem ${this.id} is not colorable.`);
     }
     this.#color = newColor;
-    this.children.forEach((peaksItem) => peaksItem.update({ color: newColor }));
+    this.children.forEach((peaksItem) => {
+      if (peaksItem instanceof PeaksItem) peaksItem.update({ color: newColor });
+    });
   }
 
   /**
@@ -2900,12 +2976,14 @@ var PeaksGroup = class PeaksGroup extends Group {
     } catch (error) {
       return false;
     } // unsuccessful because TreeItem with newId already exists
-    this.hidden.forEach((peaksItem) =>
+    this.hidden.forEach((peaksItem) => {
       // rename with the same text because renaming adds the parent's id to this
       // peaks item's labelText, so we need to update from the old parent's id
-      peaksItem.rename(peaksItem.text)
-    );
-    this.visible.forEach((peaksItem) => peaksItem.rename(peaksItem.text));
+      if (peaksItem instanceof PeaksItem) peaksItem.rename(peaksItem.text);
+    });
+    this.visible.forEach((peaksItem) => {
+      if (peaksItem instanceof PeaksItem) peaksItem.rename(peaksItem.text);
+    });
     return true;
   }
 
@@ -2929,7 +3007,7 @@ var PeaksGroup = class PeaksGroup extends Group {
     if (this.checked) {
       PeaksItem.showOnPeaks(this.hidden);
       this.hidden.forEach((peaksItem) => {
-        peaksItem.updateEditable();
+        if (peaksItem instanceof PeaksItem) peaksItem.updateEditable();
         this.visible.add(peaksItem);
       });
       this.hidden.clear();
@@ -2950,9 +3028,11 @@ var PeaksGroup = class PeaksGroup extends Group {
   copy(copyParent) {
     const copiedChildren = [];
     for (const child of this.children) {
-      const copiedChild = child.copy(copyParent);
-      if (copiedChild) {
-        copiedChildren.push(copiedChild);
+      if ("copy" in child && typeof child.copy === "function") {
+        const copiedChild = child.copy(copyParent);
+        if (copiedChild) {
+          copiedChildren.push(copiedChild);
+        }
       }
     }
     return copiedChildren;
@@ -2968,10 +3048,17 @@ var PeaksGroup = class PeaksGroup extends Group {
   getOverlapping(segment) {
     const overlapping = [];
     for (const child of this.children) {
-      if (child.startTime >= segment.endTime) {
-        break;
-      } else if (child.endTime > segment.startTime && child !== segment) {
-        overlapping.push(child);
+      if (
+        "startTime" in child &&
+        typeof child.startTime === "number" &&
+        "endTime" in child &&
+        typeof child.endTime === "number"
+      ) {
+        if (child.startTime >= segment.endTime) {
+          break;
+        } else if (child.endTime > segment.startTime && child !== segment) {
+          overlapping.push(child);
+        }
       }
     }
     return overlapping;
@@ -3077,7 +3164,7 @@ var Face = class Face extends TreeItem {
         ` style="text-decoration:none;"` +
         ` target="_blank" rel="noopener noreferrer"` +
         ` class="button-on">` +
-        `${this.constructor.icons.image}</a>`
+        `${Face.icons.image}</a>`
     );
     this.nested.before(this.linkButton);
 
@@ -3178,7 +3265,7 @@ var File = class File extends TreeItem {
    */
   constructor(
     filename,
-    { parent = null, text = null, renamable = false, curFile } = {}
+    { parent = null, text = null, renamable = false, curFile = null } = {}
   ) {
     super(filename, {
       parent,
@@ -3186,22 +3273,30 @@ var File = class File extends TreeItem {
       renamable,
       saveable: false,
     });
-    this.currentFile = curFile;
+    File.currentFile = curFile;
     this.toggleTree(false);
     this.checkbox.type = "radio";
     this.checkbox.name = "radioFiles";
-    this.parent.addEventListener("click", () => {
-      File.byId[curFile].toggleTree(true); // turn on button for current file
-    });
-    this.addEventListener("click", () => {
-      if (this.id !== this.currentFile) {
-        // don't allow the same file to be clicked again and
-        this.openFile();
-      } else {
-        // if the same radio button is clicked don't unclick it
-        this.toggleTree(true);
-      }
-    });
+    this.parent.addEventListener(
+      "click",
+      () => {
+        File.byId[curFile].toggleTree(true); // turn on button for current file
+      },
+      {}
+    );
+    this.addEventListener(
+      "click",
+      () => {
+        if (this.id !== File.currentFile) {
+          // don't allow the same file to be clicked again and
+          this.openFile();
+        } else {
+          // if the same radio button is clicked don't unclick it
+          this.toggleTree(true);
+        }
+      },
+      {}
+    );
   }
 
   /**

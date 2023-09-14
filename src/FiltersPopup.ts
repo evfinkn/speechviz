@@ -1,8 +1,8 @@
-import { Type, Attributes } from "./Attribute.js";
-import { Rules } from "./Rule.js";
-import { TreeItem } from "./treeClasses.js";
-import { htmlToElement } from "./util.js";
-import { plusIcon, minusIcon } from "./icon.js";
+import { Type, Attributes } from "./Attribute";
+import { Rules, Rule } from "./Rule";
+import { TreeItem } from "./treeClasses";
+import { htmlToElement } from "./util";
+import { plusIcon, minusIcon } from "./icon";
 
 // The idea for the layout and concept of the filtering was inspired by
 // Apple's various smart collections in their apps, such as Smart Albums in
@@ -106,7 +106,9 @@ const FilterElement = class FilterElement {
     if (!select) {
       select = document.createElement("select");
 
-      for (const rule of Object.values(Rules[attributeType.type])) {
+      for (const rule of Object.values(
+        Rules[attributeType.type] as typeof Rule[]
+      )) {
         const option = document.createElement("option");
         option.value = rule.name;
         option.innerText = rule.name;
@@ -202,6 +204,13 @@ const FiltersPopup = class FiltersPopup {
    */
   filters;
 
+  doFilteringCheckbox: any;
+
+  /**
+   * Html for any or all selection
+   */
+  matchTypeSelect: HTMLSelectElement;
+
   constructor() {
     this.popup = htmlToElement("<div class='popup'></div>");
     document.body.append(this.popup);
@@ -224,7 +233,8 @@ const FiltersPopup = class FiltersPopup {
          Match <select></select> of the following rules:
       </label>`
     );
-    const [doFilteringCheckbox, matchTypeSelect] = matchType.children;
+    const doFilteringCheckbox = matchType[0];
+    const matchTypeSelect = matchType[1];
     this.doFilteringCheckbox = doFilteringCheckbox;
     doFilteringCheckbox.addEventListener("change", () => {
       this.ul.classList.toggle("grayed-out", !doFilteringCheckbox.checked);

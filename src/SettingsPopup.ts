@@ -1,6 +1,6 @@
-import globals from "./globals.js";
-import { Segment } from "./treeClasses.js";
-import { checkResponseStatus, htmlToElement } from "./util.js";
+import globals from "./globals";
+import { Segment } from "./treeClasses";
+import { checkResponseStatus, htmlToElement } from "./util";
 
 const peaks = globals.peaks;
 const overview = peaks.views.getView("overview");
@@ -217,9 +217,9 @@ const SettingsPopup = class SettingsPopup {
       aspectRatioDiv.firstElementChild.firstElementChild;
     this.maintainVideoAspectRatio.addEventListener("change", function () {
       if (this.checked) {
-        document.getElementById("media").style = "object-fit: cover";
+        document.getElementById("media").style.objectFit = "cover";
       } else {
-        document.getElementById("media").style = "object-fit: fill";
+        document.getElementById("media").style.objectFit = "fill";
       }
     });
 

@@ -4,7 +4,7 @@
 // it doesn't make sense to include it yet.
 
 import * as Plotly from "plotly.js-gl2d-dist";
-import globals from "./globals.js";
+import globals from "./globals";
 import { getRandomColor } from "./util";
 
 const media = globals.media;
@@ -31,6 +31,9 @@ var TimeSeries = class TimeSeries {
    */
   ys;
 
+  timelineX: number[];
+  timelineY: number[];
+
   /**
    * @param {!Element} container - The div element to put the plot in.
    * @param {!Array.<Array.<number>>} data - The rows of data to plot. The first
@@ -54,7 +57,7 @@ var TimeSeries = class TimeSeries {
    *      and (2, 0).
    */
   parseData(data) {
-    if (!data.length >= 2) {
+    if (!(data.length >= 2)) {
       throw new Error("data must have at least 2 columns");
     }
 
@@ -83,7 +86,17 @@ var TimeSeries = class TimeSeries {
   init() {
     this.timelineX = [0, 0];
     this.timelineY = [0, 0];
-    const data = [
+
+    const data: {
+      name?: string;
+      type: string;
+      mode: string;
+      x: number[];
+      y: number[];
+      line: {
+        color: string;
+      };
+    }[] = [
       {
         type: "scattergl",
         mode: "lines",
