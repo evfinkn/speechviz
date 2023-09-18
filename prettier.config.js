@@ -5,8 +5,10 @@ export default {
     "",
     "<THIRD_PARTY_MODULES>",
     "",
-    "^\\.?/(?!routes)", // any of our files other than routes
+    // \.* to match /, ./, or ../ (i.e., any of our files)
+    "^\\.*/(?!routes)",
     "",
-    "^\\./routes", // separate ./routes so it's easier to see what's what
+    // separate ./routes so it's easier to see what's what
+    "^\\.*/routes",
   ],
 };
