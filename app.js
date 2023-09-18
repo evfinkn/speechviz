@@ -1,6 +1,5 @@
 import fs from "fs/promises";
 import path from "path";
-import url from "url";
 
 import Database from "better-sqlite3";
 import cookieParser from "cookie-parser";
@@ -11,6 +10,7 @@ import logger from "morgan";
 
 import fossil from "./server/fossil.js";
 import fossilUtil from "./server/fossilUtil.js";
+import { dataDir, speechvizDir } from "./server/globals.js";
 import { readdirAndFilter } from "./server/io.js";
 import propagate from "./server/propagate.js";
 
@@ -25,9 +25,6 @@ const app = express();
 
 const db = new Database("speechviz.sqlite3");
 
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
-const dataDir = await fs.realpath(path.join(__dirname, "data"));
-
 app.use(
   session({
     name: "speechviz",
@@ -38,7 +35,7 @@ app.use(
 );
 
 // view engine setup
-app.set("views", path.join(__dirname, "views"));
+app.set("views", path.join(speechvizDir, "views"));
 app.set("view engine", "pug");
 
 /**
@@ -72,7 +69,7 @@ app.use(express.json());
 // urlencoded is needed for the login form
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(speechvizDir, "public")));
 app.use(checkAuthentification);
 
 app.use("/", index);
@@ -234,7 +231,7 @@ app.get(dataSubdirRegex, async (req, res) => {
     }
     // if it's a file, return the file
     else {
-      return res.sendFile(url, { root: __dirname });
+      return res.sendFile(url, { root: speechvizDir });
     }
   } catch (err) {
     // catch error from stat when file doesn't exist

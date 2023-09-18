@@ -1,15 +1,12 @@
 import fs from "fs";
 import path from "path";
-import url from "url";
 
 import Papa from "papaparse";
 
 import fossil from "./fossil.js";
 import fossilUtil from "./fossilUtil.js";
+import { dataDir } from "./globals.js";
 import { write } from "./io.js";
-
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, "../data");
 
 const parseCsv = (readStream, config = {}) => {
   return new Promise((resolve, reject) => {
