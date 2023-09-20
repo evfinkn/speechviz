@@ -381,7 +381,6 @@ if (folder !== undefined && folder !== null) {
     .then((response) => response.json())
     .then((fileList) => {
       fileList.forEach((file: string) => {
-        //@ts-ignore for some reason ts gets mad due to TreeItem not taking curFile, even though that shouldn't matter
         new File(file, { parent: files, curFile: filename });
       });
       File.byId[filename].toggleTree(true); // turn on button for current file

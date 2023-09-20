@@ -68,9 +68,9 @@ interface ToObjectTreeItem {
   playable?: boolean;
   removable?: boolean;
   renamable?: boolean;
-  moveTo?: typeof TreeItem[];
-  copyTo?: typeof TreeItem[];
-  assocWith?: typeof TreeItem[];
+  moveTo?: String[];
+  copyTo?: String[];
+  assocWith?: String[];
   attributes?: any;
   options?: ToObjectTreeItem;
   arguments?: {
@@ -110,7 +110,8 @@ interface ToObjectTreeItem {
  * Not intended to actually be used in the tree and instead acts as more of an
  * abstract class.
  */
-var TreeItem = class TreeItem {
+
+class TreeItemClass {
   // While I think actually using this class in the tree in addition to its
   // subclasses would work, TreeItem isn't intended to be used in the tree
   // and is more of an abstract class
@@ -131,14 +132,14 @@ var TreeItem = class TreeItem {
    * @type {!Object.<string, TreeItem>}
    * @static
    */
-  static byId = {};
+  static byId: { [id: string]: TreeItemClass } = {};
 
   /**
    * HTML strings for the play, pause, loop, and remove icons for items in the tree.
    * @type {!Object.<string, string>}
    * @static
    */
-  static icons = groupIcons;
+  static icons: { [s: string]: string } = groupIcons;
 
   /**
    * Checks if a `TreeItem` by the given id exists.
@@ -146,7 +147,7 @@ var TreeItem = class TreeItem {
    * @returns {boolean} `true` if a TreeItem with `id` exists. Otherwise, `false`.
    * @static
    */
-  static exists(id) {
+  static exists(id: string): boolean {
     // in a static method, `this` refers to the class, e.g. TreeItem
     return id in this.byId;
   }
@@ -161,7 +162,11 @@ var TreeItem = class TreeItem {
    * @param {Array} obj.arguments
    * @param {!Object<string, *>} obj.options
    */
-  static #extractChildrenOptions(obj) {
+  static #extractChildrenOptions(obj: {
+    type: string;
+    arguments: Array<any>;
+    options: { [s: string]: any };
+  }) {
     if (!obj?.options?.children) {
       return obj; // no children to get options from, so return
     }
@@ -174,13 +179,13 @@ var TreeItem = class TreeItem {
         return;
       }
       Object.entries(child.options).forEach(([opt, val]) => {
-        if (TreeItem.#excludedOpts.has(opt)) {
+        if (TreeItemClass.#excludedOpts.has(opt)) {
           return;
         }
         // for "childrenOptions", stringifying should be fine because properties of
         // the toObject result are added in specific order
         // stringifying "moveTo" and "copyTo" should work, but it's fine if it doesn't
-        if (TreeItem.#optsToSerialize.has(opt)) {
+        if (TreeItemClass.#optsToSerialize.has(opt)) {
           val = JSON.stringify(val);
         }
         if (typeof val === "object") {
@@ -231,7 +236,7 @@ var TreeItem = class TreeItem {
           child.options[opt] = undefined;
         } else if (child.options[opt] === val) {
           delete child.options[opt];
-        } else if (TreeItem.#optsToSerialize.has(opt)) {
+        } else if (TreeItemClass.#optsToSerialize.has(opt)) {
           // right now, val is still a JSON string, so convert child.options[opt] to
           // a JSON string to compare
           if (val === JSON.stringify(child.options[opt])) {
@@ -240,7 +245,7 @@ var TreeItem = class TreeItem {
         }
       });
     });
-    TreeItem.#optsToSerialize.forEach((opt) => {
+    TreeItemClass.#optsToSerialize.forEach((opt) => {
       if (childrenOptions[opt]) {
         childrenOptions[opt] = JSON.parse(childrenOptions[opt]);
       }
@@ -260,13 +265,13 @@ var TreeItem = class TreeItem {
    * `null` if this item is the root of the tree.
    * @type {?TreeItem}
    */
-  #parent: TreeItem | null = null;
+  #parent: TreeItemClass | null = null;
 
   /**
    * An array of `TreeItem`s contained in this item's nested content.
    * @type {!TreeItem[]}
    */
-  children: (TreeItem[] & { id?: string }) | null = [];
+  children: (TreeItemClass[] & { id?: string }) | null = [];
 
   /**
    * The text shown in `span` (and therefore in the tree).
@@ -286,26 +291,26 @@ var TreeItem = class TreeItem {
    * A `boolean` indicating if this item can be played and looped.
    * @type {boolean}
    */
-  playable;
+  playable: boolean;
 
   /**
    * How long this item's audio lasts in seconds if this item is playable.
    * Otherwise, `null`.
    * @type {?number}
    */
-  duration = null;
+  duration: number = null;
 
   /**
    * A `boolean` indicating if this item can be removed from the tree.
    * @type {boolean}
    */
-  removable;
+  removable: boolean;
 
   /**
    * A `boolean` indicating if this item can be renamed.
    * @type {boolean}
    */
-  renamable;
+  renamable: boolean;
 
   /**
    * An array of the `TreeItem`s that this item can be moved to.
@@ -319,7 +324,7 @@ var TreeItem = class TreeItem {
    * in the variable `labeled`, you can add `labeled.children` to `moveTo`.
    * @type {?Array.<(TreeItem|TreeItem[])>}
    */
-  moveTo = null;
+  moveTo: TreeItemClass | TreeItemClass[] = null;
 
   /**
    * An array of the `TreeItem`s that this item can be copied to.
@@ -328,7 +333,7 @@ var TreeItem = class TreeItem {
    * @type {?Array.<(TreeItem|TreeItem[])>}
    * @see moveTo
    */
-  copyTo = null;
+  copyTo: TreeItemClass | TreeItemClass[] | null = null;
 
   /**
    * An array of the `TreeItem`s that this item can be associated with.
@@ -338,13 +343,13 @@ var TreeItem = class TreeItem {
    * @type {?Array.<(TreeItem|TreeItem[])>}
    * @see moveTo
    */
-  assocWith = null;
+  assocWith: TreeItemClass | TreeItemClass[] | null = null;
 
   /**
    * An object containing miscellaneous attributes of this item.
    * @type {?Object}
    */
-  attributes = null;
+  attributes: object | null = null;
 
   /**
    * A boolean indicating if the item is saveable.
@@ -352,40 +357,40 @@ var TreeItem = class TreeItem {
    * necessary to recreate the item. Otherwise, `toObject` will return `null`.
    * @type {boolean}
    */
-  saveable;
+  saveable: boolean;
 
   /**
    * The li element that is displayed and that contains all other elements if this
    * item is rendered. `null` otherwise.
    * @type {?Element}
    */
-  li = null;
+  li: HTMLElement | null = null;
 
   /**
    * The input element of the checkbox used to toggle this item if this item is
    * rendered. `null` otherwise.
    * @type {?Element}
    */
-  checkbox = null;
+  checkbox: HTMLInputElement | null = null;
 
   /**
    * The span element containing the text shown in `li` if this item is rendered.
    * `null` otherwise.
    * @type {?HTMLElement}
    */
-  span = null;
+  span: HTMLElement | null = null;
 
   /**
    * The a element of the play button if this item is playable. Otherwise, `null`.
    * @type {?Element}
    */
-  playButton = null;
+  playButton: Element | null = null;
 
   /**
    * The a element of the loop button if this item is playable. Otherwise, `null`.
    * @type {?Element}
    */
-  loopButton = null;
+  loopButton: Element | null = null;
 
   /**
    * The a element of the pause button if this item is playable. Otherwise, `null`.
@@ -393,28 +398,28 @@ var TreeItem = class TreeItem {
    * so it's only displayed when the item is playing.
    * @type {?Element}
    */
-  pauseButton = null;
+  pauseButton: Element | null = null;
 
   /**
    * The a element of the remove button.
    * `null` if this item isn't removable.
    * @type {?Element}
    */
-  removeButton = null;
+  removeButton: Element | null = null;
 
   /**
    * The `Popup` that is shown when this item (specifically `span`) is clicked.
    * `null` if this item doesn't have any properties shown in a `Popup`.
    * @type {?Popup}
    */
-  popup = null;
+  popup: typeof Popup | null = null;
 
   /**
    * The ul element containing the nested content (the children) of this item if
    * this item is rendered. `null` otherwise.
    * @type {?Element}
    */
-  nested = null;
+  nested: Element | null = null;
 
   // this is here for subclasses to define a style method
   // if they want to apply specific CSS styles
@@ -468,16 +473,16 @@ var TreeItem = class TreeItem {
       attributes = null,
       saveable = true,
     }: {
-      parent?: TreeItem | null;
-      children?: TreeItem[] & { id: string };
+      parent?: TreeItemClass | null;
+      children?: TreeItemClass[] & { id: string };
       text?: string | null;
       playable?: boolean;
       removable?: boolean;
       renamable?: boolean;
-      moveTo?: TreeItem[] | null;
-      copyTo?: TreeItem[] | null;
+      moveTo?: TreeItemClass[] | null;
+      copyTo?: TreeItemClass[] | null;
       render?: boolean;
-      assocWith?: string | null;
+      assocWith?: TreeItemClass[] | null;
       attributes?: any;
       saveable?: boolean;
     } = {}
@@ -559,16 +564,25 @@ var TreeItem = class TreeItem {
       options.renamable = true;
     }
     if (this.moveTo) {
-      // FIXME: this doesn't work because some items in moveTo are arrays of TreeItems
-      options.moveTo = this.moveTo.map((item) => item.id);
+      if (Array.isArray(this.moveTo))
+        options.moveTo = (this.moveTo as TreeItemClass[]).map(
+          (item) => item.id
+        );
+      else options.moveTo = [(this.moveTo as TreeItemClass).id];
     }
     if (this.copyTo) {
-      // FIXME: see above
-      options.copyTo = this.copyTo.map((item) => item.id);
+      if (Array.isArray(this.copyTo))
+        options.copyTo = (this.copyTo as TreeItemClass[]).map(
+          (item) => item.id
+        );
+      else options.copyTo = [(this.copyTo as TreeItemClass).id];
     }
     if (this.assocWith) {
-      // FIXME: see above
-      options.assocWith = this.assocWith.map((item) => item.id);
+      if (Array.isArray(this.assocWith))
+        options.assocWith = (this.assocWith as TreeItemClass[]).map(
+          (item) => item.id
+        );
+      else options.assocWith = [(this.assocWith as TreeItemClass).id];
     }
     if (this.attributes) {
       options.attributes = this.attributes;
@@ -579,7 +593,7 @@ var TreeItem = class TreeItem {
       arguments: [this.id],
       options,
     };
-    return TreeItem.#extractChildrenOptions(json);
+    return TreeItemClass.#extractChildrenOptions(json);
   }
 
   // https://stackoverflow.com/a/68374307
@@ -590,7 +604,7 @@ var TreeItem = class TreeItem {
    * the class of `this` and the last element is the superclass before `Object`.
    * @return {!Array.<Object>} The constructors of `this`.
    */
-  get constructors() {
+  get constructors(): any {
     const result = [];
     let next = Object.getPrototypeOf(this);
     while (next.constructor.name !== "Object") {
@@ -686,7 +700,9 @@ var TreeItem = class TreeItem {
     return this.ancestors?.map((ancestor) => ancestor.id);
   }
 
-  *preorder(/** @type {?Array.<TreeItem>} */ exclude = null) {
+  *preorder(
+    /** @type {?Array.<TreeItem>} */ exclude: Array<TreeItemClass> | null = null
+  ) {
     if (!exclude?.includes(this)) {
       yield this;
       for (const child of this.children) {
@@ -699,7 +715,7 @@ var TreeItem = class TreeItem {
    * Adds `TreeItem`s to this `TreeItem`'s nested content.
    * @param  {...TreeItem} children - The children to add.
    */
-  addChildren(...children) {
+  addChildren(...children: TreeItemClass[]) {
     for (const child of children) {
       if (child.parent) {
         child.parent.removeChildren(child);
@@ -719,7 +735,7 @@ var TreeItem = class TreeItem {
    * Removes `TreeItem`s from this `TreeItem`'s nested content.
    * @param  {...TreeItem} children - The children to remove.
    */
-  removeChildren(...children) {
+  removeChildren(...children: TreeItemClass[]) {
     const ids = children.map((child) => child.id);
     children.forEach((child) => {
       child.#parent = null;
@@ -740,7 +756,7 @@ var TreeItem = class TreeItem {
 
     if (this.rendered) {
       this.playButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${TreeItem.icons.play}</a>`
+        `<a href="javascript:;" class="button-on">${TreeItemClass.icons.play}</a>`
       );
       // use () => this.play() instead of just this.play so that
       // "this" refers to the TreeItem and not the button getting clicked
@@ -751,7 +767,7 @@ var TreeItem = class TreeItem {
       this.span.after(this.playButton);
 
       this.loopButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${TreeItem.icons.loop}</a>`
+        `<a href="javascript:;" class="button-on">${TreeItemClass.icons.loop}</a>`
       );
       // need to use () => so that we can pass loop = true
       this.loopButton.addEventListener("click", () => {
@@ -760,7 +776,7 @@ var TreeItem = class TreeItem {
       this.playButton.after(this.loopButton);
 
       this.pauseButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${TreeItem.icons.pause}</a>`
+        `<a href="javascript:;" class="button-on">${TreeItemClass.icons.pause}</a>`
       );
       this.pauseButton.addEventListener("click", () => {
         if ("pause" in this && typeof this.pause === "function") this.pause();
@@ -777,7 +793,7 @@ var TreeItem = class TreeItem {
 
     if (this.rendered) {
       this.removeButton = htmlToElement(
-        `<a href="javascript:;" class="button-on">${TreeItem.icons.remove}</a>`
+        `<a href="javascript:;" class="button-on">${TreeItemClass.icons.remove}</a>`
       );
       this.removeButton.addEventListener("click", () => {
         undoStorage.push(new Actions.RemoveAction(this));
@@ -799,10 +815,10 @@ var TreeItem = class TreeItem {
             <input type="checkbox" autocomplete="off" checked>
             <span>${this.#text}</span>
             <ul class="nested active"></ul>
-        </li>`);
+        </li>`) as HTMLElement;
     this.li = li;
 
-    this.checkbox = li.children[0];
+    this.checkbox = li.children[0] as HTMLInputElement;
     // event listeners need to use `() => {}` syntax instead of `function () {}` because
     // `() => {}` doesn't rebind `this` (`this` will still refer to the TreeItem)
     this.checkbox.addEventListener("click", () => {
@@ -824,7 +840,7 @@ var TreeItem = class TreeItem {
       contextMenu.dataset.id = this.id;
     });
 
-    this.span = li.children[1];
+    this.span = li.children[1] as HTMLElement;
     // need to track mousemove to know if we want to
     // drag a segment or click it for popup
     // TODO: give some wiggle room before drag is considered true
@@ -834,7 +850,8 @@ var TreeItem = class TreeItem {
     this.span.addEventListener("mouseup", () => {
       // TODO: move popup to TreeItem constructor?
       if (this.popup && drag === false) {
-        this.popup.show();
+        if ("show" in this.popup && typeof this.popup.show === "function")
+          this.popup.show();
       }
     });
 
@@ -859,7 +876,7 @@ var TreeItem = class TreeItem {
    * @param {number} durationChange - The amount to change `duration` by. If negative,
    *      decreases `duration`. Otherwise, increases `duration`.
    */
-  updateDuration(durationChange) {
+  updateDuration(durationChange: number) {
     if (this.playable) {
       this.duration = this.duration + durationChange;
       if (this.rendered) {
@@ -894,7 +911,7 @@ var TreeItem = class TreeItem {
    *      the play button is replaced.
    * @throws {Error} If this item is not playable.
    */
-  switchToPauseButton(loop) {
+  switchToPauseButton(loop: boolean) {
     if (!this.rendered) {
       throw new Error(
         `TreeItem ${this.id} is not rendered and therefore has no buttons to switch.`
@@ -939,7 +956,7 @@ var TreeItem = class TreeItem {
    * @throws {Error} If a `TreeItem` with `id` already exists in `byId`.
    */
   addToById() {
-    if (TreeItem.exists(this.id)) {
+    if (TreeItemClass.exists(this.id)) {
       throw new Error(`A TreeItem with the id ${this.id} already exists.`);
     }
     this.constructors.forEach((ctor) => (ctor.byId[this.id] = this));
@@ -979,7 +996,7 @@ var TreeItem = class TreeItem {
    * @param {?TreeItem} parent - The `TreeItem` to add this item to, if any.
    * @param {boolean} [render=true] - Whether to render this item after readding it.
    */
-  readd(parent = null, render = true) {
+  readd(parent: TreeItemClass | null = null, render: boolean = true) {
     this.addToById(); // will throw an error if one already exists !
     if (render) {
       this.render();
@@ -997,7 +1014,7 @@ var TreeItem = class TreeItem {
    * @param {boolean} [open=true] - Whether to open `to`'s nested content after moving
    *      this item to it.
    */
-  move(to, open = true) {
+  move(to: TreeItemClass, open: boolean = true) {
     to.addChildren(this);
     if (open) {
       to.open();
@@ -1010,13 +1027,13 @@ var TreeItem = class TreeItem {
    * @throws {Error} If this item cannot be renamed.
    * @throws {Error} If a `TreeItem` with `newId` already exists.
    */
-  rename(newId) {
+  rename(newId: string) {
     if (!this.renamable) {
       throw new Error(`TreeItem ${this.id} is not renamable.`);
     }
     // check even though it's checked in addToById because otherwise if
     // that throws an error, removeFromById will still have already run
-    if (TreeItem.exists(newId)) {
+    if (TreeItemClass.exists(newId)) {
       throw new Error(`A TreeItem with the id ${newId} already exists`);
     }
     // delete the old name from the byId objects
@@ -1038,7 +1055,13 @@ var TreeItem = class TreeItem {
    *   this item is rendered and only applies to the children that are rendered.
    * @returns {TreeItem[]} The reference to this item's children, now sorted.
    */
-  sortBy(prop, { reverse = false, reappend = true } = {}) {
+  sortBy(
+    prop: string,
+    {
+      reverse = false,
+      reappend = true,
+    }: { reverse?: boolean; reappend?: boolean } = {}
+  ): TreeItemClass[] {
     return this.sort(
       (child1, child2) => compareProperty(child1, child2, prop),
       { reverse, reappend }
@@ -1056,7 +1079,13 @@ var TreeItem = class TreeItem {
    *     this item is rendered and only applies to the children that are rendered.
    * @returns {TreeItem[]} The reference to this item's children, now sorted.
    */
-  sort(compareFn, { reverse = false, reappend = true } = {}) {
+  sort(
+    compareFn: (a: any, b: any) => number,
+    {
+      reverse = false,
+      reappend = true,
+    }: { reverse?: boolean; reappend?: boolean } = {}
+  ): TreeItemClass[] {
     this.children.sort(compareFn);
     if (reverse) {
       this.children.reverse();
@@ -1082,7 +1111,7 @@ var TreeItem = class TreeItem {
    *      In other words, when `force == null`, returns `true`. Otherwise,
    *      returns `force !== checked`.
    */
-  toggleTree(force = null) {
+  toggleTree(force: boolean | undefined = null): boolean {
     if (force === this.checked) {
       return false;
     }
@@ -1134,9 +1163,9 @@ var TreeItem = class TreeItem {
    * @param {string} childId
    * @returns whether this TreeItem has that child somewhere underneath it
    */
-  hasChild(childId) {
+  hasChild(childId: string) {
     let hasChild = false;
-    const potentialParent = TreeItem.byId[this.id];
+    const potentialParent = TreeItemClass.byId[this.id];
     potentialParent.children.forEach((child) => {
       // base case
       if (child.id === childId) hasChild = true;
@@ -1152,7 +1181,7 @@ var TreeItem = class TreeItem {
    * @param {boolean} [highlight=true] - Whether to highlight this item after scrolling.
    *     Highlighting adds a blue border around the item temporarily.
    */
-  scrollIntoView(highlight = true) {
+  scrollIntoView(highlight: boolean = true) {
     this.open();
     this.li.scrollIntoView({ block: "center" });
     if (highlight) {
@@ -1189,30 +1218,31 @@ var TreeItem = class TreeItem {
   dispatchEvent(event) {
     return this.li.dispatchEvent(event);
   }
-};
+}
+var TreeItem = TreeItemClass;
 
 /** A popup to display when a `TreeItem` is clicked. */
-var Popup = class Popup {
+class PopupClass {
   /**
    * The `TreeItem` that uses this popup.
    * Properties of `treeItem` are used to determine the contents of this popup.
    * @type {!TreeItem}
    */
-  treeItem;
+  treeItem: TreeItemClass;
 
   /**
    * The text shown in the headers of this popup's divs.
    * Always equals `treeItem.text`.
    * @type {string}
    */
-  #text;
+  #text: string;
 
   /**
    * The div element that contains all other elements.
    * Displayed when `treeItem` is clicked (and this popup currently has content).
    * @type {!Element}
    */
-  popup;
+  popup: HTMLElement;
 
   // Honestly I'm not sure why popup and popupContent are separate, that's just the way
   // Sarita made it, so that's how I made the class. They might be able to be combined
@@ -1220,35 +1250,35 @@ var Popup = class Popup {
    * The div element containing the actual content of the popup.
    * @type {!Element}
    */
-  popupContent;
+  popupContent: Element;
 
   /**
    * The div element containing `renameInput` if `treeItem.renamable`.
    * Otherwise, `null`.
    * @type {?Element}
    */
-  renameDiv = null;
+  renameDiv: Element | null = null;
 
   /**
    * The text input element used to rename `treeItem` if `treeItem.renamable`.
    * Otherwise, `null`.
    * @type {?Element}
    */
-  renameInput = null;
+  renameInput: Element | null = null;
 
   /**
    * The div element containing the radio buttons used to move `treeItem`
    * if `treeItem.moveTo`. Otherwise, `null`.
    * @type {?Element}
    */
-  moveDiv = null;
+  moveDiv: HTMLElement | null = null;
 
   /**
    * The div element containing the radio buttons used to copy `treeItem`
    * if `treeItem.copyTo`. Otherwise, `null`.
    * @type {?Element}
    */
-  copyDiv = null;
+  copyDiv: HTMLElement | null = null;
 
   /**
    * The div element containing the radio buttons used to associate
@@ -1256,34 +1286,34 @@ var Popup = class Popup {
    * Otherwise, `null`.
    * @type {?Element}
    */
-  assocDiv = null;
+  assocDiv: HTMLElement | null = null;
 
   /**
    * The div element containing `colorPicker` if `treeItem.colorable`.
    * Otherwise, `null`.
    * @type {?Element}
    */
-  colorDiv = null;
+  colorDiv: Element | null = null;
 
   /**
    * The color picker used to set the color of `treeItem` if `treeItem.colorable`.
    * Otherwise, `null`.
    * @type {?Picker}
    */
-  colorPicker = null;
+  colorPicker: Picker | null = null;
 
   /**
    * The button element used to set `treeItem` to a random color if
    * `treeItem.colorable`. Otherwise, `null`.
    * @type {?Element}
    */
-  randomColorButton = null;
+  randomColorButton: Element | null = null;
 
   /**
    * @param {!TreeItem} treeItem - The `TreeItem` to create the `Popup` for.
    */
-  constructor(treeItem) {
-    this.popup = htmlToElement("<div class='popup'></div>");
+  constructor(treeItem: TreeItemClass) {
+    this.popup = htmlToElement("<div class='popup'></div>") as HTMLElement;
 
     const popupContent = htmlToElement("<div class='popup-content'></div>");
     this.popupContent = popupContent;
@@ -1299,7 +1329,7 @@ var Popup = class Popup {
     popupContent.appendChild(closeButton);
     closeButton.addEventListener("click", () => this.hide());
 
-    if (treeItem.renamable) {
+    if ((treeItem as TreeItemClass).renamable) {
       const renameDiv = htmlToElement(`<div><h3>Rename ${text}</h3></div>`);
       this.renameDiv = renameDiv;
       const renameInput = htmlToElement(
@@ -1322,7 +1352,7 @@ var Popup = class Popup {
       popupContent.append(document.createElement("br"));
       this.moveDiv = htmlToElement(
         `<div><h3>Move ${text} to another group</h3></div>`
-      );
+      ) as HTMLElement;
       popupContent.append(this.moveDiv);
     }
 
@@ -1330,7 +1360,7 @@ var Popup = class Popup {
       popupContent.append(document.createElement("br"));
       this.copyDiv = htmlToElement(
         `<div><h3>Copy ${text} to another group</h3></div>`
-      );
+      ) as HTMLElement;
       popupContent.append(this.copyDiv);
     }
 
@@ -1338,11 +1368,11 @@ var Popup = class Popup {
       popupContent.append(document.createElement("br"));
       this.assocDiv = htmlToElement(
         `<div><h3>Associate ${text} with a speaker</h3></div>`
-      );
+      ) as HTMLElement;
       popupContent.append(this.assocDiv);
     }
 
-    if (treeItem.colorable) {
+    if (treeItem instanceof PeaksGroup && treeItem.colorable) {
       const colorDiv = htmlToElement(
         `<div><h3>Pick a new color for ${text}</h3></div>`
       ) as HTMLElement;
@@ -1417,7 +1447,8 @@ var Popup = class Popup {
       this.updateAssocWith();
     }
     if (this.colorPicker) {
-      this.colorPicker.setColor(this.treeItem.color || "#000000", true);
+      if (this.treeItem instanceof PeaksGroup)
+        this.colorPicker.setColor(this.treeItem.color || "#000000", true);
     }
     if (
       this.renameDiv ||
@@ -1451,7 +1482,10 @@ var Popup = class Popup {
     }
     // flatten until all subarrays have been flattened
     // see TreeItem.moveTo for why this is useful
-    let moveTo = this.treeItem.moveTo.flat(Infinity);
+    // add check for if moveTo is an array
+    let moveTo = Array.isArray(this.treeItem.moveTo)
+      ? this.treeItem.moveTo.flat(Infinity)
+      : [this.treeItem.moveTo];
     if (this.treeItem.parent !== null) {
       moveTo = moveTo.filter((dest) => dest.id !== this.treeItem.parent.id);
     }
@@ -1469,7 +1503,9 @@ var Popup = class Popup {
     while (copyDiv.children[1]) {
       copyDiv.removeChild(copyDiv.lastChild);
     }
-    let copyTo = this.treeItem.copyTo.flat(Infinity);
+    let copyTo = Array.isArray(this.treeItem.copyTo)
+      ? this.treeItem.copyTo.flat(Infinity)
+      : [this.treeItem.copyTo];
     if (this.treeItem.parent !== null) {
       copyTo = copyTo.filter((dest) => dest.id !== this.treeItem.parent.id);
     }
@@ -1485,10 +1521,12 @@ var Popup = class Popup {
     while (assocDiv.children[1]) {
       assocDiv.removeChild(assocDiv.lastChild);
     }
-    const assocWith = this.treeItem.assocWith.flat(Infinity);
+    const assocWith = Array.isArray(this.treeItem.assocWith)
+      ? this.treeItem.assocWith.flat(Infinity)
+      : [this.treeItem.assocWith];
     assocDiv.hidden = assocWith.length === 0;
     assocWith.forEach((dest) => {
-      if (dest.faceNum === null) {
+      if (dest instanceof PeaksGroup && dest.faceNum === null) {
         this.addAssocRadio(dest);
       }
     });
@@ -1499,7 +1537,7 @@ var Popup = class Popup {
    * @param {!TreeItem} dest - The `TreeItem` to move `treeItem` to when the radio
    *      button is clicked.
    */
-  addMoveRadio(dest) {
+  addMoveRadio(dest: TreeItemClass) {
     const radioDiv = htmlToElement(
       "<div><label>" +
         `<input type="radio" name="${this.treeItem.id}-radios"` +
@@ -1522,7 +1560,7 @@ var Popup = class Popup {
    * @param {!TreeItem} dest - The `TreeItem` to copy `treeItem` to when the radio
    *      button is clicked.
    */
-  addCopyRadio(dest) {
+  addCopyRadio(dest: TreeItemClass) {
     const radioDiv = htmlToElement(
       "<div><label>" +
         `<input type="radio" name="${this.treeItem.id}-radios"` +
@@ -1534,7 +1572,8 @@ var Popup = class Popup {
     this.copyDiv.append(radioDiv);
 
     radioButton.addEventListener("change", () => {
-      const copied = this.treeItem.copy(dest);
+      let copied;
+      if (this.treeItem instanceof Segment) copied = this.treeItem.copy(dest);
       if (copied) {
         undoStorage.push(new Actions.CopyAction(copied));
         dest.sortBy("startTime");
@@ -1550,7 +1589,7 @@ var Popup = class Popup {
    * @param {!TreeItem} dest - The `TreeItem` to associate the `Face` to
    *      when the radio button is clicked.
    */
-  addAssocRadio(dest) {
+  addAssocRadio(dest: TreeItemClass) {
     const radioDiv = htmlToElement(
       "<div><label>" +
         `<input type="radio" name="${this.treeItem.id}-radios"` +
@@ -1567,13 +1606,14 @@ var Popup = class Popup {
       this.hide();
     });
   }
-};
+}
+var Popup = PopupClass;
 
 /**
  * A group of `TreeItem`s.
  * @extends TreeItem
  */
-var Group = class Group extends TreeItem {
+class GroupClass extends TreeItemClass {
   /**
    * An object containing all `Group`s by their id.
    * Key is id, value is corresponding `Group`:
@@ -1581,7 +1621,7 @@ var Group = class Group extends TreeItem {
    * @type {!Object.<string, Group>}
    * @static
    */
-  static byId = {};
+  static byId: { [s: string]: GroupClass } = {};
 
   /**
    * HTML strings for the play, pause, loop, and remove icons for `Group`s
@@ -1589,7 +1629,7 @@ var Group = class Group extends TreeItem {
    * @type {!Object.<string, string>}
    * @static
    */
-  static icons = groupIcons;
+  static icons: { [s: string]: string } = groupIcons;
 
   /**
    * @param {string} id - The unique identifier to give the `Group`.
@@ -1613,7 +1653,7 @@ var Group = class Group extends TreeItem {
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
-    id,
+    id: string,
     {
       parent = null,
       children = null,
@@ -1624,7 +1664,7 @@ var Group = class Group extends TreeItem {
       moveTo = null,
       copyTo = null,
       saveable = true,
-    } = {}
+    }: ({ [s: string]: any } | null) | undefined = {}
   ) {
     super(id, {
       parent,
@@ -1655,7 +1695,7 @@ var Group = class Group extends TreeItem {
    *      returns `force !== checked`.
    * @see toggleTree
    */
-  toggle(force = null) {
+  toggle(force: boolean | undefined = null): boolean {
     if (!this.toggleTree(force)) {
       return false;
     } // no toggling necessary
@@ -1672,7 +1712,7 @@ var Group = class Group extends TreeItem {
    * @yields {TreeItem} A `TreeItem` whose `checked` and `playable` properties are
    *      both `true`.
    */
-  *checkedPlayableGenerator(infinite = false) {
+  *checkedPlayableGenerator(infinite: boolean = false) {
     // do... while always executes the loop once and THEN evalutes the condition,
     // meaning all of the children that are checked will be yielded once, and then
     // if we are infinite, they will continue to be yielded forever
@@ -1705,7 +1745,7 @@ var Group = class Group extends TreeItem {
    *      of the children will restart playing at the beginning)
    * @throws {Error} If this group is not playable.
    */
-  play(loop = false) {
+  play(loop: boolean = false) {
     if (!this.playable) {
       throw new Error(`Group ${this.id} is not playable.`);
     }
@@ -1768,16 +1808,17 @@ var Group = class Group extends TreeItem {
     // it's not defined here)
     this.dispatchEvent(new Event("manualpause", { bubbles: true }));
   }
-};
+}
+var Group = GroupClass;
 
-var CarouselGroup = class CarouselGroup extends Group {
+class CarouselGroupClass extends GroupClass {
   /**
    * An object containing all `CarouselGroup`s by their id.
    * Key is id, value is corresponding `CarouselGroup`:
    * {id: `CarouselGroup`}
    * @type {!Object.<string, CarouselGroup>}
    */
-  static byId = {};
+  static byId: { [s: string]: CarouselGroupClass } = {};
 
   /**
    * The a element used to untoggle the currently selected item in the group and
@@ -1788,7 +1829,7 @@ var CarouselGroup = class CarouselGroup extends Group {
    * happens.
    * @type {!Element}
    */
-  leftButton;
+  leftButton: Element;
 
   /**
    * The a element used to untoggle the currently selected item in the group and
@@ -1799,7 +1840,7 @@ var CarouselGroup = class CarouselGroup extends Group {
    * happens.
    * @type {!Element}
    */
-  rightButton;
+  rightButton: Element;
 
   /**
    * @param {string} id - The unique identifier to give the `CarouselGroup`.
@@ -1821,7 +1862,7 @@ var CarouselGroup = class CarouselGroup extends Group {
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
-    id,
+    id: string,
     {
       parent = null,
       children = null,
@@ -1831,7 +1872,7 @@ var CarouselGroup = class CarouselGroup extends Group {
       moveTo = null,
       copyTo = null,
       saveable = true,
-    } = {}
+    }: ({ [s: string]: any } | null) | undefined = {}
   ) {
     super(id, {
       parent,
@@ -1867,13 +1908,14 @@ var CarouselGroup = class CarouselGroup extends Group {
       if (childFile instanceof File) childFile.openFile();
     });
   }
-};
+}
+var CarouselGroup = CarouselGroupClass;
 
 /**
  * A `TreeItem` for a Peaks.js class (segment / point).
  * @extends TreeItem
  */
-var PeaksItem = class PeaksItem extends TreeItem {
+class PeaksItemClass extends TreeItemClass {
   /**
    * An object containing all `PeaksItem`s by their id.
    * Key is id, value is corresponding `PeaksItem`:
@@ -1881,7 +1923,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * @type {!Object.<string, PeaksItem>}
    * @static
    */
-  static byId = {};
+  static byId: { [s: string]: PeaksItemClass } = {};
 
   /**
    * HTML strings for the play, pause, loop, and
@@ -1889,14 +1931,14 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * @type {!Object.<string, string>}
    * @static
    */
-  static icons = segmentIcons;
+  static icons: { [s: string]: string } = segmentIcons;
 
   /**
    * Gets the `PeaksSegment`s from the `PeaksItem`s that wrap `PeaksSegment`s.
    * @param {!Array.<PeaksItem>} peaksItems - The `PeaksItem`s to filter.
    * @returns {!Array.<PeaksSegment>} The `PeaksSegments`s in `peaksItem`s.
    */
-  static getSegments(peaksItems) {
+  static getSegments(peaksItems: Array<PeaksItemClass>): Array<SegmentClass> {
     const segments = [];
     peaksItems.forEach((peaksItem) => {
       if (peaksItem.type === "Segment") {
@@ -1908,10 +1950,10 @@ var PeaksItem = class PeaksItem extends TreeItem {
 
   /**
    * Gets the `PeaksPoint`s from the `PeaksItem`s that wrap `PeaksPoint`s.
-   * @param {!Array.<PeaksItem>} peaksItems - The `PeaksItem`s to filter.
+   * @param {!Array.<PeaksItemClass>} peaksItems - The `PeaksItem`s to filter.
    * @returns {!Array.<PeaksPoint>} The `PeaksPoints`s in `peaksItem`s.
    */
-  static getPoints(peaksItems) {
+  static getPoints(peaksItems: Array<PeaksItemClass>): Array<PointClass> {
     const points = [];
     peaksItems.forEach((peaksItem) => {
       if (peaksItem.type === "Point") {
@@ -1925,7 +1967,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * Adds each item to Peaks.js, displaying it on the waveform.
    * @param {!Array.<PeaksItem>} peaksItems - The `PeaksItem`s to show.
    */
-  static showOnPeaks(peaksItems) {
+  static showOnPeaks(peaksItems: Array<PeaksItemClass>) {
     const segments = PeaksItem.getSegments(peaksItems);
     const points = PeaksItem.getPoints(peaksItems);
     peaks.segments.add(segments);
@@ -1936,7 +1978,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * Removes each item from Peaks.js, hiding it from the waveform.
    * @param {!Array.<PeaksItem>} peaksItems - The `PeaksItem`s to hide.
    */
-  static hideFromPeaks(peaksItems) {
+  static hideFromPeaks(peaksItems: Array<PeaksItem>) {
     const segments = PeaksItem.getSegments(peaksItems);
     const points = PeaksItem.getPoints(peaksItems);
     segments.forEach((segment) => peaks.segments.removeById(segment.id));
@@ -1947,13 +1989,13 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * The Peaks.js Segment or Point being represented in the tree by this `PeaksItem`.
    * @type {(!PeaksSegment|!PeaksPoint)}
    */
-  peaksItem;
+  peaksItem: PeaksSegment | PeaksPoint;
 
   /**
    * Indicates if `peaksItem` is a segment or a point.
    * @type {("Segment"|"Point")}
    */
-  type;
+  type: "Segment" | "Point";
 
   /**
    * A `boolean` indicating if this segment is editable.
@@ -1962,7 +2004,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * showing / hiding said drag handles if it has them.
    * @type {boolean}
    */
-  #editable;
+  #editable: boolean;
 
   /**
    * A `boolean` indicating if this segment is currently editable.
@@ -1970,7 +2012,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * if this segment's drag handles are shown and `false` if they're hidden.
    * @type {boolean}
    */
-  currentlyEditable;
+  currentlyEditable: boolean;
 
   /**
    * @param {(!PeaksSegment|!PeaksPoint)} peaksItem - The Peaks.js segment / point being
@@ -1996,7 +2038,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * @throws {Error} If a `TreeItem` with `peaksItem.id` already exists.
    */
   constructor(
-    peaksItem,
+    peaksItem: PeaksSegment | PeaksPoint,
     {
       parent = null,
       text = null,
@@ -2008,7 +2050,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
       render = true,
       attributes = null,
       saveable = true,
-    } = {}
+    }: ({ [s: string]: any } | null) | undefined = {}
   ) {
     // catch options contained within the peaks item
     text = text || peaksItem.treeText;
@@ -2119,7 +2161,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    *      waveform.
    * @param {string=} options.labelText - The segment's / point's text label.
    */
-  update(options) {
+  update(options: { [s: string]: any }) {
     this.peaksItem.update(options);
   }
 
@@ -2135,7 +2177,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    *      and returns `force !== checked` when `force != null`. If this item isn't
    *      editable, returns `null`.
    */
-  toggleDragHandles(force = null) {
+  toggleDragHandles(force: boolean | undefined = null): boolean | null {
     if (!this.#editable) {
       return null;
     } // this segment isn't editable
@@ -2212,7 +2254,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * @param {?PeaksGroup} parent - The `PeaksGroup` to add this item to, if any.
    * @param {boolean} [render=true] - Whether to render this item after readding it.
    */
-  readd(parent = null, render = true) {
+  readd(parent: PeaksGroup | null = null, render: boolean = true) {
     this.#addToPeaks();
     super.readd(parent, render);
   }
@@ -2222,7 +2264,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    * unchanged.
    * @param {string} newText - The new text to give this item.
    */
-  rename(newText) {
+  rename(newText: string) {
     super.text = newText;
     if (this.parent) {
       this.peaksItem.update({ labelText: `${this.parent.id}\n${newText}` });
@@ -2241,7 +2283,7 @@ var PeaksItem = class PeaksItem extends TreeItem {
    *      when `force == null`, returns `true`. Otherwise, returns `force !== checked`.
    * @see toggleTree
    */
-  toggle(force = null) {
+  toggle(force: boolean | undefined = null): boolean {
     if (!this.toggleTree(force)) {
       return false;
     } // no toggling necessary
@@ -2262,13 +2304,14 @@ var PeaksItem = class PeaksItem extends TreeItem {
 
     return true;
   }
-};
+}
+var PeaksItem = PeaksItemClass;
 
 /**
  * A `TreeItem` for a Peaks.js segment.
  * @extends PeaksItem
  */
-var Segment = class Segment extends PeaksItem {
+class SegmentClass extends PeaksItemClass {
   /**
    * An object containing all `Segment`s by their id.
    * Key is id, value is corresponding `Segment`:
@@ -2276,7 +2319,7 @@ var Segment = class Segment extends PeaksItem {
    * @type {!Object.<string, Segment>}
    * @static
    */
-  static byId = {};
+  static byId: { [s: string]: SegmentClass } = {};
 
   static #idCounter = new IdCounter("segment.%d");
 
@@ -2299,7 +2342,7 @@ var Segment = class Segment extends PeaksItem {
    * @throws {Error} If a `TreeItem` with `segment.id` already exists.
    */
   constructor(
-    segment,
+    segment: PeaksSegment | PeaksSegmentOptions,
     {
       parent = null,
       text = null,
@@ -2309,7 +2352,7 @@ var Segment = class Segment extends PeaksItem {
       copyTo = null,
       attributes = null,
       saveable = true,
-    } = {}
+    }: ({ [s: string]: any } | null) | undefined = {}
   ) {
     if (segment.constructor.name !== "Segment") {
       if (segment.id) {
@@ -2437,7 +2480,7 @@ var Segment = class Segment extends PeaksItem {
    * @param {boolean} [loop=false] - If `true`, loops this segment (reaching
    *      the end of the segment will restart playing at the beginning).
    */
-  play(loop = false) {
+  play(loop: boolean = false) {
     // pause in case anything else is playing so that
     // their icons get switched back to play and loop
     media.pause();
@@ -2495,7 +2538,7 @@ var Segment = class Segment extends PeaksItem {
    *
    * @returns {!Segment} The new segment.
    */
-  split() {
+  split(): Segment {
     if (this.duration < 0.15) {
       return null; // don't split if segment is too short
     }
@@ -2535,7 +2578,7 @@ var Segment = class Segment extends PeaksItem {
    * @returns {?Segment} The copied segment if `copyParent` didn't already have a
    *      copy of this segment. Otherwise, `null`.
    */
-  copy(copyParent) {
+  copy(copyParent: PeaksGroup): Segment | null {
     // only copy if the new parent doesn't already have a copy of the segment
     if (
       !copyParent.children.some((child) =>
@@ -2566,7 +2609,7 @@ var Segment = class Segment extends PeaksItem {
    * @param {...Segment} segments - Segments to merge with this segment. All
    *     segments must overlap this segment. They will be removed after merging.
    */
-  merge(...segments) {
+  merge(...segments: Segment[]) {
     segments.forEach((segment) => {
       if (segment.startTime < this.startTime) {
         this.startTime = segment.startTime;
@@ -2577,13 +2620,14 @@ var Segment = class Segment extends PeaksItem {
       segment.remove();
     });
   }
-};
+}
+var Segment = SegmentClass;
 
 /**
  * A `TreeItem` for a Peaks.js point.
  * @extends PeaksItem
  */
-var Point = class Point extends PeaksItem {
+class PointClass extends PeaksItemClass {
   /**
    * An object containing all `Point`s by their id.
    * Key is id, value is corresponding `Point`:
@@ -2591,7 +2635,7 @@ var Point = class Point extends PeaksItem {
    * @type {!Object.<string, Point>}
    * @static
    */
-  static byId = {};
+  static byId: { [s: string]: Point } = {};
 
   static #idCounter = new IdCounter("point.%d");
 
@@ -2617,7 +2661,7 @@ var Point = class Point extends PeaksItem {
    * @throws {Error} If a `TreeItem` with `point.id` already exists.
    */
   constructor(
-    point,
+    point: PeaksPoint,
     {
       parent = null,
       text = null,
@@ -2627,7 +2671,7 @@ var Point = class Point extends PeaksItem {
       copyTo = null,
       render = true,
       saveable = true,
-    } = {}
+    }: ({ [s: string]: any } | null) | undefined = {}
   ) {
     if (point.constructor.name !== "Point") {
       if (point.id) {
@@ -2680,14 +2724,15 @@ var Point = class Point extends PeaksItem {
   set time(newTime) {
     this.point.update({ time: newTime });
   }
-};
+}
+var Point = PointClass;
 
 /**
  * A `Point` used to show a word on the Peaks.js waveform.
  * This item isn't rendered in the tree.
  * @extends Point
  */
-var Word = class Word extends Point {
+class WordClass extends Point {
   /**
    * An object containing all `Word`s by their id.
    * Key is id, value is corresponding `Word`:
@@ -2695,7 +2740,7 @@ var Word = class Word extends Point {
    * @type {!Object.<string, Word>}
    * @static
    */
-  static byId = {};
+  static byId: { [s: string]: Word } = {};
 
   /**
    * @param {!PeaksPoint} point - The Peaks point being represented in the tree by
@@ -2705,7 +2750,13 @@ var Word = class Word extends Point {
    *       in its nested content.
    * @throws {Error} If a `TreeItem` with `point.id` already exists.
    */
-  constructor(point, { parent = null, saveable = true } = {}) {
+  constructor(
+    point: PeaksPoint,
+    {
+      parent = null,
+      saveable = true,
+    }: ({ [s: string]: any } | null) | undefined = {}
+  ) {
     super(point, { parent, saveable, text: point.labelText, render: false });
   }
 
@@ -2727,13 +2778,14 @@ var Word = class Word extends Point {
   rename(newText) {
     this.peaksItem.update({ labelText: newText });
   }
-};
+}
+var Word = WordClass;
 
 /**
  * A group of `PeaksItem`s.
  * @extends Group
  */
-var PeaksGroup = class PeaksGroup extends Group {
+class PeaksGroupClass extends Group {
   /**
    * An object containing all `PeaksGroup`s by their id.
    * Key is id, value is corresponding `PeaksGroup`:
@@ -2741,14 +2793,14 @@ var PeaksGroup = class PeaksGroup extends Group {
    * @type {!Object.<string, PeaksGroup>}
    * @static
    */
-  static byId = {};
+  static byId: { [id: string]: PeaksGroup } = {};
 
   /**
    * The signal-to-noise ratio (SNR) of this `PeaksGroup` if it has one.
    * Otherwise, `null`.
    * @type {?number}
    */
-  snr = null;
+  snr: number | null = null;
 
   /**
    * The color of this group's `PeaksItem`s in the Peaks waveform.
@@ -2756,25 +2808,25 @@ var PeaksGroup = class PeaksGroup extends Group {
    * `PeaksItem` is added to this group.
    * @type {?Color}
    */
-  #color = null;
+  #color: Color | null = null;
 
   /**
    * A `boolean` indicating if this item can be recolored.
    * @type {boolean}
    */
-  colorable;
+  colorable: boolean;
 
   /**
    * A set containing the `PeaksItem`s that are currently hidden in Peaks.
    * @type {!Set.<PeaksItem>}
    */
-  hidden = new Set();
+  hidden: Set<PeaksItem> = new Set();
 
   /**
    * A set containing the `PeaksItem`s that are currently visible in Peaks.
    * @type {!Set.<PeaksItem>}
    */
-  visible = new Set();
+  visible: Set<PeaksItem> = new Set();
 
   /**
    * Face number this face is associated with, for saving purposes
@@ -2808,7 +2860,7 @@ var PeaksGroup = class PeaksGroup extends Group {
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
-    id,
+    id: string,
     {
       parent = null,
       children = null,
@@ -2822,7 +2874,7 @@ var PeaksGroup = class PeaksGroup extends Group {
       moveTo = null,
       copyTo = null,
       saveable = true,
-    } = {}
+    }: ({ [s: string]: any } | null) | undefined = {}
   ) {
     // always have to call constructor for super class (TreeItem)
     super(id, {
@@ -2917,7 +2969,7 @@ var PeaksGroup = class PeaksGroup extends Group {
    * Adds `PeaksItem`s to this group's nested content.
    * @param  {...PeaksItem} children - The children to add.
    */
-  addChildren(...children) {
+  addChildren(...children: PeaksItem[]) {
     if (this.#color === null && children.length > 0) {
       this.#color = children[0].color;
     }
@@ -2944,7 +2996,7 @@ var PeaksGroup = class PeaksGroup extends Group {
    * Removes `PeaksItem`s from this group's nested content.
    * @param  {...PeaksItem} children - The children to remove.
    */
-  removeChildren(...children) {
+  removeChildren(...children: PeaksItem[]) {
     for (const child of children) {
       this.visible.delete(child);
       this.hidden.delete(child);
@@ -2970,7 +3022,7 @@ var PeaksGroup = class PeaksGroup extends Group {
    * @returns {boolean} A `boolean` indicating if renaming was successful.
    *      Renaming is successful if there's no `TreeItem` with `newId`.
    */
-  rename(newId) {
+  rename(newId: string): boolean {
     try {
       super.rename(newId);
     } catch (error) {
@@ -2997,7 +3049,7 @@ var PeaksGroup = class PeaksGroup extends Group {
    *      when `force == null`, returns `true`. Otherwise, returns `force !== checked`.
    * @see toggleTree
    */
-  toggle(force = null) {
+  toggle(force: boolean | undefined = null): boolean {
     if (!this.toggleTree(force)) {
       return false;
     } // no toggling necessary
@@ -3025,7 +3077,7 @@ var PeaksGroup = class PeaksGroup extends Group {
    * @param {!PeaksGroup} copyParent - `PeaksGroup` to add the copied items to.
    * @returns {!Array.<PeaksItem>} The array of copied `PeaksItem`s.
    */
-  copy(copyParent) {
+  copy(copyParent: PeaksGroup): Array<PeaksItem> {
     const copiedChildren = [];
     for (const child of this.children) {
       if ("copy" in child && typeof child.copy === "function") {
@@ -3045,7 +3097,7 @@ var PeaksGroup = class PeaksGroup extends Group {
    * @returns {!Array.<Segment>} The `Segment`s of this group that overlap with
    *      `segment`.
    */
-  getOverlapping(segment) {
+  getOverlapping(segment: Segment): Array<Segment> {
     const overlapping = [];
     for (const child of this.children) {
       if (
@@ -3063,27 +3115,28 @@ var PeaksGroup = class PeaksGroup extends Group {
     }
     return overlapping;
   }
-};
+}
+var PeaksGroup = PeaksGroupClass;
 
 /**
  * A `TreeItem` for a face from clustering face detection on the video
  * @extends TreeItem
  */
-var Face = class Face extends TreeItem {
+class FaceClass extends TreeItem {
   /**
    * An object containing all `Face`s by their id.
    * Key is id, value is corresponding `Face`:  {id: `Face`}
    * @type {Object.<string, Face>}
    * @static
    */
-  static byId = {};
+  static byId: { [s: string]: Face } = {};
 
   /**
    * HTML strings for the remove icons for `Face`s in the tree
    * @type {Object.<string, string>}
    * @static
    */
-  static icons = segmentIcons;
+  static icons: { [s: string]: string } = segmentIcons;
 
   /**
    * An Array containing all removed `Face`s by their id.
@@ -3092,19 +3145,19 @@ var Face = class Face extends TreeItem {
    * @type {number[]}
    * @static
    */
-  static removed = [];
+  static removed: number[] = [];
 
   /**
    * Path to image displayed for a face
    * @type {string}
    */
-  imagePath;
+  imagePath: string;
 
   /**
    * Button that links to a page with every single face in this cluster
    * @type {string}
    */
-  linkButton;
+  linkButton: string;
 
   /**
    * Li for the image shown for a face
@@ -3135,7 +3188,7 @@ var Face = class Face extends TreeItem {
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
-    id,
+    id: string,
     {
       parent = null,
       text = null,
@@ -3144,7 +3197,7 @@ var Face = class Face extends TreeItem {
       assocWith = null,
       dir = null,
       imagePath = null,
-    } = {}
+    }: ({ [s: string]: any } | null) | undefined = {}
   ) {
     // (can't use 'this' until after super() call,
     // so can't get rid of playButton, etc. until after super())
@@ -3205,7 +3258,7 @@ var Face = class Face extends TreeItem {
    * both are `null`, this item isn't added to any parent.
    * @param {?TreeItem} parent - The `TreeItem` to add this item to, if any.
    */
-  readd(parent = null) {
+  readd(parent: TreeItem | null = null) {
     Face.removed = Face.removed.filter(
       (faceNum) => faceNum === parseInt(this.id.replace("face", ""))
     );
@@ -3217,7 +3270,7 @@ var Face = class Face extends TreeItem {
    * group.
    * @param {PeaksGroup} speaker - The group to send this face's image to.
    */
-  assoc(speaker) {
+  assoc(speaker: PeaksGroup) {
     this.speakerNum = speaker.id;
     speaker.faceNum = this.id;
     speaker.nested.before(this.imageLi);
@@ -3236,23 +3289,24 @@ var Face = class Face extends TreeItem {
       this.speakerNum = null;
     }
   }
-};
+}
+var Face = FaceClass;
 
-var File = class File extends TreeItem {
+class FileClass extends TreeItemClass {
   /**
    * An object containing all `File`s by their id.
    * Key is id, value is corresponding `File`:  {id: `File`}
    * @type {Object.<string, File>}
    * @static
    */
-  static byId = {};
+  static byId: { [s: string]: FileClass } = {};
 
   /**
    * Stores what the file being viewed right now is
    * @type {string}
    * @static
    */
-  static currentFile;
+  static currentFile: string;
 
   /**
    * @param {string} filename - The name of the file, including its extension.
@@ -3261,11 +3315,22 @@ var File = class File extends TreeItem {
    * @param {string=} options.text - The text to show in the item's span (and
    *      therefore in the tree). If `null`, `filename` is used.
    * @param {boolean} [options.renamable=false] - Indicates if the item can be renamed.
+   * @param {string} options.curFile - the currently showed file
    * @throws {Error} If a `TreeItem` with an id equal to `filename` already exists.
    */
   constructor(
-    filename,
-    { parent = null, text = null, renamable = false, curFile = null } = {}
+    filename: string,
+    {
+      parent = null,
+      text = null,
+      renamable = false,
+      curFile = null,
+    }: {
+      parent?: TreeItemClass;
+      text?: string;
+      renamable?: boolean;
+      curFile?: string;
+    } = {}
   ) {
     super(filename, {
       parent,
@@ -3273,14 +3338,14 @@ var File = class File extends TreeItem {
       renamable,
       saveable: false,
     });
-    File.currentFile = curFile;
+    FileClass.currentFile = curFile;
     this.toggleTree(false);
     this.checkbox.type = "radio";
     this.checkbox.name = "radioFiles";
     this.parent.addEventListener(
       "click",
       () => {
-        File.byId[curFile].toggleTree(true); // turn on button for current file
+        FileClass.byId[curFile].toggleTree(true); // turn on button for current file
       },
       {}
     );
@@ -3350,7 +3415,8 @@ var File = class File extends TreeItem {
 
     window.location.href = tempWindowLocationHref;
   }
-};
+}
+var File = FileClass;
 
 var Stat = class Stat extends TreeItem {
   /**
@@ -3359,7 +3425,7 @@ var Stat = class Stat extends TreeItem {
    * @type {Object.<string, Stat>}
    * @static
    */
-  static byId = {};
+  static byId: { [s: string]: Stat } = {};
 
   /**
    * @param {string} id - The unique identifier to give the `Stat`.
@@ -3372,7 +3438,14 @@ var Stat = class Stat extends TreeItem {
    *      from the tree.
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
-  constructor(id, { parent = null, text = null, saveable = true } = {}) {
+  constructor(
+    id: string,
+    {
+      parent = null,
+      text = null,
+      saveable = true,
+    }: ({ [s: string]: any } | null) | undefined = {}
+  ) {
     super(id, { parent, text, saveable });
     this.checkbox.type = "hidden";
   }
