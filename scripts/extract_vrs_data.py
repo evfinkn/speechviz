@@ -308,6 +308,13 @@ def route_file(*paths: Path, scan_dir: bool = True, **kwargs):
             route_dir(path, scan_dir=False, **kwargs)
 
 
+def run_from_pipeline(args):
+    # path should be a str or list of str so convert to list of Paths
+    paths = util.expand_files(args.pop("path"), to_paths=True)
+    with log.Timer("Extraction took {}"):
+        route_file(*paths, **args)
+
+
 # cam slam left is excluded to check for it separately since it might be moved
 expected_images = {
     Path(path)
