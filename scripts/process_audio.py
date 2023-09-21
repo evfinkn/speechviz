@@ -513,48 +513,40 @@ def process_audio(
         try:
             with open(segs_path, "r") as annot_file:
                 annot_data = json.load(annot_file)
-            # just update the annotations if it is already in the
-            # updated format
-            if "formatVersion" in annot_data == 3:
-                annotations = annot_data.get("annotations", [])
 
-                def replaceElement(name, replacement):
-                    found = False
-                    for index, element in enumerate(annotations):
-                        if element.get("arguments") == [name]:
-                            # replace previous
-                            annotations[index] = replacement
-                            found = True
-                            break
-                    if not found:
-                        # add replacement for first time
-                        annotations.append(replacement)
+            if annot_data.get("formatVersion") != 3:
+                raise ValueError()  # raise error to catch and rewrite as new format
 
-                replaceElement("Speakers", speakers)
-                replaceElement("VAD", vad)
-                replaceElement("Non-VAD", non_vad)
-                replaceElement("SNR-Noise", speech_pause)
+            # just update the annotations if it is already in the updated format
+            annotations = annot_data.get("annotations", [])
 
-                annot_data["annotations"] = annotations
+            def replaceElement(name, replacement):
+                found = False
+                for index, element in enumerate(annotations):
+                    if element.get("arguments") == [name]:
+                        # replace previous
+                        annotations[index] = replacement
+                        found = True
+                        break
+                if not found:
+                    # add replacement for first time
+                    annotations.append(replacement)
 
-                # get rid of any undefined
-                no_undef_annot_data = [x for x in annot_data if x is not None]
+            replaceElement("Speakers", speakers)
+            replaceElement("VAD", vad)
+            replaceElement("Non-VAD", non_vad)
+            replaceElement("SNR-Noise", speech_pause)
 
-                with segs_path.open("w") as segs_file:
-                    json.dump(no_undef_annot_data, segs_file, indent=2)
-            # otherwise rewrite as the new formats
-            else:
-                # get rid of any undefined
-                no_undef_tree_items = [x for x in tree_items if x is not None]
-                with segs_path.open("w") as segs_file:
-                    json.dump(no_undef_tree_items, segs_file, indent=2)
-        except FileNotFoundError or json.JSONDecodeError:
-            # file doesn't exist yet or empty json file
+            tree_items["annotations"] = annotations
 
-            # get rid of any undefined
-            no_undef_tree_items = [x for x in tree_items if x is not None]
-            with segs_path.open("w") as segs_file:
-                json.dump(no_undef_tree_items, segs_file, indent=2)
+        except FileNotFoundError or json.JSONDecodeError or ValueError:
+            # either file doesn't exist yet, it's empty, or it's in the old format
+            # so we don't need to do anything special with tree_items
+            # (just save it as is, hence the empty except block)
+            pass
+
+        with segs_path.open("w") as segs_file:
+            json.dump(tree_items, segs_file, indent=2)
 
         logger.trace("Calculating stats")
 
