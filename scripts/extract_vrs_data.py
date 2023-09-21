@@ -11,6 +11,7 @@ import orjson
 
 import log
 import util
+from constants import DATA_DIR
 from log import logger
 
 DATA_TYPES = {  # numpy data types corresponding to data types in the VRS metadata
@@ -339,7 +340,7 @@ def vrs_needs_reprocessed(
     needs_extracted = not output_dir.exists() or reprocess
     needs_videos = not output_dir.exists() or reprocess
     if not needs_extracted:
-        data_dir = output_dir.parents[1]
+        parent_dir = output_dir.parent.relative_to(DATA_DIR / "graphical")
         file_stem = output_dir.stem
         files = {path.relative_to(output_dir) for path in output_dir.iterdir()}
         # if we want to keep the images but they don't exist
@@ -348,13 +349,20 @@ def vrs_needs_reprocessed(
                 needs_extracted = True
             elif not (move or Path("camera-rgb") in files):
                 needs_extracted = True
-            elif move and not (data_dir / f"imagesForEncoding/{file_stem}").exists():
+            elif (
+                move
+                and not (
+                    DATA_DIR / "imagesForEncoding" / parent_dir / file_stem
+                ).exists()
+            ):
                 needs_extracted = True
         elif (metadata or reprocess_metadata) and Path("metadata.jsons") not in files:
             needs_extracted = True
         elif not (move or Path("microphones.wav") in files):
             needs_extracted = True
-        elif move and not (data_dir / f"audio/{file_stem}.wav").exists():
+        elif (
+            move and not (DATA_DIR / "audio" / parent_dir / f"{file_stem}.wav").exists()
+        ):
             needs_extracted = True
         # missing the videos
         if not expected_videos.issubset(files):
@@ -367,7 +375,9 @@ def vrs_needs_reprocessed(
             needs_videos = True
             if not Path("camera-slam-left") in files:
                 needs_extracted = True
-        elif move and not (data_dir / f"video/{file_stem}.mp4").exists():
+        elif (
+            move and not (DATA_DIR / "video" / parent_dir / f"{file_stem}.mp4").exists()
+        ):
             needs_videos = True
             if not Path("camera-slam-left") in files:
                 needs_extracted = True
@@ -384,7 +394,7 @@ def metadata_needs_reprocessed(output_dir: Path, reprocess=False, calib=True):
     needs_processed = not output_dir.exists() or reprocess
     if not needs_processed:
         files = {path.relative_to(output_dir) for path in output_dir.iterdir()}
-        if calib and Path("calib.txt") not in files:
+        if calib and Path("calib.json") not in files:
             needs_processed = True
         if not expected_sensors.issubset(files):
             needs_processed = True
@@ -425,10 +435,11 @@ def extract_vrs_data(
     timer = log.Timer("extract_vrs_data took {}")
     timer.start()
 
-    if len(path.parents) < 2 or path.parents[1].name != "data":
-        raise Exception("Input file must be in either data/audio or data/video")
-    data_dir = path.parents[1]
-    output_dir = data_dir / "graphical" / path.stem
+    try:
+        parent_dir = path.parent.relative_to(DATA_DIR / "vrs")
+    except ValueError:
+        raise ValueError("Input file must be in a directory in data/vrs")
+    output_dir = DATA_DIR / "graphical" / parent_dir / path.stem
     log.log_vars(output_dir=output_dir)
 
     reprocess_metadata = metadata_needs_reprocessed(output_dir, reprocess, save_calib)
@@ -441,13 +452,20 @@ def extract_vrs_data(
         log.run_and_log_subprocess(["vrs", "extract-all", path, "--to", output_dir])
         # move the audio file out of its directory and remove the directory
         # there should only be one audio file, so [0] is getting the only one
-        old_audio_path = list((output_dir / "231-1").glob("*.wav"))[0]
-        old_audio_path.replace(output_dir / "231-1.wav")
-        shutil.rmtree(output_dir / "231-1", ignore_errors=True)
+        audio_dir_files = list((output_dir / "231-1").glob("*.wav"))
+        if len(audio_dir_files) > 1:
+            logger.warning(
+                "There are multiple audio files in {}. Using the first one.",
+                output_dir.stem / "231-1",
+            )
         logger.trace("Renaming the audio and video files")
+        old_audio_path = audio_dir_files[0]
+        # old_audio_path.replace(output_dir / "231-1.wav")
+        old_audio_path.replace(output_dir / "microphones.wav")
+        shutil.rmtree(output_dir / "231-1", ignore_errors=True)
         for stream in VIDEO_STREAMS:
-            old_path = output_dir / f"{stream}.mp4"
-            new_path = output_dir / f"{STREAM_NAMES[stream]}.mp4"
+            old_path = output_dir / f"{stream}"
+            new_path = output_dir / f"{STREAM_NAMES[stream]}"
             old_path.replace(new_path)
     else:
         logger.info("{} has already been processed. To reprocess it, pass -r", path)
@@ -469,17 +487,19 @@ def extract_vrs_data(
     if move:
         old_audio_path = output_dir / "microphones.wav"
         if old_audio_path.exists():
-            new_audio_path = data_dir / "audio" / f"{path.stem}.wav"
+            new_audio_path = DATA_DIR / "audio" / parent_dir / f"{path.stem}.wav"
             old_audio_path.replace(new_audio_path)
 
         old_video_path = output_dir / "camera-slam-left.mp4"
         if old_video_path.exists():
-            new_video_path = data_dir / "video" / f"{path.stem}.mp4"
+            new_video_path = DATA_DIR / "video" / parent_dir / f"{path.stem}.mp4"
             old_video_path.replace(new_video_path)
 
         old_images_path = output_dir / "camera-rgb"
         if old_images_path.exists():
-            new_images_path = data_dir / "imagesForEncoding" / f"{path.stem}"
+            new_images_path = (
+                DATA_DIR / "imagesForEncoding" / parent_dir / f"{path.stem}"
+            )
             old_images_path.replace(new_images_path)
 
     timer.stop()
@@ -528,9 +548,11 @@ def extract_sensor_data(
     save_calib = calib
     keep_metadata = metadata
 
-    if len(path.parents) < 2 or path.parents[2].name != "data":
-        raise Exception("Input file must be in a directory in data/graphical")
-    output_dir = path.parents[0]
+    try:
+        path.parent.relative_to(DATA_DIR / "graphical")
+    except ValueError:
+        raise ValueError("Input file must be in a directory in data/graphical")
+    output_dir = path.parent
     log.log_vars(output_dir=output_dir)
 
     # check if vrs has already been processed and only process if reprocess is True
@@ -613,7 +635,7 @@ def extract_sensor_data(
     with open(output_dir / "vrs-info.json", "w") as info_file:
         info_file.write(metadata_json)
     if save_calib:
-        with open(output_dir / "calib.txt", "w") as calib_file:
+        with open(output_dir / "calib.json", "w") as calib_file:
             calib_file.write(calib)
     for stream, data in arrays.items():
         if headers:

@@ -6,7 +6,7 @@ from typing import Optional, Sequence
 import log
 import util
 from _types import PeaksGroup, TreeItem
-from constants import AUDIO_EXTS, SCRIPTS_DIR, VIDEO_EXTS
+from constants import AUDIO_EXTS, DATA_DIR, SCRIPTS_DIR, VIDEO_EXTS
 from log import logger
 
 TRANSCRIBE_SCRIPT = SCRIPTS_DIR / "transcribe"
@@ -78,34 +78,27 @@ def transcribe(
     max_len: int = 1,
     reprocess: bool = False,
 ):
-    # if len(path.parents) < 2 or path.parents[1].name != "data":
-    #     raise Exception("Input file must be in either data/audio or data/video")
-
     log.log_vars(log_separate_=True, path=path, model=model)
     log.log_vars(max_len=max_len, reprocess=reprocess)
 
-    # transcriptions_dir = path.parents[1] / "transcriptions"
-    # transcriptions_dir.mkdir(exist_ok=True)
-    # transcription_path = transcriptions_dir / f"{path.stem}-transcription.json"
-    for ancestor in path.parents:
-        if ancestor.name == "audio" or ancestor.name == "video":
-            if ancestor.parent.name == "data":
-                data_dir = ancestor.parent
-                parent_dir = path.parent.relative_to(ancestor)
-                break
-    # an else for a for loop is executed if break is never reached
-    else:
+    try:
+        if "audio" in path.parts:
+            parent_dir = path.parent.relative_to(DATA_DIR / "audio")
+        elif "video" in path.parts:
+            parent_dir = path.parent.relative_to(DATA_DIR / "video")
+        else:
+            raise ValueError()
+    except ValueError:
         raise ValueError("Input file must be a descendant of data/audio or data/video.")
 
-    transcriptions_dir = data_dir / "transcriptions"
-    transcriptions_dir.mkdir(exist_ok=True)
+    transcriptions_dir = DATA_DIR / "transcriptions"
     transcription_path = (
         transcriptions_dir / parent_dir / f"{path.stem}-transcription.json"
     )
+    transcription_path.parent.mkdir(exist_ok=True, parents=True)
 
     log.log_vars(
         log_separate_=True,
-        data_dir=data_dir,
         parent_dir=parent_dir,
         transcription_path=transcription_path,
     )
@@ -139,9 +132,10 @@ def transcribe(
 
     # want to grab what transcribe.cpp output
     # and add it to annotations
-    annotations_dir = data_dir / "annotations"
-    annotations_dir.mkdir(exist_ok=True)
-    annotations_path = annotations_dir / parent_dir / f"{path.stem}-annotations.json"
+    annotations_path = (
+        DATA_DIR / "annotations" / parent_dir / f"{path.stem}-annotations.json"
+    )
+    annotations_path.parent.mkdir(exist_ok=True, parents=True)
 
     # open the transcription file to copy it over to annotations file
     with open(transcription_path, "r") as transc_file:
