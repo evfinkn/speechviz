@@ -647,7 +647,7 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
     .then((response) => response.json())
     .catch((error) => output404OrError(error, "annotations"));
   if (annots === undefined) {
-    global.highestId = 0;
+    globals.highestId = 0;
     return; // no annotations found (the fetch failed), so just return
   }
   if (annots?.notes) {
