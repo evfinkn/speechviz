@@ -10,13 +10,10 @@
 
 import { spawn } from "child_process";
 import path from "path";
-import process from "process";
 
-import { dataDir } from "./globals.js";
+import { dataDir, isWindows } from "./globals.js";
 import { write } from "./io.js";
 
-// platform is "win32" even on 64-bit Windows
-const isWindows = process.platform === "win32";
 const fossilPath = path.resolve(dataDir, isWindows ? "fossil.exe" : "fossil");
 
 // This is much simpler than a regex with every possible line ending.
