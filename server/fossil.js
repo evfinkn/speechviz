@@ -11,13 +11,10 @@
 import { spawn } from "child_process";
 import path from "path";
 import process from "process";
-import url from "url";
 
+import { dataDir } from "./globals.js";
 import { write } from "./io.js";
 
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
-// fossil.js is in speechviz/server, hence the ../ to get to speechviz/data
-const dataDir = path.resolve(__dirname, "../data");
 // platform is "win32" even on 64-bit Windows
 const isWindows = process.platform === "win32";
 const fossilPath = path.resolve(dataDir, isWindows ? "fossil.exe" : "fossil");
