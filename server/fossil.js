@@ -11,10 +11,11 @@
 import { spawn } from "child_process";
 import path from "path";
 
-import { dataDir, isWindows } from "./globals.js";
+import { dataDir, isWindows, speechvizDir } from "./globals.js";
 import { write } from "./io.js";
 
 const fossilPath = path.resolve(dataDir, isWindows ? "fossil.exe" : "fossil");
+const getVersionsQuery = path.resolve(speechvizDir, "queries/getVersions.sql");
 
 // This is much simpler than a regex with every possible line ending.
 // /g makes it global so that it matches every line instead of just the first
@@ -231,7 +232,8 @@ function sqlCmd(
 
 // Create views the queries use (this won't error if they already exist).
 // no --readonly because we're creating views, which requires writing to the db
-sqlCmd(".read ../queries/views.sql", {}, { readonly: false });
+const viewsQuery = path.resolve(speechvizDir, "queries/views.sql");
+sqlCmd(`.read ${viewsQuery}`, {}, { readonly: false });
 
 /**
  * Joins multiple regexs into a single regex.
@@ -570,7 +572,8 @@ var tagCmd = {
    *    to an empty array.
    */
   find(tagname, { raw = false, type = "ci", limit } = {}) {
-    return sqlCmd("..queries/getTagged.sql", { tagname, raw, type, limit });
+    const getTaggedQuery = path.resolve(speechvizDir, "queries/getTagged.sql");
+    return sqlCmd(`.read ${getTaggedQuery}`, { tagname, raw, type, limit });
   },
 
   /**
@@ -908,7 +911,7 @@ async function versionsCmd(
     file = path.relative(dataDir, file);
   }
   const params = { file, branch, limit, order };
-  const lines = await sqlCmd(".read ../queries/getVersions.sql", params);
+  const lines = await sqlCmd(`.read ${getVersionsQuery}`, params);
   return lines.map((line) => {
     const entry = JSON.parse(line);
     if (parseNums) {
