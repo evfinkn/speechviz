@@ -231,7 +231,7 @@ function sqlCmd(
 
 // Create views the queries use (this won't error if they already exist).
 // no --readonly because we're creating views, which requires writing to the db
-sqlCmd(".read ../queries/views.sql", { readonly: false });
+sqlCmd(".read ../queries/views.sql", {}, { readonly: false });
 
 /**
  * Joins multiple regexs into a single regex.
