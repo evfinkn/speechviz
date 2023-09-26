@@ -177,9 +177,7 @@ app.post("/propagate/:file(*)", async (req, res) => {
   }
 });
 
-const dataSubdirs = (await readdirAndFilter("data")).filter((file) => {
-  return file !== "annotations";
-});
+const dataSubdirs = await readdirAndFilter("data", ["annotations"]);
 // matches any request that start with "/subdir" where subdir is
 // a subdirectory of the data directory
 // escape is there because regex interprets string as is and doesn't escape for you
