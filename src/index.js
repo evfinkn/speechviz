@@ -1,4 +1,4 @@
-import { html, checkResponseStatus } from "./util.js";
+import { checkResponseStatus, html } from "./util.js";
 
 /**
  * Opens the main interface to visualize the specified file.
@@ -91,15 +91,13 @@ const initFaceSelection = async () => {
     const label = createRadio(
       `${faceFolder}-cluster`,
       "face-selection",
-      faceFolder
+      faceFolder,
     );
     label.firstElementChild.addEventListener("change", function () {
       this.checked = false;
       // when radio button clicked, show each cluster folder to choose which to view
       // remove its different id, go to correct folder
-      window.location.assign(
-        `/clustered-faces?dir=${this.value}&inFaceFolder=false`
-      );
+      window.location.assign(`/clustered-faces/${this.value}`);
     });
     faceFieldset.append(label);
   });

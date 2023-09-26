@@ -7,7 +7,6 @@ export default {
   entry: {
     init: "./src/init.js",
     index: "/src/index.js",
-    faceCluster: "/src/faceCluster.js",
   },
   stats: "errors-only",
   output: {

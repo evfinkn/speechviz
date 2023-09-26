@@ -3057,8 +3057,8 @@ var Face = class Face extends TreeItem {
    * @param {?Array.<TreeItem>=} [options.assocWith] - An array of the `TreeItem`s
    *      that Face can be associated with. `null` if the Face isn't able to be
    *      associated.
-   * @param {string=} options.dir - The folder representing the clusters of faces for
-   *      this video
+   * @param {string=} options.faceHref - The link to the page showing every image for
+   *      this face.
    * @param {string=} options.imagePath - The name of the image shown for this face
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
@@ -3070,7 +3070,7 @@ var Face = class Face extends TreeItem {
       removable = true,
       renamable = false,
       assocWith = null,
-      dir = null,
+      faceHref = null,
       imagePath = null,
     } = {},
   ) {
@@ -3087,7 +3087,7 @@ var Face = class Face extends TreeItem {
 
     // rel="noopener noreferrer" is there to avoid tab nabbing
     this.linkButton = html`<a
-      href="/clustered-faces?faceFolder=${this.id}&inFaceFolder=true"
+      href="${faceHref}"
       style="text-decoration:none;"
       target="_blank"
       rel="noopener noreferrer"
@@ -3099,7 +3099,7 @@ var Face = class Face extends TreeItem {
     // change width and height here if you want a different sized image to show
     this.imageLi = html`<li>
       <img
-        src="faceClusters/${dir}/${id}/${imagePath}"
+        src="${imagePath}"
         width="100px"
         height="100px"
         alt="Example image of face"

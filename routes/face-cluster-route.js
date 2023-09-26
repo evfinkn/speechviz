@@ -1,54 +1,50 @@
-import fs from "fs";
+import path from "path";
 
 import express from "express";
 
+import { dataDir } from "../server/globals.js";
+import { readdirAndFilter } from "../server/io.js";
+
+const faceClusterDir = path.join(dataDir, "faceClusters");
+
 const router = express.Router();
 
-/* GET home page. */
-router.get("/", (req, res) => {
-  const inFace = req.query.inFaceFolder == "false" ? false : true;
-  req.session.inFaceFolder = inFace; // for app.js to know what we request
-
-  let faceFolder;
-  if (req.query.faceFolder !== undefined) {
-    // face folder changed
-    faceFolder = req.query.faceFolder;
-    // for app.js to get images, it needs to know what face folder we are in
-    req.session.faceFolder = faceFolder;
-  } else if (req.session.faceFolder !== undefined) {
-    // keep face folder the same
-    faceFolder = req.session.faceFolder;
+router.get("/:video", async (req, res) => {
+  const video = req.params.video;
+  const videoDir = path.join(faceClusterDir, video);
+  try {
+    const faces = await readdirAndFilter(videoDir);
+    res.render("facecluster", { video, faces });
+  } catch (error) {
+    res.status(404).send("Not Found");
   }
+});
 
-  let folder;
-  if (req.query.dir !== undefined) {
-    // video we are looking at changed
-    folder = req.query.dir;
-    req.session.dir = folder;
-  } else {
-    // keep the same dir
-    folder = req.session.dir;
+router.get("/:video/thumbnails", async (req, res) => {
+  const video = req.params.video;
+  const videoDir = path.join(faceClusterDir, video);
+  try {
+    const faces = await readdirAndFilter(videoDir);
+    const thumbnails = {};
+    for (const face of faces) {
+      const faceDir = path.join(videoDir, face);
+      const images = await readdirAndFilter(faceDir);
+      thumbnails[face] = path.join("faceClusters", video, face, images[0]);
+    }
+    res.json(thumbnails);
+  } catch (error) {
+    res.status(404).send("Not Found");
   }
-  const dir = "faceClusters/" + folder + "/";
+});
 
-  if (!inFace) {
-    // user needs to pick which face folder to view
-    req.session.inFaceFolder = false;
-    // send to faceCluster.pug
-    res.render("facecluster", { dir: dir, inFaceFolder: false });
-  } else {
-    // we are in a face folder, and can therefore
-    // send paths of the images to pug to render
-    fs.readdir("data/" + dir + faceFolder + "/", function (err, files) {
-      req.session.inFaceFolder = true;
-      res.render("facecluster", {
-        images: files,
-        faceFolder: faceFolder,
-        dir: dir,
-        inFaceFolder: true,
-      });
-      // send to views/facecluster.pug
-    });
+router.get("/:video/:face", async (req, res) => {
+  const { video, face } = req.params;
+  const faceDir = path.join(faceClusterDir, video, face);
+  try {
+    const images = await readdirAndFilter(faceDir);
+    res.render("facecluster", { video, face, images });
+  } catch (error) {
+    res.status(404).send("Not Found");
   }
 });
 

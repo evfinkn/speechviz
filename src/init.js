@@ -745,29 +745,28 @@ const branch = globals.urlParams.get("branch");
 const commit = globals.urlParams.get("commit");
 const annotsLoading = loadAnnotations(annotsFile, { branch, commit });
 
-const facesLoading = fetch(`/clustered-files/`)
-  .then(checkResponseStatus)
-  .then((response) => response.json())
-  .then((fileList) => {
+const loadFaces = async () => {
+  await annotsLoading; // Speakers has to be loaded before faces can be loaded
+  const clusteredFacesDir = getUrl("clustered-faces", basename, "", folder);
+  try {
+    const faces = await fetch(`${clusteredFacesDir}/thumbnails`)
+      .then(checkResponseStatus)
+      .then((response) => response.json());
     const clusters = new Group("Clusters", { parent: tree, playable: false });
-    const clusterfolders = fileList.cluster; // folder of each found cluster
-    // name of the overall folder, same as video in speechviz w/out extension
-    const dir = fileList.dir;
-    // default image for each of the faces to show in speechviz
-    const images = fileList.images;
-
-    clusterfolders.forEach(async function (folderName) {
-      var imagePath = images[folderName];
-      await annotsLoading; // the segments must be loaded to get speakers
-      new Face(folderName, {
+    Object.entries(faces).forEach(([face, imagePath]) => {
+      new Face(face, {
         parent: clusters,
         assocWith: [Group.byId["Speakers"].children],
-        dir: dir,
+        faceHref: `${clusteredFacesDir}/${face}/`,
         imagePath: imagePath,
       });
     });
-  })
-  .catch((error) => output404OrError(error, "clustered faces"));
+  } catch (error) {
+    output404OrError(error, "clustered faces");
+  }
+};
+
+const facesLoading = loadFaces();
 
 const poseRegex = /pose.*\.csv/;
 const poseContainer = document.getElementById("poses");
