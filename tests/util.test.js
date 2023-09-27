@@ -1,5 +1,6 @@
-import * as util from "../src/util";
 import { beforeEach, describe, expect, jest, test } from "@jest/globals";
+
+import * as util from "../src/util";
 
 const toBeCaseInsensitive = function toBeCaseInsensitive(received, expected) {
   const pass =
@@ -298,24 +299,34 @@ describe("binarySearch", () => {
 });
 
 const successfulFetch = jest.fn(() =>
-  Promise.resolve({ ok: true, status: 200 }),
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    text: () => Promise.resolve("ok"),
+  }),
 );
 const unsuccessfulFetch = jest.fn(() =>
-  Promise.resolve({ ok: false, status: 0 }),
+  Promise.resolve({
+    ok: false,
+    status: 404,
+    statusText: "Not Found",
+    text: () => Promise.resolve("error"),
+  }),
 );
 
 describe("checkResponseStatus", () => {
-  test("doesn't throw on successful response", () => {
-    successfulFetch().then((res) => {
-      // have to wrap in () => for .toThrow to properly detect a thrown error
-      expect(() => util.checkResponseStatus(res)).not.toThrow();
-    });
+  test("doesn't throw on successful response", async () => {
+    expect.assertions(1); // verifies that 1 assertion is called in the test
+    const response = await successfulFetch();
+    await expect(util.checkResponseStatus(response)).resolves.not.toThrow();
   });
-  test("throws ResponseError on unsuccessful response", () => {
-    unsuccessfulFetch().then((res) => {
-      // have to wrap in () => for .toThrow to properly detect a thrown error
-      expect(() => util.checkResponseStatus(res)).toThrow(util.ResponseError);
-    });
+  test("throws ResponseError on unsuccessful response", async () => {
+    expect.assertions(1);
+    const response = await unsuccessfulFetch();
+    await expect(util.checkResponseStatus(response)).rejects.toThrow(
+      util.ResponseError,
+    );
   });
 });
 
