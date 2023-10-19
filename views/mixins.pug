@@ -1,0 +1,14 @@
+mixin urlRadio(name, value, url)
+  label
+    input(
+      type="radio",
+      name=name,
+      value=value,
+      autocomplete="off",
+      checked=false,
+      onclick=`
+        window.location.assign("${url}");
+        this.checked = false; // otherwise it stays checked when you go back
+      `
+    )
+    | #{ value }

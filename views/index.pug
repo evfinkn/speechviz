@@ -1,15 +1,34 @@
 extends layout
+include mixins
+
+mixin vizUrlRadio(type, name, file)
+  -
+    const url = file.includes(".")
+      ? `/viz?type=${type}&file=${file}`
+      : `/viz?type=${type}&folder=${file}` // files without extensions are folders
+  +urlRadio(name, file, url)
 
 block body
   body#indexBody
     .centerThem
       button#audio-selection-acc.accordion Audios
       fieldset#audio-selection.panel
+        each audio in audios
+          +vizUrlRadio("audio", "audio-selection", audio)
+
       button#video-selection-acc.accordion Videos
       fieldset#video-selection.panel
+        each video in videos
+          +vizUrlRadio("video", "video-selection", video)
+
       button#view-selection-acc.accordion Views
       fieldset#view-selection.panel
+        each view in views
+          +vizUrlRadio("views", "view-selection", view)
+
       button#face-selection-acc.accordion Face Clusters
       fieldset#face-selection.panel
+        each face in faces
+          +urlRadio("face-selection", face, `/clustered-faces/${face}`)
 
     script(type="application/javascript", src="js/index.js")

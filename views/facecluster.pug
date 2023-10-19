@@ -1,4 +1,5 @@
 extends layout
+include mixins
 
 block content
   if images
@@ -13,15 +14,4 @@ block content
     | Select which cluster for #{ video } you'd like to view:
     fieldset#face-selection
       each face in faces
-        label
-          input(
-            type="radio",
-            name="face-selection",
-            value=face,
-            autocomplete="off",
-            onclick=`
-              window.location.assign("/clustered-faces/${video}/${face}");
-              this.checked = false; // otherwise it stays checked when you go back
-            `
-          )
-          | #{ face }
+        +urlRadio("face-selection", face, `/clustered-faces/${video}/${face}`)
