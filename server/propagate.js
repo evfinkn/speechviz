@@ -81,7 +81,7 @@ const filterOldPropagatedSegments = (item, filename) => {
     const filtered = [];
     item.forEach((child) => {
       child = filterOldPropagatedSegments(child, filename);
-      if (child !== null) {
+      if (child) {
         filtered.push(child);
       }
     });
