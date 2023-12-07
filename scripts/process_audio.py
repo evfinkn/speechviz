@@ -12,6 +12,7 @@ from typing import Optional, Sequence
 
 import librosa
 import numpy as np
+import pandas as pd
 
 import entropy
 import log
@@ -52,25 +53,27 @@ def format_segment(
     return format_tree_item("Segment", [peaks_seg], options)
 
 
-def get_complement_times(times, duration):
+# new complement times is changed to accept custom start and stop times
+# for processing whole view files of concat audio
+def get_complement_times(times, start_time, stop_time):
     comp_times = []
     if len(times) == 0:
-        comp_times.append((0, duration))
+        comp_times.append((start_time, stop_time))
     else:
         start_index = 1
-        if times[0][0] == 0:
+        if times[0][0] == start_time:
             start_index = 2
             if len(times) == 1:
-                if times[0][1] != duration:
-                    comp_times.append((times[0][1], duration))
+                if times[0][1] != stop_time:
+                    comp_times.append((times[0][1], stop_time))
             else:
                 comp_times.append((times[0][1], times[1][0]))
         else:
-            comp_times.append((0, times[0][0]))
+            comp_times.append((start_time, times[0][0]))
         for i in range(start_index, len(times)):
             comp_times.append((times[i - 1][1], times[i][0]))
-        if times[-1][1] != duration:
-            comp_times.append((times[-1][1], duration))
+        if times[-1][1] != stop_time:
+            comp_times.append((times[-1][1], stop_time))
     return comp_times
 
 
@@ -90,7 +93,11 @@ def flatten_times(times, num_samples, sr):
     if len(indices) != 0:
         times.append(indices[-1])
         times = librosa.samples_to_time(times, sr=sr)
-        times = [(times[i], times[i + 1]) for i in range(0, len(times), 2)]
+
+        new_times = []
+        for i in range(0, len(times), 2):
+            new_times.append((times[i], times[i + 1]))
+        times = new_times
     return times
 
 
@@ -155,7 +162,7 @@ def get_diarization(path: pathlib.Path, auth_token, num_speakers=None):
         logger.trace("Initializing diarization pipeline")
         with log.Timer("Initializing diarization pipeline took {}"):
             diar_pipe = Pipeline.from_pretrained(
-                "pyannote/speaker-diarization@2.1", use_auth_token=auth_token
+                "pyannote/speaker-diarization-3.0", use_auth_token=auth_token
             )
 
     try:
@@ -396,242 +403,409 @@ def process_audio(
 
         logger.debug("sr={} duration={:.3f}", sr, duration)
 
+        # Do speaker diarization (just make spkrs_segs and
+        # spkrs_times only take before and after filter_start and filter_stop)
         spkrs_segs, spkrs_times = get_diarization(
             path, auth_token, num_speakers=num_speakers
         )
-        spkrs = sorted(spkrs_segs.keys())
-        spkrs_durations = {
-            spkr: get_times_duration(spkr_times)
-            for spkr, spkr_times in spkrs_times.items()
-        }
-        spkrs_num_segs = {
-            spkr: len(spkr_segs) for spkr, spkr_segs in spkrs_segs.items()
-        }
-        diar_times = [time for spkr in spkrs_times.values() for time in spkr]
-        diar_times = flatten_times(diar_times, len(mono_samples), sr)
 
+        # Do vad (just make spkrs_segs and spkrs_times only take before and
+        # after filter_start and filter_stop)
         vad_segs, vad_times = get_vad(path, auth_token, onset, offset)
-        non_vad_segs = []
-        non_vad_times = get_complement_times(vad_times, duration)
-        for start, end in non_vad_times:
-            # don't need to give options because the Non-VAD PeaksGroup handles it
-            non_vad_segs.append(format_segment(start, end, "#b59896", "Non-VAD"))
-        non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
 
-        logger.trace("Calculating SNRs")
-
-        # Filter to get segments that are less than 2 seconds long since these
-        # are probably pauses in speech (and thus noise)
-        noise_times = list(filter(lambda tr: tr[1] - tr[0] < 2, non_vad_times))
-        if len(noise_times) == 0:
-            logger.trace("No noise found, using non-vad instead")
-            # if there are no speech pause times, just use regular nonvad instead
-            noise_times = non_vad_times
-
-        # todo: decide if we implement this with nonvad and/or speech_pause / or both
-        # no noise to base off of, and can't calculate snr?
-        # then try again with higher onset and offset (less strict)
-        # if not noise_times:
-        # originalOnset = onset
-        # originalOffset = offset
-        # while not noise_times:
-        # onset = onset + 0.05
-        # offset = offset + 0.05
-        # vad_segs, vad_times = get_vad(path, auth_token, onset, offset)
-        # speech_pause_times = get_complement_times(
-        # vad_times, duration, True
-        # )
-        # noise_times = speech_pause_times
-        # onset = originalOnset
-        # offset = originalOffset
-        # if still no noise for snr throw exception
-        # and let user decide what they'd like to do about it
-        # if not noise_times:
-        # raise Exception("No non-vad to calculate snr with for file " + str(path))
-
-        noise_samps = samples_from_times(noise_times, mono_samples, sr)
-        noise_rms = snr.rms(noise_samps)
-        if noise_rms == 0:
-            # can't divide by 0, be less picky and take non vad not just speech_pause
-            noise_rms = snr.rms(non_vad_samps)
-
-        spkrs_snrs = {
-            spkr: snr_from_times(spkrs_times[spkr], mono_samples, sr, noise_rms)
-            for spkr in spkrs
-        }
-
-        noise_segs = []
-        for start, end in noise_times:
-            noise_segs.append(format_segment(start, end, "#092b12", "SNR-Noise"))
-
-        logger.trace("Creating tree items for Speechviz")
-
-        tree_items = []
-
-        spkrs_groups = []
-        spkrs_children_options = COPY_TO_LABELED.copy()
-        spkrs_children_options["moveTo"] = ["Speakers.children"]
-        for spkr in spkrs:
-            options = {
-                "snr": spkrs_snrs[spkr],
-                "childrenOptions": spkrs_children_options,
-                "children": spkrs_segs[spkr],
+        # this is to allow for the stats to be calculated on the entire
+        # file or a subsection like a run in a view
+        def calc_stats(
+            filter_start=0, filter_stop=duration, stats_path=stats_path, entire=True
+        ):
+            # Make sure it is only within the filter_start and filter_stop
+            filtered_spkrs_times = {
+                spkr: [
+                    tr for tr in times if filter_start <= tr[0] <= tr[1] <= filter_stop
+                ]
+                for spkr, times in spkrs_times.items()
             }
-            spkr_group = format_peaks_group(spkr, options)
-            spkrs_groups.append(spkr_group)
-        spkrs_options = {
-            "parent": "Analysis",
-            "playable": True,
-            "childrenOptions": COPY_TO_LABELED,
-            "children": spkrs_groups,
-        }
-        speakers = format_group("Speakers", spkrs_options)
+            filtered_spkrs_segs = {
+                spkr: [
+                    seg
+                    for seg in segs
+                    if filter_start
+                    <= seg["arguments"][0]["startTime"]
+                    <= seg["arguments"][0]["endTime"]
+                    <= filter_stop
+                ]
+                for spkr, segs in spkrs_segs.items()
+            }
 
-        vad_options = {
-            "parent": "Analysis",
-            "copyTo": ["Labeled.children"],
-            "childrenOptions": COPY_TO_LABELED,
-            "children": vad_segs,
-        }
-        vad = format_peaks_group("VAD", vad_options)
+            spkrs = sorted(filtered_spkrs_segs.keys())
 
-        non_vad_options = vad_options.copy()
-        non_vad_options["children"] = non_vad_segs
-        non_vad = format_peaks_group("Non-VAD", non_vad_options)
+            spkrs_durations = {
+                spkr: get_times_duration(spkr_times)
+                for spkr, spkr_times in filtered_spkrs_times.items()
+            }
+            spkrs_num_segs = {
+                spkr: len(spkr_segs) for spkr, spkr_segs in filtered_spkrs_segs.items()
+            }
 
-        speech_pause_options = vad_options.copy()
-        speech_pause_options["children"] = noise_segs
-        speech_pause = format_peaks_group("SNR-Noise", speech_pause_options)
+            diar_times = [
+                time for spkr in filtered_spkrs_times.values() for time in spkr
+            ]
+            diar_times = flatten_times(diar_times, len(mono_samples), sr)
 
-        # save the segments
-        tree_items = {
-            "formatVersion": 3,
-            "annotations": [speakers, vad, non_vad, speech_pause],
-        }
-        logger.info("Saving segments to {}", segs_path)
+            filtered_vad_times = list(
+                filter(
+                    lambda tr: filter_start <= tr[0] <= filter_stop
+                    and filter_start <= tr[1] <= filter_stop,
+                    vad_times,
+                )
+            )
+            filtered_vad_segs = [
+                segment
+                for segment in vad_segs
+                if filter_start <= segment["arguments"][0]["startTime"] <= filter_stop
+                and filter_start <= segment["arguments"][0]["endTime"] <= filter_stop
+            ]
 
-        try:
-            with open(segs_path, "r") as annot_file:
-                annot_data = json.load(annot_file)
+            filtered_diar_times = list(
+                filter(
+                    lambda tr: filter_start <= tr[0] <= filter_stop
+                    and filter_start <= tr[1] <= filter_stop,
+                    diar_times,
+                )
+            )
 
-            if annot_data.get("formatVersion") != 3:
-                raise ValueError()  # raise error to catch and rewrite as new format
+            non_vad_segs = []
+            non_vad_times = get_complement_times(
+                filtered_vad_times, filter_start, filter_stop
+            )
+            for start, end in non_vad_times:
+                # don't need to give options because the Non-VAD PeaksGroup handles it
+                non_vad_segs.append(format_segment(start, end, "#b59896", "Non-VAD"))
+            non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
 
-            # just update the annotations if it is already in the updated format
-            annotations = annot_data.get("annotations", [])
+            logger.trace("Calculating SNRs")
 
-            def replaceElement(name, replacement):
-                found = False
-                for index, element in enumerate(annotations):
-                    if element.get("arguments") == [name]:
-                        # replace previous
-                        annotations[index] = replacement
-                        found = True
-                        break
-                if not found:
-                    # add replacement for first time
-                    annotations.append(replacement)
+            # Filter to get segments that are less than 2 seconds long since these
+            # are probably pauses in speech (and thus noise)
+            noise_times = list(filter(lambda tr: tr[1] - tr[0] < 2, non_vad_times))
 
-            replaceElement("Speakers", speakers)
-            replaceElement("VAD", vad)
-            replaceElement("Non-VAD", non_vad)
-            replaceElement("SNR-Noise", speech_pause)
+            if len(noise_times) == 0:
+                logger.trace("No noise found, using non-vad instead")
+                # if there are no speech pause times, use regular nonvad instead
+                noise_times = non_vad_times
 
-            tree_items["annotations"] = annotations
+            # todo: decide if we implement this with nonvad and/or
+            # speech_pause / or both
+            #
+            # no noise to base off of, and can't calculate snr?
+            # then try again with higher onset and offset (less strict)
+            # if not noise_times:
+            # originalOnset = onset
+            # originalOffset = offset
+            # while not noise_times:
+            # onset = onset + 0.05
+            # offset = offset + 0.05
+            # vad_segs, vad_times = get_vad(path, auth_token, onset, offset)
+            # speech_pause_times = get_complement_times(
+            # vad_times, duration, True
+            # )
+            # noise_times = speech_pause_times
+            # onset = originalOnset
+            # offset = originalOffset
+            # if still no noise for snr throw exception
+            # and let user decide what they'd like to do about it
+            # if not noise_times:
+            # raise Exception("No non-vad to calculate snr with for file " + str(path))
 
-        except FileNotFoundError or json.JSONDecodeError or ValueError:
-            # either file doesn't exist yet, it's empty, or it's in the old format
-            # so we don't need to do anything special with tree_items
-            # (just save it as is, hence the empty except block)
-            pass
+            noise_samps = samples_from_times(noise_times, mono_samples, sr)
+            noise_rms = snr.rms(noise_samps)
+            if noise_rms == 0:
+                # can't divide by 0, be less picky
+                # and take non vad not just speech_pause
+                noise_rms = snr.rms(non_vad_samps)
 
-        with segs_path.open("w") as segs_file:
-            json.dump(tree_items, segs_file, indent=2)
+            non_vad_samps = samples_from_times(non_vad_times, mono_samples, sr)
+            non_vad_rms = snr.rms(non_vad_samps)
 
-        logger.trace("Calculating stats")
+            spkrs_snrs = {
+                spkr: snr_from_times(
+                    filtered_spkrs_times[spkr], mono_samples, sr, noise_rms
+                )
+                for spkr in spkrs
+            }
 
-        overall_snr = snr_from_times(diar_times, mono_samples, sr, noise_rms)
-        e_entropy = util.AggregateData(entropy.energy_entropy(mono_samples, sr))
-        s_entropy = util.AggregateData(entropy.spectral_entropy(mono_samples, sr))
-        diar_duration = get_times_duration(diar_times)
-        vad_duration = get_times_duration(vad_times)
-        snr_noise_duration = get_times_duration(noise_times)
+            # TODO add this to stats
+            spkrs_non_vad_snrs = {
+                spkr: snr_from_times(
+                    filtered_spkrs_times[spkr], mono_samples, sr, non_vad_rms
+                )
+                for spkr in spkrs
+            }
 
-        # Bind "N/A" as default to save room when calling these functions
-        # default is a tuple of "N/A" and "N/A" so that it can be unpacked
-        maxval = functools.partial(util.max_value, default=("N/A", "N/A"))
-        minval = functools.partial(util.min_value, default=("N/A", "N/A"))
+            if len(spkrs_snrs) != 0:
+                max_speaker = max(spkrs_snrs, key=spkrs_snrs.get)
+                non_main_spkr_spkrs = []
+                for speaker in spkrs:
+                    if speaker != max_speaker:
+                        non_main_spkr_spkrs.append(speaker)
 
-        # key (speaker) is first item in tuple, value is second
-        least_segs_spkr, least_segs = minval(spkrs_num_segs)
-        most_segs_spkr, most_segs = maxval(spkrs_num_segs)
-        shortest_spkr, shortest_spkr_duration = minval(spkrs_durations)
-        longest_spkr, longest_spkr_duration = maxval(spkrs_durations)
-        lowest_snr_spkr, lowest_snr = minval(spkrs_snrs)
-        highest_snr_spkr, highest_snr = maxval(spkrs_snrs)
+                non_main_diar_times = [
+                    time
+                    for spkr in non_main_spkr_spkrs
+                    for time in filtered_spkrs_times[spkr]
+                ]
+                non_main_diar_times = flatten_times(
+                    non_main_diar_times, len(mono_samples), sr
+                )
 
-        stats = {
-            "sampling_rate": sr,
-            "duration": duration,
-            "num_speakers": len(spkrs),
-            "num_convo_turns": get_num_convo_turns(list(spkrs_times.values())),
-            "overall_snr_db": overall_snr,
-            "e_entropy_mean": e_entropy.mean,
-            "e_entropy_median": e_entropy.median,
-            "e_entropy_std": e_entropy.std,
-            "e_entropy_max": e_entropy.max,
-            "e_entropy_min": e_entropy.min,
-            "s_entropy_mean": s_entropy.mean,
-            "s_entropy_median": s_entropy.median,
-            "s_entropy_std": s_entropy.std,
-            "s_entropy_max": s_entropy.max,
-            "s_entropy_min": s_entropy.min,
-            "diar_duration": diar_duration,
-            "non_diar_duration": duration - diar_duration,
-            "num_diar_segments": sum(spkrs_num_segs.values()),
-            "least_segments": least_segs,
-            "least_segments_speaker": least_segs_spkr,
-            "most_segments": most_segs,
-            "most_segments_speaker": most_segs_spkr,
-            "shortest_duration": shortest_spkr_duration,
-            "shortest_duration_speaker": shortest_spkr,
-            "longest_duration": longest_spkr_duration,
-            "longest_duration_speaker": longest_spkr,
-            "lowest_snr_db": lowest_snr,
-            "lowest_snr_db_speaker": lowest_snr_spkr,
-            "highest_snr_db": highest_snr,
-            "highest_snr_db_speaker": highest_snr_spkr,
-            "vad_duration": vad_duration,
-            "num_vad_segments": len(vad_segs),
-            "non_vad_duration": duration - vad_duration,
-            "snr_noise_duration": snr_noise_duration,
-        }
-        for spkr, spkr_snr in spkrs_snrs.items():
-            stats[f"{spkr}_snr_db"] = spkr_snr
-        if split_channels and samples.ndim == 2:
-            if channels_path.exists():
-                channel_names = channels_path.read_text().splitlines()
-            else:
-                channel_names = [f"channel{i}" for i in range(samples.shape[0])]
-            logger.debug("channel_names={}", channel_names)
-            for i, channel_name in enumerate(channel_names):
-                c_noise_samps = samples_from_times(noise_times, samples[i], sr)
-                c_noise_rms = snr.rms(c_noise_samps)
-                if c_noise_rms == 0:
-                    logger.debug('channel "{}"\'s noise rms is 0', channel_name)
-                    # can't divide by 0, be less picky and take
-                    # non vad not just speech_pause
-                    c_noise_rms = snr.rms(non_vad_samps)
-                c_spkrs_snrs = {
-                    spkr: snr_from_times(spkrs_times[spkr], samples[i], sr, c_noise_rms)
-                    for spkr in spkrs
+            noise_segs = []
+            for start, end in noise_times:
+                noise_segs.append(format_segment(start, end, "#092b12", "SNR-Noise"))
+
+            logger.trace("Creating tree items for Speechviz")
+
+            tree_items = []
+
+            spkrs_groups = []
+            spkrs_children_options = COPY_TO_LABELED.copy()
+            spkrs_children_options["moveTo"] = ["Speakers.children"]
+            for spkr in spkrs:
+                options = {
+                    "snr": spkrs_snrs[spkr],
+                    "childrenOptions": spkrs_children_options,
+                    "children": filtered_spkrs_segs[spkr],
                 }
-                c_overall_snr = snr_from_times(diar_times, samples[i], sr, c_noise_rms)
-                stats[f"{channel_name}_overall_snr_db"] = c_overall_snr
-                for spkr, spkr_snr in c_spkrs_snrs.items():
-                    stats[f"{channel_name}_{spkr}_snr_db"] = spkr_snr
-        remove_keys = [re.compile(".*_snr")]
-        util.add_to_csv(stats_path, stats, remove_keys=remove_keys)
+                spkr_group = format_peaks_group(spkr, options)
+                spkrs_groups.append(spkr_group)
+            spkrs_options = {
+                "parent": "Analysis",
+                "playable": True,
+                "childrenOptions": COPY_TO_LABELED,
+                "children": spkrs_groups,
+            }
+            speakers = format_group("Speakers", spkrs_options)
+
+            vad_options = {
+                "parent": "Analysis",
+                "copyTo": ["Labeled.children"],
+                "childrenOptions": COPY_TO_LABELED,
+                "children": vad_segs,
+            }
+            vad = format_peaks_group("VAD", vad_options)
+
+            non_vad_options = vad_options.copy()
+            non_vad_options["children"] = non_vad_segs
+            non_vad = format_peaks_group("Non-VAD", non_vad_options)
+
+            speech_pause_options = vad_options.copy()
+            speech_pause_options["children"] = noise_segs
+            speech_pause = format_peaks_group("SNR-Noise", speech_pause_options)
+
+            # if this is the calc_stats being run on the entire file
+            # (not individual runs of a view) save the segments
+            if entire:
+                tree_items = {
+                    "formatVersion": 3,
+                    "annotations": [speakers, vad, non_vad, speech_pause],
+                }
+                logger.info("Saving segments to {}", segs_path)
+
+                try:
+                    with open(segs_path, "r") as annot_file:
+                        annot_data = json.load(annot_file)
+
+                    if annot_data.get("formatVersion") != 3:
+                        # raise error to catch and rewrite as new format
+                        raise ValueError()
+
+                    # just update the annotations if it is already in the updated format
+                    annotations = annot_data.get("annotations", [])
+
+                    def replaceElement(name, replacement):
+                        found = False
+                        for index, element in enumerate(annotations):
+                            if element.get("arguments") == [name]:
+                                # replace previous
+                                annotations[index] = replacement
+                                found = True
+                                break
+                        if not found:
+                            # add replacement for first time
+                            annotations.append(replacement)
+
+                    replaceElement("Speakers", speakers)
+                    replaceElement("VAD", vad)
+                    replaceElement("Non-VAD", non_vad)
+                    replaceElement("SNR-Noise", speech_pause)
+
+                    tree_items["annotations"] = annotations
+
+                except FileNotFoundError or json.JSONDecodeError or ValueError:
+                    # either file doesn't exist yet,
+                    # it's empty, or it's in the old format
+                    # so we don't need to do anything special with tree_items
+                    # (just save it as is, hence the empty except block)
+                    pass
+
+                with segs_path.open("w") as segs_file:
+                    json.dump(tree_items, segs_file, indent=2)
+
+            logger.trace("Calculating stats")
+
+            overall_snr = snr_from_times(
+                filtered_diar_times, mono_samples, sr, noise_rms
+            )
+            overall_non_vad_snr = snr_from_times(
+                filtered_diar_times, mono_samples, sr, non_vad_rms
+            )
+
+            if len(spkrs_snrs) > 1:
+                overall_wout_main_snr = snr_from_times(
+                    non_main_diar_times, mono_samples, sr, noise_rms
+                )
+                overall_non_vad_wout_main_snr = snr_from_times(
+                    non_main_diar_times, mono_samples, sr, non_vad_rms
+                )
+
+            else:
+                overall_wout_main_snr = "N/A"
+                overall_wout_main_snr = "N/A"
+
+            # entropy should only be calculated on the noise
+            e_entropy = util.AggregateData(entropy.energy_entropy(non_vad_samps, sr))
+            s_entropy = util.AggregateData(entropy.spectral_entropy(non_vad_samps, sr))
+            diar_duration = get_times_duration(filtered_diar_times)
+            vad_duration = get_times_duration(filtered_vad_times)
+            snr_noise_duration = get_times_duration(noise_times)
+
+            # Bind "N/A" as default to save room when calling these functions
+            # default is a tuple of "N/A" and "N/A" so that it can be unpacked
+            maxval = functools.partial(util.max_value, default=("N/A", "N/A"))
+            minval = functools.partial(util.min_value, default=("N/A", "N/A"))
+
+            # key (speaker) is first item in tuple, value is second
+            least_segs_spkr, least_segs = minval(spkrs_num_segs)
+            most_segs_spkr, most_segs = maxval(spkrs_num_segs)
+            shortest_spkr, shortest_spkr_duration = minval(spkrs_durations)
+            longest_spkr, longest_spkr_duration = maxval(spkrs_durations)
+            lowest_snr_spkr, lowest_snr = minval(spkrs_snrs)
+            highest_snr_spkr, highest_snr = maxval(spkrs_snrs)
+
+            num_speakers = 0
+            for spkr in spkrs:
+                if len(filtered_spkrs_segs[spkr]) > 0:
+                    num_speakers += 1
+
+            stats = {
+                "sampling_rate": sr,
+                "duration": filter_stop - filter_start,
+                "num_speakers": num_speakers,
+                "num_convo_turns": get_num_convo_turns(
+                    list(filtered_spkrs_times.values())
+                ),
+                "overall_snr_db": overall_snr,
+                "overall_non_vad_snr_db": overall_non_vad_snr,
+                "overall_wout_main_snr_db": overall_wout_main_snr,
+                "overall_non_vad_wout_main_snr_db": overall_non_vad_wout_main_snr,
+                "e_entropy_mean": e_entropy.mean,
+                "e_entropy_median": e_entropy.median,
+                "e_entropy_std": e_entropy.std,
+                "e_entropy_max": e_entropy.max,
+                "e_entropy_min": e_entropy.min,
+                "s_entropy_mean": s_entropy.mean,
+                "s_entropy_median": s_entropy.median,
+                "s_entropy_std": s_entropy.std,
+                "s_entropy_max": s_entropy.max,
+                "s_entropy_min": s_entropy.min,
+                "diar_duration": diar_duration,
+                "non_diar_duration": filter_stop - filter_start - diar_duration,
+                "num_diar_segments": sum(spkrs_num_segs.values()),
+                "least_segments": least_segs,
+                "least_segments_speaker": least_segs_spkr,
+                "most_segments": most_segs,
+                "most_segments_speaker": most_segs_spkr,
+                "shortest_duration": shortest_spkr_duration,
+                "shortest_duration_speaker": shortest_spkr,
+                "longest_duration": longest_spkr_duration,
+                "longest_duration_speaker": longest_spkr,
+                "lowest_snr_db": lowest_snr,
+                "lowest_snr_db_speaker": lowest_snr_spkr,
+                "highest_snr_db": highest_snr,
+                "highest_snr_db_speaker": highest_snr_spkr,
+                "vad_duration": vad_duration,
+                "num_vad_segments": len(filtered_vad_segs),
+                "non_vad_duration": filter_stop - filter_start - vad_duration,
+                "snr_noise_duration": snr_noise_duration,
+            }
+            for spkr, spkr_snr in spkrs_snrs.items():
+                stats[f"{spkr}_snr_db"] = spkr_snr
+            for spkr, spkr_snr in spkrs_non_vad_snrs.items():
+                stats[f"{spkr}_non_vad_snr_db"] = spkr_snr
+            if split_channels and samples.ndim == 2:
+                if channels_path.exists():
+                    channel_names = channels_path.read_text().splitlines()
+                else:
+                    channel_names = [f"channel{i}" for i in range(samples.shape[0])]
+                logger.debug("channel_names={}", channel_names)
+                for i, channel_name in enumerate(channel_names):
+                    c_noise_samps = samples_from_times(noise_times, samples[i], sr)
+                    c_noise_rms = snr.rms(c_noise_samps)
+                    if c_noise_rms == 0:
+                        logger.debug('channel "{}"\'s noise rms is 0', channel_name)
+                        # can't divide by 0, be less picky and take
+                        # non vad not just speech_pause
+                        c_noise_rms = snr.rms(non_vad_samps)
+                    c_spkrs_snrs = {
+                        spkr: snr_from_times(
+                            filtered_spkrs_times[spkr], samples[i], sr, c_noise_rms
+                        )
+                        for spkr in spkrs
+                    }
+                    c_overall_snr = snr_from_times(
+                        filtered_diar_times, samples[i], sr, c_noise_rms
+                    )
+                    if len(spkrs_snrs) > 1:
+                        c_overall_wout_main_snr = snr_from_times(
+                            non_main_diar_times, samples[i], sr, c_noise_rms
+                        )
+                    else:
+                        c_overall_wout_main_snr = "N/A"
+                    stats[f"{channel_name}_overall_wout_main_snr_db"] = (
+                        c_overall_wout_main_snr
+                    )
+                    stats[f"{channel_name}_overall_snr_db"] = c_overall_snr
+
+                    for spkr, spkr_snr in c_spkrs_snrs.items():
+                        stats[f"{channel_name}_{spkr}_snr_db"] = spkr_snr
+            remove_keys = [re.compile(".*_snr")]
+            os.makedirs(os.path.dirname(stats_path), exist_ok=True)
+            if not os.path.exists(stats_path):
+                with open(stats_path, "w"):
+                    pass
+            util.add_to_csv(stats_path, stats, remove_keys=remove_keys)
+
+        calc_stats()
+        if (
+            ancestor.name == "views"
+        ):  # it is a view file, also do stats on the individual runs
+            logger.trace("Calculating SNRs")
+            start_stop_df = pd.read_csv(f"data/views/{path.stem}-times.csv")
+
+            for index, row in start_stop_df.iloc[
+                0:
+            ].iterrows():  # Start from the second row (index 1)
+                file_name = row["File Name"]
+                file_name = file_name.rstrip(".wav")
+                stats_path_run = (
+                    data_dir / "stats" / f"{path.stem}-views" / f"{file_name}-stats.csv"
+                )
+                channels_path = (
+                    data_dir / "channels" / path.stem / f"{file_name}-channels.csv"
+                )
+
+                start_time = int(row["Start Time (seconds)"])
+                end_time = int(row["End Time (seconds)"])
+                calc_stats(start_time, end_time, stats_path_run, False)
 
     # if we converted to wav, remove that wav file
     # (since it was only needed for the pipelines)
