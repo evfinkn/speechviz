@@ -13,10 +13,17 @@ const write = (path, content) => {
 
 // ".DS_STORE" is a hidden file on mac in all folders
 // ".fslckout" is a hidden file in fossil repos
-const excludedFiles = new Set([".DS_Store", ".fslckout"]);
-const readdirAndFilter = async (path) => {
+const defaultExcluded = new Set([".DS_Store", ".fslckout"]);
+const readdirAndFilter = async (
+  path,
+  excluded = [],
+  { excludeDefault = true } = {},
+) => {
   const files = await fs.readdir(path);
-  return files.filter((file) => !excludedFiles.has(file));
+  excluded = excludeDefault
+    ? new Set([...defaultExcluded, ...excluded])
+    : new Set(excluded);
+  return files.filter((file) => !excluded.has(file));
 };
 
 // export write and readdirAndFilter

@@ -1,18 +1,17 @@
 import path from "path";
-import url from "url";
 
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+import { speechvizDir } from "./server/globals.js";
+
 export default {
   mode: "development",
   entry: {
     init: "./src/init.js",
-    index: "/src/index.js",
-    faceCluster: "/src/faceCluster.js",
+    index: "./src/index.js",
   },
   stats: "errors-only",
   output: {
     filename: "[name].js",
-    path: path.resolve(__dirname, "public/js"),
+    path: path.join(speechvizDir, "public/js"),
   },
   experiments: {
     topLevelAwait: true,

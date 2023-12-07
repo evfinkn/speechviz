@@ -1,22 +1,17 @@
 extends layout
+include mixins
 
 block content
-  .navbar
-    if inFaceFolder
-      a(href="/clustered-faces?inFaceFolder=false") Back to face selection
-    else
-      a(href="/") Back to file selection
-  fieldset#user-selection(hidden)
-    legend(style="font-size: 20px") Select a user:
-  if inFaceFolder
+  if images
+    .navbar: a(href=`/clustered-faces/${video}`) Back to face selection
     fieldset#face-display
-      legend(style="font-size: 20px") Clustered Faces for #{ faceFolder }:
-      //https://github.com/pugjs/pug/issues/2648
-      //? and over stops it from breaking when images hasn't been sent yet
-      each image in images ? images : []
-        img(src="" + dir + faceFolder + "/" + image)
+      legend(style="font-size: 20px") Clustered faces for #{ face }:
+      each image in images
+        img(src=`/faceClusters/${video}/${face}/${image}`, alt=image)
   else
-    legend(style="font-size: 20px") Select which cluster you'd like to view:
-    fieldset#file-selection
-
-  script(type="application/javascript", src="js/faceCluster.js")
+    .navbar: a(href="/") Back to file selection
+    legend(style="font-size: 20px")
+    | Select which cluster for #{ video } you'd like to view:
+    fieldset#face-selection
+      each face in faces
+        +urlRadio("face-selection", face, `/clustered-faces/${video}/${face}`)

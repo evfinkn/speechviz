@@ -86,42 +86,6 @@ app.get("/logout", (req, res) => {
   return;
 });
 
-app.get("/clustered-files", async (req, res) => {
-  const faceClusters = await readdirAndFilter("data/faceClusters/");
-  if (faceClusters.includes(req.session.dir)) {
-    const files = {};
-    const commonDir = "data/faceClusters/" + req.session.dir + "/";
-    files.cluster = await readdirAndFilter(commonDir);
-    files.inFaceFolder = req.session.inFaceFolder;
-    files.dir = req.session.dir;
-    if (req.session.inFaceFolder == true) {
-      const faceFolder = req.session.faceFolder;
-      files.faceFolder = faceFolder;
-    } else {
-      // serve an image from each cluster to viz for display
-      const imageFiles = {};
-      for (const folder of files.cluster) {
-        const images = await readdirAndFilter(commonDir + folder);
-        let noImageYet = true;
-        while (noImageYet) {
-          // grab first image in cluster and send to viz
-          const fileName = images[0];
-          if (path.extname(fileName) === ".jpg") {
-            noImageYet = false;
-            imageFiles[folder] = fileName;
-          }
-        }
-      }
-
-      files.images = imageFiles;
-      files.dir = req.session.dir;
-    }
-    res.send(files);
-    return;
-  }
-  res.status(404).send("Not Found");
-});
-
 app.get("/user", (req, res) => {
   res.send(req.session.user);
 });
@@ -213,9 +177,7 @@ app.post("/propagate/:file(*)", async (req, res) => {
   }
 });
 
-const dataSubdirs = (await readdirAndFilter("data")).filter((file) => {
-  return file !== "annotations";
-});
+const dataSubdirs = await readdirAndFilter("data", ["annotations"]);
 // matches any request that start with "/subdir" where subdir is
 // a subdirectory of the data directory
 // escape is there because regex interprets string as is and doesn't escape for you
