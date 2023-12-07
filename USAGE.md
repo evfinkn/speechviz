@@ -224,7 +224,7 @@ where data/stats/folder is the path to the folder containing all the seperate st
 With this script you can combine all the audio files of a folder into one audio file allowing for annotations made from this file to be back propagated to all the files that make it up (in development).
 
 ```bash
-python scripts/concat_audio.py data/audio/folder
+python3 scripts/concat_audio_in_folder.py data/audio/folder
 ```
 
 where data/audio/folder is the path to the folder containing all the seperate audio files. This will create a file called data/views/folder.wav.
