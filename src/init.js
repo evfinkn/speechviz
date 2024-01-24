@@ -728,16 +728,18 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
   // disabling most groups right away so just do it automatically)
   analysis.children.forEach((child) => child.toggle(false));
 
-  Group.byId["Speakers"].children.forEach((speaker) => {
-    dragToLabel(speaker);
-    speaker.children.forEach((segment) => dragToLabel(segment));
-  });
-
-  const vadAndNonVad = [
-    ...Group.byId["VAD"].children,
-    ...Group.byId["Non-VAD"].children,
-  ];
-  vadAndNonVad.forEach((segment) => dragToLabel(segment));
+  if (Group.byId.Speakers) {
+    Group.byId.Speakers.children.forEach((speaker) => {
+      dragToLabel(speaker);
+      speaker.children.forEach((segment) => dragToLabel(segment));
+    });
+  }
+  if (Group.byId.VAD) {
+    Group.byId.VAD.children.forEach((segment) => dragToLabel(segment));
+  }
+  if (Group.byId["Non-VAD"]) {
+    Group.byId["Non-VAD"].children.forEach((segment) => dragToLabel(segment));
+  }
 };
 
 const annotsFile = getUrl("annotations", basename, "-annotations.json", folder);
