@@ -146,6 +146,13 @@ def snr_from_times(signal_times, samples, sr, noise_rms):
     return snr.snr(signal_samps, noise_rms)
 
 
+# Try applying a linear adjustment, to see if that makes it
+# more accurate and better correlations.
+def snr_with_linear_from_times(signal_times, samples, sr, noise_rms):
+    signal_samps = samples_from_times(signal_times, samples, sr)
+    return snr.snr_with_linear_amp(signal_samps, noise_rms)
+
+
 @log.Timer()
 def get_diarization(path: pathlib.Path, auth_token, num_speakers=None):
     # use global diar_pipe so that it doesn't need
@@ -534,13 +541,29 @@ def process_audio(
                 for spkr in spkrs
             }
 
-            # TODO add this to stats
+            # TODO add this to stats if linear is found to be better
+            # spkrs_with_linear_snrs = {
+            #     spkr: snr_with_linear_from_times(
+            #         filtered_spkrs_times[spkr], mono_samples, sr, noise_rms
+            #     )
+            #     for spkr in spkrs
+            # }
+
             spkrs_non_vad_snrs = {
                 spkr: snr_from_times(
                     filtered_spkrs_times[spkr], mono_samples, sr, non_vad_rms
                 )
                 for spkr in spkrs
             }
+
+            # TODO add this to stats if linear and non-vad as noise
+            # is found to be better
+            # spkrs_non_vad_with_linear_snrs = {
+            #     spkr: snr_with_linear_from_times(
+            #         filtered_spkrs_times[spkr], mono_samples, sr, non_vad_rms
+            #     )
+            #     for spkr in spkrs
+            # }
 
             if len(spkrs_snrs) != 0:
                 max_speaker = max(spkrs_snrs, key=spkrs_snrs.get)
@@ -652,10 +675,36 @@ def process_audio(
 
             logger.trace("Calculating stats")
 
+            # uses speech pause as noise
             overall_snr = snr_from_times(
                 filtered_diar_times, mono_samples, sr, noise_rms
             )
+            # uses non vad as noise
             overall_non_vad_snr = snr_from_times(
+                filtered_diar_times, mono_samples, sr, non_vad_rms
+            )
+            # uses speech pause as noise
+            overall_with_linear_snr = snr_with_linear_from_times(
+                filtered_diar_times, mono_samples, sr, noise_rms
+            )
+            # uses non vad as noise
+            overall_non_vad_with_linear_snr = snr_with_linear_from_times(
+                filtered_diar_times, mono_samples, sr, non_vad_rms
+            )
+            # uses vad as overall signal, speech pause as noise
+            overall_vad_snr = snr_from_times(
+                filtered_vad_times, mono_samples, sr, noise_rms
+            )
+            # uses vad as overall signal, non vad as noise
+            overall_non_vad_vad_snr = snr_from_times(
+                filtered_vad_times, mono_samples, sr, non_vad_rms
+            )
+            # uses vad as overall signal, speech pause as noise
+            overall_vad_with_linear_snr = snr_with_linear_from_times(
+                filtered_diar_times, mono_samples, sr, noise_rms
+            )
+            # uses vad as overall signal, non vad as noise
+            overall_non_vad_vad_with_linear_snr = snr_with_linear_from_times(
                 filtered_diar_times, mono_samples, sr, non_vad_rms
             )
 
@@ -666,10 +715,9 @@ def process_audio(
                 overall_non_vad_wout_main_snr = snr_from_times(
                     non_main_diar_times, mono_samples, sr, non_vad_rms
                 )
-
             else:
                 overall_wout_main_snr = "N/A"
-                overall_wout_main_snr = "N/A"
+                overall_non_vad_wout_main_snr = "N/A"
 
             # entropy should only be calculated on the noise
             e_entropy = util.AggregateData(entropy.energy_entropy(non_vad_samps, sr))
@@ -707,6 +755,14 @@ def process_audio(
                 "overall_non_vad_snr_db": overall_non_vad_snr,
                 "overall_wout_main_snr_db": overall_wout_main_snr,
                 "overall_non_vad_wout_main_snr_db": overall_non_vad_wout_main_snr,
+                "overall_with_linear_snr_db": overall_with_linear_snr,
+                "overall_non_vad_with_linear_snr_db": overall_non_vad_with_linear_snr,
+                "overall_vad_snr_db": overall_vad_snr,
+                "overall_non_vad_vad_snr_db": overall_non_vad_vad_snr,
+                "overall_vad_with_linear_snr_db": overall_vad_with_linear_snr,
+                "overall_non_vad_vad_with_linear_snr_db": (
+                    overall_non_vad_vad_with_linear_snr
+                ),
                 "e_entropy_mean": e_entropy.mean,
                 "e_entropy_median": e_entropy.median,
                 "e_entropy_std": e_entropy.std,
