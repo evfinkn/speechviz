@@ -50,6 +50,7 @@ def run_ahrs(timestamp, accelerometer, gyroscope, magnetometer, sample_rate):
         ahrs.update(gyroscope[i], accelerometer[i], magnetometer[i], delta_time[i])
         quaternion[i] = ahrs.quaternion.wxyz
         # euler[i] = ahrs.quaternion.to_euler()
+        acceleration[i] = ahrs.earth_acceleration
 
     return quaternion, acceleration
 
