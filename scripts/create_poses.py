@@ -26,10 +26,12 @@ def run_ahrs(timestamp, accelerometer, gyroscope, magnetometer, sample_rate):
     offset = imufusion.Offset(sample_rate)
     ahrs = imufusion.Ahrs()
 
+    # The gyroscope on the left IMU saturates when it exceeds 5000 deg/s, see
+    # https://facebookresearch.github.io/projectaria_tools/docs/tech_insights/sensor_measurement_model
     ahrs.settings = imufusion.Settings(
         imufusion.CONVENTION_ENU,
         0.5,  # gain
-        2000,  # gyroscope range
+        5000,  # gyroscope range
         10,  # acceleration rejection
         20,  # magnetic rejection
         5 * sample_rate,  # recovery trigger period = 5 seconds
