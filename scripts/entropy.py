@@ -35,29 +35,44 @@ def energy_entropy(
     step_samples = round(step * sr)
 
     num_samples = len(y)
-    num_of_frames = int(np.floor((num_samples - window_samples) / step_samples)) + 1
+    if num_samples >= window_samples:
+        num_of_frames = int(np.floor((num_samples - window_samples) / step_samples)) + 1
+        if num_of_frames > 0:  # Ensure num_of_frames is non-negative
+            entropy = np.zeros(num_of_frames)
+            index = 0
 
-    index = 0
-    entropy = np.zeros(num_of_frames)
-    for frame_num in range(num_of_frames):
-        frame = y[index : index + window_samples]
-        pwr = np.sum(np.square(frame))  # calculate total power
-        frame_length = len(frame)
+            entropy = np.zeros(num_of_frames)
+            for frame_num in range(num_of_frames):
+                frame = y[index : index + window_samples]
+                pwr = np.sum(np.square(frame))  # calculate total power
+                frame_length = len(frame)
 
-        sub_frame_length = int(np.floor(frame_length / num_sub_frames))
-        if frame_length != sub_frame_length * num_sub_frames:
-            frame = frame[: sub_frame_length * num_sub_frames]
-        # order="F" to make reshape use column major layout because this function is
-        # translated from MATLAB (which is column major) so in order to match the
-        # calculations from the MATLAB code, we need to use the same layout
-        sub_frames = np.reshape(frame, (sub_frame_length, num_sub_frames), order="F")
+                sub_frame_length = int(np.floor(frame_length / num_sub_frames))
+                if frame_length != sub_frame_length * num_sub_frames:
+                    frame = frame[: sub_frame_length * num_sub_frames]
+                # order="F" to make reshape use column major layout
+                # because this function is translated from MATLAB
+                # (which is column major) so in order to match the
+                # calculations from the MATLAB code, we need to use the same layout
+                sub_frames = np.reshape(
+                    frame, (sub_frame_length, num_sub_frames), order="F"
+                )
 
-        # compute normalized sub-frame energies
-        s = np.sum(np.square(sub_frames), axis=0) / (pwr + eps)
-        # compute entropy of the normalized sub-frame energies
-        entropy[frame_num] = -np.sum(s * np.log2(s + eps))
+                # compute normalized sub-frame energies
+                s = np.sum(np.square(sub_frames), axis=0) / (pwr + eps)
+                # compute entropy of the normalized sub-frame energies
+                entropy[frame_num] = -np.sum(s * np.log2(s + eps))
 
-        index += step_samples  # move forward
+                index += step_samples  # move forward
+        else:
+            print(
+                "Error: window_samples or step_samples are too large for the length of"
+                " the signal."
+            )
+            entropy = np.nan
+    else:
+        print("Error: window_samples is larger than the length of the signal.")
+        entropy = np.nan
 
     return entropy
 
@@ -82,24 +97,29 @@ def spectral_entropy(y, sr, window=0.03, overlap=0.02, freq_range=(80, 8000)):
     overlap = round(overlap * sr)
 
     y = librosa.to_mono(y)
-    f, t, Sxx = signal.spectrogram(y, sr, window=window, noverlap=overlap)
+    num_samples = len(y)
+    if num_samples >= len(window):
+        f, t, Sxx = signal.spectrogram(y, sr, window=window, noverlap=overlap)
 
-    # frequency bin indices corresponding to the specified frequency range
-    freq_bins = np.where((f >= freq_range[0]) & (f <= freq_range[1]))[0]
-    b1 = freq_bins[0]
-    b2 = freq_bins[-1]
-    Sxx_range = Sxx[freq_bins, :]  # spectral values within freq_range for each time
-    sum_Sxx_range = np.sum(Sxx_range, axis=0)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        # This can give "RuntimeWarning: invalid value encountered in divide" when
-        # sum_Sxx_range contains 0s. We can ignore this, since dividing by 0 is
-        # nan and we use nansum later to ignore nan
-        norm_Sxx_range = Sxx_range / sum_Sxx_range  # normalized spectral values
+        # frequency bin indices corresponding to the specified frequency range
+        freq_bins = np.where((f >= freq_range[0]) & (f <= freq_range[1]))[0]
+        b1 = freq_bins[0]
+        b2 = freq_bins[-1]
+        Sxx_range = Sxx[freq_bins, :]  # spectral values within freq_range for each time
+        sum_Sxx_range = np.sum(Sxx_range, axis=0)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            # This can give "RuntimeWarning: invalid value encountered in divide" when
+            # sum_Sxx_range contains 0s. We can ignore this, since dividing by 0 is
+            # nan and we use nansum later to ignore nan
+            norm_Sxx_range = Sxx_range / sum_Sxx_range  # normalized spectral values
 
-    # calculate the spectral entropy for each time point
-    entropy = np.zeros_like(t)
-    for i in range(len(t)):
-        sk = norm_Sxx_range[:, i]
-        entropy[i] = -np.nansum(sk * np.log2(sk)) / np.log2(b2 - b1)
+        # calculate the spectral entropy for each time point
+        entropy = np.zeros_like(t)
+        for i in range(len(t)):
+            sk = norm_Sxx_range[:, i]
+            entropy[i] = -np.nansum(sk * np.log2(sk)) / np.log2(b2 - b1)
+    else:
+        print("Error: window_samples is larger than the length of the signal.")
+        entropy = np.nan
 
     return entropy
