@@ -17,7 +17,7 @@ def snr(signal: Union[np.ndarray, float], noise: Union[np.ndarray, float]) -> fl
     signal_rms = rms(signal) if not isinstance(signal, float) else signal
     noise_rms = rms(noise) if not isinstance(noise, float) else noise
     if noise_rms == 0:
-        return float("inf")
+        return ""
     snr = ((signal_rms - noise_rms) / noise_rms) ** 2
     snr_db = 10 * (math.log(snr, 10))
     return snr_db

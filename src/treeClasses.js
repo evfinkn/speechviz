@@ -2891,7 +2891,7 @@ var PeaksGroup = class PeaksGroup extends Group {
 
   /** Updates the title (tooltip) of `span`. */
   updateSpanTitle() {
-    if (this.snr && this.duration != 0) {
+    if (this.snr && this.snr != "NAN" && this.duration != 0) {
       this.span.title = `SNR: ${this.snr.toFixed(
         2,
       )}\nDuration: ${this.duration.toFixed(2)}`;

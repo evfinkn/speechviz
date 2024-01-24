@@ -22,6 +22,13 @@ def run_from_pipeline(args):
     main(**args)
 
 
+def is_valid_image_file(file_path):
+    """
+    Check if a file is a valid image file based on its extension.
+    """
+    return file_path.suffix.lower() in image_types
+
+
 def main(
     dataset: pathlib.Path,
     encodings: str,
@@ -47,6 +54,10 @@ def main(
     counter = 0
     # loop over the image paths
     for i, imagePath in enumerate(imagePaths):
+        # Check if the file is a valid image file
+        if not is_valid_image_file(pathlib.Path(imagePath)):
+            print(f"Skipping invalid image file: {imagePath}")
+            continue
         # load the input image and convert it from RGB (OpenCV ordering)
         # to dlib ordering (RGB)
         if (i + 1) % 100 == 0:
