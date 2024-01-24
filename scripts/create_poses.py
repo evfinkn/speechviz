@@ -1,17 +1,20 @@
 import argparse
 import csv
-import os
-import pathlib
 from dataclasses import dataclass
+from pathlib import Path
 
 import imufusion
 import numpy as np
-import pyark.datatools as datatools
+from projectaria_tools.core import data_provider
+from projectaria_tools.core.data_provider import VrsDataProvider
+from projectaria_tools.core.stream_id import StreamId
 from scipy import interpolate
 
 import log
 import util
+from constants import DATA_DIR
 from log import logger
+from util_aria import first_time_ns, get_stream_data
 
 RADIAN_TO_DEGREE_FACTOR = 180 / np.pi
 DEGREE_TO_RADIAN_FACTOR = np.pi / 180
@@ -24,11 +27,13 @@ def run_ahrs(timestamp, accelerometer, gyroscope, magnetometer, sample_rate):
     ahrs = imufusion.Ahrs()
 
     ahrs.settings = imufusion.Settings(
+        imufusion.CONVENTION_ENU,
         0.5,  # gain
+        2000,  # gyroscope range
         10,  # acceleration rejection
         20,  # magnetic rejection
-        5 * sample_rate,
-    )  # rejection timeout = 5 seconds
+        5 * sample_rate,  # recovery trigger period = 5 seconds
+    )
 
     # Process sensor data
     delta_time = np.diff(timestamp, prepend=timestamp[0])
@@ -38,11 +43,12 @@ def run_ahrs(timestamp, accelerometer, gyroscope, magnetometer, sample_rate):
 
     for i in range(len(timestamp)):
         gyroscope[i] = offset.update(gyroscope[i])
+        # no need to check if magnetometer is 0 and call ahrs.update_no_magnetometer
+        # if it is because update_no_magnetometer just calls update with the zero
+        # vector anyway
         ahrs.update(gyroscope[i], accelerometer[i], magnetometer[i], delta_time[i])
-        quaternion[i] = ahrs.quaternion.array
+        quaternion[i] = ahrs.quaternion.wxyz
         # euler[i] = ahrs.quaternion.to_euler()
-        # convert from g back to m/s^2
-        acceleration[i] = EARTH_GRAVITATIONAL_ACCELERATION * ahrs.earth_acceleration
 
     return quaternion, acceleration
 
@@ -127,66 +133,102 @@ def calculate_position(timestamp, acceleration, sample_rate):
 
 @log.Timer()
 def create_poses(
-    imu_path: pathlib.Path,
-    mag_path: pathlib.Path,
+    vrs_path: Path,
     reprocess: bool = False,
     headers=True,
     positions=False,
 ):
     log.log_vars(
         log_separate_=True,
-        imu_path=imu_path,
-        mag_path=mag_path,
+        vrs_path=vrs_path,
         reprocess=reprocess,
         headers=headers,
         positions=positions,
     )
 
-    parent = imu_path.parent
+    try:
+        parent_dir = vrs_path.parent.relative_to(DATA_DIR / "vrs")
+    except ValueError:
+        raise ValueError("Input file must be in a directory in data/vrs")
+    pose_path = DATA_DIR / "graphical" / parent_dir / vrs_path.stem / "pose.csv"
 
-    pose_path = parent / "pose.csv"
-    log.log_vars(log_separate_=True, parent=parent, pose_path=pose_path)
+    log.log_vars(pose_path=pose_path)
     if pose_path.exists() and not reprocess:
         logger.info(
             "Poses for {} have already been created. To recreate them, pass -r",
-            parent,
+            vrs_path.name,
         )
         return
 
+    pose_path.parent.mkdir(parents=True, exist_ok=True)
+
     logger.trace("Loading data")
-    with open(parent / "calib.txt", encoding="utf-8") as file:
-        calibration = file.read()
-    device_model = datatools.sensors.DeviceModel.fromJson(calibration)
-    accelerometer_calibration = device_model.getImuCalib("imu-left").accel
-    gyroscope_calibration = device_model.getImuCalib("imu-left").gyro
 
-    imu_data = np.genfromtxt(imu_path, delimiter=",", skip_header=1)
-    timestamp = imu_data[:, 0]
-    accelerometer = imu_data[:, 1:4]
-    gyroscope = imu_data[:, 4:]
+    dp: VrsDataProvider = data_provider.create_vrs_data_provider(str(vrs_path))
+    imu_label = dp.get_label_from_stream_id(StreamId("1202-2"))
+    mag_label = dp.get_label_from_stream_id(StreamId("1203-1"))
+
+    calib = dp.get_device_calibration()
+    imu_calib = calib.get_imu_calib(imu_label)
+    mag_calib = calib.get_magnetometer_calib(mag_label)
+    transform_cpf_imu = calib.get_transform_cpf_sensor(imu_label)
+    # True because otherwise throws "[DeviceCalibration][ERROR]: Sensor mag0 is not
+    # calibrated by default. Please use ::getT_Device_SensorByLabel(label, true) to use
+    # its CAD extrinsics value."
+    transform_cpf_mag = calib.get_transform_cpf_sensor(mag_label, True)
+
+    # 1202-2 = imu-left and 1203-1 = magnetometer
+    data_arrays = get_stream_data(dp, (StreamId("1202-2"), StreamId("1203-1")))
+
+    imu_data = data_arrays["1202-2"]
+    timestamp = imu_data["capture_timestamp_ns"]
+    accelerometer = imu_data["accel_msec2"]
+    gyroscope = imu_data["gyro_radsec"]
     for i in range(len(timestamp)):
-        accelerometer[i] = accelerometer_calibration.rectify(accelerometer[i])  #
-        accelerometer[
-            i
-        ] /= EARTH_GRAVITATIONAL_ACCELERATION  # imufusion requires acceleration in g
-        gyroscope[i] = gyroscope_calibration.rectify(gyroscope[i])
-        gyroscope[i] *= RADIAN_TO_DEGREE_FACTOR  # imufusion requires degrees
+        accelerometer[i] = imu_calib.raw_to_rectified_accel(accelerometer[i])
+        gyroscope[i] = imu_calib.raw_to_rectified_gyro(gyroscope[i])
 
-    mag_data = np.genfromtxt(mag_path, delimiter=",", skip_header=1)
+    # transform_cpf_imu @ accelerometer[i] has shape (3, 1), but we need
+    # (3,) so use np.squeeze to remove the extra dimension
+    accelerometer = (transform_cpf_imu @ accelerometer.T).T
+    gyroscope = (transform_cpf_imu @ gyroscope.T).T
+    # imufusion requires acceleration in g. We don't need negative because
+    # imufusion's default convention is that positive z is up.
+    accelerometer /= EARTH_GRAVITATIONAL_ACCELERATION
+    gyroscope *= RADIAN_TO_DEGREE_FACTOR  # imufusion requires degrees
+
+    mag_data = data_arrays["1203-1"]
+    mag_timestamp = mag_data["capture_timestamp_ns"]
+    mag_data = mag_data["mag_tesla"]
+    mag_data[:, 0]
     # ahrs.update ignores the magnetometer measurement if the input is the zero
     # vector, so filling zeros in between the actual measurements and passing those
     # into ahrs.update doesn't mess with the algorithm / results.
     # See https://github.com/xioTechnologies/Fusion/blob/main/Fusion/FusionAhrs.c#L208
     magnetometer = np.zeros((len(timestamp), 3))
-    for mag_index in range(len(mag_data)):
+    for i in range(len(mag_data)):
+        mag_data[i] = mag_calib.raw_to_rectified(mag_data[i])
         # transform the magnetometer data from its coordinate system
-        # to the left imu's coordinate system
-        transformed = device_model.transform(
-            mag_data[mag_index, 1:], "mag0", "imu-left"
-        )
+        # to the central pupil frame
+        mag_data[i] = np.squeeze(transform_cpf_mag @ mag_data[i])
         # get the index of the imu timestamp closest to the mag timestamp
-        nearest_index = util.get_nearest_index(timestamp, mag_data[mag_index, 0])
-        magnetometer[nearest_index] = transformed
+        nearest_index = util.get_nearest_index(timestamp, mag_timestamp[i])
+        magnetometer[nearest_index] = mag_data[i]
+
+    # Currently, the data has +X is left, +Y is up, and +Z points forward, from the
+    # person's perspective. imufusion has different conventions. We'll use the
+    # ENU convention (i.e., +X is forward, +Y is left, and +Z is up) because it's
+    # a right-handed coordinate system like the current one. So, we need to swap the
+    # axes around to get the correct orientation.
+    # Note that we use [0, 1, 2] instead of : because otherwise there is no temporary
+    # array created, so data can be overwritten before it is moved.
+    accelerometer[:, [0, 1, 2]] = accelerometer[:, [2, 0, 1]]
+    gyroscope[:, [0, 1, 2]] = gyroscope[:, [2, 0, 1]]
+    magnetometer[:, [0, 1, 2]] = magnetometer[:, [2, 0, 1]]
+
+    # convert from ns to s and make relative to the first timestamp of the vrs file
+    first_timestamp = first_time_ns(dp)
+    timestamp = (timestamp - first_timestamp) / 1e9
 
     sample_rates = 1 / np.diff(timestamp)
     sample_rate = round(np.mean(sample_rates))
@@ -195,6 +237,12 @@ def create_poses(
         quaternion, acceleration = run_ahrs(
             timestamp, accelerometer, gyroscope, magnetometer, sample_rate
         )
+    # convert back to m/s/s
+    acceleration *= EARTH_GRAVITATIONAL_ACCELERATION
+    # reconvert to the original coordinate system
+    acceleration[:, [2, 0, 1]] = acceleration[:, [0, 1, 2]]
+    quaternion[:, [3, 1, 2]] = quaternion[:, [1, 2, 3]]
+
     if positions:
         logger.trace("Calculating position")
         with log.Timer("Calculating positions took {}"):
@@ -219,55 +267,38 @@ def create_poses(
         writer.writerows(data)
 
 
-def route_dir(dir, verbose=0, **kwargs):
-    imu_path = dir / "imu-left.csv"
-    mag_path = dir / "magnetometer.csv"
-    if imu_path.exists() and mag_path.exists():
-        create_poses(imu_path, mag_path, verbose=verbose, **kwargs)
+def route_dir(dir, scan_dir=True, **kwargs):
+    logger.debug("Running create_poses on each file in {}", dir)
+    for path in dir.iterdir():
+        route_file(path, scan_dir=scan_dir, **kwargs)
 
 
-def route_file(*paths: pathlib.Path, quiet: bool = False, verbose: int = 0, **kwargs):
+def route_file(*paths: Path, scan_dir: bool = True, **kwargs):
     """Handles the different types of files that can be input into this script."""
     if len(paths) == 0:
-        # if no file or directory given, use directory script was called from
-        paths = [os.getcwd()]
-    # if multiple files (or directories) given, run function on each one
-    elif len(paths) > 1:
-        if len(paths) == 2:
-            path1, path2 = paths
-            if path1.parent != path2.parent:
-                logger.error("{} and {} need to be in the same directory", path1, path2)
-            if path1.name == "imu-left.csv" and path2.name == "magnetometer.csv":
-                create_poses(path1, path2, quiet=quiet, verbose=verbose, **kwargs)
-            elif path2.name == "imu-left.csv" and path1.name == "magnetometer.csv":
-                create_poses(path2, path1, quiet=quiet, verbose=verbose, **kwargs)
-        elif paths[0].is_dir():  # assume paths is all paths to directories
-            for path in paths:
-                route_file(path, quiet=quiet, verbose=verbose, **kwargs)
-        else:  # paths is a list of imu_left and magnetometer paths
-            for path1, path2 in util.grouped(paths, 2):
-                route_file(path1, path2, quiet=quiet, verbose=verbose, **kwargs)
+        paths = [
+            Path.cwd()
+        ]  # if no file or directory given, use directory script was called from
+    elif (
+        len(paths) > 1
+    ):  # if multiple files (or directories) given, run function on each one
+        for path in paths:
+            route_file(path, scan_dir=scan_dir, **kwargs)
         # stop function because all of the processing is
         # done in the function calls in the for loop
         return
 
-    # paths[0] is--at this point--the only argument in paths
-    path = paths[0].absolute()
+    path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
-    if path.is_dir():
-        if path.name == "data":
-            path = path / "graphical"
-        if path.name == "graphical":
-            for dir in path.iterdir():
-                route_dir(dir, quiet=quiet, verbose=verbose, **kwargs)
-        elif path.parent.name == "graphical":
-            route_dir(path, quiet=quiet, verbose=verbose, **kwargs)
+    if path.suffix.casefold() == ".vrs":
+        create_poses(path, **kwargs)
+
+    # route every file in file.path if it is a dir and scan_dir is True
+    elif path.is_dir() and scan_dir:
+        if path.name == "data":  # the data dir was passed so run on data/vrs
+            route_dir(path / "vrs", scan_dir=scan_dir, **kwargs)
         else:
-            logger.error(
-                "{} is an invalid directory. Must be either the data directory, the"
-                " graphical directory, or a subdirectory of the graphical directory",
-                path,
-            )
+            route_dir(path, scan_dir=False, **kwargs)
 
 
 def run_from_pipeline(args):
@@ -283,12 +314,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "path",
         nargs="*",
-        type=pathlib.Path,
+        type=Path,
         help=(
-            "The path to the directory to process. If the directory"
-            "contains an imu-left.csv file and a magnetometer.csv file,"
-            "Otherwise, it applies that process to the subdirectories"
-            "of path"
+            "The path to the file to process. If a VRS file, creates poses from the VRS"
+            " file. If a directory, creates poses from every VRS file in the directory."
         ),
     )
     parser.add_argument(
