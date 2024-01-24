@@ -17,3 +17,4 @@ orjson
 pyyaml
 loguru
 pydub
+projectaria-tools[all]

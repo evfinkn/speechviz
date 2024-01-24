@@ -258,13 +258,6 @@ var GraphIMU = class GraphIMU {
     // t qw qx qy qz
     // where (x, y, z) is the position and (qx, qy, qz, qw)
     // is the quaternion of the orientation
-    // use qy, qz, qx instead of qx, qy, qz because otherwise glasses' axes
-    // are wrong I don't actually know the reason, but I think it might have
-    // something to do with the vector of the imu-left sensor pointing unexpected
-    // directions (see
-    // https://facebookresearch.github.io/Aria_data_tools/docs/sensors-measurements/#coordinate-systems)
-    // and the glasses' model's local axes not lining up with that vector
-    // y and z for same reasons
 
     if (!Array.isArray(data?.[0]?.[0])) {
       data = [data];
@@ -293,7 +286,7 @@ var GraphIMU = class GraphIMU {
         imu.forEach((row) => {
           imu_timestamps.push(row[0]);
           const [qw, qx, qy, qz] = row.slice(1);
-          imu_quaternions.push(new THREE.Quaternion(qy, qz, qx, qw));
+          imu_quaternions.push(new THREE.Quaternion(qx, qy, qz, qw));
         });
       } else if (imu?.[0]?.length == 8) {
         imu.forEach((row) => {
@@ -301,7 +294,7 @@ var GraphIMU = class GraphIMU {
           const [, y, z] = row.slice(1, 4);
           imu_positions.push(new THREE.Vector3(y, 1, z));
           const [qw, qx, qy, qz] = row.slice(4);
-          imu_quaternions.push(new THREE.Quaternion(qy, qz, qx, qw));
+          imu_quaternions.push(new THREE.Quaternion(qx, qy, qz, qw));
         });
       } else {
         throw new Error("data must have either 5 or 8 columns.");
@@ -421,7 +414,6 @@ var GraphIMU = class GraphIMU {
       }
       // update glasses' orientation
       glasses[i].quaternion.slerp(this.quaternions[i][index], factor); // rotate
-      glasses[i].rotateZ(Math.PI / 2); // rotate z 90 degrees for same reason as above
 
       if (Array.isArray(this.positions[i])) {
         glasses[i].position.lerp(this.positions[i][index], factor); // move

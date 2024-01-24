@@ -8,9 +8,12 @@ import fossil from "./fossil.js";
  * Used for adding and committing files that have been (re)processed externally (e.g.,
  * by the pipeline) to ensure the changes are tracked in the fossil repository.
  * @param {string} file - The file to add or commit (if necessary).
+ * @param {string=} message - The commit message to use if a commit is made. Defaults to
+ *   "Reprocess <filename>" if the file was already in the repository or "Process
+ *   <filename>" if the file was added to the repository.
  * @returns {Promise<?string>} - The commit hash if a commit was made, null otherwise.
  */
-const addAndCommit = async (file) => {
+const addAndCommit = async (file, message) => {
   const inRepo = await fossil.isInRepo(file);
   // !inRepo because file will need to be commit after adding (hasChanges would detect
   // the ADDED change, but since we already know it's not in the repo, we can avoid
@@ -25,9 +28,8 @@ const addAndCommit = async (file) => {
     const mtimeMs = (await fs.promises.stat(file)).mtimeMs;
     // use toISOString because fossil expects YYYY-MM-DDTHH:mm:ss.sssZ (ISO 8601)
     const date = new Date(mtimeMs).toISOString();
-    let message = `Reprocess ${path.basename(file)}`;
-    if (!inRepo) {
-      message = `Process ${path.basename(file)}`;
+    if (message === undefined) {
+      message = `${inRepo ? "Reprocess" : "Process"} ${path.basename(file)}`;
     }
     // just commit to trunk because it's the main, default branch
     return await fossil.commit(file, { message, branch: "trunk", date });

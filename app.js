@@ -11,7 +11,7 @@ import logger from "morgan";
 import fossil from "./server/fossil.js";
 import fossilUtil from "./server/fossilUtil.js";
 import { dataDir, speechvizDir } from "./server/globals.js";
-import { readdirAndFilter } from "./server/io.js";
+import { readdirAndFilter, write } from "./server/io.js";
 import propagate from "./server/propagate.js";
 
 import changePassword from "./routes/change-password-route.js";
@@ -90,6 +90,12 @@ app.get("/user", (req, res) => {
   res.send(req.session.user);
 });
 
+const DEFAULT_ANNOTATIONS = {
+  formatVersion: 3,
+  annotations: [],
+  notes: "",
+};
+
 // GET /versions/:file(*)?limit=n&branch=branchName
 // Returns the version history of the specified file, optionally limited to the
 // specified number of versions and/or the specified branch.
@@ -102,13 +108,24 @@ app.get("/versions/:file(*)", async (req, res) => {
   // req.params.file is the matched value of :file(*)
   const file = path.join(dataDir, "annotations", req.params.file);
   try {
-    // ensure the latest version of the file is in the repo
     await fossilUtil.addAndCommit(file);
-    const versionEntries = await fossil.versions(file, { limit, branch });
-    res.json(versionEntries);
   } catch (err) {
-    res.status(500).send(err.toString());
+    // ENOENT means the file doesn't exist
+    if (err.code !== "ENOENT") {
+      res.status(500).send(err.toString());
+      return;
+    }
+    try {
+      // Create the file with the default format
+      await write(file, JSON.stringify(DEFAULT_ANNOTATIONS, null, "  "));
+      await fossilUtil.addAndCommit(file, "Create empty annotations file");
+    } catch (err) {
+      res.status(500).send(err.toString());
+      return;
+    }
   }
+  const versionEntries = await fossil.versions(file, { limit, branch });
+  res.json(versionEntries);
 });
 
 // GET /annotations/:file(*)?commit=commitHash&branch=branchName
