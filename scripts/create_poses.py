@@ -17,7 +17,6 @@ from log import logger
 from util_aria import first_time_ns, get_stream_data
 
 RADIAN_TO_DEGREE_FACTOR = 180 / np.pi
-DEGREE_TO_RADIAN_FACTOR = np.pi / 180
 EARTH_GRAVITATIONAL_ACCELERATION = 9.8067
 
 
