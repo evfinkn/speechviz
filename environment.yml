@@ -28,3 +28,4 @@ dependencies:
     - orjson
     - pyyaml
     - loguru
+    - projectaria-tools[all]
