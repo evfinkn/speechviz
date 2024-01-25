@@ -46,7 +46,8 @@ STREAM_NAMES = {  # used to get the file name from a stream id
     "1202-2": "imu-left",
     "1203-1": "magnetometer",
 }
-VIDEO_STREAMS = ("1201-1", "1201-2", "211-1", "214-1")
+# VIDEO_STREAMS = ("1201-1", "1201-2", "211-1", "214-1")
+VIDEO_STREAMS = ("1201-1", "1201-2", "214-1")
 STREAM_UNITS = {  # dicts containing the units of the sensor's measurements
     "247-1": {"temperature": "deg. C", "pressure": "Pa"},
     "281-1": {"latitude": "dec. deg.", "longitude": "dec. deg.", "altitude": "m"},
@@ -319,7 +320,7 @@ def run_from_pipeline(args):
 expected_images = {
     Path(path)
     for path in (
-        "camera-eye-tracking",
+        # "camera-eye-tracking",
         "camera-slam-left",
         "camera-slam-right",
     )
@@ -433,7 +434,7 @@ def extract_vrs_data(
     # didn't want to name them just the regular --metadata because then the actual data
     # would have to be named stuff like metadata_obj, so renaming these here is my
     # compromise
-    save_calib = calib
+    # save_calib = calib
     keep_images = images
     keep_metadata = metadata
 
@@ -449,14 +450,29 @@ def extract_vrs_data(
     output_dir = DATA_DIR / "graphical" / parent_dir / path.stem
     log.log_vars(output_dir=output_dir)
 
-    reprocess_metadata = metadata_needs_reprocessed(output_dir, reprocess, save_calib)
+    # reprocess_metadata = metadata_needs_reprocessed(output_dir, reprocess, save_calib)
+    reprocess_metadata = False
     needs_extracted, needs_videos = vrs_needs_reprocessed(
         output_dir, reprocess, move, keep_images, keep_metadata, reprocess_metadata
     )
 
     if needs_extracted:
         output_dir.mkdir(parents=True, exist_ok=True)
-        log.run_and_log_subprocess(["vrs", "extract-all", path, "--to", output_dir])
+        # log.run_and_log_subprocess(["vrs", "extract-all", path, "--to", output_dir])
+        log.run_and_log_subprocess(
+            ["vrs", "extract-audio", path, "--to", output_dir / "231-1"]
+        )
+        # # Don't export eye-tracking images
+        # log.run_and_log_subprocess(
+        #     ["vrs", "extract-images", path, "--to", output_dir, "-", "211"]
+        # )
+        # ^ Actually can't do that because then it's all extracted into output_dir
+        # instead of each stream in its own directory
+        for stream in VIDEO_STREAMS:
+            output_to = output_dir / stream
+            log.run_and_log_subprocess(
+                ["vrs", "extract-images", path, "--to", output_to, "+", stream]
+            )
         # move the audio file out of its directory and remove the directory
         # there should only be one audio file, so [0] is getting the only one
         audio_dir_files = list((output_dir / "231-1").glob("*.wav"))
@@ -511,19 +527,19 @@ def extract_vrs_data(
 
     timer.stop()
 
-    if reprocess_metadata:
-        extract_sensor_data(
-            output_dir / "metadata.jsons",
-            reprocess,
-            calib=save_calib,
-            metadata=keep_metadata,
-            **kwargs,
-        )
-    else:
-        logger.info(
-            "{} has already been processed. To reprocess it, pass -r",
-            output_dir / "metadata.jsons",
-        )
+    # if reprocess_metadata:
+    #     extract_sensor_data(
+    #         output_dir / "metadata.jsons",
+    #         reprocess,
+    #         calib=save_calib,
+    #         metadata=keep_metadata,
+    #         **kwargs,
+    #     )
+    # else:
+    #     logger.info(
+    #         "{} has already been processed. To reprocess it, pass -r",
+    #         output_dir / "metadata.jsons",
+    #     )
 
 
 @log.Timer()
