@@ -273,7 +273,7 @@ def load_json_with_nan(s: str):
 
 
 def route_dir(dir, scan_dir=True, **kwargs):
-    logger.debug("Running process_audio on each file in {}", dir)
+    logger.debug("Running extract_vrs_data on each file in {}", dir)
     for path in dir.iterdir():
         route_file(path, scan_dir=scan_dir, **kwargs)
 
