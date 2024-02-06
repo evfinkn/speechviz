@@ -525,11 +525,13 @@ def extract_vrs_data(
         old_audio_path = output_dir / "microphone1.wav"
         if old_audio_path.exists():
             new_audio_path = DATA_DIR / "audio" / parent_dir / f"{path.stem}.wav"
+            new_audio_path.parent.mkdir(parents=True, exist_ok=True)
             old_audio_path.replace(new_audio_path)
 
         old_video_path = output_dir / "camera-slam-left.mp4"
         if old_video_path.exists():
             new_video_path = DATA_DIR / "video" / parent_dir / f"{path.stem}.mp4"
+            new_video_path.parent.mkdir(parents=True, exist_ok=True)
             old_video_path.replace(new_video_path)
 
         old_images_path = output_dir / "camera-rgb"
@@ -537,6 +539,7 @@ def extract_vrs_data(
             new_images_path = (
                 DATA_DIR / "imagesForEncoding" / parent_dir / f"{path.stem}"
             )
+            new_images_path.parent.mkdir(parents=True, exist_ok=True)
             old_images_path.replace(new_images_path)
 
     timer.stop()
