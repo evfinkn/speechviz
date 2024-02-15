@@ -1,7 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
 
-import Database from "better-sqlite3";
 import cookieParser from "cookie-parser";
 import express from "express";
 // use sessions
@@ -22,8 +21,6 @@ import settings from "./routes/settings-route.js";
 import viz from "./routes/viz-route.js";
 
 const app = express();
-
-const db = new Database("speechviz.sqlite3");
 
 app.use(
   session({
@@ -218,158 +215,6 @@ app.get(dataSubdirRegex, async (req, res) => {
   }
 });
 
-const selectFileId = db.prepare("SELECT id FROM audiofiles WHERE audiofile=?");
-const insertFile = db.prepare("INSERT INTO audiofiles(audiofile) VALUES(?)");
-
-const selectUserId = db.prepare("SELECT id FROM users WHERE user=?");
-
-const deleteSegments = db.prepare(
-  "DELETE FROM annotations WHERE fileId=? AND userId=?",
-);
-const deleteNotes = db.prepare("DELETE FROM notes WHERE fileId=? AND userId=?");
-const deleteFaces = db.prepare("DELETE FROM faces WHERE fileId=? AND userId=?");
-
-const selectLabelId = db.prepare("SELECT id FROM labels WHERE label=?");
-const insertLabel = db.prepare("INSERT INTO labels(label) VALUES(?)");
-
-const selectPathId = db.prepare("SELECT id FROM paths WHERE path=?");
-const insertPath = db.prepare("INSERT INTO paths(path) VALUES(?)");
-
-const insertSegment = db.prepare(
-  "INSERT INTO " + // eslint-disable-next-line max-len
-    "annotations(fileId,userId,startTime,endTime,editable,labelId,id,pathId,treeText,removable) " +
-    "VALUES(?,?,?,?,?,?,?,?,?,?)",
-);
-const insertNotes = db.prepare(
-  "INSERT INTO notes(fileId,userId,notes) VALUES(?,?,?)",
-);
-const insertFace = db.prepare(
-  "INSERT INTO faces(fileId,userId,speaker,faceNum) VALUES(?,?,?,?)",
-);
-
-const save = db.transaction((filename, user, segments, notes, faces) => {
-  let fileId = selectFileId.get([filename])?.id;
-  if (!fileId) {
-    fileId = insertFile.run([filename]).lastInsertRowid;
-  }
-  const userId = selectUserId.get([user]).id;
-
-  deleteSegments.run([fileId, userId]);
-  deleteNotes.run([fileId, userId]);
-  deleteFaces.run([fileId, userId]);
-
-  for (const segment of segments) {
-    const label = segment.labelText;
-    let labelId = selectLabelId.get([label])?.id;
-    if (!labelId) {
-      labelId = insertLabel.run([label]).lastInsertRowid;
-    }
-
-    const path = segment.path.join("|");
-    let pathId = selectPathId.get([path])?.id;
-    if (!pathId) {
-      pathId = insertPath.run([path]).lastInsertRowid;
-    }
-
-    segment.editable = +segment.editable;
-    segment.removable = +segment.removable;
-
-    insertSegment.run([
-      fileId,
-      userId,
-      segment.startTime,
-      segment.endTime,
-      segment.editable,
-      labelId,
-      segment.id,
-      pathId,
-      segment.treeText,
-      segment.removable,
-    ]);
-  }
-
-  insertNotes.run([fileId, userId, notes]);
-  for (let i = 0; i < faces.length; i = i + 2) {
-    insertFace.run([fileId, userId, faces[i], faces[i + 1]]);
-  }
-});
-app.use("/save/", (req, res) => {
-  save(
-    req.body["filename"],
-    req.body["user"],
-    req.body["segments"],
-    req.body["notes"],
-    req.body["faces"],
-  );
-  res.end();
-});
-
-const selectSegments = db.prepare(
-  "SELECT " +
-    "startTime,endTime,editable,labelId,id,pathId,treeText,removable " +
-    "FROM annotations WHERE fileId=? AND userId=?",
-);
-
-const selectLabel = db.prepare("SELECT label FROM labels WHERE id=?");
-const selectPath = db.prepare("SELECT path FROM paths WHERE id=?");
-
-const selectNotes = db.prepare(
-  "SELECT notes FROM notes WHERE fileId=? AND userId=?",
-);
-
-const selectFaces = db.prepare(
-  "SELECT speaker,faceNum FROM faces WHERE fileId=? AND userId=?",
-);
-
-const load = db.transaction((filename, user) => {
-  let fileId = selectFileId.get([filename])?.id;
-  if (!fileId) {
-    fileId = insertFile.run([filename]).lastInsertRowid;
-  }
-  const userId = selectUserId.get([user]).id;
-
-  const loaded = {};
-
-  const segments = selectSegments.all([fileId, userId]);
-  for (const segment of segments) {
-    segment.editable = !!segment.editable; // "double not" to cast to boolean
-
-    segment.labelText = selectLabel.get([segment.labelId]).label;
-    delete segment.labelId;
-
-    segment.path = selectPath.get([segment.pathId]).path.split("|");
-    delete segment.pathId;
-  }
-  loaded.segments = segments;
-
-  loaded.notes = selectNotes.get([fileId, userId])?.notes;
-
-  loaded.faces = selectFaces.all([fileId, userId]);
-
-  return loaded;
-});
-app.use("/load/", (req, res) => {
-  res.send(load(req.body["filename"], req.body["user"]));
-  res.end();
-});
-
-const deleteSegment = db.prepare("DELETE FROM annotations WHERE id=?");
-
-const resetMoved = db.transaction((filename, user, highestId) => {
-  let fileId = selectFileId.get([filename])?.id;
-  if (!fileId) {
-    fileId = insertFile.run([filename]).lastInsertRowid;
-  }
-  const userId = selectUserId.get([user]).id;
-
-  const segments = selectSegments.all([fileId, userId]);
-  for (const segment of segments) {
-    if (parseInt(segment.id.split(".").at(-1)) <= highestId) {
-      deleteSegment.run([segment.id]);
-    }
-  }
-});
-
 app.post("/isSplitChannel", async (req, res) => {
   const folder = req.body.folder;
   const basename = req.body.basename;
@@ -381,27 +226,6 @@ app.post("/isSplitChannel", async (req, res) => {
   }
   // if it has a -mono waveform it must be a split-channel file
   res.send(waveforms.indexOf(`${basename}-waveform-mono.json`) !== -1);
-});
-
-app.use("/reset-moved/", (req, res) => {
-  resetMoved(req.body["filename"], req.body["user"], req.body["highestId"]);
-  res.end();
-});
-
-const reset = db.transaction((filename, user) => {
-  let fileId = selectFileId.get([filename])?.id;
-  if (!fileId) {
-    fileId = insertFile.run([filename]).lastInsertRowid;
-  }
-  const userId = selectUserId.get([user]).id;
-
-  deleteSegments.run([fileId, userId]);
-  deleteNotes.run([fileId, userId]);
-  deleteFaces.run([fileId, userId]);
-});
-app.use("/reset/", (req, res) => {
-  reset(req.body["filename"], req.body["user"]);
-  res.end();
 });
 
 // catch 404 and forward to error handler

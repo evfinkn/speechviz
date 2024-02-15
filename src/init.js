@@ -38,7 +38,6 @@ import {
 } from "./util.js";
 
 const peaks = globals.peaks;
-const user = globals.user;
 const filename = globals.filename;
 const basename = globals.basename;
 const media = globals.media;
@@ -768,7 +767,7 @@ const loadFaces = async () => {
   }
 };
 
-const facesLoading = loadFaces();
+loadFaces();
 
 const poseRegex = /pose.*\.csv/;
 const poseContainer = document.getElementById("poses");
@@ -930,92 +929,6 @@ document.getElementById("add-segment").addEventListener("click", function () {
   undoStorage.push(new Actions.AddAction(segment));
   custom.open(); // open custom in tree to show newly added segment
 });
-
-const folderFile =
-  folder !== undefined && folder !== null ? `${folder}/${filename}` : filename;
-// old loading code for backwards compatibility (custom segments will be in database
-// until they're saved again)
-fetch("load", {
-  method: "POST",
-  headers: { "Content-Type": "application/json; charset=UTF-8" },
-  body: JSON.stringify({ user, filename: folderFile }),
-})
-  .then(checkResponseStatus)
-  .then((res) => res.json())
-  .then(async (data) => {
-    await annotsLoading;
-    const notes = document.getElementById("notes");
-    // we prioritize notes.value because if notes has a value, then it was loaded from
-    // the annotations (which is the new behavior), so we don't want to overwrite it
-    // with the database value (which will happen if this file hasn't been saved
-    // since the new annotations format was implemented)
-    notes.value = notes.value || data.notes || "";
-
-    // only add database segments if custom segments weren't loaded from annotations
-    // (since new format stores custom segments there)
-    if (custom.children.length === 0 && labeled.children.length === 0) {
-      peaks.segments
-        .add(data.segments, { overwrite: true })
-        .forEach((segment) => {
-          let parent = segment.path.at(-1);
-          if (!(parent in PeaksGroup.byId)) {
-            // parent group doesn't exist yet so add it
-            parent = new PeaksGroup(parent, {
-              parent: Group.byId[segment.path.at(-2)],
-              removable: true,
-              renamable: true,
-              color: getRandomColor(),
-              colorable: true,
-              copyTo: [labeled.children],
-            });
-          } else {
-            parent = PeaksGroup.byId[parent];
-          }
-
-          if (segment.id in Segment.byId) {
-            // segment is a moved segment
-            const treeSegment = Segment.byId[segment.id];
-            treeSegment.segment = segment;
-            parent.addChildren(treeSegment);
-          } else {
-            new Segment(segment, {
-              parent: parent,
-              removable: true,
-              renamable: true,
-              moveTo: [labeled.children],
-            });
-          }
-          parent.sortBy("startTime");
-
-          // if the segment isn't a custom segment, the counter won't be updated
-          customSegIdCounter.update(segment.labelText);
-        });
-    }
-
-    async function waitForFacesThenLoad() {
-      // wait for the fetching of faces from file system to finish
-      await facesLoading;
-      await annotsLoading;
-      // move faces to saved spot on tree
-      data.faces.forEach((face) => {
-        if (face.speaker !== -1) {
-          const actualFace = Face.byId["face" + face.faceNum];
-          const actualSpeaker = PeaksGroup.byId["Speaker " + face.speaker];
-          actualFace.assoc(actualSpeaker);
-        } else {
-          const removingFace = Face.byId["face" + face.faceNum];
-          Face.removed.push(parseInt(face.faceNum));
-          removingFace.remove();
-        }
-      });
-    }
-    waitForFacesThenLoad();
-
-    // after loading, toggle everything off (usually end up
-    // disabling most groups right away, just do it automatically)
-    analysis.children.forEach((child) => child.toggle(false));
-  })
-  .catch((error) => console.error(error)); // catch err thrown by res if any
 
 peaks.on("segments.dragstart", function (event) {
   const segment = Segment.byId[event.segment.id];

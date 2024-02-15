@@ -3012,13 +3012,10 @@ var Face = class Face extends TreeItem {
   static icons = segmentIcons;
 
   /**
-   * An Array containing all removed `Face`s by their id.
-   * Key is id, value is corresponding `Face`:  {id: `Face`}
-   * For saving purposes
-   * @type {number[]}
-   * @static
+   * The link to the page showing every image for this face.
+   * @type {string}
    */
-  static removed = [];
+  faceHref;
 
   /**
    * Path to image displayed for a face
@@ -3039,10 +3036,10 @@ var Face = class Face extends TreeItem {
   imageLi;
 
   /**
-   * Speaker number this face is associated with
-   * @type {number}
+   * The id of the `Group` this face is currently associated with.
+   * @type {?string}
    */
-  speakerNum = null;
+  currentAssoc = null;
 
   /**
    * @param {string} id - The unique identifier to give the `Face`.
@@ -3060,6 +3057,12 @@ var Face = class Face extends TreeItem {
    * @param {string=} options.faceHref - The link to the page showing every image for
    *      this face.
    * @param {string=} options.imagePath - The name of the image shown for this face
+   * @param {string=} options.currentAssoc - The id of the `Group` this face is
+   *      currently associated with.
+   * @param {boolean} [options.saveable=true] - Indicates if the item is saveable.
+   *      If `true`, `toObject` will return an object containing the arguments and
+   *      options necessary to recreate the item. Otherwise, `toObject` will return
+   *      `null`.
    * @throws {Error} If a `TreeItem` with `id` already exists.
    */
   constructor(
@@ -3072,6 +3075,8 @@ var Face = class Face extends TreeItem {
       assocWith = null,
       faceHref = null,
       imagePath = null,
+      currentAssoc = null,
+      saveable = true,
     } = {},
   ) {
     // (can't use 'this' until after super() call,
@@ -3082,7 +3087,7 @@ var Face = class Face extends TreeItem {
       removable,
       renamable,
       assocWith,
-      saveable: false,
+      saveable,
     });
 
     // rel="noopener noreferrer" is there to avoid tab nabbing
@@ -3105,16 +3110,39 @@ var Face = class Face extends TreeItem {
         alt="Example image of face"
       />
     </li>`;
-    // store previous html of image to reset its position when the image is clicked
+
     this.imageLi.addEventListener("click", () => {
-      undoStorage.push(new Actions.UnassociateAction(this));
+      // Only push a new action if the face is actually associated with a speaker
+      // (since you can click on the image even when it's in the Clusters group)
+      if (this.currentAssoc !== null) {
+        undoStorage.push(new Actions.UnassociateAction(this));
+      }
     });
     this.nested.appendChild(this.imageLi);
     this.popup = new Popup(this);
+
+    this.faceHref = faceHref;
+    this.imagePath = imagePath;
+    if (currentAssoc) {
+      this.assoc(Group.byId[currentAssoc]);
+    }
+  }
+
+  toObject() {
+    if (!this.saveable) {
+      return null;
+    }
+    const json = super.toObject();
+    json.options.imagePath = this.imagePath;
+    json.options.faceHref = this.linkButton.href;
+    if (this.currentAssoc !== null) {
+      json.options.currentAssoc = this.currentAssoc;
+    }
+    return json;
   }
 
   get speaker() {
-    return this.speakerNum ? PeaksGroup.byId[this.speakerNum] : null;
+    return this.currentAssoc ? PeaksGroup.byId[this.currentAssoc] : null;
   }
 
   /** Initialize the CSS styling of the `Face` */
@@ -3123,33 +3151,13 @@ var Face = class Face extends TreeItem {
     this.checkbox.style.transform = "scale(0.85)";
   }
 
-  /** Removes this `Face` from the tree and from Peaks */
-  remove() {
-    Face.removed.push(parseInt(this.id.replace("face", "")));
-    super.remove();
-  }
-
-  /**
-   * Override of readding the item for Faces.
-   * To be specific, adds this item to `byId` and `parent` if not `null`. If `parent`
-   * is `null` and `this.parent` isn't, `this.parent` is used instead. Otherwise, if
-   * both are `null`, this item isn't added to any parent.
-   * @param {?TreeItem} parent - The `TreeItem` to add this item to, if any.
-   */
-  readd(parent = null) {
-    Face.removed = Face.removed.filter(
-      (faceNum) => faceNum === parseInt(this.id.replace("face", "")),
-    );
-    super.readd(parent);
-  }
-
   /**
    * Associates this face with a `PeaksGroup`, displaying this face's image with the
    * group.
    * @param {PeaksGroup} speaker - The group to send this face's image to.
    */
   assoc(speaker) {
-    this.speakerNum = speaker.id;
+    this.currentAssoc = speaker.id;
     speaker.faceNum = this.id;
     speaker.nested.before(this.imageLi);
   }
@@ -3160,11 +3168,11 @@ var Face = class Face extends TreeItem {
    */
   unassoc() {
     this.nested.appendChild(this.imageLi);
-    if (this.speakerNum !== null) {
+    if (this.currentAssoc !== null) {
       // TODO: Blake, is setting face on the PeaksGroup necessary? Just asking
       //       because I don't think PeaksGroup needs to know anything about Face
-      PeaksGroup.byId[this.speakerNum].faceNum = null;
-      this.speakerNum = null;
+      PeaksGroup.byId[this.currentAssoc].faceNum = null;
+      this.currentAssoc = null;
     }
   }
 };
