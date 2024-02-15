@@ -273,7 +273,7 @@ def load_json_with_nan(s: str):
 
 
 def route_dir(dir, scan_dir=True, **kwargs):
-    logger.debug("Running process_audio on each file in {}", dir)
+    logger.debug("Running extract_vrs_data on each file in {}", dir)
     for path in dir.iterdir():
         route_file(path, scan_dir=scan_dir, **kwargs)
 
@@ -366,7 +366,8 @@ def vrs_needs_reprocessed(
                 needs_extracted = True
         elif (metadata or reprocess_metadata) and Path("metadata.jsons") not in files:
             needs_extracted = True
-        elif not (move or Path("microphones.wav") in files):
+        # elif not (move or Path("microphones.wav") in files):
+        elif not (move or Path("microphone1.wav") in files):
             needs_extracted = True
         elif (
             move and not (DATA_DIR / "audio" / parent_dir / f"{file_stem}.wav").exists()
@@ -483,8 +484,20 @@ def extract_vrs_data(
             )
         logger.trace("Renaming the audio and video files")
         old_audio_path = audio_dir_files[0]
+        util.ffmpeg(
+            old_audio_path,
+            output_dir / "microphone1.wav",
+            # This is needed so that ffmpeg doesn't try to guess the layout of the
+            # input audio (making it 6.1 instead of just saying it's 7 channels). I'm
+            # not sure it matters, but I'm doing it just in case.
+            input_options=["-guess_layout_max", "0"],
+            # Argument is file.stream.channel. 0.0.1 gives 2nd channel (which is mic1,
+            # the mic in the center of the glasses).
+            output_options=["-map_channel", "0.0.1"],
+        )
         # old_audio_path.replace(output_dir / "231-1.wav")
-        old_audio_path.replace(output_dir / "microphones.wav")
+        # old_audio_path.replace(output_dir / "microphones.wav")
+        old_audio_path.unlink()
         shutil.rmtree(output_dir / "231-1", ignore_errors=True)
         for stream in VIDEO_STREAMS:
             old_path = output_dir / f"{stream}"
@@ -508,14 +521,17 @@ def extract_vrs_data(
         logger.info("Videos have already been created. To recreate them, pass -r")
 
     if move:
-        old_audio_path = output_dir / "microphones.wav"
+        # old_audio_path = output_dir / "microphones.wav"
+        old_audio_path = output_dir / "microphone1.wav"
         if old_audio_path.exists():
             new_audio_path = DATA_DIR / "audio" / parent_dir / f"{path.stem}.wav"
+            new_audio_path.parent.mkdir(parents=True, exist_ok=True)
             old_audio_path.replace(new_audio_path)
 
         old_video_path = output_dir / "camera-slam-left.mp4"
         if old_video_path.exists():
             new_video_path = DATA_DIR / "video" / parent_dir / f"{path.stem}.mp4"
+            new_video_path.parent.mkdir(parents=True, exist_ok=True)
             old_video_path.replace(new_video_path)
 
         old_images_path = output_dir / "camera-rgb"
@@ -523,6 +539,7 @@ def extract_vrs_data(
             new_images_path = (
                 DATA_DIR / "imagesForEncoding" / parent_dir / f"{path.stem}"
             )
+            new_images_path.parent.mkdir(parents=True, exist_ok=True)
             old_images_path.replace(new_images_path)
 
     timer.stop()
