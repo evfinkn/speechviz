@@ -2,7 +2,6 @@ module.exports = {
   plugins: [
     "node_modules/jsdoc/plugins/markdown",
     // "node_modules/jsdoc/plugins/summarize",
-    "node_modules/better-docs/typedef-import",
   ],
   source: {
     include: ["src"],
@@ -12,7 +11,6 @@ module.exports = {
     destination: "docs/js/",
     encoding: "utf8",
     readme: "README.md",
-    template: "node_modules/better-docs",
     verbose: true,
   },
   templates: {
