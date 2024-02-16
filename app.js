@@ -1,9 +1,12 @@
+// env.js import has to be first. See
+// https://www.npmjs.com/package/dotenv#how-do-i-use-dotenv-with-import
+import "./server/env.js";
+
 import fs from "fs/promises";
 import path from "path";
 
 import cookieParser from "cookie-parser";
 import express from "express";
-// use sessions
 import session from "express-session";
 import logger from "morgan";
 
@@ -25,9 +28,14 @@ const app = express();
 app.use(
   session({
     name: "speechviz",
-    secret: "clinic annotations here",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
+    cookie: {
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1 * 24 * 3600 * 1000, // 1 day in milliseconds
+    },
   }),
 );
 

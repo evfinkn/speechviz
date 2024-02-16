@@ -36,6 +36,7 @@
     "better-sqlite3": "^7.5.3",
     "cookie-parser": "^1.4.6",
     "debug": "^4.3.4",
+    "dotenv": "^16.4.4",
     "express": "^4.18.1",
     "express-force-ssl": "^0.3.2",
     "express-session": "^1.17.3",
