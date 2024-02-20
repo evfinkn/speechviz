@@ -29,11 +29,19 @@ if (isMain(import.meta.url)) {
     .description("add a user to the database")
     .action(async (user, password) => {
       const hash = await argon2.hash(password);
-      db.prepare("INSERT INTO users (user, password) VALUES (?, ?)").run(
-        user,
-        hash,
-      );
-      console.log("User added successfully.");
+      try {
+        db.prepare("INSERT INTO users (user, password) VALUES (?, ?)").run(
+          user,
+          hash,
+        );
+        console.log("User added successfully.");
+      } catch (error) {
+        if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
+          console.error(`Username "${user}" is already taken.`);
+        } else {
+          throw error;
+        }
+      }
     });
 
   const deleteCmd = program.command("delete");
