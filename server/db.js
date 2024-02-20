@@ -44,6 +44,24 @@ if (isMain(import.meta.url)) {
       }
     });
 
+  const updateCmd = program.command("update");
+  updateCmd.description("update an item in the database");
+  updateCmd
+    .command("user")
+    .argument("<username>", "username of the user to update")
+    .argument("<password>", "new password of the user (will be hashed)")
+    .description("update a user in the database")
+    .action(async (user, password) => {
+      const hash = await argon2.hash(password);
+      const stmt = db.prepare("UPDATE users SET password=? WHERE user=?");
+      const { changes } = stmt.run(hash, user);
+      if (changes === 0) {
+        console.error(`User "${user}" not found.`);
+      } else {
+        console.log("User updated successfully.");
+      }
+    });
+
   const deleteCmd = program.command("delete");
   deleteCmd.description("delete an item from the database");
   deleteCmd
