@@ -1,8 +1,9 @@
-import Database from "better-sqlite3";
+import * as argon2 from "argon2";
 import express from "express";
 
+import db from "../server/db.js";
+
 const router = express.Router();
-const db = Database("speechviz.sqlite3");
 
 const redirectToReferer = function (referer, res) {
   referer = referer ? decodeURIComponent(referer) : "/";
@@ -21,22 +22,15 @@ router.get("/", (req, res) => {
   }
 });
 
-router.post("/credentials", (req, res) => {
+router.post("/credentials", async (req, res) => {
   const { user, password, referer } = req.body;
   const row = db.prepare("SELECT password FROM users WHERE user=?").get(user);
-  if (row) {
-    const expectedPassword = row.password;
-
-    if (password === expectedPassword) {
-      // success
-      req.session.authenticated = true;
-      req.session.user = user;
-      redirectToReferer(referer, res);
-    } else {
-      res.redirect("/login?retry");
-    }
+  if (row && (await argon2.verify(row.password, password))) {
+    req.session.authenticated = true;
+    req.session.user = user;
+    redirectToReferer(referer, res);
   } else {
     res.redirect("/login?retry");
-  } // incorrect login
+  }
 });
 export default router;

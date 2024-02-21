@@ -18,7 +18,7 @@ export default [
     },
     rules: {
       "max-len": ["error", { code: 88, ignoreUrls: true }],
-      "prefer-const": "error",
+      "prefer-const": ["error", { destructuring: "all" }],
       "spaced-comment": [
         "error",
         "always",

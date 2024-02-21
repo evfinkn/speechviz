@@ -1,6 +1,6 @@
 import globals from "./globals.js";
 import { Segment } from "./treeClasses.js";
-import { checkResponseStatus, html } from "./util.js";
+import { html } from "./util.js";
 
 const peaks = globals.peaks;
 const overview = peaks.views.getView("overview");
@@ -98,17 +98,6 @@ const SettingsPopup = class SettingsPopup {
    * @type {!Element}
    */
   switchMono;
-  /**
-   * The button element that resets all moved segments.
-   * @type {!Element}
-   */
-  resetMovedButton;
-
-  /**
-   * The button element that resets all saved changes.
-   * @type {!Element}
-   */
-  resetAllButton;
 
   constructor() {
     this.popup = html`<div class="popup"></div>`;
@@ -243,60 +232,6 @@ const SettingsPopup = class SettingsPopup {
         window.location.href = window.location.href.replace("&mono=True", "");
       }
     });
-
-    // fine to use same body for both requests
-    // because "reset" request will just ignore highestId
-    const fetchOptions = {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json; charset=UTF-8" },
-      body: JSON.stringify({
-        user: globals.user,
-        filename: globals.filename,
-        highestId: globals.highestId,
-      }),
-    };
-
-    // resets all of the pipeline segments that
-    // have been moved from one group to another
-    this.resetMovedButton = html`<button>Reset moved</button>`;
-    this.resetMovedButton.addEventListener("click", function () {
-      if (
-        confirm(
-          "This will reset all moved speaker segments.\n" +
-            "Are you sure you want to continue?",
-        )
-      ) {
-        fetch("reset-moved", fetchOptions)
-          .then(checkResponseStatus)
-          .then(() => window.location.reload())
-          .catch((error) =>
-            console.error(`Error while resetting moved: ${error}`),
-          );
-      }
-    });
-
-    // deletes all saved segments
-    this.resetAllButton = html`<button>Reset all</button>`;
-    this.resetAllButton.addEventListener("click", function () {
-      if (
-        confirm(
-          "This will delete ALL saved segments, notes, and faces for this file.\n" +
-            "Are you sure you want to continue?",
-        )
-      ) {
-        fetch("reset", fetchOptions)
-          .then(checkResponseStatus)
-          .then(() => window.location.reload())
-          .catch((error) =>
-            console.error(`Error while resetting moved: ${error}`),
-          );
-      }
-    });
-
-    popupContent.append(document.createElement("br"));
-    popupContent.append(this.resetMovedButton);
-    popupContent.append(document.createElement("br"));
-    popupContent.append(this.resetAllButton);
   }
 
   /** Updates content and displays this popup. */

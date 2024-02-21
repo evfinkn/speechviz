@@ -1,9 +1,18 @@
 import { createWriteStream, promises as fs } from "fs";
 
-const write = (path, content) => {
+/**
+ * Asynchronously writes data to a file.
+ *
+ * @param {string} path - The file path to write to.
+ * @param {(string|Buffer)} content - The data to write to the file.
+ * @param {Object} [options] - Options to pass to `fs.createWriteStream` (which is
+ *    used internally). For example, to throw an error if the file already exists, you
+ *    can pass `{ flags: "wx" }`.
+ */
+const write = (path, content, options) => {
   return new Promise((resolve, reject) => {
     // createWriteStream is used instead of writeFile for better performance
-    const writeStream = createWriteStream(path);
+    const writeStream = createWriteStream(path, options);
     writeStream.on("error", reject);
     writeStream.on("finish", resolve);
     writeStream.write(content);
