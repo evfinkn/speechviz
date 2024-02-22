@@ -39,7 +39,9 @@ def combine_audio_files(runs_folder, session_time_differences, video_folder):
             "Processing session {} with time differences: {}", session, time_differences
         )
         for time_difference in time_differences:
-            print(f"Processing run {run_number}, time difference: {time_difference}")
+            logger.debug(
+                "Processing run {}, time difference: {}", run_number, time_difference
+            )
             audio_file = pathlib.Path(runs_folder, f"run{run_number}.wav")
             audio_segment, sr = sf.read(str(audio_file))
             # Add silent duration between audio clips
@@ -177,7 +179,9 @@ def main():
 
     # Initialize the first session
     current_video = data.iloc[0]["VRSFile"][:-4]
-    session_time_differences[current_video] = [0]  # Initialize with 0
+    session_time_differences[current_video] = []
+
+    firstTime = True
 
     # Iterate through runs
     for _, row in data.iterrows():
@@ -198,14 +202,33 @@ def main():
                     1  # Subtract 1 minute to account for the 1 minute run themselves
                 )
 
-                # Check if session number changed
+                # Check if session changed
+
                 if video_file[:-4] != current_session:
                     if video_file[:-4] not in session_time_differences:
                         session_time_differences[video_file[:-4]] = []
-                    session_time_differences[video_file[:-4]].append(0)
+                    if firstTime:
+                        logger.debug(
+                            "FIRST TIME: Run {} has a time difference of {} minutes",
+                            run_number,
+                            minutes_difference,
+                        )
+                        session_time_differences[video_file[:-4]].append(
+                            minutes_difference
+                        )
+                        firstTime = False
+                    if current_session is not None:
+                        session_time_differences[current_session].append(
+                            0
+                        )  # end with a 0 difference
                     current_session = video_file[:-4]  # Update current session
                 else:
                     session_time_differences[current_session].append(minutes_difference)
+                    logger.debug(
+                        "Run {} has a time difference of {} minutes",
+                        run_number,
+                        minutes_difference,
+                    )
 
                 prevTime = currTime
         else:
@@ -214,7 +237,12 @@ def main():
             # with changes in code this may
             if video_file[:-4] not in session_time_differences:
                 session_time_differences[video_file[:-4]] = []
-            session_time_differences[video_file[:-4]].append(0)
+            if current_session is not None:
+                session_time_differences[current_session].append(
+                    0
+                )  # end with a 0 difference
+
+    session_time_differences[current_session].append(0)  # end with a 0 difference
 
     # Combine audio files that are from the same vrsfile given the time differences
     # gotten from that vrs file
