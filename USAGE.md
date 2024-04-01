@@ -217,12 +217,13 @@ If you have a file of the survey data from the uiowa study, you can add it to th
 python3 scripts/add_survey_to_stats.py path/to/survey data/stats/folder
 ```
 
-where path/to/survey is the path to the file containing the survey data. The file should be a csv file with the following columns:run, type, eVal. and where stats folder is the folder containing the stats files. This will add the survey data to the stats files in the stats folder.
+where path/to/survey is the path to the file containing the survey data. The file should be a csv file with the following columns: run, type, eVal. and where stats folder is the
+folder containing the stats files. This will add the survey data to the stats files in the stats folder.
 
 ### Combine stats
 
 With the folder containing the text files from PhaseII and PhaseIII of the University of Iowa study, you can combine all the stats files of a folder with one another into one large
-csv file allowing for comparison of the various ema and time between all runs accross experiments. See Combine speechviz stats for how to combine the stats file this code generates
+csv file allowing for comparison of the various ema and time between all runs across experiments. See Combine speechviz stats for how to combine the stats file this code generates
 for each participant with each other.
 
 To generate the combined stats file for a participant run
@@ -241,7 +242,7 @@ With this script you can combine all the stats files of a folder with one anothe
 python3 scripts/combine_stats.py data/stats/folder output/file/path
 ```
 
-where data/stats/folder is the path to the folder containing all the seperate stats files. This will create a file called output/file/path (or whatever you substitute it with) that has all the stats in one folder.
+where data/stats/folder is the path to the folder containing all the separate stats files. This will create a file called output/file/path (or whatever you substitute it with) that has all the stats in one folder.
 
 ### Combine audio
 
@@ -251,15 +252,15 @@ With this script you can combine all the audio files of a folder into one audio 
 python3 scripts/concat_audio_in_folder.py data/audio/folder
 ```
 
-where data/audio/folder is the path to the folder containing all the seperate audio files. This will create a file called data/views/folder.wav.
+where data/audio/folder is the path to the folder containing all the separate audio files. This will create a file called data/views/folder.wav.
 
 ## LLM
 
-For the LLM scripts, one must download a quantized llm that uses the standard alpaca prompt template (or rewrite the prompts the scripts use to match your llms prompt). The exact model used when coding this (open-llama-7B-open-instruct.ggmlv3.q6_K.bin) can be downloaded here https://huggingface.co/TheBloke/open-llama-7b-open-instruct-GGML and should be placed in scripts/models.
+For the LLM scripts, one must download a quantized LLM that uses the standard alpaca prompt template (or rewrite the prompts the scripts use to match your LLM's prompt). The exact model used when coding this (open-llama-7B-open-instruct.ggmlv3.q6_K.bin) can be downloaded here https://huggingface.co/TheBloke/open-llama-7b-open-instruct-GGML and should be placed in scripts/models.
 
 ### Auto annotate news
 
-To automatically generate annotations on files for what is suspected to be news, one must first perform speech recognition as detailed above. The llm takes in the transcript and decides if it is more likely to be news or not news (other). If the llm thinks it is news, it will annotate the part of the file where that transcript starts and ends as news. To run this script, run
+To automatically generate annotations on files for what is suspected to be news, one must first perform speech recognition as detailed above. The LLM takes in the transcript and decides if it is more likely to be news or not news (other). If the LLM thinks it is news, it will annotate the part of the file where that transcript starts and ends as news. To run this script, run
 
 ```bash
 python3 scripts/news_analysis.py data/transcription/folder
@@ -267,25 +268,25 @@ python3 scripts/news_analysis.py data/transcription/folder
 
 where data/transcription/folder is the path to the folder containing the transcription file. This will automatically update the annotation file for that file to reflect what is thought to be news on the interface
 
-### Compare manual news annotation to llm annotations
+### Compare manual news annotation to LLM annotations
 
-If you wish to compare the accuracy of the llm's news annotations with manual annotations you have done via the interface (where you add a label that contains News in the name, i.e. ManualNews, and give the segments added to it the same name,i.e. ManualNews1 etc.) you can run
+If you wish to compare the accuracy of the LLM's news annotations with manual annotations you have done via the interface (where you add a label that contains News in the name, i.e. ManualNews, and give the segments added to it the same name, i.e. ManualNews1 etc.) you can run
 
 ```bash
 python3 scripts/compare_llm_news_to_truth.py data/annotations/file
 ```
 
-where data/annotations file is the path to the annotations file/folder you wish to compare the accuracy of. This will output the accuracy of the llm's news annotations compared to the manual annotations at the file scripts/output/llmMatchPercentages.csv.
+where data/annotations file is the path to the annotations file/folder you wish to compare the accuracy of. This will output the accuracy of the LLM's news annotations compared to the manual annotations at the file scripts/output/llmMatchPercentages.csv.
 
 ### Maximize accuracy with different parameters
 
-If you have manual news annotations to compare and want to find what parrameters on news_analysis.py result in the highest accuracy you can use this script as an example (needs to be updated to whatever files you annotated manually) and look at the results. It does a combination of news_analyis.py with different parameters, followed by compare_llm_news_to_truth.py and analyze_llm_match_percentages.py to output into one csv at scripts/output/llmMatchPercentages.csv. To run this script, run
+If you have manual news annotations to compare and want to find what parameters on news_analysis.py result in the highest accuracy you can use this script as an example (needs to be updated to whatever files you annotated manually) and look at the results. It does a combination of news_analyis.py with different parameters, followed by compare_llm_news_to_truth.py and analyze_llm_match_percentages.py to output into one csv at scripts/output/llmMatchPercentages.csv. To run this script, run
 
 ```bash
 python3 scripts/maximize_news_numbers_and_threshold_accuracy.py
 ```
 
-This will output the average accuracy of all the llm's news annotations compared to all the manual annotations at the file scripts/output/llmMatchPercentages.csv and you can see which is highest and use that.
+This will output the average accuracy of all the LLM's news annotations compared to all the manual annotations at the file scripts/output/llmMatchPercentages.csv and you can see which is highest and use that.
 
 ## Interface
 
@@ -326,9 +327,9 @@ respectively. Your files need to be moved to these directories to be found by th
 interface. Each file `FILE` in these directories also needs a respective waveform file
 in `data/waveforms` named `FILE_NAME-waveform.json` where `FILE_NAME` is `FILE` without
 the extension. If you ran `process_audio.py` on `FILE` while it was in its respective
-directory, the waveform file will already be in its correct folder, and a segments file
-containing the annotations will be in `data/segments`. Segments files aren't required
-to view a file in the interface.
+directory, the waveform file will already be in its correct folder, and an annotations
+file containing the annotations will be in `data/annotations`. Annotations files aren't
+required to view a file in the interface.
 
 Clicking on a file in the list open's up the main interface which contains the waveform
 and annotations (if any) for the file. Some notable features:
@@ -343,9 +344,11 @@ and annotations (if any) for the file. Some notable features:
   be moved, renamed, and recolored.
 - A labeled group can be created by entering a name into the textbox and clicking the
   `Add Label` button next to it. It will then appear in the `Labeled` group. Other
-  groups can then be moved to that label.
+  groups can then be moved to that label. This can be useful for manually annotating
+  a category, like a speaker, without disrupting the original model's output.
 - Custom segments can be added by clicking the `Add Segment` button, which will add a
-  2.5-second-long segment at the current time under the `Custom` group.
+  2.5-second-long segment at the current time under the `Custom` group. These can
+  then be moved to a labeled group as a manual annotation of that label.
 - Editable segments (such as custom ones) have handles at their start and end that can
   be dragged to change when it starts and end.
 - Notes can help to remember who is who (e.g. "Speaker 1 is the man with the raspy
@@ -354,6 +357,9 @@ and annotations (if any) for the file. Some notable features:
   `Ctrl+Z` (`Cmd+Z` on Mac). Redoing changes is currently unimplemented.
 - Other options can be found by clicking the settings button (its icon is a gear).
 - To save, click the save button (its icon is a floppy disk) or press `Ctrl+S`
-  (`Cmd+S` on Mac).
+  (`Cmd+S` on Mac). Afterwards, choose what branch of the annotation's version
+  control you want to save it to, add a commit message, and hit save.
+- To view previous annotations versions, click the versions button, then click the
+  commit you want to view.
 
 This is by no means an exhaustive list.
