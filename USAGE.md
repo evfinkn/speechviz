@@ -11,8 +11,9 @@
     - [Face detection and clustering](#face-detection-and-clustering)
   - [University of Iowa specific](#university-of-iowa-specific)
     - [Add survey data to stats tree on interface](#add-survey-data-to-stats)
-  - [Combine folders of data](#combine-folders)
     - [Combine stats](#combine-stats)
+  - [Combine folders of data](#combine-folders)
+    - [Combine speechviz stats](#combine-speechviz-stats)
     - [Combine audio](#combine-audio)
   - [Large Language Model Scripts](#llm)
     - [Auto Annotate News](#auto-annotate-news)
@@ -42,9 +43,15 @@ it outputs the waveform and segments files into the appropriate directories used
 by the interface. Otherwise, the files are output to the same directory that the
 input file is in.
 
-The waveform file contains the data used to visualize the waveform of the audio on
-the interface. The segments file contains the annotations of the unique speakers,
-the voice activity, and the non-voice activity.
+Additionally, the path to a folder containing audio or video files can be passed
+as the first parameter, and process_audio will be run on each file.
+
+The script outputs a waveform file which contains the data used to visualize the
+waveform of the audio on the interface. It also outputs an annotations file
+which contains the annotations of when each unique speaker speaks, when voice
+activity occurs, and when the non-voice activity occurs. Lastly it outputs a
+stats file which contains various metrics about the file including but not
+limited to sampling rate, duration, number of speakers, and snr.
 
 ### VRS files
 
@@ -104,7 +111,12 @@ scripts/transcribe -ml 1 \
 ```
 
 This requires the audio file to be `data/audio`. The transcription file is output
-to `data/transcripts`.
+to `data/transcripts`. Be sure to have downloaded the whisper model if not using
+our speechviz container that comes with it. To download the model, run
+
+```bash
+bash scripts/install_tools.sh
+```
 
 ### Face detection and clustering
 
@@ -207,11 +219,23 @@ python3 scripts/add_survey_to_stats.py path/to/survey data/stats/folder
 
 where path/to/survey is the path to the file containing the survey data. The file should be a csv file with the following columns:run, type, eVal. and where stats folder is the folder containing the stats files. This will add the survey data to the stats files in the stats folder.
 
-## Combine folders
-
 ### Combine stats
 
-With this script you can combine all the stats files of a folder with one another into one large csv file allowing for comparison of the various stats collected (i.e. snr, number of conversattion turns, etc.) between all files in that folder.
+With the folder containing the text files from PhaseII and PhaseIII of the University of Iowa study, you can combine all the stats files of a folder with one another into one large
+csv file allowing for comparison of the various ema and time between all runs accross experiments. See Combine speechviz stats for how to combine the stats file this code generates
+for each participant with each other.
+
+To generate the combined stats file for a participant run
+
+```bash
+python3 scripts/combine_facebook_stats.py path/to/study/participant output/stat/path.csv
+```
+
+## Combine folders
+
+### Combine speechviz stats
+
+With this script you can combine all the stats files of a folder with one another into one large csv file allowing for comparison of the various stats collected (i.e. snr, number of conversation turns, etc.) between all files in that folder.
 
 ```bash
 python3 scripts/combine_stats.py data/stats/folder output/file/path
