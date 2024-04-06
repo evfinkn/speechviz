@@ -1,22 +1,10 @@
 import os
 from datetime import timedelta
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    List,
-    Literal,
-    Optional,
-    Protocol,
-    Tuple,
-    TypedDict,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Generic, Literal, Protocol, TypedDict, TypeVar
 
 T = TypeVar("T")  #: Generic type variable.
-PathLike = Union[str, os.PathLike]
-Retention = Optional[Union[int, timedelta, str, Callable]]
+PathLike = str | os.PathLike
+Retention = int | timedelta | str | Callable | None
 LogLevel = Literal[
     "TRACE",
     "DEBUG",
@@ -31,7 +19,7 @@ LogLevel = Literal[
 
 class List2D(Generic[T]):
     def __class_getitem__(cls, item):
-        return List[List[item]]
+        return list[list[item]]
 
 
 # SupportsGT, SupportsLT, and SupportsRichComparison are from typeshed:
@@ -46,7 +34,7 @@ class SupportsLT(Protocol[T]):
         ...
 
 
-SupportsRichComparison = Union[SupportsGT[Any], SupportsLT[Any]]
+SupportsRichComparison = SupportsGT[Any] | SupportsLT[Any]
 
 
 class KeyFunc(Generic[T]):
@@ -62,14 +50,14 @@ class TreeItem(TypedDict, total=False):
 
 class Group(TypedDict, total=False):
     type: Literal["Group"]
-    arguments: Tuple[str]
+    arguments: tuple[str]
     options: dict
 
 
 # can't inherit from Group because we change the type of `type`
 class PeaksGroup(TypedDict, total=False):
     type: Literal["PeaksGroup"]
-    arguments: Tuple[str]
+    arguments: tuple[str]
     options: dict
 
 
@@ -82,5 +70,5 @@ class PeaksSegment(TypedDict):
 
 class Segment(TypedDict, total=False):
     type: Literal["Segment"]
-    arguments: Tuple[PeaksSegment]
+    arguments: tuple[PeaksSegment]
     options: dict

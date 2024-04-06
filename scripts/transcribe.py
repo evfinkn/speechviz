@@ -1,7 +1,7 @@
 import argparse
 import json
 import pathlib
-from typing import Optional, Sequence
+from typing import Sequence
 
 import log
 import util
@@ -14,7 +14,7 @@ BASE_MODEL = SCRIPTS_DIR / "models/whisper-base.en.bin"
 
 
 def format_tree_item(
-    item_type: str, arguments: Sequence, options: Optional[dict] = None
+    item_type: str, arguments: Sequence, options: dict | None = None
 ) -> TreeItem:
     item = {"type": item_type, "arguments": arguments}
     if options is not None:
@@ -22,11 +22,11 @@ def format_tree_item(
     return item
 
 
-def format_peaks_group(name: str, options: Optional[dict] = None) -> PeaksGroup:
+def format_peaks_group(name: str, options: dict | None = None) -> PeaksGroup:
     return format_tree_item("PeaksGroup", [name], options)
 
 
-def format_word(id: str, labelText: str, time: float, options: Optional[dict] = None):
+def format_word(id: str, labelText: str, time: float, options: dict | None = None):
     # round start and end to save space in the json file and because many times from
     # the pyannote pipelines look like 5.3071874999999995 and 109.99968750000001
     word = {"id": id, "labelText": labelText, "time": time}

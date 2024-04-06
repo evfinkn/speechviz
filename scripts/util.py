@@ -10,17 +10,7 @@ import re
 import subprocess
 from operator import itemgetter
 from pathlib import Path
-from typing import (
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Iterable, Iterator, Sequence, TypeVar
 
 import numpy as np
 
@@ -157,8 +147,8 @@ def ffmpeg(
     input: str,
     output: str,
     *,
-    input_options: Optional[List[str]] = None,
-    output_options: Optional[List[str]] = None,
+    input_options: list[str] | None = None,
+    output_options: list[str] | None = None,
     check: bool = True,
 ) -> subprocess.CompletedProcess:
     """Wrapper for the `ffmpeg` command.
@@ -198,7 +188,7 @@ def audiowaveform(
     output: str,
     *,
     split_channels: bool = False,
-    options: Optional[List[str]] = None,
+    options: list[str] | None = None,
     check: bool = True,
 ) -> subprocess.CompletedProcess:
     """Wrapper for the `audiowaveform` command.
@@ -252,7 +242,7 @@ def get_nearest_index(array: Sequence[T], value: T) -> int:
 
 
 # https://stackoverflow.com/a/5389547
-def grouped(iterable: Iterable[T], n: int) -> Iterator[Tuple[T, ...]]:
+def grouped(iterable: Iterable[T], n: int) -> Iterator[tuple[T, ...]]:
     """Groups the elements of an iterable.
 
     Parameters
@@ -273,7 +263,7 @@ def grouped(iterable: Iterable[T], n: int) -> Iterator[Tuple[T, ...]]:
     return zip(*([iter(iterable)] * n))
 
 
-def random_color_generator(seed: Optional[int] = None) -> Iterator[str]:
+def random_color_generator(seed: int | None = None) -> Iterator[str]:
     """Indefinitely generates random colors as hexadecimal strings.
 
     Parameters
@@ -294,7 +284,7 @@ def random_color_generator(seed: Optional[int] = None) -> Iterator[str]:
         yield f"#{r:02x}{g:02x}{b:02x}"
 
 
-def sort_and_regroup(lists: List2D[T], key: Optional[KeyFunc[T]] = None) -> List2D[T]:
+def sort_and_regroup(lists: List2D[T], key: KeyFunc[T] | None = None) -> List2D[T]:
     flat = [(item, i) for i in range(len(lists)) for item in lists[i]]
 
     if key is None:
@@ -325,9 +315,7 @@ class AggregateData:
             self.min = np.amin(data)
 
 
-def min_key(
-    d: Dict[K, V], default: Union[Tuple[K, V], _Missing] = _missing
-) -> Tuple[K, V]:
+def min_key(d: dict[K, V], default: tuple[K, V] | _Missing = _missing) -> tuple[K, V]:
     """Returns the item from `d` with the minimum key."""
     if len(d) == 0 and default is not _missing:
         return default
@@ -336,34 +324,28 @@ def min_key(
     return min(d.items(), key=itemgetter(0))
 
 
-def max_key(
-    d: Dict[K, V], default: Union[Tuple[K, V], _Missing] = _missing
-) -> Tuple[K, V]:
+def max_key(d: dict[K, V], default: tuple[K, V] | _Missing = _missing) -> tuple[K, V]:
     """Returns the item from `d` with the maximum key."""
     if len(d) == 0 and default is not _missing:
         return default
     return max(d.items(), key=itemgetter(0))
 
 
-def min_value(
-    d: Dict[K, V], default: Union[Tuple[K, V], _Missing] = _missing
-) -> Tuple[K, V]:
+def min_value(d: dict[K, V], default: tuple[K, V] | _Missing = _missing) -> tuple[K, V]:
     """Returns the item from `d` with the minimum value."""
     if len(d) == 0 and default is not _missing:
         return default
     return min(d.items(), key=itemgetter(1))
 
 
-def max_value(
-    d: Dict[K, V], default: Union[Tuple[K, V], _Missing] = _missing
-) -> Tuple[K, V]:
+def max_value(d: dict[K, V], default: tuple[K, V] | _Missing = _missing) -> tuple[K, V]:
     """Returns the item from `d` with the maximum value."""
     if len(d) == 0 and default is not _missing:
         return default
     return max(d.items(), key=itemgetter(1))
 
 
-def recurse_load_json(obj: Union[str, dict, list]) -> Union[dict, list]:
+def recurse_load_json(obj: str | dict | list) -> dict | list:
     """Recursively loads JSON contained in a string.
 
     This is preferred over `json.loads` because it can handle JSON strings
@@ -387,7 +369,7 @@ def recurse_load_json(obj: Union[str, dict, list]) -> Union[dict, list]:
     # use try in case obj is a string that isn't valid JSON
     try:
         if isinstance(obj, str):
-            obj: Union[dict, list] = json.loads(obj)
+            obj: dict | list = json.loads(obj)
         # the next ifs aren't elifs because we want to include obj loaded from str above
         if isinstance(obj, dict):
             obj = {key: recurse_load_json(obj[key]) for key in obj}
@@ -397,7 +379,7 @@ def recurse_load_json(obj: Union[str, dict, list]) -> Union[dict, list]:
         return obj
 
 
-def add_to_csv(path: Path, data: dict, remove_keys: Optional[list] = None):
+def add_to_csv(path: Path, data: dict, remove_keys: list | None = None):
     """Updates the data in the specified CSV file.
     If the file doesn't exist, it is created. The first row of the CSV file is
     assumed to be the fieldnames and the second row is assumed to be the only

@@ -8,7 +8,7 @@ import pathlib
 import re
 import subprocess
 from collections import defaultdict
-from typing import Optional, Sequence
+from typing import Sequence
 
 import librosa
 import numpy as np
@@ -26,7 +26,7 @@ COPY_TO_LABELED = {"copyTo": ["Labeled.children"]}
 
 
 def format_tree_item(
-    item_type: str, arguments: Sequence, options: Optional[dict] = None
+    item_type: str, arguments: Sequence, options: dict | None = None
 ) -> TreeItem:
     item = {"type": item_type, "arguments": arguments}
     if options is not None:
@@ -34,16 +34,16 @@ def format_tree_item(
     return item
 
 
-def format_group(name: str, options: Optional[dict] = None) -> Group:
+def format_group(name: str, options: dict | None = None) -> Group:
     return format_tree_item("Group", [name], options)
 
 
-def format_peaks_group(name: str, options: Optional[dict] = None) -> PeaksGroup:
+def format_peaks_group(name: str, options: dict | None = None) -> PeaksGroup:
     return format_tree_item("PeaksGroup", [name], options)
 
 
 def format_segment(
-    start: float, end: float, color: str, label: str, options: Optional[dict] = None
+    start: float, end: float, color: str, label: str, options: dict | None = None
 ) -> Segment:
     # round start and end to save space in the json file and because many times from
     # the pyannote pipelines look like 5.3071874999999995 and 109.99968750000001

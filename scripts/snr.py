@@ -1,5 +1,4 @@
 import math
-from typing import Union
 
 import numpy as np
 
@@ -12,7 +11,7 @@ def rms(samples: np.ndarray) -> float:
     return float(np.sqrt(np.mean(np.square(samples))))
 
 
-def snr(signal: Union[np.ndarray, float], noise: Union[np.ndarray, float]) -> float:
+def snr(signal: np.ndarray | float, noise: np.ndarray | float) -> float:
     # https://en.m.wikipedia.org/wiki/Signal-to-noise_ratio
     signal_rms = rms(signal) if not isinstance(signal, float) else signal
     noise_rms = rms(noise) if not isinstance(noise, float) else noise
@@ -30,9 +29,7 @@ def snr(signal: Union[np.ndarray, float], noise: Union[np.ndarray, float]) -> fl
 # lower or higher than the true snr as true snr was lower or higher.
 # From limited testing on our real world data it seemed to not improve
 # any accuracy or correlations.
-def snr_with_linear_amp(
-    signal: Union[np.ndarray, float], noise: Union[np.ndarray, float]
-) -> float:
+def snr_with_linear_amp(signal: np.ndarray | float, noise: np.ndarray | float) -> float:
     # https://en.m.wikipedia.org/wiki/Signal-to-noise_ratio
     signal_rms = rms(signal) if not isinstance(signal, float) else signal
     noise_rms = rms(noise) if not isinstance(noise, float) else noise

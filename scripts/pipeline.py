@@ -1,7 +1,7 @@
 import argparse
 import importlib
 from pathlib import Path
-from typing import Any, Dict, List, TypedDict
+from typing import Any, TypedDict
 
 import yaml
 
@@ -25,10 +25,10 @@ NEXT_STEP_MSG = (
 # this isn't an actual class, just a type for type hinting
 class Step(TypedDict):
     script: str
-    arguments: Dict[str, Any]
+    arguments: dict[str, Any]
 
 
-def create_pipeline(steps: List[Step], on_error: str = "next_file"):
+def create_pipeline(steps: list[Step], on_error: str = "next_file"):
     # copy the dicts in the list because we're gonna add items to them
     steps = [step.copy() for step in steps]
     for step in steps:
@@ -78,8 +78,8 @@ def create_pipeline(steps: List[Step], on_error: str = "next_file"):
 @log.Timer(message="entire pipeline took {}")
 def run_pipeline(
     config_path: Path,
-    files: List[Path],
-    dirs: List[Path],
+    files: list[Path],
+    dirs: list[Path],
     on_error: str = "next_file",
 ):
     config_yaml = config_path.read_text()

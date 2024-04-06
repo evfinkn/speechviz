@@ -7,7 +7,7 @@ import pathlib
 import subprocess
 import sys
 import time
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Callable
 
 from loguru import logger
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     # Without __future__.annotations and this if statement, this file would error
     from loguru import Record
 
-    Patcher = Optional[Callable[[Record], None]] = None
+    Patcher = Callable[[Record], None] | None
 
 LOG_LEVELS = [
     "TRACE",
@@ -46,8 +46,8 @@ TIMING_LEVEL = logger.level(
 def setup_logging(
     level: LogLevel = "WARNING",
     *,
-    calling_file: str = None,
-    log_file_level: Optional[LogLevel] = "TRACE",
+    calling_file: str | None = None,
+    log_file_level: LogLevel = "TRACE",
     retention: Retention = 3,
 ):
     """Sets the minimum severity level of messages to output to stderr and sets up
@@ -290,9 +290,7 @@ class Timer:
     """
 
     # TODO: add format option for the time taken
-    def __init__(
-        self, message: Optional[str] = None, *, prec: int = 3, log: bool = True
-    ):
+    def __init__(self, message: str | None = None, *, prec: int = 3, log: bool = True):
         self.message = message
         self.prec = prec
         self.log_on_exit = log
@@ -324,8 +322,8 @@ class Timer:
     def log(
         self,
         *args,
-        message: Optional[str] = None,
-        prec: Optional[int] = None,
+        message: str | None = None,
+        prec: int | None = None,
         depth_: int = 0,
         **kwargs,
     ):
