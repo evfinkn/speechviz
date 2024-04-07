@@ -87,7 +87,6 @@ and database, run these 3 commands:
 
 ```bash
 npm run mkdir
-python3 scripts/db_init.py
 python3 scripts/init_fossil.py
 ```
 
@@ -122,7 +121,6 @@ cd speechviz
 ```bash
 npm install
 npm run mkdir
-python3 scripts/db_init.py
 python3 scripts/init_fossil.py
 ```
 

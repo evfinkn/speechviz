@@ -288,6 +288,36 @@ python3 scripts/maximize_news_numbers_and_threshold_accuracy.py
 
 This will output the average accuracy of all the LLM's news annotations compared to all the manual annotations at the file scripts/output/llmMatchPercentages.csv and you can see which is highest and use that.
 
+## Users
+
+To be able to use the interface, you must have an account. To create one, run
+
+```bash
+node server/db.js new user USERNAME PASSWORD
+```
+
+If `USERNAME` is an already existing user, no new account will be created. A user's
+password can be changed by running
+
+```bash
+node server/db.js update user USERNAME PASSWORD
+```
+
+Lastly, to remove a user, run
+
+```bash
+node server/db.js delete user USERNAME
+```
+
+One more utility provided by `db.js` is the `list` subcommand:
+
+```bash
+# list all usernames in the database
+node server/db.js list users
+# list all of the database's tables
+node server/db.js list tables
+```
+
 ## Interface
 
 The interface can only be accessed if the server is running. To start it, run
@@ -304,22 +334,9 @@ the server listens on port 3000. To specify a different port, run with `-- --por
 npm start -- --port=PORT
 ```
 
-Once you open up the interface, you will be greeted with a login page. The default
-login is username `user` and password `pass`. Other users can be created with
-
-```bash
-python3 scripts/db_user.py USERNAME PASSWORD
-```
-
-where `USERNAME` is the username of the new user and `PASSWORD` is the password to
-give them. If `USERNAME` is an already existing user, then the command will instead
-update their password. A user's password can also be changed by logging in as that
-user and navigating to `/change-password` (i.e. http://localhost:3000/change-password).
-If you'd like to remove a user, run the following:
-
-```bash
-python3 scripts/db_user.py --delete USERNAME
-```
+Once you open up the interface, you will be greeted with a login page. Enter your
+username and password to log in. If you don't have an account, see the [Users](#users)
+section.
 
 After logging in, you will be redirected to an index page containing a list of audio
 and video files. These are the files found in `data/audio` and `data/video`
