@@ -6,7 +6,7 @@
         <h3>
             An annotation tool for analyzing real-world auditory soundscapes
         </h3>
-        ![interface](/uploads/7815e2d5b3dd463d14d01923eb339510/interface.png)
+        ![interface](docs/interface.png)
     </center>
 </div>
 
