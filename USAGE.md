@@ -34,22 +34,19 @@ To process an audio (.mp3, .wav, .flac, .ogg, or .opus) file or a video
 ```bash
 # to process an audio file
 python3 scripts/process_audio.py data/audio/FILE
-# processing a video file is the same command, just a different directory
+# processing a video file or view is the same command, just a different directory
 python3 scripts/process_audio.py data/video/FILE
+python3 scripts/process_audio.py data/views/FILE
 ```
 
-While the file doesn't have to be in `data/audio` or `data/video`, if it is,
-it outputs the waveform and segments files into the appropriate directories used
-by the interface. Otherwise, the files are output to the same directory that the
-input file is in.
+The file must be in `data/audio`, `data/video`, or `data/views` for `process_audio.py`
+to process it. If one of those directories is passed as the argument, every file in the
+directory will be processed.
 
-Additionally, the path to a folder containing audio or video files can be passed
-as the first parameter, and process_audio will be run on each file.
-
-The script outputs a waveform file which contains the data used to visualize the
-waveform of the audio on the interface. It also outputs an annotations file
-which contains the annotations of when each unique speaker speaks, when voice
-activity occurs, and when the non-voice activity occurs. Lastly it outputs a
+The script outputs a waveform file to `data/waveforms` containing the data necessary to
+visualize the audio on the interface. It also outputs an annotations file to
+`data/annotations` containing the annotations of when each unique speaker speaks, when
+voice activity occurs, and when the non-voice activity occurs. Lastly, it outputs a
 stats file which contains various metrics about the file including but not
 limited to sampling rate, duration, number of speakers, and snr.
 
