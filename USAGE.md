@@ -7,7 +7,7 @@
   - [Processing](#processing)
     - [Audio and video files](#audio-and-video-files)
     - [VRS files](#vrs-files)
-    - [Speech recognition](#speech-recognition)
+    - [Speech to text](#speech-to-text)
     - [Face detection and clustering](#face-detection-and-clustering)
   - [University of Iowa specific](#university-of-iowa-specific)
     - [Add survey data to stats](#add-survey-data-to-stats)
@@ -96,26 +96,35 @@ python3 scripts/process_audio.py data/video/FILE_NAME.mp4
 
 Once finished, open it in the interface (which will automatically detect the pose file).
 
-### Speech recognition
+### Speech to text
 
-The following command will run speech recognition on a file:
+In order to run speech to text, you must have
+[`whisper.cpp`](https://github.com/ggerganov/whisper.cpp) and a model installed. This
+can be done on Linux by running
 
 ```bash
-# whisper.cpp requires 16-bit WAV files
-ffmpeg -i input.mp3 -ar 16000 -ac 1 -c:a pcm_s16le converted.wav
-# transcribe the audio file
-scripts/transcribe -ml 1 \
-    -m scripts/models/whisper-base.en.bin \
-    -f data/audio/converted.wav
+# in the speechviz directory
+git clone https://github.com/ggerganov/whisper.cpp
+cd whisper.cpp
+cp ../scripts/transcribe.cpp .
+mkdir -p ../scripts/models
+bash models/download-ggml-model.sh base.en
+make ggml.o whisper.o
+g++ -std=c++17 -O3 -Iexamples -fPIC -pthread \
+  transcribe.cpp ggml.o whisper.o -o ../scripts/transcribe
+mv models/ggml-base.en.bin ../scripts/models/whisper-base.en.bin
+cd ..
+rm -rf whisper.cpp
+```
+
+Then, speech to text can be run by
+
+```bash
+python3 scripts/transcribe_audio.py data/audio/FILE
 ```
 
 This requires the audio file to be `data/audio`. The transcription file is output
-to `data/transcripts`. Be sure to have downloaded the whisper model if not using
-our speechviz container that comes with it. To download the model, run
-
-```bash
-bash scripts/install_tools.sh
-```
+to `data/transcripts`.
 
 ### Face detection and clustering
 
