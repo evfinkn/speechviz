@@ -315,6 +315,21 @@ node server/db.js list users
 node server/db.js list tables
 ```
 
+## Annotations
+
+Annotations on the interface are stored in a version control system called
+[Fossil](https://fossil-scm.org/) (more info on the implementation can be found in the
+[versioning](docs/versioning-implementation.md) documentation). Fossil needs to be
+installed and initialized before the interface can be used. To do this, run
+
+```bash
+python3 scripts/init_fossil.py
+```
+
+This will install Fossil in the `data` directory and create a repository named
+`speechviz.fossil` in the same directory. If you've run this script before, it will
+not overwrite the existing repository.
+
 ## Interface
 
 The interface can only be accessed if the server is running. To start it, run
