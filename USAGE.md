@@ -26,7 +26,8 @@
 ## Processing
 
 All the Python scripts have a list of useful options that can be viewed by passing
-the `-h` option.
+the `-h` option. Note that many of the scripts that run on audio files can also run on
+video files.
 
 ### Audio and video files
 
@@ -62,9 +63,8 @@ move the file to `data/vrs` and run
 python3 scripts/extract_vrs_data.py data/vrs/FILE
 ```
 
-Unlike `process_audio.py`, the file must be in `data/vrs` for `extract_vrs_data.py`
-to work. The files are output to `data/graphical/FILE_NAME` where `FILE_NAME` is
-`FILE` without the extension.
+The file must be in `data/vrs` for `extract_vrs_data.py` to work. The files are output
+to `data/graphical/FILE_NAME` where `FILE_NAME` is `FILE` without the extension.
 
 The script extracts the videos from the eye-tracking, SLAM-left, SLAM-right, and
 RGB cameras; the audio from the microphones; the magnetometer data; the IMU-left
