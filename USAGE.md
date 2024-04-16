@@ -20,6 +20,9 @@
     - [Auto annotate news](#auto-annotate-news)
     - [Compare manual news annotation to LLM annotations](#compare-manual-news-annotation-to-llm-annotations)
     - [Maximize accuracy with different parameters](#maximize-accuracy-with-different-parameters)
+  - [Other scripts](#other-scripts)
+    - [Rename files](#rename-files)
+    - [Download pyannote models](#download-pyannote-models)
   - [Users](#users)
   - [Annotations](#annotations)
   - [Interface](#interface)
@@ -327,6 +330,36 @@ python3 scripts/maximize_news_numbers_and_threshold_accuracy.py
 ```
 
 This will output the average accuracy of all the LLM's news annotations compared to all the manual annotations at the file scripts/output/llmMatchPercentages.csv and you can see which is highest and use that.
+
+## Other scripts
+
+There are a couple of other small scripts that are useful.
+
+### Rename files
+
+`rename_files.py` replaces substrings in file names.
+
+```bash
+python3 scripts/rename_files.py old new
+```
+
+For example, if you have the files `audio/bbc.wav`, `waveforms/bbc-waveform.json`, and
+`annotations/bbc-annotations.json`, you can replace `bbc` with `npr` by running
+
+```bash
+python3 scripts/rename_files.py bbc npr
+```
+
+This will rename the files to `audio/npr.wav`, `waveforms/npr-waveform.json`, and
+`annotations/npr-annotations.json`.
+
+### Download pyannote models
+
+`download_models.py` downloads the pyannote models that speechviz uses. It is run
+without any arguments. The `PYANNOTE_AUTH_TOKEN` environment variable must be set (see
+[pyannote access](README.md#pyannote-access) for more information). This script is
+only useful if you are building speechviz in an image so that the models don't have
+to be downloaded every time the image is run.
 
 ## Users
 
