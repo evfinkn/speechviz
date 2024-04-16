@@ -5,10 +5,11 @@
 - [Usage](#usage)
   - [Contents](#contents)
   - [Processing](#processing)
-    - [Audio and video files](#audio-and-video-files)
+    - [Diarization and voice-activity detection](#diarization-and-voice-activity-detection)
     - [VRS files](#vrs-files)
     - [Speech to text](#speech-to-text)
     - [Face detection and clustering](#face-detection-and-clustering)
+    - [Extracting audio features](#extracting-audio-features)
   - [University of Iowa specific](#university-of-iowa-specific)
     - [Add survey data to stats](#add-survey-data-to-stats)
     - [Combine stats](#combine-stats)
@@ -29,7 +30,7 @@ All the Python scripts have a list of useful options that can be viewed by passi
 the `-h` option. Note that many of the scripts that run on audio files can also run on
 video files.
 
-### Audio and video files
+### Diarization and voice-activity detection
 
 To process an audio (.mp3, .wav, .flac, .ogg, or .opus) file or a video
 (.mp4 or .mov) file, run
@@ -212,6 +213,37 @@ too few, lower epsilon.
 This will make a few folders in a folder given to outputs. `Face-1` is faces that it
 found to be noise, and `Face0`, `Face1`, etc. are folders containing the faces it
 thinks are the same person.
+
+### Extracting audio features
+
+To extract audio features from a file, run
+
+```bash
+python3 scripts/extract_audio_features.py data/audio/FILE
+```
+
+This will output a file to `data/features/FILE_NAME-features.npz` where `FILE_NAME`
+is `FILE` without the extension. This file is a NumPy archive containing the features
+extracted from the audio file. To load the features, see
+[`numpy.load`](https://numpy.org/doc/stable/reference/generated/numpy.load.html). The
+features extracted are:
+
+- `spectral_centroid`
+- `spectral_bandwidth`
+- `spectral_rolloff`
+- `spectral_contrast`
+- `spectral_flatness`
+- `mfcc`
+- `amplitude_envelope`
+- `rms`
+- `zero_crossing_rate`
+
+These features maintain the number of channels. When the audio file has multiple
+channels, the script will also output the features for the audio converted to mono;
+these features have the suffix `_mono`.
+
+Other than `amplitude_envelope`, more on these features can be found in the
+[librosa documentation](https://librosa.org/doc/latest/feature.html).
 
 ## University of Iowa specific
 
