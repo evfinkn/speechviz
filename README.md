@@ -45,12 +45,12 @@ to use pyannote. You can do so by following these steps:
     also need to be accepted to use the new model and remove any models that are
     no longer needed."
 
-1. Login to or signup for https://huggingface.co/
+1. Login to or signup for <https://huggingface.co/>
 2. Visit each of the following and accept the user conditions:
-   - https://huggingface.co/pyannote/segmentation-3.0
-   - https://huggingface.co/pyannote/speaker-diarization-3.1
-   - https://huggingface.co/pyannote/voice-activity-detection
-3. Go to https://huggingface.co/settings/tokens and create an access token
+   - <https://huggingface.co/pyannote/segmentation-3.0>
+   - <https://huggingface.co/pyannote/speaker-diarization-3.1>
+   - <https://huggingface.co/pyannote/voice-activity-detection>
+3. Go to <https://huggingface.co/settings/tokens> and create an access token
 4. Set your `PYANNOTE_AUTH_TOKEN` environment variable to your access token
 
 ## Docker / Podman image
@@ -180,7 +180,7 @@ Then, to view the results on the interface, run
 npm start
 ```
 
-and open http://localhost:3000.  
+and open <http://localhost:3000>.  
 For a more in-depth usage guide, see [USAGE.md](USAGE.md).
 
 ## Troubleshooting

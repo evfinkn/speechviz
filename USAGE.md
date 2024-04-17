@@ -414,7 +414,7 @@ The interface can only be accessed if the server is running. To start it, run
 npm start
 ```
 
-and open http://localhost:3000 (or the IP address output in the console). By default,
+and open <http://localhost:3000> (or the IP address output in the console). By default,
 the server listens on port 3000. To specify a different port, run with `-- --port=PORT`
 (where `PORT` is the port you want the server to listen on):
 
