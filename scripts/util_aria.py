@@ -1,4 +1,3 @@
-import queue
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from typing import NamedTuple
@@ -6,7 +5,7 @@ from typing import NamedTuple
 import numpy as np
 import numpy.typing as npt
 from projectaria_tools.core.data_provider import VrsDataProvider
-from projectaria_tools.core.sensor_data import SensorData, SensorDataType, TimeDomain
+from projectaria_tools.core.sensor_data import SensorData, TimeDomain
 from projectaria_tools.core.stream_id import StreamId
 
 DEVICE_TIME = TimeDomain.DEVICE_TIME
@@ -122,46 +121,23 @@ def create_stream_array(
     return np.empty(dp.get_num_data(s_id), create_stream_dtype(dp, s_id, **kwargs))
 
 
-# Reimplementation of projectaria_tools' SensorDataIterator because for some
-# reason it doesn't work. Source code is here:
-# https://github.com/facebookresearch/projectaria_tools/blob/main/core/data_provider/SensorDataSequence.cpp
+# Wrapper around deliver_queued_sensor_data that avoids issues with streams having
+# having start times = -1. projectaria_tools fixes this in 1.4, so we can remove this
+# in the future.
 def generate_sensor_data(
     dp: VrsDataProvider, *, streams: list[StreamId] = None
 ) -> Iterator[SensorData]:
+    options = dp.get_default_deliver_queued_options()
+    options.deactivate_stream_all()
     if streams is None:
         streams = get_active_streams(dp)
     else:
         streams = [
             s_id for s_id in streams if dp.get_first_time_ns(s_id, DEVICE_TIME) != -1
         ]
-
-    data_queue = queue.PriorityQueue()
-
-    def enqueue(data: SensorData):
-        # Wrap in tuple to make the queue prioritize by time (earliest first)
-        data_queue.put((data.get_time_ns(DEVICE_TIME), data))
-
-    # Enqueue the first data point from each stream
-    for stream_id in streams:
-        data = dp.get_sensor_data_by_index(stream_id, 0)
-        # data_queue.put((data.get_time_ns(DEVICE_TIME), data))
-        enqueue(data)
-
-    # Have to use str(stream_id) because StreamId isn't hashable
-    next_indices = {str(stream_id): 1 for stream_id in streams}
-
-    while not data_queue.empty():
-        _, data = data_queue.get()
-        if data.sensor_data_type() != SensorDataType.NOT_VALID:
-            yield data
-
-        stream_id = data.stream_id()
-        next_index = next_indices[str(stream_id)]
-        if next_index < dp.get_num_data(stream_id):
-            next_data = dp.get_sensor_data_by_index(stream_id, next_index)
-            # data_queue.put((next_data.get_time_ns(DEVICE_TIME), next_data))
-            enqueue(next_data)
-            next_indices[str(stream_id)] += 1
+    for s_id in streams:
+        options.activate_stream(s_id)
+    return dp.deliver_queued_sensor_data(options)
 
 
 def first_time_ns(dp: VrsDataProvider, time_domain: TimeDomain = DEVICE_TIME) -> int:
