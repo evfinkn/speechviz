@@ -8,5 +8,5 @@ if auth_token is None:
         "To run the diarization and VAD pipelines, you need a PyAnnotate authentication"
         " token and to set the PYANNOTE_AUTH_TOKEN environment variable."
     )
-Pipeline.from_pretrained("pyannote/speaker-diarization@2.1", use_auth_token=auth_token)
+Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=auth_token)
 Pipeline.from_pretrained("pyannote/voice-activity-detection", use_auth_token=auth_token)

@@ -41,10 +41,14 @@ Speechviz is a tool to
 Before you can get started, you'll have to get an access token
 to use pyannote. You can do so by following these steps:
 
+[comment]: # "When changing one of these models, make sure to add any models that
+    also need to be accepted to use the new model and remove any models that are
+    no longer needed."
+
 1. Login to or signup for https://huggingface.co/
 2. Visit each of the following and accept the user conditions:
-   - https://huggingface.co/pyannote/segmentation
-   - https://huggingface.co/pyannote/speaker-diarization
+   - https://huggingface.co/pyannote/segmentation-3.0
+   - https://huggingface.co/pyannote/speaker-diarization-3.1
    - https://huggingface.co/pyannote/voice-activity-detection
 3. Go to https://huggingface.co/settings/tokens and create an access token
 4. Set your `PYANNOTE_AUTH_TOKEN` environment variable to your access token

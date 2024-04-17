@@ -168,8 +168,11 @@ def get_diarization(path: pathlib.Path, auth_token, num_speakers=None):
     if "diar_pipe" not in globals():  # diar_pipe hasn't been initialized yet
         logger.trace("Initializing diarization pipeline")
         with log.Timer("Initializing diarization pipeline took {}"):
+            # IMPORTANT: if you change the pipeline loaded here, change it in
+            #   download_models.py and update the models that need to be accepted in
+            #   README.md#pyannote-access
             diar_pipe = Pipeline.from_pretrained(
-                "pyannote/speaker-diarization-3.0", use_auth_token=auth_token
+                "pyannote/speaker-diarization-3.1", use_auth_token=auth_token
             )
 
     try:
@@ -215,6 +218,9 @@ def get_vad(path: pathlib.Path, auth_token, onset, offset):
     if "vad_pipe" not in globals():  # vad_pipe hasn't been initialized yet
         logger.trace("Initializing VAD pipeline")
         with log.Timer("Initializing VAD pipeline took {}"):
+            # IMPORTANT: if you change the pipeline loaded here, change it in
+            #   download_models.py and update the models that need to be accepted in
+            #   README.md#pyannote-access
             vad_pipe = Pipeline.from_pretrained(
                 "pyannote/voice-activity-detection", use_auth_token=auth_token
             )
