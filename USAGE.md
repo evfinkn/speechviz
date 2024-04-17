@@ -299,7 +299,7 @@ where data/audio/folder is the path to the folder containing all the separate au
 
 ## LLM
 
-For the LLM scripts, one must download a quantized LLM that uses the standard alpaca prompt template (or rewrite the prompts the scripts use to match your LLM's prompt). The exact model used when coding this (open-llama-7B-open-instruct.ggmlv3.q6_K.bin) can be downloaded here https://huggingface.co/TheBloke/open-llama-7b-open-instruct-GGML and should be placed in scripts/models.
+For the LLM scripts, one must download a quantized LLM that uses the standard alpaca prompt template (or rewrite the prompts the scripts use to match your LLM's prompt). The exact model used when coding this (open-llama-7B-open-instruct.ggmlv3.q6_K.bin) can be downloaded [here](https://huggingface.co/TheBloke/open-llama-7b-open-instruct-GGML) and should be placed in scripts/models.
 
 ### Auto annotate news
 
