@@ -4,7 +4,7 @@ import pathlib
 import shutil
 
 
-def rename_and_move_files(source_folder):
+def rename_and_move_files(source_folder: str):
     # Iterate through all files in the source folder (including subfolders)
     for root, _, files in os.walk(source_folder):
         for filename in files:

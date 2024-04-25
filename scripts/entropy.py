@@ -6,8 +6,12 @@ eps = np.finfo(np.float64).eps
 
 
 def energy_entropy(
-    y, sr, window: float = 0.03, overlap: float = 0.02, num_sub_frames: int = 10
-):
+    y: np.ndarray,
+    sr: float,
+    window: float = 0.03,
+    overlap: float = 0.02,
+    num_sub_frames: int = 10,
+) -> np.ndarray | float:
     """Calculates the energy entropy of an audio signal.
 
     Parameters
@@ -77,7 +81,13 @@ def energy_entropy(
     return entropy
 
 
-def spectral_entropy(y, sr, window=0.03, overlap=0.02, freq_range=(80, 8000)):
+def spectral_entropy(
+    y: np.ndarray,
+    sr: float,
+    size: float = 0.03,
+    overlap: float = 0.02,
+    freq_range: tuple[int, int] = (80, 8000),
+) -> np.ndarray | float:
     """Calculates the spectral entropy of an audio signal.
 
     Parameters
@@ -86,14 +96,14 @@ def spectral_entropy(y, sr, window=0.03, overlap=0.02, freq_range=(80, 8000)):
         The audio signal.
     sr : int
         Sample rate of the audio.
-    window : float
+    size : float
         Window size in seconds.
     overlap : float
         Window overlap in seconds.
     freq_range : tuple of 2 ints
         Frequency range in Hz.
     """
-    window = signal.windows.hamming(round(window * sr))
+    window = signal.windows.hamming(round(size * sr))
     overlap = round(overlap * sr)
 
     y = librosa.to_mono(y)

@@ -1,15 +1,18 @@
 import argparse
 import itertools
 import pathlib
+from collections.abc import Iterable, Sequence
 from typing import Literal
 
 import librosa
 import numpy as np
 import scipy.io.wavfile
 import scipy.signal
+from numpy.typing import NDArray
 
 import log
 import util
+from _types import FloatArray, NpFloat
 from log import logger
 
 Mode = Literal["trim", "pad"]
@@ -31,14 +34,14 @@ def pad_axis(
     **kwargs
         Additional arguments to pass to np.pad.
     """
-    pad_width = [(0, 0)] * arr.ndim
+    pad_width: list[tuple[int, int]] = [(0, 0)] * arr.ndim
     pad_width[axis] = axis_pad_width
     return np.pad(arr, pad_width, **kwargs)
 
 
 def load_audios(
     audio_paths: list[pathlib.Path], *, mono: bool = False
-) -> tuple[list[np.ndarray], int]:
+) -> tuple[list[np.ndarray], float]:
     """Loads multiple audio files.
     The audio files must all have the same sample rate.
 
@@ -78,11 +81,11 @@ def load_audios(
 def _get_best_corr_and_lag(
     i: int,
     j: int,
-    xcorr: np.ndarray,
-    xcorr_lags: np.ndarray,
-    bounds: np.ndarray,
+    xcorr: FloatArray,
+    xcorr_lags: NDArray[np.int64],
+    bounds: np.ndarray | None,
     threshold: float,
-) -> tuple[int, int]:
+) -> tuple[NpFloat, np.int64]:
     """
     Parameters
     ----------
@@ -102,8 +105,8 @@ def _get_best_corr_and_lag(
     """
 
     best_corr_index = np.argmax(xcorr)
-    best_corr = xcorr[best_corr_index]
-    best_lag = xcorr_lags[best_corr_index]
+    best_corr: NpFloat = xcorr[best_corr_index]
+    best_lag: np.int64 = xcorr_lags[best_corr_index]
 
     if bounds is None:
         return best_corr, best_lag
@@ -116,12 +119,12 @@ def _get_best_corr_and_lag(
     xcorr_guess_indices = np.where((lower <= xcorr_lags) & (xcorr_lags <= upper))
     if len(xcorr_guess_indices) == 0:
         return best_corr, best_lag
-    xcorr_guess = xcorr[xcorr_guess_indices]
-    xcorr_lags_guess = xcorr_lags[xcorr_guess_indices]
+    xcorr_guess: FloatArray = xcorr[xcorr_guess_indices]
+    xcorr_lags_guess: NDArray[np.int64] = xcorr_lags[xcorr_guess_indices]
 
     best_corr_guess_index = np.argmax(xcorr_guess)
-    best_corr_guess = xcorr_guess[best_corr_guess_index]
-    best_lag_guess = xcorr_lags_guess[best_corr_guess_index]
+    best_corr_guess: NpFloat = xcorr_guess[best_corr_guess_index]
+    best_lag_guess: np.int64 = xcorr_lags_guess[best_corr_guess_index]
 
     if abs(best_corr - best_corr_guess) / best_corr <= threshold:
         return best_corr_guess, best_lag_guess
@@ -129,7 +132,9 @@ def _get_best_corr_and_lag(
         return best_corr, best_lag
 
 
-def _remove_pairly_dependent(indices, corrs, *, exclude=None):
+def _remove_pairly_dependent(
+    indices: NDArray[np.intp], corrs: FloatArray, *, exclude: set[np.intp] | None = None
+) -> None:
     if exclude is None:
         exclude = set()
     for i, j in itertools.combinations(range(len(indices)), 2):
@@ -148,7 +153,12 @@ def _remove_pairly_dependent(indices, corrs, *, exclude=None):
             break  # break because recursive call will handle the rest
 
 
-def _recursive_calculate_lags(best_corr_indices, lags, final_lags, i):
+def _recursive_calculate_lags(
+    best_corr_indices: NDArray[np.intp],
+    lags: NDArray[np.int64],
+    final_lags: list[int | None],
+    i: int,
+):
     if final_lags[i] is not None:
         return final_lags[i]
     j = best_corr_indices[i]
@@ -158,8 +168,8 @@ def _recursive_calculate_lags(best_corr_indices, lags, final_lags, i):
 
 
 def get_audios_lags(
-    audios: list[np.ndarray],
-    bounds: list[tuple[int, int]] = None,
+    audios: Sequence[FloatArray],
+    bounds: Sequence[tuple[int, int]] | np.ndarray | None = None,
     threshold: float = 1 / 3,
 ) -> list[int]:
     """Get the lags between audios.
@@ -208,11 +218,15 @@ def get_audios_lags(
         bounds = np.asarray(bounds)
 
     if len(audios) == 2:
-        xcorr = scipy.signal.correlate(audios[0], audios[1], mode="full")
-        xcorr_lags = scipy.signal.correlation_lags(len(audios[0]), len(audios[1]))
+        xcorr: FloatArray = scipy.signal.correlate(  # type: ignore
+            audios[0], audios[1], mode="full"
+        )
+        xcorr_lags: NDArray[np.int64] = scipy.signal.correlation_lags(
+            len(audios[0]), len(audios[1])
+        )
         return [
             0,
-            _get_best_corr_and_lag(0, 1, xcorr, xcorr_lags, bounds, threshold)[1],
+            int(_get_best_corr_and_lag(0, 1, xcorr, xcorr_lags, bounds, threshold)[1]),
         ]
 
     square_shape = (len(audios),) * 2
@@ -220,7 +234,9 @@ def get_audios_lags(
     lags = np.zeros(square_shape, dtype=np.int64)
 
     for i, j in itertools.combinations(range(len(audios)), 2):
-        xcorr = scipy.signal.correlate(audios[i], audios[j], mode="full")
+        xcorr = scipy.signal.correlate(  # type: ignore
+            audios[i], audios[j], mode="full"
+        )
         xcorr_lags = scipy.signal.correlation_lags(len(audios[i]), len(audios[j]))
         best_corr, best_lag = _get_best_corr_and_lag(
             i, j, xcorr, xcorr_lags, bounds, threshold
@@ -230,38 +246,53 @@ def get_audios_lags(
         lags[j, i] = -lags[i, j]
 
     # Determine the best correlation for each audio
-    best_corr_index = np.argmax(corr, axis=1)
+    # Has the same shape as audios. Element i is the index of the audio that audio i
+    # has the best correlation with.
+    # np.intp is the same as np.int64 on 64-bit systems, np.int32 on 32-bit systems
+    best_corr_index: NDArray[np.intp] = np.argmax(corr, axis=1)
 
-    pairly_dependent = []
+    pairly_dependent: list[tuple[int, int]] = []
     for i, j in itertools.combinations(range(len(audios)), 2):
         if best_corr_index[i] == j and best_corr_index[j] == i:
             pairly_dependent.append((i, j))
 
-    depended_on_counts = dict(zip(*np.unique(best_corr_index, return_counts=True)))
+    # np.unique returns tuple[NDArray[intp], NDArray[intp]], zipping gives
+    # Iterator[tuple[intp, intp]], dict gives dict[intp, intp]
+    depended_on_counts: dict[np.intp, np.intp] = dict(
+        zip(*np.unique(best_corr_index, return_counts=True))
+    )
     if len(pairly_dependent) == 0:
         # Use the most depended on audio as the reference audio so there is less
         # recursion when computing the lags
-        ref_index = max(depended_on_counts, key=depended_on_counts.get)
+        ref_index = util.max_value(depended_on_counts)[0]
     else:
         # use the most depended on audio that is piarly dependent with another audio
         # as the reference audio and remove other pairly dependent audios by setting
         # their best correlation index to the next best correlation index for that
         # audio until it is no longer pairly dependent with another audio
-        ref_index = max(util.flatten(pairly_dependent), key=depended_on_counts.get)
+        # util.flatten gives Iterator[int], max gives int. The type error is because get
+        # returns None if the key is not found (which is not comparable), we ignore it
+        # because we know all of the items in pairly_dependent are in depended_on_counts
+        # (since being in pairly_dependent must mean they're depended on)
+        ref_index: np.intp = max(
+            util.flatten(pairly_dependent), key=depended_on_counts.get  # type: ignore
+        )
         if len(pairly_dependent) > 1:
             _remove_pairly_dependent(best_corr_index, corr, exclude={ref_index})
 
-    final_lags = [None] * len(audios)
+    final_lags: list[int | None] = [None] * len(audios)
     final_lags[ref_index] = 0
     for i in range(len(audios)):
         _recursive_calculate_lags(best_corr_index, lags, final_lags, i)
 
-    return final_lags
+    # Type ignore because we call _recursive_calculate_lags for every index i,
+    # and _recursive_calculate_lags sets final_lags[i] to an int if it's None
+    return final_lags  # type: ignore
 
 
 @log.Timer()
 def sync_audios(
-    audios: list[np.ndarray], lags: list[int], mode: Mode = "trim"
+    audios: Sequence[np.ndarray], lags: list[int], mode: Mode = "trim"
 ) -> list[np.ndarray]:
     """Synchronizes audios so that each starts and stops at the same real-world time.
 
@@ -328,7 +359,7 @@ def sync_audios(
     return synced
 
 
-def mix_audios(audios: list[np.ndarray]) -> np.ndarray:
+def mix_audios(audios: Sequence[np.ndarray]) -> np.ndarray:
     """Mixes audios into one mono audio.
 
     Parameters
@@ -345,7 +376,7 @@ def mix_audios(audios: list[np.ndarray]) -> np.ndarray:
     return np.add.reduce(audios) / len(audios)
 
 
-def overlay_audios(audios: list[np.ndarray]) -> np.ndarray:
+def overlay_audios(audios: Iterable[np.ndarray]) -> np.ndarray:
     """Overlays audios into a single audio, where each audio is a channel.
 
     Parameters
@@ -370,7 +401,7 @@ def overlay_audios(audios: list[np.ndarray]) -> np.ndarray:
 def main(
     audio_paths: list[pathlib.Path],
     output_path: pathlib.Path,
-    mode: str = "pad",
+    mode: Mode = "pad",
     mono: bool = False,
     reprocess: bool = False,
 ):
@@ -391,7 +422,7 @@ def main(
     scipy.io.wavfile.write(output_path, sr, synced_audio.T)
 
 
-def route_file(paths: list[pathlib.Path], output_path: pathlib.Path, **kwargs):
+def route_file(paths: Iterable[pathlib.Path], output_path: pathlib.Path, **kwargs):
     paths = [path.absolute() for path in paths]
     main(paths, output_path, **kwargs)
 

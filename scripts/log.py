@@ -7,11 +7,11 @@ import pathlib
 import subprocess
 import sys
 import time
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, ParamSpec, TypeVar
 
 from loguru import logger
 
-from _types import LogLevel, PathLike, Retention
+from _types import Command, LogLevel, PathLike, Retention
 from constants import DATA_DIR, LOGS_DIR
 
 if TYPE_CHECKING:
@@ -23,6 +23,11 @@ if TYPE_CHECKING:
     from loguru import Record
 
     Patcher = Callable[[Record], None] | None
+
+# ParamSpec is useful for type annotations when using decorators, allowing you to
+# return a function that takes the same arguments as the function passed in
+P = ParamSpec("P")
+R = TypeVar("R")  # return type
 
 LOG_LEVELS = [
     "TRACE",
@@ -80,8 +85,9 @@ def setup_logging(
         The ID of the sink for the log file, or None if no log file is being used.
 
     """
-    level = level.upper()
-    log_file_level = log_file_level.upper()
+    # pyright complains about re-assigning but we want case-insensitivity, so we ignore
+    level = level.upper()  # type: ignore
+    log_file_level = log_file_level.upper()  # type: ignore
     # can't log the invalid level messages because the logger isn't set up yet
     invalid_levels_messages = []
     if level not in LOG_LEVELS:
@@ -367,10 +373,10 @@ class Timer:
             **kwargs,
         )
 
-    def __call__(self, func):
+    def __call__(self, func: Callable[P, R]) -> Callable[P, R]:
         return self._wrap(func)
 
-    def _wrap(self, func: Callable) -> Callable:
+    def _wrap(self, func: Callable[P, R]) -> Callable[P, R]:
         log_on_exit = self.log_on_exit
         message = self.message
         if message is None:
@@ -383,7 +389,7 @@ class Timer:
         timer = type(self)(message, prec=self.prec, log=False)
 
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: P.args, **kwargs: P.kwargs):
             # Need to patch the function name and module because loguru retrieves them
             # from the stack frame, but @wraps doesn't change those, just the attributes
             # Basically, this fixes loguru saying `util:wrapper:{line}` instead of
@@ -443,7 +449,7 @@ def shorten_data_path(path: PathLike, max_length: int = 50) -> str:
 
 
 def run_and_log_subprocess(
-    args: list[str],
+    args: Command,
     *,
     check: bool = True,
     _level: LogLevel = "DEBUG",

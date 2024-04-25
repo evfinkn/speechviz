@@ -1,9 +1,11 @@
 import argparse
 import importlib
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, TypedDict
 
 import yaml
+from typing_extensions import NotRequired
 
 import log
 import util
@@ -26,6 +28,7 @@ NEXT_STEP_MSG = (
 class Step(TypedDict):
     script: str
     arguments: dict[str, Any]
+    run_step: NotRequired[Callable[[dict[str, Any]], Any]]
 
 
 def create_pipeline(steps: list[Step], on_error: str = "next_file"):
@@ -83,7 +86,7 @@ def run_pipeline(
     on_error: str = "next_file",
 ):
     config_yaml = config_path.read_text()
-    config = yaml.safe_load(config_yaml)
+    config: dict[str, Any] = yaml.safe_load(config_yaml)
 
     if files is None or len(files) == 0:
         files = config.get("files", [])
@@ -102,8 +105,7 @@ def run_pipeline(
     pipeline = create_pipeline(steps, on_error)
 
     files = list(util.expand_files(files, to_paths=True))
-    dirs = util.expand_files(dirs, to_paths=True)
-    for dir in dirs:
+    for dir in util.expand_files(dirs, to_paths=True):
         files.extend(dir.iterdir())
 
     errored_on = []

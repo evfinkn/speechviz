@@ -55,7 +55,7 @@ def get_latest_filename() -> str:
     return filename
 
 
-def download_fossil(filename: str, filepath: Path = None):
+def download_fossil(filename: str, filepath: Path | None = None):
     if filepath is None:
         filepath = Path(filename)
     fossil_url = f"https://fossil-scm.org/home/uv/{filename}"

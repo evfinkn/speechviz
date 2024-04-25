@@ -7,34 +7,54 @@ import itertools
 import random
 import re
 import subprocess
+from collections.abc import Iterable, Iterator, Mapping
+from enum import Enum
 from operator import itemgetter
 from pathlib import Path
-from typing import Iterable, Iterator, Sequence, TypeVar
+from typing import Final, Literal, Sequence, SupportsIndex, TypeVar, overload
 
 import numpy as np
+from numpy.typing import NDArray
 
 try:
     import orjson as json
 except ImportError:
     import json
 
-from _types import KeyFunc, List2D, PathLike
+from _types import (
+    JSON,
+    AnyNumberT,
+    KeyFunc,
+    List2D,
+    NpNumberT,
+    NumberT,
+    Sequence2D,
+    StrOrBytesPath,
+    StrPath,
+)
 from log import run_and_log_subprocess
 
 T = TypeVar("T")  #: Generic type variable.
+U = TypeVar("U")  #: Generic type variable.
 K = TypeVar("K")  #: Generic type variable for keys in a mapping.
 V = TypeVar("V")  #: Generic type variable for values in a mapping.
+# T or an iterable of (T or an iterable of (T or an iterable of ...))
+Nested = T | Iterable["Nested[T]"]
+# Use TypeVar versions so that the number types can't be mixed within the same sequence
+NumericData = AnyNumberT | Sequence[AnyNumberT] | NDArray[NpNumberT]
 
 
-class _Missing:
-    pass
+# Use Enum for singleton so typing with unions works. See
+# https://peps.python.org/pep-0484/#support-for-singleton-types-in-unions
+class _Missing(Enum):
+    token = 0
 
 
-_missing = _Missing()
+_missing: Final = _Missing.token
 
 
 def split_path_at(
-    path: PathLike, part: str, *, inclusive: bool = True
+    path: StrPath, part: str, *, inclusive: bool = True
 ) -> tuple[Path, Path]:
     """Split a path at a given part, returning the paths before and after.
 
@@ -75,7 +95,7 @@ def split_path_at(
     raise ValueError(f"{part} is not in the path {path}")
 
 
-def get_path_up_to(path: Path, part: str, *, inclusive: bool = True) -> Path:
+def get_path_up_to(path: StrPath, part: str, *, inclusive: bool = True) -> Path:
     """Get the path up to a given part.
 
     See Also
@@ -93,7 +113,7 @@ def get_path_up_to(path: Path, part: str, *, inclusive: bool = True) -> Path:
     return split_path_at(path, part, inclusive=inclusive)[0]
 
 
-def get_path_after(path: Path, part: str, *, inclusive: bool = True) -> Path:
+def get_path_after(path: StrPath, part: str, *, inclusive: bool = True) -> Path:
     """Get the path after a given part.
 
     See Also
@@ -111,9 +131,58 @@ def get_path_after(path: Path, part: str, *, inclusive: bool = True) -> Path:
     return split_path_at(path, part, inclusive=inclusive)[1]
 
 
+_StrPath = TypeVar("_StrPath", bound=StrPath)
+
+
+@overload
 def expand_files(
-    files: Iterable[PathLike], wildcard: bool = False, to_paths: bool = False
+    files: StrPath | Iterable[StrPath],
+    wildcard: Literal[True],
+    to_paths: Literal[False] = ...,
+) -> Iterator[str]:
+    ...
+
+
+@overload
+def expand_files(
+    files: _StrPath | Iterable[_StrPath],
+    wildcard: Literal[False] = ...,
+    to_paths: Literal[False] = ...,
+) -> Iterator[_StrPath]:
+    ...
+
+
+@overload
+def expand_files(
+    files: StrPath | Iterable[StrPath], wildcard: bool, to_paths: Literal[False] = ...
+) -> Iterator[StrPath]:
+    ...
+
+
+@overload
+def expand_files(
+    files: StrPath | Iterable[StrPath], wildcard: bool, to_paths: Literal[True]
 ) -> Iterator[Path]:
+    ...
+
+
+@overload
+def expand_files(
+    files: StrPath | Iterable[StrPath], *, to_paths: Literal[True]
+) -> Iterator[Path]:
+    ...
+
+
+@overload
+def expand_files(
+    files: StrPath | Iterable[StrPath], wildcard: bool = ..., to_paths: bool = ...
+) -> Iterator[StrPath]:
+    ...
+
+
+def expand_files(
+    files: StrPath | Iterable[StrPath], wildcard: bool = False, to_paths: bool = False
+) -> Iterator[StrPath]:
     """Generates an expanded list of files.
 
     Parameters
@@ -131,7 +200,9 @@ def expand_files(
         If `wildcard` is `False`, this function simply yields the files. Otherwise, this
         function yields the files expanded from the wildcards in the files.
     """
-    if isinstance(files, (str, Path)):
+    # StrPath is str | PathLike[str], so we can't *only* check for str and Path, hence
+    # the check for non-iterable. Checking str is separate because str is Iterable.
+    if isinstance(files, str) or not isinstance(files, Iterable):
         files = [files]
     if wildcard:
         # convert to str because glob doesn't work on Path
@@ -143,11 +214,11 @@ def expand_files(
 
 
 def ffmpeg(
-    input: str,
-    output: str,
+    input: StrOrBytesPath,
+    output: StrOrBytesPath,
     *,
-    input_options: list[str] | None = None,
-    output_options: list[str] | None = None,
+    input_options: Sequence[StrOrBytesPath] | None = None,
+    output_options: Sequence[StrOrBytesPath] | None = None,
     check: bool = True,
 ) -> subprocess.CompletedProcess:
     """Wrapper for the `ffmpeg` command.
@@ -172,7 +243,7 @@ def ffmpeg(
     subprocess.CompletedProcess
         The completed process containing info about the `ffmpeg` command that was run.
     """
-    args = ["ffmpeg", "-y"]
+    args: list[StrOrBytesPath] = ["ffmpeg", "-y"]
     if input_options:
         args.extend(input_options)
     args.extend(["-i", input])
@@ -183,11 +254,11 @@ def ffmpeg(
 
 
 def audiowaveform(
-    input: str,
-    output: str,
+    input: StrOrBytesPath,
+    output: StrOrBytesPath,
     *,
     split_channels: bool = False,
-    options: list[str] | None = None,
+    options: Sequence[StrOrBytesPath] | None = None,
     check: bool = True,
 ) -> subprocess.CompletedProcess:
     """Wrapper for the `audiowaveform` command.
@@ -212,7 +283,13 @@ def audiowaveform(
         The completed process containing info about the `audiowaveform` command
         that was run.
     """
-    args = ["audiowaveform", f"-i{input}", f"-o{output}", "-b", "8"]
+    args: list[StrOrBytesPath] = [
+        "audiowaveform",
+        f"-i{input}",
+        f"-o{output}",
+        "-b",
+        "8",
+    ]
     if split_channels:
         args.append("--split-channels")
     if options:
@@ -221,16 +298,19 @@ def audiowaveform(
 
 
 # functions that yield have return type Iterator (not Iterable)
-def flatten(arr: Iterable) -> Iterator:
+def flatten(arr: Iterable[Nested[T]]) -> Iterator[T]:
     for val in arr:
         if isinstance(val, Iterable) and not isinstance(val, str):
             yield from flatten(val)
         else:
-            yield val
+            # Pyright complains about val's type here. I'm pretty sure it's because of
+            # weird type narrowing because of the check for str above, but the check is
+            # necessary because str is Iterable and we don't want to flatten str.
+            yield val  # type: ignore
 
 
 # https://stackoverflow.com/a/26026189
-def get_nearest_index(array: Sequence[T], value: T) -> int:
+def get_nearest_index(array: Sequence[NumberT], value: NumberT) -> SupportsIndex:
     i = np.searchsorted(array, value)
     if i > 0 and (
         i == len(array) or np.abs(value - array[i - 1]) < np.abs(value - array[i])
@@ -283,29 +363,33 @@ def random_color_generator(seed: int | None = None) -> Iterator[str]:
         yield f"#{r:02x}{g:02x}{b:02x}"
 
 
-def sort_and_regroup(lists: List2D[T], key: KeyFunc[T] | None = None) -> List2D[T]:
+def sort_and_regroup(lists: Sequence2D[T], key: KeyFunc[T] | None = None) -> List2D[T]:
     flat = [(item, i) for i in range(len(lists)) for item in lists[i]]
 
     if key is None:
-        key = itemgetter(0)
+        key_on_first_item = itemgetter(0)
     else:
-        key = lambda item: key(item[0])  # noqa: E731
+        key_on_first_item = lambda item: key(item[0])  # noqa: E731
 
-    flat.sort(key=key)
+    flat.sort(key=key_on_first_item)
     grouped = itertools.groupby(flat, key=itemgetter(1))
     return [[item[0] for item in list(g)] for _, g in grouped]
 
 
 class AggregateData:
-    def __init__(self, data: Sequence, ignore_nan: bool = True):
+    def __init__(self, data: NumericData, ignore_nan: bool = True):
+        # data = np.asarray(data)
         self.data = data
 
-        if ignore_nan:
+        # The nan-versions ignore nans but throws an error if all values are nan, so
+        # we exclude that case.
+        if ignore_nan and not np.isnan(data).all():
             self.mean = np.nanmean(data, dtype=np.float64)
             self.median = np.nanmedian(data)
             self.std = np.nanstd(data, dtype=np.float64)
             self.max = np.nanmax(data)
             self.min = np.nanmin(data)
+        # The non-nan versions will return nan if there are any nans.
         else:
             self.mean = np.mean(data, dtype=np.float64)
             self.median = np.median(data)
@@ -314,7 +398,47 @@ class AggregateData:
             self.min = np.amin(data)
 
 
-def min_key(d: dict[K, V], default: tuple[K, V] | _Missing = _missing) -> tuple[K, V]:
+@overload
+def min_key(d: Mapping[K, V]) -> tuple[K, V]:
+    ...
+
+
+@overload
+def min_key(d: Mapping[K, V], *, default: T) -> tuple[K, V] | T:
+    ...
+
+
+@overload
+def max_key(d: Mapping[K, V]) -> tuple[K, V]:
+    ...
+
+
+@overload
+def max_key(d: Mapping[K, V], *, default: T) -> tuple[K, V] | T:
+    ...
+
+
+@overload
+def min_value(d: Mapping[K, V]) -> tuple[K, V]:
+    ...
+
+
+@overload
+def min_value(d: Mapping[K, V], *, default: T) -> tuple[K, V] | T:
+    ...
+
+
+@overload
+def max_value(d: Mapping[K, V]) -> tuple[K, V]:
+    ...
+
+
+@overload
+def max_value(d: Mapping[K, V], *, default: T) -> tuple[K, V] | T:
+    ...
+
+
+def min_key(d: Mapping[K, V], *, default: T | _Missing = _missing) -> tuple[K, V] | T:
     """Returns the item from `d` with the minimum key."""
     if len(d) == 0 and default is not _missing:
         return default
@@ -323,28 +447,28 @@ def min_key(d: dict[K, V], default: tuple[K, V] | _Missing = _missing) -> tuple[
     return min(d.items(), key=itemgetter(0))
 
 
-def max_key(d: dict[K, V], default: tuple[K, V] | _Missing = _missing) -> tuple[K, V]:
+def max_key(d: Mapping[K, V], *, default: T | _Missing = _missing) -> tuple[K, V] | T:
     """Returns the item from `d` with the maximum key."""
     if len(d) == 0 and default is not _missing:
         return default
     return max(d.items(), key=itemgetter(0))
 
 
-def min_value(d: dict[K, V], default: tuple[K, V] | _Missing = _missing) -> tuple[K, V]:
+def min_value(d: Mapping[K, V], *, default: T | _Missing = _missing) -> tuple[K, V] | T:
     """Returns the item from `d` with the minimum value."""
     if len(d) == 0 and default is not _missing:
         return default
     return min(d.items(), key=itemgetter(1))
 
 
-def max_value(d: dict[K, V], default: tuple[K, V] | _Missing = _missing) -> tuple[K, V]:
+def max_value(d: Mapping[K, V], *, default: T | _Missing = _missing) -> tuple[K, V] | T:
     """Returns the item from `d` with the maximum value."""
     if len(d) == 0 and default is not _missing:
         return default
     return max(d.items(), key=itemgetter(1))
 
 
-def recurse_load_json(obj: str | dict | list) -> dict | list:
+def recurse_load_json(obj: str | dict | list) -> JSON:
     """Recursively loads JSON contained in a string.
 
     This is preferred over `json.loads` because it can handle JSON strings
@@ -368,7 +492,7 @@ def recurse_load_json(obj: str | dict | list) -> dict | list:
     # use try in case obj is a string that isn't valid JSON
     try:
         if isinstance(obj, str):
-            obj: dict | list = json.loads(obj)
+            obj = json.loads(obj)
         # the next ifs aren't elifs because we want to include obj loaded from str above
         if isinstance(obj, dict):
             obj = {key: recurse_load_json(obj[key]) for key in obj}

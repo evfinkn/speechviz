@@ -1,6 +1,7 @@
 import argparse
 import csv
 import pathlib
+from collections.abc import MutableSequence, Sequence
 
 import log
 import util
@@ -17,12 +18,12 @@ def flatten_dirs_to_files(*paths: pathlib.Path):
     yield from util.flatten(file_paths)
 
 
-def extend_not_in(to_extend: list, extend_with: list):
+def extend_not_in(to_extend: MutableSequence, extend_with: Sequence):
     to_extend.extend([item for item in extend_with if item not in to_extend])
 
 
 def main(
-    paths: pathlib.Path,
+    paths: Sequence[pathlib.Path],
     output_path: pathlib.Path,
     reprocess: bool = False,
 ):
@@ -37,7 +38,8 @@ def main(
             reader = csv.DictReader(file)
             # we use a list instead of a set because we want to preserve the order,
             # but we don't want duplicates, hence the use of extend_not_in
-            extend_not_in(fieldnames, reader.fieldnames)
+            # Also, we use "or []" to satisfy pyright
+            extend_not_in(fieldnames, reader.fieldnames or [])
             for row in reader:  # read the data (this doesn't include the header row)
                 if row.get("file") is not None:
                     # this CSV is from a file that has already been combined, so we

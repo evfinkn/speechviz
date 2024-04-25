@@ -42,7 +42,7 @@ def route_dir(dir, scan_dir=True, **kwargs):
 def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
     if len(paths) == 0:
         # if no file or directory given, use directory script was called from
-        paths = [pathlib.Path.cwd()]
+        paths = (pathlib.Path.cwd(),)
     elif len(paths) > 1:
         for path in paths:
             route_file(path, scan_dir=scan_dir, **kwargs)

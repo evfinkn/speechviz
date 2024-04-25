@@ -11,7 +11,7 @@ from constants import AUDIO_EXTS, VIDEO_EXTS
 from log import logger
 
 
-def frames(num_frames: int, frame_length: int, hop_length: int):
+def frames(num_frames: int, frame_length: int, hop_length: int) -> tuple[slice, ...]:
     """Gets a sequence of slices to that can be used to frame an array.
 
     Parameters
@@ -53,7 +53,9 @@ def frames(num_frames: int, frame_length: int, hop_length: int):
     return tuple(slice(start, end) for start, end in zip(frame_start, frame_end))
 
 
-def amplitude_envelope(y: np.ndarray, *, n_fft=2048, hop_length=512):
+def amplitude_envelope(
+    y: np.ndarray, *, n_fft: int = 2048, hop_length: int = 512
+) -> np.ndarray:
     """Compute the amplitude envelope of a signal.
     The amplitude envelope is the maximum amplitude of each frame.
     Samples that don't fit into a full frame are still included.
@@ -97,16 +99,16 @@ def amplitude_envelope(y: np.ndarray, *, n_fft=2048, hop_length=512):
     return ae
 
 
-def route_dir(dir, scan_dir=True, **kwargs):
+def route_dir(dir, scan_dir: bool = True, **kwargs):
     logger.debug("Running extract_features on each file in {}", dir)
     for path in dir.iterdir():
         route_file(path, scan_dir=scan_dir, **kwargs)
 
 
-def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
+def route_file(*paths: pathlib.Path, scan_dir: bool = True, **kwargs):
     if len(paths) == 0:
         # if no file or directory given, use directory script was called from
-        paths = [pathlib.Path.cwd()]
+        paths = (pathlib.Path.cwd(),)
     # if multiple files (or directories) given, run function on each one
     elif len(paths) > 1:
         for path in paths:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+from collections.abc import Sequence
 
 import librosa
 import numpy as np
@@ -12,6 +13,7 @@ import scipy.signal
 import log
 import sync_audios
 import util
+from _types import StrOrBytesPath
 from log import logger
 
 
@@ -19,10 +21,10 @@ from log import logger
 # in one ffmpeg command is a lot quicker than separating them
 @log.Timer()
 def sync_and_hstack_videos(
-    video_paths: list[pathlib.Path],
-    offsets: list[float],
+    video_paths: Sequence[pathlib.Path],
+    offsets: Sequence[float],
     output_path: pathlib.Path,
-    audio_path: pathlib.Path = None,
+    audio_path: pathlib.Path | None = None,
 ):
     """Trims the videos and stacks them left-to-right in columns.
     This assumes that the videos have the same height (an error will be thrown by
@@ -52,7 +54,7 @@ def sync_and_hstack_videos(
     """
     if len(video_paths) < 2:
         raise Exception("video_paths must have at least 2 elements")
-    args = ["ffmpeg", "-y"]
+    args: list[StrOrBytesPath] = ["ffmpeg", "-y"]
 
     for video_path, offset in zip(video_paths, offsets):
         minutes, seconds = divmod(offset, 60)
@@ -85,8 +87,8 @@ def sync_and_hstack_videos(
 
 @log.Timer()
 def sync_poses(
-    pose_paths: list[pathlib.Path],
-    offsets: list[float],
+    pose_paths: Sequence[pathlib.Path],
+    offsets: Sequence[float],
     last_time: float,
     output_dir: pathlib.Path,
 ):
@@ -104,7 +106,9 @@ def sync_poses(
         np.savetxt(trimmed_pose_path, pose, fmt="%.15f", delimiter=",", header=header)
 
 
-def needs_reprocessed(output_dir: pathlib.Path, num_paths, reprocess=False):
+def needs_reprocessed(
+    output_dir: pathlib.Path, num_paths: int, reprocess: bool = False
+) -> tuple[bool, bool, bool]:
     audios_need_synced = not output_dir.exists() or reprocess
     videos_need_synced = not output_dir.exists() or reprocess
     poses_need_synced = not output_dir.exists() or reprocess
@@ -125,10 +129,10 @@ def needs_reprocessed(output_dir: pathlib.Path, num_paths, reprocess=False):
 
 @log.Timer()
 def sync_aria_data(
-    paths: list[pathlib.Path],
+    paths: Sequence[pathlib.Path],
     output_dir: pathlib.Path,
     reprocess: bool = False,
-    offsets: bool = True,
+    save_offsets: bool = True,
 ):
     """ """
     log.log_vars(
@@ -136,10 +140,8 @@ def sync_aria_data(
         paths=paths,
         output_dir=output_dir,
         reprocess=reprocess,
-        offsets=offsets,
+        save_offsets=save_offsets,
     )
-    save_offsets = offsets  # rename to save_offsets to avoid confusion
-
     needs_resynced = needs_reprocessed(output_dir, len(paths), reprocess)
     if not any(needs_resynced):
         logger.info("Paths have already been synced. To resync them, pass -r")
@@ -181,13 +183,13 @@ def sync_aria_data(
     sr = srs[0]
 
     lags = sync_audios.get_audios_lags(audios)
+    offsets = [lag / sr for lag in lags]
     synced_audios = sync_audios.sync_audios(audios, lags, mode="trim")
     mixed_audio = sync_audios.mix_audios(synced_audios)
     mixed_audio_path = output_dir / "microphones-mono.wav"
     scipy.io.wavfile.write(mixed_audio_path, sr, mixed_audio)
 
     if save_offsets:
-        offsets = [lag / sr for lag in lags]
         offsets_obj = {path.name: offset for path, offset in zip(paths, offsets)}
         with open(output_dir / "offsets.json", "w") as offsets_file:
             json.dump(offsets_obj, offsets_file)
@@ -215,7 +217,7 @@ def sync_aria_data(
         logger.info("Poses have already been synced. To reprocess them, pass -r")
 
 
-def route_file(paths: list[pathlib.Path], output_dir: pathlib.Path, **kwargs):
+def route_file(paths: Sequence[pathlib.Path], output_dir: pathlib.Path, **kwargs):
     # I know there's is_file but not is_dir felt safer in my mind idk why
     if any([not path.is_dir() for path in paths]):
         raise Exception("All paths must be paths to directories")
@@ -256,6 +258,7 @@ if __name__ == "__main__":
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Save the offsets between the recordings. Default is True.",
+        dest="save_offsets",  # change the name of the argument for clarity
     )
     log.add_log_level_argument(parser)
 

@@ -8,55 +8,106 @@ import pathlib
 import re
 import subprocess
 from collections import defaultdict
-from typing import Sequence
+from collections.abc import Iterator, MutableMapping, Sequence
+from typing import Any, Literal, overload
 
 import librosa
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
+from pyannote.core import Annotation as PyannoteAnnotation
+from pyannote.core import Segment as PyannoteSegment
+from pyannote.core.utils.types import Label, TrackName
 
 import entropy
 import log
 import snr
 import util
-from _types import Group, PeaksGroup, Segment, TreeItem
+from _types import (
+    Annotations,
+    FloatArray,
+    Group,
+    PeaksGroup,
+    PeaksSegment,
+    Segment,
+    Sequence2D,
+    TreeItem,
+)
 from constants import AUDIO_EXTS, VIDEO_EXTS
 from log import logger
+
+AnyDict = dict[str, Any]
+Track = tuple[PyannoteSegment, TrackName]
+LabeledTrack = tuple[PyannoteSegment, TrackName, Label]
+TimeRange = tuple[float, float]
 
 COPY_TO_LABELED = {"copyTo": ["Labeled.children"]}
 
 
+@overload
 def format_tree_item(
-    item_type: str, arguments: Sequence, options: dict | None = None
+    item_type: Literal["Group"], arguments: tuple[str], options: AnyDict | None = ...
+) -> Group:
+    ...
+
+
+@overload
+def format_tree_item(
+    item_type: Literal["PeaksGroup"],
+    arguments: tuple[str],
+    options: AnyDict | None = ...,
+) -> PeaksGroup:
+    ...
+
+
+@overload
+def format_tree_item(
+    item_type: Literal["Segment"],
+    arguments: tuple[PeaksSegment],
+    options: AnyDict | None = ...,
+) -> Segment:
+    ...
+
+
+def format_tree_item(
+    item_type: str, arguments: Sequence, options: AnyDict | None = None
 ) -> TreeItem:
-    item = {"type": item_type, "arguments": arguments}
+    item: TreeItem = {"type": item_type, "arguments": arguments}
     if options is not None:
         item["options"] = options
     return item
 
 
-def format_group(name: str, options: dict | None = None) -> Group:
-    return format_tree_item("Group", [name], options)
+def format_group(name: str, options: AnyDict | None = None) -> Group:
+    return format_tree_item("Group", (name,), options)
 
 
-def format_peaks_group(name: str, options: dict | None = None) -> PeaksGroup:
-    return format_tree_item("PeaksGroup", [name], options)
+def format_peaks_group(name: str, options: AnyDict | None = None) -> PeaksGroup:
+    return format_tree_item("PeaksGroup", (name,), options)
 
 
 def format_segment(
-    start: float, end: float, color: str, label: str, options: dict | None = None
+    start: float, end: float, color: str, label: str, options: AnyDict | None = None
 ) -> Segment:
     # round start and end to save space in the json file and because many times from
     # the pyannote pipelines look like 5.3071874999999995 and 109.99968750000001
     start = round(start, 7)
     end = round(end, 7)
-    peaks_seg = {"startTime": start, "endTime": end, "color": color, "labelText": label}
-    return format_tree_item("Segment", [peaks_seg], options)
+    peaks_seg: PeaksSegment = {
+        "startTime": start,
+        "endTime": end,
+        "color": color,
+        "labelText": label,
+    }
+    return format_tree_item("Segment", (peaks_seg,), options)
 
 
 # new complement times is changed to accept custom start and stop times
 # for processing whole view files of concat audio
-def get_complement_times(times, start_time, stop_time):
-    comp_times = []
+def get_complement_times(
+    times: Sequence[TimeRange], start_time: float, stop_time: float
+) -> list[TimeRange]:
+    comp_times: list[TimeRange] = []
     if len(times) == 0:
         comp_times.append((start_time, stop_time))
     else:
@@ -77,7 +128,7 @@ def get_complement_times(times, start_time, stop_time):
     return comp_times
 
 
-def flatten_times(times, num_samples, sr):
+def flatten_times(times, num_samples: int, sr: float) -> list[TimeRange]:
     is_in_times = np.full(num_samples, False)
     times = times[:]  # copy times
     for srange in librosa.time_to_samples(times, sr=sr):
@@ -101,13 +152,13 @@ def flatten_times(times, num_samples, sr):
     return times
 
 
-def get_times_duration(times):
+def get_times_duration(times: Sequence[TimeRange]) -> float:
     return np.sum(np.diff(times))
 
 
-def remove_overlapped(grouped, in_place=False):
-    if not in_place:
-        grouped = [group[:] for group in grouped]
+def remove_overlapped(grouped: Sequence2D[TimeRange]) -> list[list[TimeRange]]:
+    # Copy grouped so that we don't modify the original (and also for type hinting)
+    grouped = [list(group) for group in grouped]
     i = 1
     n = len(grouped)
     while i < n:
@@ -123,15 +174,18 @@ def remove_overlapped(grouped, in_place=False):
     return grouped
 
 
-def get_num_convo_turns(times):
+def get_num_convo_turns(times: Sequence2D[TimeRange]) -> int:
     grouped = util.sort_and_regroup(times)
     return len(remove_overlapped(grouped))
 
 
-def samples_from_times(times, samples, sr):
+def samples_from_times(
+    times: Sequence[TimeRange], samples: FloatArray, sr: float
+) -> NDArray[np.float64]:
     indices = (np.array(times) * sr).astype(int)
     if len(indices) == 0:
-        return []
+        # return [] # we have to return an ndarray instead
+        return np.empty(0)
     samps = np.empty(np.sum(np.clip(indices[:, 1] - indices[:, 0], 0, None)))
     offset = 0
     for start, stop in indices:
@@ -141,20 +195,34 @@ def samples_from_times(times, samples, sr):
     return samps
 
 
-def snr_from_times(signal_times, samples, sr, noise_rms):
+def snr_from_times(
+    signal_times: Sequence[TimeRange], samples: FloatArray, sr: float, noise_rms: float
+) -> float:
     signal_samps = samples_from_times(signal_times, samples, sr)
     return snr.snr(signal_samps, noise_rms)
 
 
 # Try applying a linear adjustment, to see if that makes it
 # more accurate and better correlations.
-def snr_with_linear_from_times(signal_times, samples, sr, noise_rms):
+def snr_with_linear_from_times(
+    signal_times: Sequence[TimeRange], samples: FloatArray, sr: float, noise_rms: float
+) -> float:
     signal_samps = samples_from_times(signal_times, samples, sr)
     return snr.snr_with_linear_amp(signal_samps, noise_rms)
 
 
+def itertracks(annot: PyannoteAnnotation) -> Iterator[Track]:
+    yield from annot.itertracks()  # type: ignore
+
+
+def itertracks_labeled(annot: PyannoteAnnotation) -> Iterator[LabeledTrack]:
+    yield from annot.itertracks(yield_label=True)  # type: ignore
+
+
 @log.Timer()
-def get_diarization(path: pathlib.Path, auth_token, num_speakers=None):
+def get_diarization(
+    path: pathlib.Path, auth_token: str, num_speakers: int | None = None
+) -> tuple[dict[str, list[Segment]], dict[str, list[TimeRange]]]:
     # use global diar_pipe so that it doesn't need
     # to be re-initialized (which is time-consuming)
     global diar_pipe
@@ -178,28 +246,29 @@ def get_diarization(path: pathlib.Path, auth_token, num_speakers=None):
     try:
         logger.trace("Running diarization pipeline")
         if num_speakers is not None:
-            diar = diar_pipe(path, num_speakers=num_speakers)
+            # Ignore "diar_pipe is possibly unbound" because we know it's bound above
+            diar: PyannoteAnnotation = diar_pipe(path, num_speakers=num_speakers)  # type: ignore # noqa: E501
         else:
-            diar = diar_pipe(path)
+            diar: PyannoteAnnotation = diar_pipe(path)  # type: ignore
     except ValueError:
         logger.warning("{} failed diarization or has no speakers.", path)
+        # spkrs_segs: dict[str, list[Segment]] = {}
+        # spkrs_times: dict[str, list[TimeRange]] = {}
         return (defaultdict(list), defaultdict(list))
+        # return (spkrs_segs, spkrs_times)
 
     logger.trace("Formatting diarization results as segments")
     # format the speakers segments for peaks
     colors = util.random_color_generator(seed=2)
     # dictionary to store speaker's colors. key = speaker, value = color
-    spkrs_colors = {}
-    spkrs_segs = defaultdict(list)
-    spkrs_times = defaultdict(list)
-    for turn, _, spkr in diar.itertracks(yield_label=True):
+    spkrs_colors: dict[str, str] = defaultdict(lambda: next(colors))
+    spkrs_segs: dict[str, list[Segment]] = defaultdict(list)
+    spkrs_times: dict[str, list[TimeRange]] = defaultdict(list)
+    for turn, _, spkr in itertracks_labeled(diar):
         start = turn.start
         end = turn.end
-        spkr = f"Speaker {int(spkr.split('_')[1]) + 1}"
-
-        if spkr not in spkrs_colors:
-            # each speaker has a color used for all of their segments
-            spkrs_colors[spkr] = next(colors)
+        # pyannoate diarization outputs str for spkr, so ignore the type error
+        spkr = f"Speaker {int(spkr.split('_')[1]) + 1}"  # type: ignore
 
         # don't need to give segment options because the speaker PeaksGroups handles it
         spkrs_segs[spkr].append(format_segment(start, end, spkrs_colors[spkr], spkr))
@@ -209,7 +278,12 @@ def get_diarization(path: pathlib.Path, auth_token, num_speakers=None):
 
 
 @log.Timer()
-def get_vad(path: pathlib.Path, auth_token, onset, offset):
+def get_vad(
+    path: pathlib.Path,
+    auth_token: str,
+    onset: float | None = None,
+    offset: float | None = None,
+) -> tuple[list[Segment], list[TimeRange]]:
     # use global vad_pipe so that it doesn't need
     # to be re-initialized (which is time-consuming)
     global vad_pipe
@@ -224,7 +298,8 @@ def get_vad(path: pathlib.Path, auth_token, onset, offset):
             vad_pipe = Pipeline.from_pretrained(
                 "pyannote/voice-activity-detection", use_auth_token=auth_token
             )
-    old_params = vad_pipe.parameters(instantiated=True)
+    # Ignore "vad_pipe is possibly unbound" because we know it's bound above
+    old_params = vad_pipe.parameters(instantiated=True)  # type: ignore
 
     new_params = {}
     if onset is not None:
@@ -233,15 +308,15 @@ def get_vad(path: pathlib.Path, auth_token, onset, offset):
         new_params["offset"] = offset
     # change default parameters of onset and offset if given
     old_params.update(new_params)
-    vad_pipe.instantiate(old_params)
+    vad_pipe.instantiate(old_params)  # type: ignore
 
     logger.trace("Running VAD pipeline")
-    vad = vad_pipe(path)
+    vad: PyannoteAnnotation = vad_pipe(path)  # type: ignore
     logger.trace("Formatting VAD results as segments")
     # format the vad segments for peaks
-    vad_segs = []
-    vad_times = []
-    for turn, _ in vad.itertracks():
+    vad_segs: list[Segment] = []
+    vad_times: list[TimeRange] = []
+    for turn, _ in itertracks(vad):
         start = turn.start
         end = turn.end
         # don't need to give segment options because the VAD PeaksGroup handles it
@@ -251,7 +326,7 @@ def get_vad(path: pathlib.Path, auth_token, onset, offset):
     return (vad_segs, vad_times)
 
 
-def get_auth_token(auth_token: str):
+def get_auth_token(auth_token: str | None) -> str:
     """Returns the pyannote authentication token.
     If `auth_token` is not `None`, it is returned. Otherwise, it is gotten from the
     `PPYANNOTE_AUTH_TOKEN` environment variable. If it is also `None`, and `Exception`
@@ -267,16 +342,16 @@ def get_auth_token(auth_token: str):
     return auth_token
 
 
-def route_dir(dir, scan_dir=True, **kwargs):
+def route_dir(dir: pathlib.Path, scan_dir: bool = True, **kwargs) -> None:
     logger.debug("Running process_audio on each file in {}", dir)
     for path in dir.iterdir():
         route_file(path, scan_dir=scan_dir, **kwargs)
 
 
-def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
+def route_file(*paths: pathlib.Path, scan_dir: bool = True, **kwargs) -> None:
     if len(paths) == 0:
         # if no file or directory given, use directory script was called from
-        paths = [pathlib.Path.cwd()]
+        paths = (pathlib.Path.cwd(),)
     # if multiple files (or directories) given, run function on each one
     elif len(paths) > 1:
         for path in paths:
@@ -302,7 +377,7 @@ def route_file(*paths: pathlib.Path, scan_dir=True, **kwargs):
             route_dir(path, scan_dir=False, **kwargs)
 
 
-def run_from_pipeline(args):
+def run_from_pipeline(args: MutableMapping) -> None:
     # args might be passed using - instead of _ since the command line arguments
     # use -. Normally, argparse changes them to _, so the other functions expect
     # _. Therefore, replace any dashes with underscores.
@@ -320,12 +395,12 @@ def run_from_pipeline(args):
 @log.Timer()
 def process_audio(
     path: pathlib.Path,
-    auth_token,
-    reprocess=False,
-    split_channels=False,
-    onset=None,
-    offset=None,
-    num_speakers=None,
+    auth_token: str,
+    reprocess: bool = False,
+    split_channels: bool = False,
+    onset: float | None = None,
+    offset: float | None = None,
+    num_speakers: int | None = None,
 ):
     log.log_vars(
         log_separate_=True,
@@ -429,8 +504,11 @@ def process_audio(
         # this is to allow for the stats to be calculated on the entire
         # file or a subsection like a run in a view
         def calc_stats(
-            filter_start=0, filter_stop=duration, stats_path=stats_path, entire=True
-        ):
+            filter_start: float = 0,
+            filter_stop: float = duration,
+            stats_path: pathlib.Path = stats_path,
+            entire: bool = True,
+        ) -> None:
             # Make sure it is only within the filter_start and filter_stop
             filtered_spkrs_times = {
                 spkr: [
@@ -487,7 +565,7 @@ def process_audio(
                 )
             )
 
-            non_vad_segs = []
+            non_vad_segs: list[Segment] = []
             non_vad_times = get_complement_times(
                 filtered_vad_times, filter_start, filter_stop
             )
@@ -571,9 +649,13 @@ def process_audio(
             #     for spkr in spkrs
             # }
 
+            # Defining non_main_diar_times outside the if statement is necessary so
+            # that pyright doesn't complain about it being unbound later. Could just
+            # use type: ignore comments there, but this is cleaner and better practice.
+            non_main_diar_times: list[TimeRange] = []
             if len(spkrs_snrs) != 0:
-                max_speaker = max(spkrs_snrs, key=spkrs_snrs.get)
-                non_main_spkr_spkrs = []
+                max_speaker = util.max_key(spkrs_snrs)[0]
+                non_main_spkr_spkrs: list[str] = []
                 for speaker in spkrs:
                     if speaker != max_speaker:
                         non_main_spkr_spkrs.append(speaker)
@@ -587,13 +669,11 @@ def process_audio(
                     non_main_diar_times, len(mono_samples), sr
                 )
 
-            noise_segs = []
+            noise_segs: list[Segment] = []
             for start, end in noise_times:
                 noise_segs.append(format_segment(start, end, "#092b12", "SNR-Noise"))
 
             logger.trace("Creating tree items for Speechviz")
-
-            tree_items = []
 
             spkrs_groups = []
             spkrs_children_options = COPY_TO_LABELED.copy()
@@ -633,7 +713,7 @@ def process_audio(
             # if this is the calc_stats being run on the entire file
             # (not individual runs of a view) save the segments
             if entire:
-                tree_items = {
+                tree_items: Annotations = {
                     "formatVersion": 3,
                     "annotations": [speakers, vad, non_vad, speech_pause],
                 }

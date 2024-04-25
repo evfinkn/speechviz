@@ -1,4 +1,6 @@
-from collections.abc import Iterable, Iterator
+from __future__ import annotations
+
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from typing import NamedTuple
 
@@ -8,7 +10,8 @@ from projectaria_tools.core.data_provider import VrsDataProvider
 from projectaria_tools.core.sensor_data import SensorData, TimeDomain
 from projectaria_tools.core.stream_id import StreamId
 
-DEVICE_TIME = TimeDomain.DEVICE_TIME
+_DEVICE_TIME = TimeDomain.DEVICE_TIME
+RawProperty = tuple[str, npt.DTypeLike]
 
 
 class Property(NamedTuple):
@@ -40,23 +43,25 @@ class StreamInfo:
     properties: tuple[Property, ...]
 
     @classmethod
-    def make(cls, id: str, name: str, properties: Iterable[tuple], timestamp=True):
+    def make(
+        cls, id: str, name: str, properties: Iterable[RawProperty], timestamp=True
+    ):
         props = [TIMESTAMP_PROPERTY] if timestamp else []
         props.extend(Property(*p) for p in properties)
         return cls(id, name, tuple(props))
 
-    def create_dtype(self):
+    def create_dtype(self) -> np.dtype:
         # remember that each property is just a tuple of (name, dtype)
         return np.dtype(list(self.properties))
 
-    def without(self, *names: str):
+    def without(self, *names: str) -> StreamInfo:
         return StreamInfo(
             self.id,
             self.name,
             tuple(p for p in self.properties if p.name not in names),
         )
 
-    def with_only(self, *names: str):
+    def with_only(self, *names: str) -> StreamInfo:
         return StreamInfo(
             self.id,
             self.name,
@@ -86,7 +91,10 @@ STREAM_INFO = {
 
 
 def get_stream_names(dp: VrsDataProvider) -> dict[str, str]:
-    return {
+    # get_label_from_stream_id has return type str | None (which is why we have a
+    # type ignore here), but we know that it will always return a str because we
+    # only pass in ids from get_all_streams which are guaranteed to have labels
+    return {  # pyright: ignore[reportReturnType]
         str(s_id): dp.get_label_from_stream_id(s_id) for s_id in dp.get_all_streams()
     }
 
@@ -95,7 +103,7 @@ def get_active_streams(dp: VrsDataProvider) -> list[StreamId]:
     return [
         s_id
         for s_id in dp.get_all_streams()
-        if dp.get_first_time_ns(s_id, DEVICE_TIME) != -1
+        if dp.get_first_time_ns(s_id, _DEVICE_TIME) != -1
     ]
 
 
@@ -103,9 +111,9 @@ def create_stream_dtype(
     dp: VrsDataProvider,
     s_id: StreamId,
     *,
-    stream_info: dict[str, StreamInfo] = STREAM_INFO,
-    without: Iterable[str] = None,
-    with_only: Iterable[str] = None,
+    stream_info: Mapping[str, StreamInfo] = STREAM_INFO,
+    without: Iterable[str] | None = None,
+    with_only: Iterable[str] | None = None,
 ) -> np.dtype:
     info = stream_info[str(s_id)]
     if without is not None:
@@ -116,16 +124,22 @@ def create_stream_dtype(
 
 
 def create_stream_array(
-    dp: VrsDataProvider, s_id: StreamId, **kwargs: dict[str, Iterable[str]]
+    dp: VrsDataProvider,
+    s_id: StreamId,
+    stream_info: Mapping[str, StreamInfo] = STREAM_INFO,
+    **kwargs: Iterable[str],
 ) -> np.ndarray:
-    return np.empty(dp.get_num_data(s_id), create_stream_dtype(dp, s_id, **kwargs))
+    return np.empty(
+        dp.get_num_data(s_id),
+        create_stream_dtype(dp, s_id, stream_info=stream_info, **kwargs),
+    )
 
 
 # Wrapper around deliver_queued_sensor_data that avoids issues with streams having
 # having start times = -1. projectaria_tools fixes this in 1.4, so we can remove this
 # in the future.
 def generate_sensor_data(
-    dp: VrsDataProvider, *, streams: list[StreamId] = None
+    dp: VrsDataProvider, *, streams: Iterable[StreamId] | None = None
 ) -> Iterator[SensorData]:
     options = dp.get_default_deliver_queued_options()
     options.deactivate_stream_all()
@@ -133,14 +147,14 @@ def generate_sensor_data(
         streams = get_active_streams(dp)
     else:
         streams = [
-            s_id for s_id in streams if dp.get_first_time_ns(s_id, DEVICE_TIME) != -1
+            s_id for s_id in streams if dp.get_first_time_ns(s_id, _DEVICE_TIME) != -1
         ]
     for s_id in streams:
         options.activate_stream(s_id)
     return dp.deliver_queued_sensor_data(options)
 
 
-def first_time_ns(dp: VrsDataProvider, time_domain: TimeDomain = DEVICE_TIME) -> int:
+def first_time_ns(dp: VrsDataProvider, time_domain: TimeDomain = _DEVICE_TIME) -> int:
     # We only use the first time from some streams because for some reason 231-1
     # (the microphones) sometimes have a way earlier first time (and all of its
     # records are at the same time) than the other streams
@@ -155,7 +169,7 @@ def get_stream_data(
     dp: VrsDataProvider,
     streams: Iterable[StreamId] | StreamId,
     *,
-    stream_info: dict[str, StreamInfo] = STREAM_INFO,
+    stream_info: Mapping[str, StreamInfo] = STREAM_INFO,
 ) -> dict[str, np.ndarray]:
     if isinstance(streams, StreamId):
         streams = (streams,)
