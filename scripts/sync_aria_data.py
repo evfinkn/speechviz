@@ -247,13 +247,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "-r",
         "--reprocess",
-        action=util.BooleanOptionalAction,  # allows --no-reprocess
+        action=argparse.BooleanOptionalAction,  # allows --no-reprocess
         default=False,
         help="Reprocess VRS files detected to have already been processed.",
     )
     parser.add_argument(
         "--offsets",
-        action=util.BooleanOptionalAction,
+        action=argparse.BooleanOptionalAction,
         default=True,
         help="Save the offsets between the recordings. Default is True.",
     )

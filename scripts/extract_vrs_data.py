@@ -742,13 +742,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "-r",
         "--reprocess",
-        action=util.BooleanOptionalAction,  # allows --no-reprocess
+        action=argparse.BooleanOptionalAction,  # allows --no-reprocess
         default=False,
         help="Reprocess VRS files detected to have already been processed.",
     )
     parser.add_argument(
         "--calib",
-        action=util.BooleanOptionalAction,
+        action=argparse.BooleanOptionalAction,
         default=True,
         help="Save the calibration data required for create_poses.py. Default is True.",
     )
@@ -757,7 +757,7 @@ if __name__ == "__main__":
     #                     help="Don't add the headers to the CSV files")
     # parser.add_argument(
     #     "--rename",
-    #     action=util.BooleanOptionalAction,
+    #     action=argparse.BooleanOptionalAction,
     #     default=True,
     #     help=(
     #         "Rename the audio and video files from the stream's id to the stream's "
@@ -766,7 +766,7 @@ if __name__ == "__main__":
     # )
     parser.add_argument(
         "--move",
-        action=util.BooleanOptionalAction,
+        action=argparse.BooleanOptionalAction,
         default=False,
         help=(
             "Moves the extracted files to their respective data folders, i.e. the audio"
@@ -781,13 +781,13 @@ if __name__ == "__main__":
     #                     help="Save the data's timestamps in nanoseconds")
     parser.add_argument(
         "--images",
-        action=util.BooleanOptionalAction,
+        action=argparse.BooleanOptionalAction,
         default=False,
         help="Save the cameras' image files. Default is False.",
     )
     parser.add_argument(
         "--metadata",
-        action=util.BooleanOptionalAction,
+        action=argparse.BooleanOptionalAction,
         default=False,
         help="Save the metadata.jsons file. Default is False.",
     )

@@ -333,7 +333,7 @@ if __name__ == "__main__":
     #                     help="Don't add the headers to the CSV files")
     parser.add_argument(
         "--positions",
-        action=util.BooleanOptionalAction,
+        action=argparse.BooleanOptionalAction,
         default=False,
         help=(
             "Whether to calculate positions. Note that the calculation currently isn't"

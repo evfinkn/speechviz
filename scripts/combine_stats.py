@@ -71,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-r",
         "--reprocess",
-        action=util.BooleanOptionalAction,
+        action=argparse.BooleanOptionalAction,
         default=False,
         help='Recombine the stats even if "output" already exists. Default is False.',
     )
