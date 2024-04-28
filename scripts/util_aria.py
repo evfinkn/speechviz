@@ -1,17 +1,233 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator, Mapping
+import json
+import os
+import tempfile
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from typing import NamedTuple
 
+import cv2
 import numpy as np
 import numpy.typing as npt
+from moviepy.audio.io.AudioFileClip import AudioFileClip
+from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
+from projectaria_tools.core import calibration, data_provider, vrs
 from projectaria_tools.core.data_provider import VrsDataProvider
 from projectaria_tools.core.sensor_data import SensorData, TimeDomain
 from projectaria_tools.core.stream_id import StreamId
 
+from _types import StrPath
+
 _DEVICE_TIME = TimeDomain.DEVICE_TIME
 RawProperty = tuple[str, npt.DTypeLike]
+
+
+class AudioExtractionError(Exception):
+    """Exception raised when audio extraction from a VRS file fails."""
+
+    ...
+
+
+class VrsAudioClip(AudioFileClip):
+    """Audio clip created from a VRS file.
+
+    A `moviepy` `AudioClip` whose audio is extracted from a VRS file.
+
+    Examples
+    --------
+    >>> from util_aria import VrsAudioClip
+    >>> with VrsAudioClip("path/to/vrs/file.vrs") as clip:
+    ...     clip.write_audiofile("output.wav")
+    """
+
+    def __init__(self, vrs_path: StrPath):
+        """Create an `AudioClip` from a VRS file.
+
+        Parameters
+        ----------
+        vrs_path : StrPath
+            Path to the VRS file that contains the audio stream.
+
+        Raises
+        ------
+        AudioExtractionError
+            If the audio extraction fails.
+        """
+
+        # Code for extracting audio is from
+        # https://github.com/facebookresearch/projectaria_tools/blob/35d071c/projectaria_tools/utils/vrs_to_mp4.py#L32
+        vrs_fspath = os.fspath(vrs_path)
+        self._fspath = vrs_fspath  # This is mostly for parity with the other classes
+        self._temp_folder = tempfile.TemporaryDirectory()
+        temp_folder_fspath = os.path.join(self._temp_folder.name, "audio.wav")
+
+        json_output_string = vrs.extract_audio_track(vrs_fspath, temp_folder_fspath)
+        json_output = json.loads(json_output_string)  # Convert string to Dict
+        if not json_output and json_output["status"] != "success":
+            raise AudioExtractionError(
+                f"Audio extraction failed with status {json_output['status']}"
+            )
+
+        audio_fspath = json_output["output"]
+        super().__init__(audio_fspath)
+
+    def close(self):
+        super().close()
+        self._temp_folder.cleanup()
+
+
+class VrsVideoClip(ImageSequenceClip):
+    """Video clip created from a VRS file.
+
+    A `moviepy` `VideoClip` whose frames are extracted from a VRS file video stream.
+
+    Examples
+    --------
+    >>> from projectaria_tools.core.stream_id import StreamId
+    >>> from util_aria import VrsVideoClip
+    >>> with VrsVideoClip("path/to/vrs/file.vrs", StreamId("214-1")) as clip:
+    ...     clip.write_videofile("output.mp4")
+    """
+
+    def __init__(self, path: StrPath, stream_id: StreamId, *, audio=True):
+        """
+        Parameters
+        ----------
+        path : StrPath
+            Path to the VRS file that contains the video stream.
+        stream_id : StreamId
+            The ID of the video stream to extract. Common video stream IDs are
+
+            - `"214-1"` for the RGB camera,
+            - `"1201-1"` for the left SLAM camera, and
+            - `"1201-2"` for the right SLAM camera.
+
+        audio : bool, default=True
+            If True, the audio track will be extracted from the VRS file and added to
+            the video clip. If the audio extraction fails, the video clip will be
+            created without audio.
+        """
+        fspath = os.fspath(path)
+        dp: VrsDataProvider = data_provider.create_vrs_data_provider(fspath)
+        self._fspath = fspath
+        self._dp = dp
+        self._stream_id = stream_id
+
+        deliver_queue_options = dp.get_default_deliver_queued_options()
+        deliver_queue_options.deactivate_stream_all()
+        deliver_queue_options.activate_stream(stream_id)
+        deliver_queue = dp.deliver_queued_sensor_data(deliver_queue_options)
+
+        fps = int(dp.get_nominal_rate_hz(stream_id))
+        frames = list(map(self._frame, deliver_queue))
+
+        super().__init__(frames, fps=fps)
+
+        if audio:
+            try:
+                self.audio = VrsAudioClip(fspath)
+            except Exception:
+                pass  # ignore if audio extraction fails
+
+    def _frame(self, sensor_data: SensorData) -> np.ndarray:
+        img = sensor_data.image_data_and_record()[0].to_numpy_array()
+        if img.ndim == 2:
+            # Convert grayscale image to RGB since moviepy requires RGB images
+            return cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        return img.copy()
+
+
+class UndistortVrsVideoTransform:
+    """Callable transform that undistorts a `VrsVideoClip`'s frames.
+
+    This transform is meant to be used with `moviepy`'s `VideoClip`'s `fl` and
+    `fl_image` methods.
+
+    Examples
+    --------
+    >>> from projectaria_tools.core.stream_id import StreamId
+    >>> from util_aria import VrsVideoClip, UndistortVrsVideoTransform
+    >>> vrs_path = "path/to/vrs/file.vrs"
+    >>> stream_id = StreamId("214-1")
+    >>> with VrsVideoClip(vrs_path, stream_id) as clip:
+    ...     undistort_transform = UndistortVrsVideoTransform.from_clip(clip)
+    ...     clip.fl(undistort_transform)
+    ...     clip.write_videofile("undistorted.mp4")
+    """
+
+    @classmethod
+    def from_clip(cls, clip: VrsVideoClip, *, rotate: bool = True):
+        """Create an `UndistortVrsVideoTransform` from a `VrsVideoClip`.
+
+        Parameters
+        ----------
+        clip : VrsVideoClip
+            The video clip to undistort.
+        rotate : bool, default=True
+            If True, the undistorted video will be rotated 90 degrees clockwise.
+
+        Returns
+        -------
+        UndistortVrsVideoTransform
+        """
+        return cls(clip._fspath, clip._stream_id, rotate=rotate)
+
+    def __init__(self, path: StrPath, stream_id: StreamId, *, rotate: bool = True):
+        """
+        Parameters
+        ----------
+        path : StrPath
+            Path to the VRS file that contains the video stream.
+        stream_id : StreamId
+            The ID of the video stream being transformed. Common video stream IDs are
+
+            - `"214-1"` for the RGB camera,
+            - `"1201-1"` for the left SLAM camera, and
+            - `"1201-2"` for the right SLAM camera.
+
+        rotate : bool, default=True
+            If True, the undistorted video will be rotated 90 degrees clockwise.
+
+        Raises
+        ------
+        ValueError
+            If the stream does not have a label or calibration in the VRS file.
+        """
+        self._stream_id = stream_id
+        self._rotate = rotate
+
+        fspath = os.fspath(path)
+        dp: VrsDataProvider = data_provider.create_vrs_data_provider(fspath)
+        self._dp = dp
+
+        stream_label = dp.get_label_from_stream_id(stream_id)
+        if stream_label is None:
+            raise ValueError(f"Stream {stream_id} does not have a label")
+
+        sensor_calib = dp.get_sensor_calibration(stream_id)
+        if sensor_calib is None:
+            raise ValueError(f"Stream {stream_id} does not have a calibration")
+        self._calib = sensor_calib.camera_calibration()
+
+        width, height = self._calib.get_image_size()
+        width, height = int(width * 1.25), int(height * 1.25)
+        focal_length = self._calib.get_focal_lengths()[0]
+        transform = self._calib.get_transform_device_camera()
+        self._linear = calibration.get_linear_camera_calibration(
+            width, height, focal_length, stream_label, transform
+        )
+
+    def __call__(
+        self, get_frame: Callable[[float], np.ndarray], t: float
+    ) -> np.ndarray:
+        frame = get_frame(t)
+        undistorted = calibration.distort_by_calibration(
+            frame, self._linear, self._calib
+        )
+        if self._rotate:
+            return np.rot90(undistorted, -1)
+        return undistorted
 
 
 class Property(NamedTuple):
