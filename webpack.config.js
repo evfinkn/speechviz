@@ -7,6 +7,7 @@ export default {
   entry: {
     init: "./src/init.js",
     index: "./src/index.js",
+    vizrects: "./src/vizrects.js",
   },
   stats: "errors-only",
   output: {

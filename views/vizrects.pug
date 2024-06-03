@@ -1,0 +1,14 @@
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    //- meta(http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate")
+    //- meta(http-equiv="Pragma", content="no-cache")
+    //- meta(http-equiv="Expires", content="0")
+    title Speechviz
+    link(rel="icon", href="data:,")
+  body(style="display: flex")
+    video#video(controls="controls", style="width: 25%")
+      source(src="video/output.mp4", type="video/mp4")
+      | Your browser does not support the video tag.
+    #container(style="width: 75%")
+    script(type="application/javascript", src="/js/vizrects.js")

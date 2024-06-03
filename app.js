@@ -22,6 +22,7 @@ import index from "./routes/index-route.js";
 import login from "./routes/login-route.js";
 import settings from "./routes/settings-route.js";
 import viz from "./routes/viz-route.js";
+import vizrects from "./routes/vizrects-route.js";
 
 const app = express();
 
@@ -83,6 +84,7 @@ app.use("/viz", viz);
 app.use("/login", login);
 app.use("/change-password", changePassword);
 app.use("/settings", settings);
+app.use("/vizrects", vizrects);
 
 app.get("/logout", (req, res) => {
   req.session.authenticated = false;
