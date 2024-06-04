@@ -189,6 +189,8 @@ def samples_from_times(
     samps = np.empty(np.sum(np.clip(indices[:, 1] - indices[:, 0], 0, None)))
     offset = 0
     for start, stop in indices:
+        # Ensure stop does not exceed the length of the samples array
+        stop = min(stop, len(samples))
         to = offset + stop - start if stop - start >= 0 else offset
         samps[offset:to] = samples[start:stop]
         offset = to
@@ -344,6 +346,7 @@ def get_auth_token(auth_token: str | None) -> str:
 
 def route_dir(dir: pathlib.Path, scan_dir: bool = True, **kwargs) -> None:
     logger.debug("Running process_audio on each file in {}", dir)
+    print(dir)
     for path in dir.iterdir():
         route_file(path, scan_dir=scan_dir, **kwargs)
 
@@ -401,6 +404,7 @@ def process_audio(
     onset: float | None = None,
     offset: float | None = None,
     num_speakers: int | None = None,
+    no_diar: bool = False,
 ):
     log.log_vars(
         log_separate_=True,
@@ -410,6 +414,7 @@ def process_audio(
         onset=onset,
         offset=offset,
         num_speakers=num_speakers,
+        no_diar=no_diar,
     )
 
     for ancestor in path.parents:
@@ -493,13 +498,24 @@ def process_audio(
 
         # Do speaker diarization (just make spkrs_segs and
         # spkrs_times only take before and after filter_start and filter_stop)
-        spkrs_segs, spkrs_times = get_diarization(
-            path, auth_token, num_speakers=num_speakers
-        )
+        if not no_diar:
+            spkrs_segs, spkrs_times = get_diarization(
+                path, auth_token, num_speakers=num_speakers
+            )
+        else:
+            spkrs_segs, spkrs_times = defaultdict(list), defaultdict(list)
 
         # Do vad (just make spkrs_segs and spkrs_times only take before and
         # after filter_start and filter_stop)
         vad_segs, vad_times = get_vad(path, auth_token, onset, offset)
+
+        vad_rms = snr.rms(samples_from_times(vad_times, mono_samples, sr))
+        non_vads_rms = snr.rms(
+            samples_from_times(
+                get_complement_times(vad_times, 0, duration), mono_samples, sr
+            )
+        )
+        all_rms = snr.rms(mono_samples)
 
         # this is to allow for the stats to be calculated on the entire
         # file or a subsection like a run in a view
@@ -546,10 +562,11 @@ def process_audio(
             filtered_vad_times = list(
                 filter(
                     lambda tr: filter_start <= tr[0] <= filter_stop
-                    and filter_start <= tr[1] <= filter_stop,
+                    and (filter_start <= tr[1] <= filter_stop or (tr[1] > duration)),
                     vad_times,
                 )
             )
+
             filtered_vad_segs = [
                 segment
                 for segment in vad_segs
@@ -833,6 +850,9 @@ def process_audio(
             stats = {
                 "sampling_rate": sr,
                 "duration": filter_stop - filter_start,
+                "rms": all_rms,
+                "vad_rms": vad_rms,
+                "non_vad_rms": non_vads_rms,
                 "num_speakers": num_speakers,
                 "num_convo_turns": get_num_convo_turns(
                     list(filtered_spkrs_times.values())
@@ -1005,6 +1025,11 @@ if __name__ == "__main__":
         "--num-speakers",
         type=int,
         help="Number of speakers if known from face clustering",
+    )
+    parser.add_argument(
+        "--no-diar",
+        action="store_true",
+        help="Don't process diarization, which takes longer than vad",
     )
     log.add_log_level_argument(parser)
 
