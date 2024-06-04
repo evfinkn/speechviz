@@ -13,5 +13,10 @@ block content
     legend(style="font-size: 20px")
     | Select which cluster for #{ video } you'd like to view:
     fieldset#face-selection
+      - faces.sort((a, b) => {
+      - const numA = parseInt(a.match(/-?\d+/));
+      - const numB = parseInt(b.match(/-?\d+/));
+      - return numA - numB;
+      - })
       each face in faces
         +urlRadio("face-selection", face, `/clustered-faces/${video}/${face}`)
