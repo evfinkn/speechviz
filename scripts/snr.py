@@ -12,6 +12,7 @@ def rms(samples: FloatSequence) -> float:
     # but is not JSON serializable. So we cast it to a float.
     if len(samples) == 0:
         return 0
+    samples = np.asarray(samples, dtype=np.float64)
     return float(np.sqrt(np.mean(np.square(samples))))
 
 
