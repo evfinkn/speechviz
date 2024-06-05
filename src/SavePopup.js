@@ -139,12 +139,14 @@ const SavePopup = class SavePopup {
     const message = this.commitMessageTextarea.value;
 
     const analysisChildren = TreeItem.byId.Analysis.children;
+    // TODO add active face annotation to end
     const annotations = {
       formatVersion: 3,
       annotations: analysisChildren
         .map((child) => child.toObject())
         .filter((obj) => obj), // filter out nulls
       notes: document.getElementById("notes").value,
+      // active_faces: [],
     };
 
     const annotsFile = getUrl(

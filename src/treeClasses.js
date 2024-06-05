@@ -77,6 +77,21 @@ const getMaxValueEntry = (countsMap) => {
  * @prop {string} [id] - The segment identifier.
  */
 
+/**
+ * Object containing options for a FaceCheckBox.
+ * @typedef {Object} FaceCheckBoxOptions
+ * @prop {number} group - The group of faces this face checkbox belongs to.
+ * @prop {number} x1 - X value of top left corner of face box.
+ * @prop {number} y1 - Y value of top left corner of face box.
+ * @prop {number} x2 - X value of bottom right corner of face box.
+ * @prop {number} y2 - Y value of bottom right corner of face box.
+ * @prop {!Array<number>} color - The color of the face box, rgb [0-255, 0-255, 0-255].
+ * @prop {boolean} active - Stores if it belongs to the active speaker during its chunk.
+ * @prop {number} chunk - The time chunk in the video this face box shows up during.
+ * @prop {number} frameNum - The frame number this face box shows up during.
+ * @prop {string} [id] - The segment identifier.
+ */
+
 // instead of const use var so the classes hoist and
 // can reference each other before definition
 /**
@@ -3317,6 +3332,308 @@ var Stat = class Stat extends TreeItem {
   }
 };
 
+/**
+ * A `TreeItem` for a FaceCheckBox.
+ * @extends TreeItem
+ */
+var FaceCheckBox = class FaceCheckBox extends TreeItem {
+  /**
+   * An object containing all `FaceCheckBox`s by their id.
+   * Key is id, value is corresponding `FaceCheckBox`:
+   * {id: `FaceCheckBox`}
+   * @type {!Object.<string, FaceCheckBox>}
+   * @static
+   */
+  static byId = {};
+
+  /**
+   * A `number` representing the group this face is associated with.
+   * @type {number}
+   */
+  group;
+
+  /**
+   * A `number` representing the x-coordinate of the top-left corner of the face.
+   * @type {number}
+   */
+  x1;
+
+  /**
+   * A `number` representing the y-coordinate of the top-left corner of the face.
+   * @type {number}
+   */
+  y1;
+
+  /**
+   * A `number` representing the x-coordinate of the bottom-right corner of the face.
+   * @type {number}
+   */
+  x2;
+
+  /**
+   * A `number` representing the y-coordinate of the bottom-right corner of the face.
+   * @type {number}
+   */
+  y2;
+
+  /**
+   * An array of `number`s representing the color of the face box.
+   * @type {Array<number>}
+   */
+  color;
+
+  /**
+   * A `boolean` representing if this facebox is for the active speaker
+   * during its chunk.
+   * @type {boolean}
+   */
+  active;
+
+  /**
+   * A `number` representing the time chunk this facebox is associated with.
+   * @type {number}
+   */
+  chunk;
+
+  /**
+   * A `number` representing the frame number this facebox is associated with.
+   * @type {number}
+   */
+  frameNum;
+
+  // FIXME
+  static #idCounter = new IdCounter("Group.%d");
+
+  /**
+   * @param {(!FaceCheckBoxOptions)} face_checkbox - The options to create it.
+   * @param {?Object.<string, any>=} options - Options to customize the FaceCheckBox.
+   * @param {?Group=} options.parent - The `Group` that contains the FaceCheckBox
+   *      in its nested content.
+   * @param {string=} options.text - The text to show in the FaceCheckBox's span (and
+   *      therefore in the tree).
+   * @throws {Error} If a `TreeItem` with `face_checkbox.id` already exists.
+   */
+  constructor(face_checkbox, { parent = null, text = null } = {}) {
+    if (face_checkbox.constructor.name !== "FaceCheckBox") {
+      if (face_checkbox.id) {
+        FaceCheckBox.#idCounter.update(face_checkbox.id);
+      } else {
+        face_checkbox.id = FaceCheckBox.#idCounter.next();
+        // this shouldn't happen, but just in case
+        while (FaceCheckBox.byId[face_checkbox.id]) {
+          console.warn(
+            `FaceCheckBox with generated id ${face_checkbox.id} already exists.` +
+              " Generating new id.",
+          );
+          face_checkbox.id = FaceCheckBox.#idCounter.next();
+        }
+      }
+    } else {
+      FaceCheckBox.#idCounter.update(face_checkbox.id);
+    }
+    super(face_checkbox.id, {
+      parent,
+      text,
+    });
+    this.x1 = face_checkbox.x1;
+    this.y1 = face_checkbox.y1;
+    this.x2 = face_checkbox.x2;
+    this.y2 = face_checkbox.y2;
+    this.color = face_checkbox.color;
+    this.active = face_checkbox.active;
+    this.chunk = face_checkbox.chunk;
+    this.frameNum = face_checkbox.frameNum;
+    this.group = face_checkbox.group;
+  }
+
+  toObject() {
+    if (!this.saveable) {
+      return null;
+    }
+    const json = super.toObject();
+
+    json.arguments = [
+      {
+        group: this.group,
+        x1: this.x1,
+        y1: this.y1,
+        x2: this.x2,
+        y2: this.y2,
+        color: this.color,
+        active: this.active,
+        chunk: this.chunk,
+        frameNum: this.frameNum,
+      },
+    ];
+    return json;
+  }
+
+  // /**
+  //  * The group this face box is associated with.
+  //  * @type {number}
+  //  */
+  // get group() {
+  //   return this.group;
+  // }
+  // /**
+  //  * @param {number} newGroup
+  //  */
+  // set group(newGroup) {
+  //   this.group = newGroup;
+  // }
+
+  // /**
+  //  * The x-coordinate of the top-left corner of the face box.
+  //  * @type {number}
+  //  */
+  // get x1() {
+  //   return this.x1;
+  // }
+  // /**
+  //  * @param {number} newX1
+  //  */
+  // set x1(newX1) {
+  //   this.x1 = newX1;
+  // }
+
+  // /**
+  //  * The y-coordinate of the top-left corner of the face box.
+  //  * @type {number}
+  //  */
+  // get y1() {
+  //   return this.y1;
+  // }
+  // /**
+  //  * @param {number} newY1
+  //  */
+  // set y1(newY1) {
+  //   this.y1 = newY1;
+  // }
+
+  // /**
+  //  * The x-coordinate of the bottom-right corner of the face box.
+  //  * @type {number}
+  //  */
+  // get x2() {
+  //   return this.x2;
+  // }
+  // /**
+  //  * @param {number} newX2
+  //  */
+  // set x2(newX2) {
+  //   this.x2 = newX2;
+  // }
+
+  // /**
+  //  * The y-coordinate of the bottom-right corner of the face box.
+  //  * @type {number}
+  //  */
+  // get y2() {
+  //   return this.y2;
+  // }
+  // /**
+  //  * @param {number} newY2
+  //  */
+  // set y2(newY2) {
+  //   this.y2 = newY2;
+  // }
+
+  // /**
+  //  * The color of the face box.
+  //  * @type {Array<number>}
+  //  */
+  // get color() {
+  //   return this.color;
+  // }
+  // /**
+  //  * @param {Array<number>} newColor
+  //  */
+  // set color(newColor) {
+  //   this.color = newColor;
+  // }
+
+  // /**
+  //  * Whether this face box is for the active speaker(s) during this chunk.
+  //  * @type {boolean}
+  //  */
+  // get active() {
+  //   return this.active;
+  // }
+  // /**
+  //  * @param {boolean} newActive
+  //  */
+  // set active(newActive) {
+  //   this.active = newActive;
+  // }
+
+  // /**
+  //  * The time chunk this face box is associated with.
+  //  * @type {number}
+  //  */
+  // get chunk() {
+  //   return this.chunk;
+  // }
+  // /**
+  //  * @param {number} newChunk
+  //  */
+  // set chunk(newChunk) {
+  //   this.chunk = newChunk;
+  // }
+
+  // /**
+  //  * The frame number this face box is associated with.
+  //  * @type {number}
+  //  */
+  // get frameNum() {
+  //   return this.frameNum;
+  // }
+  // /**
+  //  * @param {number} newFrameNum
+  //  */
+  // set frameNum(newFrameNum) {
+  //   this.frameNum = newFrameNum;
+  // }
+
+  // /**
+  //  * The text shown in `span` (and therefore in the tree).
+  //  * @type {string}
+  //  */
+  get treeText() {
+    return this.text;
+  } // backwards compatibility (database expects 'treeText')
+
+  update(options) {
+    super.update(options);
+  }
+
+  // /** Updates the title (tooltip) of `span`. */
+  // updateSpanTitle() {
+  //   this.span.title =
+  //     `Start time: ${this.startTime.toFixed(2)}\n` +
+  //     `End time: ${this.endTime.toFixed(2)}\n` +
+  //     `Duration: ${this.duration.toFixed(2)}`;
+  //   if (this.attributes !== null) {
+  //     this.span.title += `\n${mappingToString(this.attributes)}`;
+  //   }
+  // }
+
+  makeVisible() {
+    this.checked = this.active ? true : false;
+    this.li.style.display = "block";
+    const red = this.color[0];
+    const green = this.color[1];
+    const blue = this.color[2];
+    const alpha = 1;
+
+    this.span.style.backgroundColor = `rgb(${red}, ${green}, ${blue}, ${alpha})`;
+  }
+
+  makeInvisible() {
+    this.checked = false;
+    this.li.style.display = "none";
+  }
+};
+
 TreeItem.types = {
   TreeItem,
   Group,
@@ -3329,6 +3646,7 @@ TreeItem.types = {
   Face,
   File,
   Stat,
+  FaceCheckBox,
 };
 
 export {
@@ -3344,4 +3662,5 @@ export {
   Face,
   File,
   Stat,
+  FaceCheckBox,
 };

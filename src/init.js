@@ -14,6 +14,7 @@ import SettingsPopup from "./SettingsPopup.js";
 import {
   CarouselGroup,
   Face,
+  FaceCheckBox,
   File,
   Group,
   PeaksGroup,
@@ -363,6 +364,8 @@ const analysis = new Group("Analysis", { parent: tree, playable: true });
 // have to wait to define them until after the annotations are loaded in case
 // they're in the annotations
 let custom, labeled;
+
+const activeFace = new Group("Active Faces", { parent: tree, playable: false });
 
 // counts number of custom segments added, used for custom segment's labelText
 const customSegIdCounter = new IdCounter("Custom Segment %d", 1);
@@ -990,6 +993,43 @@ Promise.all([
     group_cols = group_colors;
     vid_fps = parseFloat(fps);
 
+    contin_rects.forEach((group, i) => {
+      let frame_num;
+      let x1;
+      let y1;
+      let x2;
+      let y2;
+
+      group.some((item) => {
+        frame_num = item[0];
+        x1 = item[1];
+        y1 = item[2];
+        x2 = item[3];
+        y2 = item[4];
+      });
+
+      const color = group_cols[i];
+
+      const checkboxOptions = {
+        group: i,
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        color: color,
+        active: false,
+        chunk: Math.floor(frame_num / (vid_fps * chunk_interval_seconds)),
+        frameNum: frame_num,
+        id: String(`Group.${i}`),
+      };
+
+      const face_checkbox = new FaceCheckBox(checkboxOptions, {
+        parent: activeFace,
+      });
+
+      face_checkbox.makeInvisible();
+    });
+
     // let labels =
     //  Array.from({length: continuous_rects.length}, (_, i) => i.toString());
   })
@@ -1009,10 +1049,10 @@ setInterval(() => {
 
     // Only want to update the checkboxes if we are in a new chunk
     if (current_chunk !== new_chunk) {
-      console.log(
-        `Current time: ${currentTime},
-         Start frame: ${startFrame}, End frame: ${endFrame}`,
-      );
+      // console.log(
+      //   `Current time: ${currentTime},
+      //    Start frame: ${startFrame}, End frame: ${endFrame}`,
+      // );
 
       // Clear the checkboxes
       face_checkbox_div.innerHTML = "";
@@ -1024,34 +1064,14 @@ setInterval(() => {
           return frame_num >= startFrame && frame_num < endFrame;
         });
 
+        const faceBoxCheckbox = FaceCheckBox.byId[`Group.${i}`];
+
         // If the group has a frame number in the current 5-second
         // chunk, show the checkbox for it
         if (hasFrameInChunk) {
-          const color = group_cols[i];
-
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.id = "checkbox" + i;
-          checkbox.value = i;
-
-          const label = document.createElement("label");
-          label.htmlFor = "checkbox" + i;
-          label.id = "checkbox-label" + i;
-          label.textContent = `Group ${i}`;
-
-          const colorBox = document.createElement("span");
-          colorBox.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-          colorBox.style.display = "inline-block";
-          colorBox.style.width = "20px";
-          colorBox.style.height = "20px";
-          colorBox.style.marginLeft = "5px";
-
-          face_checkbox_div.appendChild(checkbox);
-          face_checkbox_div.appendChild(label);
-          face_checkbox_div.appendChild(colorBox);
-
-          const br = document.createElement("br");
-          face_checkbox_div.appendChild(br);
+          faceBoxCheckbox.makeVisible();
+        } else {
+          faceBoxCheckbox.makeInvisible();
         }
       });
     }
@@ -1061,16 +1081,18 @@ setInterval(() => {
 
 const annotateFaceButton = document.getElementById("annotate-face-button");
 annotateFaceButton.addEventListener("click", function () {
-  const checkboxes = document.querySelectorAll(
-    'div#face-checkboxes input[type="checkbox"]',
-  );
   const checkedValues = [];
-  checkboxes.forEach((checkbox) => {
-    if (checkbox.checked) {
-      checkedValues.push(checkbox.value);
+  activeFace.children.forEach((checkbox) => {
+    // Check all checkboxes that are visible (aka in this chunk)
+    if (checkbox.li.style.display !== "none") {
+      if (checkbox.checked) {
+        checkedValues.push(checkbox.group);
+        checkbox.active = true;
+      } else {
+        checkbox.active = false;
+      }
     }
   });
-
   console.log(checkedValues);
 });
 

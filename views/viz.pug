@@ -6,7 +6,9 @@ block content
     p#file #{ file } - Saved
     a#user(href="/settings") #{ user }
   .row.split
-    #column.column: ul#tree(style="padding-left: 0px")
+    #column.column
+      ul#tree(style="padding-left: 0px")
+      button#annotate-face-button Annotate Face(s)
     #column2.column2
       #waveform-container
         if (type === "audio" || type === "views")
@@ -84,8 +86,6 @@ block content
               br
               br
               #face-checkboxes
-              br
-              button#annotate-face-button Annotate Face(s)
               br
             #column4.column4
               textarea#notes(
