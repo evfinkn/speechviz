@@ -962,6 +962,118 @@ speedSlider.addEventListener("input", function () {
   speedLabel.innerHTML = `${speed.toFixed(2)}x Speed`;
 });
 
+// TODO: make generalized, via using basename etc.
+// annotate face boxes if the necessary bounding boxes have been generated
+const continuous_rects_file = getUrl("faceBoxes", "continuous_rects", ".json");
+// basename, "-stats.csv", folder);
+const group_colors_file = getUrl("faceBoxes", "group_colors", ".json");
+// basename, "-stats.csv", folder);
+const fps_file = getUrl("faceBoxes", "fps", ".txt");
+// basename, "-stats.csv", folder);
+
+// Stores the groups of face rectangles
+let contin_rects = [[[]]];
+// Stores the color of each group
+let group_cols = [];
+// Start at -1 so we know if the fps has been set
+let vid_fps = -1;
+// Current chunk we are on
+const chunk_interval_seconds = 5;
+let current_chunk = -1;
+Promise.all([
+  fetch(continuous_rects_file).then((response) => response.json()),
+  fetch(group_colors_file).then((response) => response.json()),
+  fetch(fps_file).then((response) => response.text()),
+])
+  .then(([continuous_rects, group_colors, fps]) => {
+    contin_rects = continuous_rects;
+    group_cols = group_colors;
+    vid_fps = parseFloat(fps);
+
+    // let labels =
+    //  Array.from({length: continuous_rects.length}, (_, i) => i.toString());
+  })
+  .catch((error) => console.error("Error:", error));
+
+const face_checkbox_div = document.getElementById("face-checkboxes");
+
+setInterval(() => {
+  if (vid_fps !== -1) {
+    const currentTime = peaks.player.getCurrentTime(); // Current time in seconds
+    // console.log(`Current time ${currentTime}`);
+    const new_chunk = Math.floor(currentTime / chunk_interval_seconds);
+
+    // Calculate the range of frames for the current 5-second chunk
+    const startFrame = new_chunk * chunk_interval_seconds * vid_fps;
+    const endFrame = startFrame + chunk_interval_seconds * vid_fps;
+
+    // Only want to update the checkboxes if we are in a new chunk
+    if (current_chunk !== new_chunk) {
+      console.log(
+        `Current time: ${currentTime},
+         Start frame: ${startFrame}, End frame: ${endFrame}`,
+      );
+
+      // Clear the checkboxes
+      face_checkbox_div.innerHTML = "";
+
+      contin_rects.forEach((group, i) => {
+        // Check if the group has a frame number that is in the current 5-second chunk
+        const hasFrameInChunk = group.some((item) => {
+          const frame_num = item[0];
+          return frame_num >= startFrame && frame_num < endFrame;
+        });
+
+        // If the group has a frame number in the current 5-second
+        // chunk, show the checkbox for it
+        if (hasFrameInChunk) {
+          const color = group_cols[i];
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = "checkbox" + i;
+          checkbox.value = i;
+
+          const label = document.createElement("label");
+          label.htmlFor = "checkbox" + i;
+          label.id = "checkbox-label" + i;
+          label.textContent = `Group ${i}`;
+
+          const colorBox = document.createElement("span");
+          colorBox.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+          colorBox.style.display = "inline-block";
+          colorBox.style.width = "20px";
+          colorBox.style.height = "20px";
+          colorBox.style.marginLeft = "5px";
+
+          face_checkbox_div.appendChild(checkbox);
+          face_checkbox_div.appendChild(label);
+          face_checkbox_div.appendChild(colorBox);
+
+          const br = document.createElement("br");
+          face_checkbox_div.appendChild(br);
+        }
+      });
+    }
+    current_chunk = new_chunk;
+  }
+}, 500);
+
+const annotateFaceButton = document.getElementById("annotate-face-button");
+annotateFaceButton.addEventListener("click", function () {
+  const checkboxes = document.querySelectorAll(
+    'div#face-checkboxes input[type="checkbox"]',
+  );
+  const checkedValues = [];
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.checked) {
+      checkedValues.push(checkbox.value);
+    }
+  });
+
+  console.log(checkedValues);
+});
+
 // button for popup containing the settings that aren't usually changed
 const settingsButton = document.getElementById("settings");
 settingsButton.innerHTML = settingsIcon;

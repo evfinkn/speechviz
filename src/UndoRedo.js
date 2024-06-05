@@ -290,6 +290,29 @@ const UnassociateAction = class UnassociateAction {
   }
 };
 
+const FaceCheckAction = class FaceCheckAction {
+  /** @type {!Int} */ chunk;
+  /** @type {!Array.<Int>} */ groups;
+
+  /**
+   * @param {!TreeItem} item -
+   */
+  constructor(chunk, groups) {
+    this.chunk = chunk;
+    this.groups = groups;
+    // TODO: implement actually storing what groups are the active
+    // speaker for a given chunk
+  }
+
+  undo() {
+    // TODO: implement
+  }
+
+  redo() {
+    // TODO: implement
+  }
+};
+
 const ColorAction = class ColorAction {
   /** @type {!TreeItem} */ item;
   /** @type {!Color} */ oldColor;
@@ -373,6 +396,7 @@ const Actions = {
   ColorAction,
   SplitSegmentAction,
   MergeSegmentsAction,
+  FaceCheckAction,
 };
 
 export { undoStorage, redoStorage, Actions };
