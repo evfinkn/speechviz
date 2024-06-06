@@ -365,7 +365,7 @@ const analysis = new Group("Analysis", { parent: tree, playable: true });
 // they're in the annotations
 let custom, labeled;
 
-const activeFace = new Group("Active Faces", { parent: tree, playable: false });
+const activeFace = new Group("ActiveFaces", { parent: tree, playable: false });
 
 // counts number of custom segments added, used for custom segment's labelText
 const customSegIdCounter = new IdCounter("Custom Segment %d", 1);
@@ -635,6 +635,8 @@ const loadWords = async () => {
   }
 };
 
+let needsToInitializeFaceCheckbox = false;
+
 const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
   // add branch, version, and uuid as query parameters if they are defined
   const url = new URL(annotsFile, window.location.href);
@@ -655,6 +657,18 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
   if (annots?.notes) {
     document.getElementById("notes").value = annots.notes;
   }
+
+  if (annots?.active_faces) {
+    for (const active_face of annots.active_faces) {
+      const face_checkbox = new FaceCheckBox(active_face.arguments[0], {
+        parent: activeFace,
+      });
+      face_checkbox.makeInvisible();
+    }
+  } else {
+    needsToInitializeFaceCheckbox = true;
+  }
+
   // If annots is an object, get the annotations from it. Otherwise, annots is an array
   annots = annots?.annotations ?? annots;
 
@@ -993,42 +1007,26 @@ Promise.all([
     group_cols = group_colors;
     vid_fps = parseFloat(fps);
 
-    contin_rects.forEach((group, i) => {
-      let frame_num;
-      let x1;
-      let y1;
-      let x2;
-      let y2;
+    if (needsToInitializeFaceCheckbox) {
+      // Make a checkbox for each group
+      contin_rects.forEach((_, i) => {
+        const color = group_cols[i];
 
-      group.some((item) => {
-        frame_num = item[0];
-        x1 = item[1];
-        y1 = item[2];
-        x2 = item[3];
-        y2 = item[4];
+        const checkboxOptions = {
+          group: i,
+          color: color,
+          active: false,
+          chunks: [],
+          id: String(`Group.${i}`),
+        };
+
+        const face_checkbox = new FaceCheckBox(checkboxOptions, {
+          parent: activeFace,
+        });
+
+        face_checkbox.makeInvisible();
       });
-
-      const color = group_cols[i];
-
-      const checkboxOptions = {
-        group: i,
-        x1: x1,
-        y1: y1,
-        x2: x2,
-        y2: y2,
-        color: color,
-        active: false,
-        chunk: Math.floor(frame_num / (vid_fps * chunk_interval_seconds)),
-        frameNum: frame_num,
-        id: String(`Group.${i}`),
-      };
-
-      const face_checkbox = new FaceCheckBox(checkboxOptions, {
-        parent: activeFace,
-      });
-
-      face_checkbox.makeInvisible();
-    });
+    }
 
     // let labels =
     //  Array.from({length: continuous_rects.length}, (_, i) => i.toString());
@@ -1069,7 +1067,7 @@ setInterval(() => {
         // If the group has a frame number in the current 5-second
         // chunk, show the checkbox for it
         if (hasFrameInChunk) {
-          faceBoxCheckbox.makeVisible();
+          faceBoxCheckbox.makeVisible(new_chunk);
         } else {
           faceBoxCheckbox.makeInvisible();
         }
@@ -1079,17 +1077,40 @@ setInterval(() => {
   }
 }, 500);
 
+const original_active_face_checkboxes = TreeItem.byId.ActiveFaces.children;
+const original_active_faces = original_active_face_checkboxes.map((child) =>
+  child.toObject(),
+);
+
 const annotateFaceButton = document.getElementById("annotate-face-button");
 annotateFaceButton.addEventListener("click", function () {
   const checkedValues = [];
   activeFace.children.forEach((checkbox) => {
-    // Check all checkboxes that are visible (aka in this chunk)
-    if (checkbox.li.style.display !== "none") {
-      if (checkbox.checked) {
-        checkedValues.push(checkbox.group);
-        checkbox.active = true;
-      } else {
-        checkbox.active = false;
+    const new_active_face_checkboxes = TreeItem.byId.ActiveFaces.children;
+    const new_active_faces = new_active_face_checkboxes.map((child) =>
+      child.toObject(),
+    );
+
+    if (new_active_faces !== original_active_faces) {
+      globals.dirty = true;
+      // Check all checkboxes that are visible (aka in this chunk)
+      if (checkbox.li.style.display !== "none") {
+        if (checkbox.checked) {
+          checkedValues.push(checkbox.group);
+          checkbox.active = true;
+          if (!checkbox.chunks.includes(current_chunk)) {
+            checkbox.chunks.push(current_chunk);
+          }
+        } else {
+          if (checkbox.chunks.includes(current_chunk)) {
+            checkbox.chunks = checkbox.chunks.filter(
+              (chunk) => chunk !== current_chunk,
+            );
+          }
+          if (checkbox.chunks.length === 0) {
+            checkbox.active = false;
+          }
+        }
       }
     }
   });
