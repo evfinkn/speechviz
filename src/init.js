@@ -981,11 +981,17 @@ speedSlider.addEventListener("input", function () {
 
 // TODO: make generalized, via using basename etc.
 // annotate face boxes if the necessary bounding boxes have been generated
-const continuous_rects_file = getUrl("faceBoxes", "continuous_rects", ".json");
+// const statsFile = getUrl("stats", basename, "-stats.csv", folder);
+
+const continuous_rects_file = getUrl(
+  "faceBoxes",
+  basename,
+  "-continuous_rects.json",
+);
 // basename, "-stats.csv", folder);
-const group_colors_file = getUrl("faceBoxes", "group_colors", ".json");
+const group_colors_file = getUrl("faceBoxes", basename, "-group_colors.json");
 // basename, "-stats.csv", folder);
-const fps_file = getUrl("faceBoxes", "fps", ".txt");
+const fps_file = getUrl("faceBoxes", basename, "-fps.txt");
 // basename, "-stats.csv", folder);
 
 // Stores the groups of face rectangles
