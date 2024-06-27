@@ -141,7 +141,6 @@ const SavePopup = class SavePopup {
     const analysisChildren = TreeItem.byId.Analysis.children;
     const activeFaces = TreeItem.byId.ActiveFaces.children;
 
-    // TODO add active face annotation to end
     const annotations = {
       formatVersion: 3,
       annotations: analysisChildren
