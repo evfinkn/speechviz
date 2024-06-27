@@ -1,5 +1,6 @@
 import globals from "./globals.js";
 import { redoIcon, undoIcon } from "./icon.js";
+import { Group } from "./treeClasses.js";
 import { toggleButton } from "./util.js";
 
 const filename = globals.filename;
@@ -154,6 +155,7 @@ const MoveAction = class MoveAction {
   /** @type {!TreeItem} */ item;
   /** @type {!TreeItem} */ oldParent;
   /** @type {!TreeItem} */ newParent;
+  /** @type {[!TreeItem]} */ oldChildren;
 
   /**
    * @param {!TreeItem} item -
@@ -163,11 +165,18 @@ const MoveAction = class MoveAction {
     this.item = item;
     this.oldParent = item.parent;
     this.newParent = newParent;
+    this.oldChildren = item.children;
     item.move(newParent);
   }
 
   undo() {
-    this.item.move(this.oldParent);
+    if (this.item instanceof Group) {
+      this.oldChildren.forEach((child) => {
+        if (child.li.style.display !== "none") {
+          child.move(this.item);
+        }
+      });
+    } else this.item.move(this.oldParent);
   }
 
   redo() {
