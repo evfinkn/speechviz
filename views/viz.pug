@@ -8,7 +8,6 @@ block content
   .row.split
     #column.column
       ul#tree(style="padding-left: 0px")
-      button#annotate-face-button Annotate Face(s)
     #column2.column2
       #waveform-container
         if (type === "audio" || type === "views")
@@ -61,6 +60,11 @@ block content
               div
                 input#add-label-input(type="text", placeholder="label")
                 button#add-label-button Add Label
+                input#add-face-label-input(
+                  type="text",
+                  placeholder="face label"
+                )
+                button#add-face-label-button Add Face Label
               br
               input#speed-slider(
                 type="range",
