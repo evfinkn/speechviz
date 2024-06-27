@@ -1362,7 +1362,24 @@ var Popup = class Popup {
     if (this.moveDiv) {
       this.updateMoveTo();
     }
+    // This is needed because of an edge case that happens when there is no moveDiv
+    // initially, so after one is added it never gets updated in the above if.
+    else if (this.treeItem.moveTo) {
+      this.popupContent.append(document.createElement("br"));
+      this.moveDiv = html`<div>
+        <h3>Move ${this.treeItem.text} to another group</h3>
+      </div>`;
+      this.popupContent.append(this.moveDiv);
+      this.updateMoveTo();
+    }
     if (this.copyDiv) {
+      this.updateCopyTo();
+    } else if (this.treeItem.copyTo) {
+      this.popupContent.append(document.createElement("br"));
+      this.copyDiv = html`<div>
+        <h3>Copy ${this.treeItem.text} to another group</h3>
+      </div>`;
+      this.popupContent.append(this.copyDiv);
       this.updateCopyTo();
     }
     if (this.assocDiv) {
@@ -1600,6 +1617,8 @@ var Group = class Group extends TreeItem {
       copyTo,
       saveable,
     });
+
+    this.popup = new Popup(this);
   }
 
   /** Sets the CSS styling of the group's elements. */
@@ -1728,6 +1747,20 @@ var Group = class Group extends TreeItem {
     // this way, the endedHandler can be removed (we couldn't do it here because
     // it's not defined here)
     this.dispatchEvent(new Event("manualpause", { bubbles: true }));
+  }
+
+  /**
+   * Moves this groups children to another item's nested content.
+   * @param {!TreeItem} to - Where to move this item to.
+   * @param {boolean} [open=true] - Whether to open `to`'s nested content after moving
+   *      this item to it.
+   */
+  move(to, open = true) {
+    for (const child of this.children) {
+      if (child.li.style.display !== "none") {
+        child.move(to, open);
+      }
+    }
   }
 };
 
@@ -3343,6 +3376,18 @@ var FaceCheckBox = class FaceCheckBox extends TreeItem {
   static byId = {};
 
   /**
+   * The `Popup` for this `FaceCheckBox`.
+   * @type {Popup}
+   */
+  popup;
+
+  /**
+   * An array of `string`s representing the `TreeItem`s that this
+   * facebox can be moved to.
+   */
+  moveTo;
+
+  /**
    * A `number` representing the group this face is associated with.
    * @type {number}
    */
@@ -3379,10 +3424,14 @@ var FaceCheckBox = class FaceCheckBox extends TreeItem {
    *      therefore in the tree).
    * @throws {Error} If a `TreeItem` with `face_checkbox.id` already exists.
    */
-  constructor(face_checkbox, { parent = null, text = null } = {}) {
+  constructor(
+    face_checkbox,
+    { parent = null, text = null, moveTo = null } = {},
+  ) {
     if (face_checkbox.constructor.name !== "FaceCheckBox") {
-      if (face_checkbox.id) {
-        FaceCheckBox.#idCounter.update(face_checkbox.id);
+      if (face_checkbox.group) {
+        face_checkbox.id = `Group.${face_checkbox.group}`;
+        FaceCheckBox.#idCounter.update(face_checkbox.id - 1);
       } else {
         face_checkbox.id = FaceCheckBox.#idCounter.next();
         // this shouldn't happen, but just in case
@@ -3400,11 +3449,14 @@ var FaceCheckBox = class FaceCheckBox extends TreeItem {
     super(face_checkbox.id, {
       parent,
       text,
+      moveTo,
     });
+    this.moveTo = moveTo;
     this.group = face_checkbox.group;
     this.color = face_checkbox.color;
     this.active = face_checkbox.active;
     this.chunks = face_checkbox.chunks;
+    this.popup = new Popup(this);
   }
 
   toObject() {
