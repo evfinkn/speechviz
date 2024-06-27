@@ -1,5 +1,6 @@
 import { default as getNestedProp } from "lodash/get.js";
 import throttle from "lodash/throttle.js";
+import * as Papa from "papaparse";
 import Split from "split.js"; // library for resizing columns by dragging
 
 import { Channels } from "./ChannelAudio.js";
@@ -285,6 +286,10 @@ const createTreeItemFromObj = (obj, parent = null) => {
     }
     createTreeItemFromObj(child, treeItem);
   });
+  if (type === FaceCheckBox) {
+    treeItem.makeInvisible();
+    treeItem.moveTo = ["FaceLabeled.children"];
+  }
   return treeItem;
 };
 
@@ -363,9 +368,13 @@ const analysis = new Group("Analysis", { parent: tree, playable: true });
 // declare custom and labeled here so they can be accessed anywhere, but we
 // have to wait to define them until after the annotations are loaded in case
 // they're in the annotations
-let custom, labeled;
+let custom, labeled, faceLabeled;
 
-const activeFace = new Group("ActiveFaces", { parent: tree, playable: false });
+const activeFace = new Group("ActiveFaces", {
+  parent: tree,
+  playable: false,
+  moveTo: ["FaceLabeled.children"],
+});
 
 // counts number of custom segments added, used for custom segment's labelText
 const customSegIdCounter = new IdCounter("Custom Segment %d", 1);
@@ -573,6 +582,7 @@ const loadStats = async () => {
       }
       new Stat(statToDisplay, { parent: stats, saveable: false });
     }
+    stats.toggleTree();
   } catch (error) {
     output404OrError(error, "stats");
   }
@@ -660,13 +670,19 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
 
   if (annots?.active_faces) {
     for (const active_face of annots.active_faces) {
-      const face_checkbox = new FaceCheckBox(active_face.arguments[0], {
-        parent: activeFace,
-      });
-      face_checkbox.makeInvisible();
+      createTreeItemFromObj(active_face);
     }
   } else {
+    console.log("Missing active_faces in annotations file");
     needsToInitializeFaceCheckbox = true;
+  }
+  if (TreeItem.byId.FaceLabeled) {
+    faceLabeled = TreeItem.byId.FaceLabeled;
+  } else {
+    faceLabeled = new Group("FaceLabeled", {
+      parent: activeFace,
+      playable: false,
+    });
   }
 
   // If annots is an object, get the annotations from it. Otherwise, annots is an array
@@ -720,6 +736,21 @@ const loadAnnotations = async (annotsFile, { commit, branch } = {}) => {
   // ids might not exist until all annots are imported, so that's why we update
   // them here instead of in createTreeItemFromObj
   for (const item of analysis.preorder()) {
+    item?.moveTo?.forEach((dest, i) => {
+      if (typeof dest === "string") {
+        // getNestedProp because string might be path to property,
+        // like "Speakers.children"
+        item.moveTo[i] = getNestedProp(TreeItem.byId, dest);
+      }
+    });
+    item?.copyTo?.forEach((dest, i) => {
+      if (typeof dest === "string") {
+        item.copyTo[i] = getNestedProp(TreeItem.byId, dest);
+      }
+    });
+  }
+  activeFace.moveTo = [getNestedProp(TreeItem.byId, "FaceLabeled.children")];
+  for (const item of activeFace.preorder()) {
     item?.moveTo?.forEach((dest, i) => {
       if (typeof dest === "string") {
         // getNestedProp because string might be path to property,
@@ -908,6 +939,45 @@ const addLabel = (input) => {
   }
 };
 
+/**
+ * Creates a new Labeled group using `input`'s value as the id.
+ * @param {!HTMLInputElement} input - The element used to enter a new label name.
+ */
+const addFaceLabel = (input) => {
+  if (input.value != "") {
+    const label = new Group(input.value, {
+      parent: faceLabeled,
+      removable: true,
+      renamable: true,
+      color: getRandomColor(),
+      colorable: true,
+      copyTo: Array.from(faceLabeled.children).filter(
+        (child) => child.value !== input.value,
+      ),
+    });
+
+    // This is needed because of an edge case that happens when there is no current
+    // labels, updateMoveTo is never called because there is no way to open a popup.
+    // This essentially updates moveTo every time a label is added to make sure that
+    // a popup can be accessed in such a case.
+    if (activeFace.moveTo)
+      activeFace.moveTo = [
+        getNestedProp(TreeItem.byId, "FaceLabeled.children"),
+      ];
+    else activeFace.moveTo = [label];
+
+    for (const item of activeFace.preorder()) {
+      if (item?.moveTo)
+        item.moveTo = [getNestedProp(TreeItem.byId, "FaceLabeled.children")];
+      else item.moveTo = [label];
+    }
+
+    undoStorage.push(new Actions.AddAction(label));
+    input.value = ""; // clear text box after submitting
+    labeled.open(); // open labeled in tree to show newly added label
+  }
+};
+
 // input to add a label group
 const labelInput = document.getElementById("add-label-input");
 labelInput.addEventListener("keypress", (event) => {
@@ -919,6 +989,19 @@ document
   .getElementById("add-label-button")
   .addEventListener("click", function () {
     addLabel(labelInput);
+  });
+
+// input to add a label group
+const faceLabelInput = document.getElementById("add-face-label-input");
+faceLabelInput.addEventListener("keypress", (event) => {
+  if (event.key === "Enter") {
+    addFaceLabel(faceLabelInput);
+  }
+});
+document
+  .getElementById("add-face-label-button")
+  .addEventListener("click", function () {
+    addFaceLabel(faceLabelInput);
   });
 
 const audioDuration = peaks.player.getDuration();
@@ -979,149 +1062,221 @@ speedSlider.addEventListener("input", function () {
   speedLabel.innerHTML = `${speed.toFixed(2)}x Speed`;
 });
 
-// TODO: make generalized, via using basename etc.
-// annotate face boxes if the necessary bounding boxes have been generated
-// const statsFile = getUrl("stats", basename, "-stats.csv", folder);
+const loadActiveFaces = async () => {
+  await annotsLoading;
+  let continuous_rects_file;
+  let group_colors_file;
+  let fps_file;
+  let start_time_seconds = 0.0;
 
-const continuous_rects_file = getUrl(
-  "faceBoxes",
-  basename,
-  "-continuous_rects.json",
-);
-// basename, "-stats.csv", folder);
-const group_colors_file = getUrl("faceBoxes", basename, "-group_colors.json");
-// basename, "-stats.csv", folder);
-const fps_file = getUrl("faceBoxes", basename, "-fps.txt");
-// basename, "-stats.csv", folder);
+  if (folder !== undefined && folder !== null) {
+    // in a folder
+    const subject = folder.substring(0, 8);
+    const directoryPath = `faceBoxes/${subject}`;
 
-// Stores the groups of face rectangles
-let contin_rects = [[[]]];
-// Stores the color of each group
-let group_cols = [];
-// Start at -1 so we know if the fps has been set
-let vid_fps = -1;
-// Current chunk we are on
-const chunk_interval_seconds = 5;
-let current_chunk = -1;
-Promise.all([
-  fetch(continuous_rects_file).then((response) => response.json()),
-  fetch(group_colors_file).then((response) => response.json()),
-  fetch(fps_file).then((response) => response.text()),
-])
-  .then(([continuous_rects, group_colors, fps]) => {
-    contin_rects = continuous_rects;
-    group_cols = group_colors;
-    vid_fps = parseFloat(fps);
+    const times_file = `${directoryPath}/run_times.csv`;
+    const times = await fetch(times_file)
+      .then(checkResponseStatus)
+      .then((response) => response.text())
+      .then((text) => Papa.parse(text, { header: true }).data);
 
-    if (needsToInitializeFaceCheckbox) {
-      // Make a checkbox for each group
-      contin_rects.forEach((_, i) => {
-        const color = group_cols[i];
+    // Extract the number from the basename runX
+    const runNumber = parseInt(basename.replace(/\D/g, ""), 10);
 
-        const checkboxOptions = {
-          group: i,
-          color: color,
-          active: false,
-          chunks: [],
-          id: String(`Group.${i}`),
-        };
+    const runNumberRow = times.filter(
+      (row) => parseInt(row.run_number, 10) === runNumber,
+    )[0];
 
-        const face_checkbox = new FaceCheckBox(checkboxOptions, {
-          parent: activeFace,
-        });
+    if (runNumberRow) {
+      start_time_seconds = parseFloat(runNumberRow.start_time);
 
-        face_checkbox.makeInvisible();
-      });
+      const vrs_basename = runNumberRow.vrs;
+
+      continuous_rects_file = `${directoryPath}/${vrs_basename}_egoblur_rects.json`;
+      group_colors_file = `${directoryPath}/${vrs_basename}_egoblur_colors.json`;
+      fps_file = `${directoryPath}/${vrs_basename}_egoblur_fps.txt`;
     }
-
-    // let labels =
-    //  Array.from({length: continuous_rects.length}, (_, i) => i.toString());
-  })
-  .catch((error) => console.error("Error:", error));
-
-const face_checkbox_div = document.getElementById("face-checkboxes");
-
-setInterval(() => {
-  if (vid_fps !== -1) {
-    const currentTime = peaks.player.getCurrentTime(); // Current time in seconds
-    // console.log(`Current time ${currentTime}`);
-    const new_chunk = Math.floor(currentTime / chunk_interval_seconds);
-
-    // Calculate the range of frames for the current 5-second chunk
-    const startFrame = new_chunk * chunk_interval_seconds * vid_fps;
-    const endFrame = startFrame + chunk_interval_seconds * vid_fps;
-
-    // Only want to update the checkboxes if we are in a new chunk
-    if (current_chunk !== new_chunk) {
-      // console.log(
-      //   `Current time: ${currentTime},
-      //    Start frame: ${startFrame}, End frame: ${endFrame}`,
-      // );
-
-      // Clear the checkboxes
-      face_checkbox_div.innerHTML = "";
-
-      contin_rects.forEach((group, i) => {
-        // Check if the group has a frame number that is in the current 5-second chunk
-        const hasFrameInChunk = group.some((item) => {
-          const frame_num = item[0];
-          return frame_num >= startFrame && frame_num < endFrame;
-        });
-
-        const faceBoxCheckbox = FaceCheckBox.byId[`Group.${i}`];
-
-        // If the group has a frame number in the current 5-second
-        // chunk, show the checkbox for it
-        if (hasFrameInChunk) {
-          faceBoxCheckbox.makeVisible(new_chunk);
-        } else {
-          faceBoxCheckbox.makeInvisible();
-        }
-      });
-    }
-    current_chunk = new_chunk;
+  } else {
+    // Don't need to find which files to read in as this isn't in a folder
+    continuous_rects_file = getUrl(
+      "faceBoxes",
+      basename,
+      "-continuous_rects.json",
+    );
+    group_colors_file = getUrl("faceBoxes", basename, "-group_colors.json");
+    fps_file = getUrl("faceBoxes", basename, "-fps.txt");
   }
-}, 500);
 
-const original_active_face_checkboxes = TreeItem.byId.ActiveFaces.children;
-const original_active_faces = original_active_face_checkboxes.map((child) =>
-  child.toObject(),
-);
+  // Stores the groups of face rectangles
+  let contin_rects = [[[]]];
+  // Stores the color of each group
+  let group_cols = [];
+  // Start at -1 so we know if the fps has been set
+  let vid_fps = -1;
+  // Current chunk we are on
+  const chunk_interval_seconds = 5;
+  let current_chunk = -1;
+  Promise.all([
+    fetch(continuous_rects_file).then((response) => response.json()),
+    fetch(group_colors_file).then((response) => response.json()),
+    fetch(fps_file).then((response) => response.text()),
+  ])
+    .then(([continuous_rects, group_colors, fps]) => {
+      contin_rects = continuous_rects;
+      group_cols = group_colors;
+      vid_fps = parseFloat(fps);
 
-const annotateFaceButton = document.getElementById("annotate-face-button");
-annotateFaceButton.addEventListener("click", function () {
-  const checkedValues = [];
-  activeFace.children.forEach((checkbox) => {
-    const new_active_face_checkboxes = TreeItem.byId.ActiveFaces.children;
+      if (needsToInitializeFaceCheckbox) {
+        // Make a checkbox for each group
+        contin_rects.forEach((_, i) => {
+          const color = group_cols[i];
+
+          const checkboxOptions = {
+            moveTo: ["FaceLabeled.children"],
+            group: i,
+            color: color,
+            active: false,
+            chunks: [],
+            id: String(`Group.${i}`),
+          };
+
+          const face_checkbox = new FaceCheckBox(checkboxOptions, {
+            parent: activeFace,
+          });
+
+          face_checkbox.makeInvisible();
+        });
+      }
+
+      // let labels =
+      //  Array.from({length: continuous_rects.length}, (_, i) => i.toString());
+    })
+    .catch((error) => console.error("Error:", error));
+
+  const face_checkbox_div = document.getElementById("face-checkboxes");
+  // Create a new button element
+  var button = document.createElement("button");
+
+  button.id = "annotate-face-button";
+  button.innerHTML = "Annotate This Chunk's Face(s)";
+  activeFace.li.insertAdjacentElement("afterend", button);
+  const annotateFaceButton = document.getElementById("annotate-face-button");
+
+  setInterval(() => {
+    if (vid_fps !== -1) {
+      // if in a folder need to know where in the vrs file we are for this run,
+      // o.w. is 0 seconds
+      const currentTime = peaks.player.getCurrentTime() + start_time_seconds;
+      // console.log(`Current time ${currentTime}`);
+      const new_chunk = Math.floor(currentTime / chunk_interval_seconds);
+
+      // Calculate the range of frames for the current 5-second chunk
+      const startFrame = new_chunk * chunk_interval_seconds * vid_fps;
+      const endFrame = startFrame + chunk_interval_seconds * vid_fps;
+
+      // Only want to update the checkboxes if we are in a new chunk
+      if (current_chunk !== new_chunk) {
+        // console.log(
+        //   `Current time: ${currentTime},
+        //    Start frame: ${startFrame}, End frame: ${endFrame}
+        //    New chunk: ${new_chunk}`,
+        // );
+
+        // Clear the checkboxes
+        face_checkbox_div.innerHTML = "";
+
+        contin_rects.forEach((group, i) => {
+          // Check if the group has a frame number that is in the current 5-second chunk
+          const hasFrameInChunk = group.some((item) => {
+            const frame_num = item[0];
+            return frame_num >= startFrame && frame_num < endFrame;
+          });
+
+          const faceBoxCheckbox = FaceCheckBox.byId[`Group.${i}`];
+
+          // If the group has a frame number in the current 5-second
+          // chunk, show the checkbox for it
+          if (hasFrameInChunk) {
+            faceBoxCheckbox.makeVisible(new_chunk);
+            console.log(`Group ${i} is visible`);
+          } else {
+            if (FaceCheckBox == undefined) console.log(i);
+            try {
+              faceBoxCheckbox.makeInvisible();
+            } catch (e) {
+              console.log(e);
+              console.log(i);
+              console.log(faceBoxCheckbox);
+            }
+          }
+        });
+      }
+      current_chunk = new_chunk;
+    }
+    if (activeFace.children.length === 0) {
+      annotateFaceButton.style.display = "none";
+    }
+  }, 500);
+
+  // Add any ungrouped boxes
+  let original_active_face_checkboxes = TreeItem.byId.ActiveFaces.children;
+  original_active_face_checkboxes = original_active_face_checkboxes.filter(
+    (child) => child.id !== "FaceLabeled",
+  );
+  // Add any grouped boxes
+  for (const faceGroup of TreeItem.byId.FaceLabeled.children) {
+    for (const box of faceGroup.children) {
+      original_active_face_checkboxes.push(box);
+    }
+  }
+  const original_active_faces = original_active_face_checkboxes.map((child) =>
+    child.toObject(),
+  );
+
+  annotateFaceButton.addEventListener("click", function () {
+    const checkedValues = [];
+    let new_active_face_checkboxes = TreeItem.byId.ActiveFaces.children;
+    new_active_face_checkboxes = new_active_face_checkboxes.filter(
+      (child) => child.id !== "FaceLabeled",
+    );
+    for (const faceGroup of TreeItem.byId.FaceLabeled.children) {
+      for (const box of faceGroup.children) {
+        new_active_face_checkboxes.push(box);
+      }
+    }
+
     const new_active_faces = new_active_face_checkboxes.map((child) =>
       child.toObject(),
     );
-
-    if (new_active_faces !== original_active_faces) {
-      globals.dirty = true;
-      // Check all checkboxes that are visible (aka in this chunk)
-      if (checkbox.li.style.display !== "none") {
-        if (checkbox.checked) {
-          checkedValues.push(checkbox.group);
-          checkbox.active = true;
-          if (!checkbox.chunks.includes(current_chunk)) {
-            checkbox.chunks.push(current_chunk);
-          }
-        } else {
-          if (checkbox.chunks.includes(current_chunk)) {
-            checkbox.chunks = checkbox.chunks.filter(
-              (chunk) => chunk !== current_chunk,
-            );
-          }
-          if (checkbox.chunks.length === 0) {
-            checkbox.active = false;
+    new_active_face_checkboxes.forEach((checkbox) => {
+      if (new_active_faces !== original_active_faces) {
+        globals.dirty = true;
+        // Check all checkboxes that are visible (aka in this chunk)
+        if (checkbox.li.style.display !== "none") {
+          if (checkbox.checked) {
+            checkedValues.push(checkbox.group);
+            checkbox.active = true;
+            if (!checkbox.chunks.includes(current_chunk)) {
+              checkbox.chunks.push(current_chunk);
+            }
+          } else {
+            if (checkbox.chunks.includes(current_chunk)) {
+              checkbox.chunks = checkbox.chunks.filter(
+                (chunk) => chunk !== current_chunk,
+              );
+            }
+            if (checkbox.chunks.length === 0) {
+              checkbox.active = false;
+            }
           }
         }
       }
-    }
+    });
+    console.log(checkedValues);
   });
-  console.log(checkedValues);
-});
+};
+
+loadActiveFaces();
 
 // button for popup containing the settings that aren't usually changed
 const settingsButton = document.getElementById("settings");
