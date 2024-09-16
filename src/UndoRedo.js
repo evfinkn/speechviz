@@ -1,5 +1,6 @@
 import globals from "./globals.js";
 import { redoIcon, undoIcon } from "./icon.js";
+import { Group } from "./treeClasses.js";
 import { toggleButton } from "./util.js";
 
 const filename = globals.filename;
@@ -154,6 +155,7 @@ const MoveAction = class MoveAction {
   /** @type {!TreeItem} */ item;
   /** @type {!TreeItem} */ oldParent;
   /** @type {!TreeItem} */ newParent;
+  /** @type {[!TreeItem]} */ oldChildren;
 
   /**
    * @param {!TreeItem} item -
@@ -163,11 +165,18 @@ const MoveAction = class MoveAction {
     this.item = item;
     this.oldParent = item.parent;
     this.newParent = newParent;
+    this.oldChildren = item.children;
     item.move(newParent);
   }
 
   undo() {
-    this.item.move(this.oldParent);
+    if (this.item instanceof Group) {
+      this.oldChildren.forEach((child) => {
+        if (child.li.style.display !== "none") {
+          child.move(this.item);
+        }
+      });
+    } else this.item.move(this.oldParent);
   }
 
   redo() {
@@ -290,6 +299,29 @@ const UnassociateAction = class UnassociateAction {
   }
 };
 
+const FaceCheckAction = class FaceCheckAction {
+  /** @type {!Int} */ chunk;
+  /** @type {!Array.<Int>} */ groups;
+
+  /**
+   * @param {!TreeItem} item -
+   */
+  constructor(chunk, groups) {
+    this.chunk = chunk;
+    this.groups = groups;
+    // TODO: implement actually storing what groups are the active
+    // speaker for a given chunk
+  }
+
+  undo() {
+    // TODO: implement
+  }
+
+  redo() {
+    // TODO: implement
+  }
+};
+
 const ColorAction = class ColorAction {
   /** @type {!TreeItem} */ item;
   /** @type {!Color} */ oldColor;
@@ -373,6 +405,7 @@ const Actions = {
   ColorAction,
   SplitSegmentAction,
   MergeSegmentsAction,
+  FaceCheckAction,
 };
 
 export { undoStorage, redoStorage, Actions };

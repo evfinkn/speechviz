@@ -59,7 +59,7 @@ class VrsAudioClip(AudioFileClip):
         # https://github.com/facebookresearch/projectaria_tools/blob/35d071c/projectaria_tools/utils/vrs_to_mp4.py#L32
         vrs_fspath = os.fspath(vrs_path)
         self._fspath = vrs_fspath  # This is mostly for parity with the other classes
-        self._temp_folder = tempfile.TemporaryDirectory()
+        self._temp_folder = tempfile.TemporaryDirectory(dir="tmp")
         temp_folder_fspath = os.path.join(self._temp_folder.name, "audio.wav")
 
         json_output_string = vrs.extract_audio_track(vrs_fspath, temp_folder_fspath)
