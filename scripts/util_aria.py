@@ -18,6 +18,7 @@ from projectaria_tools.core.sensor_data import SensorData, TimeDomain
 from projectaria_tools.core.stream_id import StreamId
 
 from _types import StrPath
+from log import logger
 
 _DEVICE_TIME = TimeDomain.DEVICE_TIME
 RawProperty = tuple[str, npt.DTypeLike]
@@ -59,7 +60,7 @@ class VrsAudioClip(AudioFileClip):
         # https://github.com/facebookresearch/projectaria_tools/blob/35d071c/projectaria_tools/utils/vrs_to_mp4.py#L32
         vrs_fspath = os.fspath(vrs_path)
         self._fspath = vrs_fspath  # This is mostly for parity with the other classes
-        self._temp_folder = tempfile.TemporaryDirectory(dir="tmp")
+        self._temp_folder = tempfile.TemporaryDirectory()
         temp_folder_fspath = os.path.join(self._temp_folder.name, "audio.wav")
 
         json_output_string = vrs.extract_audio_track(vrs_fspath, temp_folder_fspath)
@@ -70,6 +71,7 @@ class VrsAudioClip(AudioFileClip):
             )
 
         audio_fspath = json_output["output"]
+        logger.info(f"VRS audio temporarily extracted to {audio_fspath}")
         super().__init__(audio_fspath)
 
     def close(self):
@@ -124,11 +126,13 @@ class VrsVideoClip(ImageSequenceClip):
 
         super().__init__(frames, fps=fps)
 
+        self.audio = None
         if audio:
             try:
                 self.audio = VrsAudioClip(fspath)
-            except Exception:
-                pass  # ignore if audio extraction fails
+            except Exception as e:
+                logger.error("Error creating audio for {}", fspath)
+                logger.exception(e)
 
     def _frame(self, sensor_data: SensorData) -> np.ndarray:
         img = sensor_data.image_data_and_record()[0].to_numpy_array()
@@ -136,6 +140,12 @@ class VrsVideoClip(ImageSequenceClip):
             # Convert grayscale image to RGB since moviepy requires RGB images
             return cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         return img.copy()
+
+    def close(self):
+        super().close()
+        if self.audio:
+            self.audio.close()
+            self.audio = None
 
 
 class UndistortVrsVideoTransform:
