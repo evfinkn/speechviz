@@ -162,8 +162,8 @@ class UndistortVrsVideoTransform:
     >>> stream_id = StreamId("214-1")
     >>> with VrsVideoClip(vrs_path, stream_id) as clip:
     ...     undistort_transform = UndistortVrsVideoTransform.from_clip(clip)
-    ...     clip.fl(undistort_transform)
-    ...     clip.write_videofile("undistorted.mp4")
+    ...     with clip.fl(undistort_transform) as undistorted_clip:
+    ...         undistorted_clip.write_videofile("undistorted.mp4")
     """
 
     @classmethod
@@ -221,7 +221,7 @@ class UndistortVrsVideoTransform:
         self._calib = sensor_calib.camera_calibration()
 
         width, height = self._calib.get_image_size()
-        width, height = int(width * 1.25), int(height * 1.25)
+        width, height = int(width * 1.5), int(height * 1.5)
         focal_length = self._calib.get_focal_lengths()[0]
         transform = self._calib.get_transform_device_camera()
         self._linear = calibration.get_linear_camera_calibration(

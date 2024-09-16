@@ -34,6 +34,10 @@ NpInt = np.integer[Any]
 NpFloat = np.floating[Any]
 NpComplex = np.complexfloating[Any, Any]
 
+AnyInt = int | NpInt
+AnyFloat = float | NpFloat
+AnyBool = bool | np.bool_
+
 Number = int | float | complex
 NumberT = TypeVar("NumberT", int, float, complex)
 

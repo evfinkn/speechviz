@@ -4,26 +4,98 @@ import colorsys
 import json
 import os
 import pathlib
-import subprocess
-from typing import Callable, cast
+from dataclasses import dataclass, field
+from typing import Literal, cast
 
 import cv2
 import numpy as np
 import torch
 from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from projectaria_tools.core import data_provider
+from projectaria_tools.core import calibration, data_provider
 from projectaria_tools.core.calibration import CameraCalibration, DeviceCalibration
+from projectaria_tools.core.data_provider import VrsDataProvider
 from projectaria_tools.core.sensor_data import TimeDomain
 from projectaria_tools.core.sophus import SE3, SO3
 from projectaria_tools.core.stream_id import StreamId
+from typing_extensions import Self
 
+import log
+from _types import AnyBool, AnyFloat, AnyInt, NpFloat
 from create_poses import create_poses
 from ego_blur_undistorted_video import get_device, visualize_video
+from log import logger
 from util_aria import UndistortVrsVideoTransform, VrsVideoClip
 
-AnyInt = int | np.int_
-DistFunc = Callable[[np.ndarray, np.ndarray], np.floating]
+Rect = np.ndarray
+Rect2D = np.ndarray[tuple[Literal[4]], np.dtype[NpFloat]]
+Rect3D = np.ndarray[tuple[Literal[6]], np.dtype[NpFloat]]
+Point = np.ndarray
+Point2D = np.ndarray[tuple[Literal[2]], np.dtype[NpFloat]]
+Point3D = np.ndarray[tuple[Literal[3]], np.dtype[NpFloat]]
+
+
+@dataclass(slots=True)
+class Face:
+    index: int
+    """The face's overall index in the video."""
+
+    frame: AnyInt
+    """The video frame number where the face was detected."""
+
+    rect2d: Rect2D
+    """The face's bounding box in the video frame."""
+
+    center2d: Point2D = field(init=False)
+    """The center of this face's rect2d."""
+
+    center3d: Point3D | None
+    """The unprojection of this face's center2d to 3D space."""
+
+    def __post_init__(self):
+        self.center2d = rect_center(self.rect2d)
+
+        if self.center3d is not None and np.isnan(self.center3d).any():
+            self.center3d = None
+
+    def dist2d(self, other: Self) -> AnyFloat:
+        return np.linalg.norm(self.center2d - other.center2d)
+
+    def dist3d(self, other: Self) -> AnyFloat:
+        if self.center3d is None or other.center3d is None:
+            raise ValueError("One or both faces do not have 3D centers.")
+        return np.linalg.norm(self.center3d - other.center3d)
+
+    def is_close2d(self, other: Self, dtol: AnyFloat, ftol: AnyFloat) -> AnyBool:
+        """Check if two faces are close in 2D space and frames.
+
+        Parameters
+        ----------
+        other : Face
+            The other face to compare with.
+        dtol : AnyFloat
+            The maximum distance between the centers of the two faces.
+        ftol : AnyFloat
+            The maximum difference in frames between the two faces.
+        """
+        return abs(self.frame - other.frame) <= ftol and self.dist2d(other) <= dtol
+
+    def is_close3d(self, other: Self, dtol: AnyFloat, ftol: AnyFloat) -> AnyBool:
+        """Check if two faces are close in 3D space and frames.
+
+        Parameters
+        ----------
+        other : Face
+            The other face to compare with.
+        dtol : AnyFloat
+            The maximum distance between the centers of the two faces.
+        ftol : AnyFloat
+            The maximum difference in frames between the two faces.
+        """
+        return abs(self.frame - other.frame) <= ftol and self.dist3d(other) <= dtol
+
+
+Group = list[Face]
 
 
 def box_pipeline(path: pathlib.Path, reprocess: bool = False):
@@ -43,212 +115,208 @@ def box_pipeline(path: pathlib.Path, reprocess: bool = False):
 
     blurred_video_path = data_dir / "video" / parent_dir / f"{path.stem}.mp4"
     output_video_path = data_dir / "video" / parent_dir / f"{path.stem}_blurred.mp4"
-    if reprocess or not output_video_path.exists():
-        # Step 1: Undistort unblurred vrs
-        print("Undistorting video...")
-        fps = 10
-
-        vrs_path = data_dir / "vrs" / parent_dir / f"{path.stem}.vrs"
-
-        stream_id = StreamId("1201-1")
-        with VrsVideoClip(vrs_path, stream_id, audio=True) as clip:
-            undistort_transform = UndistortVrsVideoTransform.from_clip(clip)
-            clip.fl(undistort_transform)
-            clip.write_videofile(str(data_dir / "undistorted.mp4"), fps=fps)
-            clip.close()
-
-        cap = cv2.VideoCapture(str(data_dir / "undistorted.mp4"))
-        if not cap.isOpened():
-            print("Error: Could not open video file")
-            return
-        else:
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            print("FPS:", fps)
-
-        command = (
-            f"ffmpeg -y -i {str(data_dir / 'undistorted.mp4')} -vf \"transpose=1\" -c:a"
-            f" copy {str(data_dir / 'rotated.mp4')}"
-        )
-        subprocess.run(command, shell=True)
-
-        cap.release()
-
-        # Step 2: Run Ego Blur on undistorted unblurred video and store what bounding
-        # boxes are on each frame
-        print("Running Ego Blur...")
-
-        face_model_path = pathlib.Path("scripts", "models", "ego_blur_face.jit")
-        input_video_path = str(data_dir / "rotated.mp4")
-        output_video_fps = fps
-
-        face_detector = None
-        face_detector = torch.jit.load(face_model_path, map_location="cpu").to(
-            get_device()
-        )
-        face_detector.eval()
-
-        # visualize_video wil create the output video with
-        # the bounding boxes drawn on it, and
-        # a csv with the boxes for faces called faces.csv
-        visualize_video(
-            input_video_path=input_video_path,
-            face_detector=face_detector,
-            lp_detector=None,
-            face_model_score_threshold=0.9,
-            lp_model_score_threshold=None,
-            nms_iou_threshold=0.3,
-            output_video_path=str(blurred_video_path),
-            scale_factor_detections=1,
-            output_video_fps=output_video_fps,
-        )
-
-        # Remove the unblurred videos now that the blurred videos are made
-        os.remove(data_dir / "undistorted.mp4")
-        os.remove(data_dir / "rotated.mp4")
-
-        # Step 3: Group the face boxes, and draw them on the video.
-        # Also output the files in data/faceBoxes etc.
-        print("Grouping face boxes...")
-
-        # Create the poses for the video
-        # TODO: find out why create_poses doesn't work on my end...
-        create_poses(vrs_path, reprocess, headers=True, positions=True)
-
-        orientation_path = (
-            data_dir / "graphical" / parent_dir / f"{path.stem}" / "pose.csv"
-        )
-        faces_path = "faces.csv"
-
-        orientations = np.loadtxt(orientation_path, delimiter=",", skiprows=1)
-        # The output of create_poses.py is almost normalized, but slightly off
-        # (likely due to floating point errors). We normalize it here.
-        orientations[:, 1:] /= np.linalg.norm(
-            orientations[:, 1:], axis=1, keepdims=True
-        )
-
-        rects = np.loadtxt(faces_path, delimiter=",", skiprows=1, dtype=np.int64)
-
-        dp: data_provider.VrsDataProvider = data_provider.create_vrs_data_provider(
-            str(vrs_path)
-        )
-        # type: ignore
-        device_calib = cast(DeviceCalibration, dp.get_device_calibration())
-        csl_calib = cast(
-            CameraCalibration, device_calib.get_camera_calib("camera-slam-left")
-        )
-        t_cpf_csl = cast(SE3, device_calib.get_transform_cpf_sensor("camera-slam-left"))
-
-        # shape of the images before they were rotated
-        unrot_img_shape = csl_calib.get_image_size()
-
-        csl_config = dp.get_image_configuration(StreamId("1201-1"))
-        img_rate = csl_config.nominal_rate_hz
-        img_time_diff = 1 / img_rate
-
-        # The frames' times relative to the beginning of the VRS recording
-        rect_times = np.asarray([get_frame_time(dp, i) for i in rects[:, 0]])
-
-        # Note to Blake: I can't remember why it was possible for some times to be
-        # negative but I definitely put this here for a reason. I think it might've
-        # been because the last frames in rects weren't in the VRS for some reason
-        # and so it returned -1 for those
-        if rect_times[0] < 0:
-            # Fall back to using the first frame's time (relative to the beginning
-            # of the video) as the time of the first rectangle
-            rect_times[0] = rects[0, 0] * img_time_diff
-        for j in np.where(rect_times < 0):
-            # rect_times[j - 1] will be positive since np.where returns indices
-            # in order and rect_times[0] must be positive from above
-            rect_times[j] = rect_times[j - 1] + img_time_diff
-
-        # The quaternion orientations nearest whose times are closest to the
-        # rectangles' times
-        rect_quats = orientations[find_nearest(orientations[:, 0], rect_times), 1:]
-        # SO3 is *basically* projectaria_tools' special quaternion class
-        # type: ignore
-        rect_so3 = cast(SO3, SO3.from_quat(rect_quats[:, 0], rect_quats[:, 1:]))
-        # cpf_rects stores the frame number and rectangle coordinates (now in 3D)
-        cpf_rects = np.empty((rects.shape[0], 7), dtype=np.float64)
-        # type: ignore
-        for j, (rect, quat) in enumerate(zip(rects.astype(np.float64), rect_so3)):
-            # Rotate the points since the rectangles are on the rotated images (which
-            # rotated 90 degrees clockwise) so we rotate the points 90 degrees
-            # counterclockwise)
-            p1 = rot_point_90cw(*rect[1:3], *unrot_img_shape, k=-1)
-            p2 = rot_point_90cw(*rect[3:], *unrot_img_shape, k=-1)
-
-            cpf_rects[j, 0] = rect[0]  # frame number
-            # Transforming them to 3D and then the central pupil frame is necessary to
-            # Multiply by the quaternion to rotate the points to orientation of
-            # the device (at least I think that's how the math works). It returns a
-            # column vector so we transpose it to get a row vector
-            cpf_rects[j, 1:4] = (quat @ transform(p1, t_cpf_csl, csl_calib)).T
-            cpf_rects[j, 4:] = (quat @ transform(p2, t_cpf_csl, csl_calib)).T
-
-        groups: list[list[tuple[int, np.ndarray]]] = []
-        with open("grouping_log.txt", "w") as file:
-            for j, rect in enumerate(cpf_rects):
-                # Play around with the frame_tol and dist_tol values, 10 and 1 were
-                # just what I tried last
-                group_rect(
-                    j, rect, groups, frame_tol=10, dist_tol=1, var_dist=False, file=file
-                )
-
-        # Use the indices of the rectangles to create the final list of grouped
-        # rectangles. We group based on the unprojected rects (the rects in 3D space)
-        # so use the indices from each group to get the corresponding 2D rects grouped
-        continuous_rects = [[rects[i] for i, _ in group] for group in groups]
-
-        group_colors = generate_colors(len(continuous_rects))
-
-        if output_video_path.exists():
-            os.remove(output_video_path)
-
-        draw_rects_to_video(
-            str(blurred_video_path),
-            continuous_rects,
-            str(output_video_path),
-            group_colors,
-        )
-
-        colors_path = (
-            data_dir / "faceBoxes" / parent_dir / f"{path.stem}_egoblur_colors.json"
-        )
-        if not os.path.exists(data_dir / "faceBoxes" / parent_dir):
-            os.makedirs(data_dir / "faceBoxes" / parent_dir)
-        if colors_path.exists():
-            os.remove(colors_path)
-        with open(colors_path, "w") as f:
-            json.dump(group_colors, f)
-
-        # Convert ndarray to list
-        continuous_rects_list = [
-            [arr.tolist() if isinstance(arr, np.ndarray) else arr for arr in sublist]
-            for sublist in continuous_rects
-        ]
-
-        continuous_rects_path = (
-            data_dir / "faceBoxes" / parent_dir / f"{path.stem}_egoblur_rects.json"
-        )
-        with open(continuous_rects_path, "w") as f:
-            json.dump(continuous_rects_list, f)
-
-        fps_path = data_dir / "faceBoxes" / parent_dir / f"{path.stem}_egoblur_fps.txt"
-        # Write the fps to fps.txt
-        with open(fps_path, "w") as f:
-            f.write(str(output_video_fps))
-
-        # Step 4: Remove all the files we made
-        if os.path.exists("faces.csv"):
-            os.remove("faces.csv")
-        if os.path.exists("grouping_log.txt"):
-            os.remove("grouping_log.txt")
-        if os.path.exists(blurred_video_path):
-            os.remove(blurred_video_path)
+    if not reprocess and output_video_path.exists():
+        logger.info("{} already processed. Skipping.", path)
         return
 
+    # Step 1: Undistort unblurred vrs
+    logger.info("Undistorting video...")
 
-def rect_center(rect: np.ndarray) -> np.ndarray:
+    vrs_path = data_dir / "vrs" / parent_dir / f"{path.stem}.vrs"
+
+    stream_id = StreamId("1201-1")
+    with VrsVideoClip(vrs_path, stream_id, audio=True) as clip:
+        fps = clip.fps
+        undistort_transform = UndistortVrsVideoTransform.from_clip(clip)
+        with clip.fl(undistort_transform) as undistorted_clip:
+            undistorted_clip.write_videofile(str(data_dir / "undistorted.mp4"))
+
+    # Step 2: Run Ego Blur on undistorted unblurred video and store what bounding
+    # boxes are on each frame
+    logger.info("Running Ego Blur...")
+
+    face_model_path = pathlib.Path("scripts", "models", "ego_blur_face.jit")
+    input_video_path = data_dir / "undistorted.mp4"
+    output_video_fps = fps
+
+    face_detector = None
+    face_detector = torch.jit.load(face_model_path, map_location="cpu").to(get_device())
+    face_detector.eval()
+
+    # visualize_video wil create the output video with
+    # the bounding boxes drawn on it, and
+    # a csv with the boxes for faces called faces.csv
+    visualize_video(
+        input_video_path=str(input_video_path),
+        face_detector=face_detector,
+        lp_detector=None,
+        face_model_score_threshold=0.9,
+        lp_model_score_threshold=None,
+        nms_iou_threshold=0.3,
+        output_video_path=str(blurred_video_path),
+        scale_factor_detections=1,
+        output_video_fps=output_video_fps,  # type: ignore
+    )
+
+    # Remove the unblurred video now that the blurred videos are made
+    try:
+        input_video_path.unlink()
+    except FileNotFoundError as e:
+        logger.warning("Could not remove undistorted video:")
+        logger.exception(e)
+
+    # Step 3: Group the face boxes, and draw them on the video.
+    # Also output the files in data/faceBoxes etc.
+    logger.info("Grouping face boxes...")
+
+    # Create the poses for the video
+    # TODO: find out why create_poses doesn't work on my end...
+    create_poses(vrs_path, reprocess, headers=True, positions=False)
+
+    orientation_path = data_dir / "graphical" / parent_dir / f"{path.stem}" / "pose.csv"
+    faces_path = "faces.csv"
+
+    orientations = np.loadtxt(orientation_path, delimiter=",", skiprows=1)
+    orientation_times = orientations[:, 0]
+    orientations = orientations[:, 1:]
+    # The output of create_poses.py is almost normalized, but slightly off
+    # (likely due to floating point errors). We normalize it here.
+    orientations /= np.linalg.norm(orientations, axis=1, keepdims=True)
+
+    rects_with_frames = np.loadtxt(
+        faces_path, delimiter=",", skiprows=1, dtype=np.int64
+    )
+    if rects_with_frames.size == 0:
+        logger.warning("No faces detected in the video {}", path)
+        if os.path.exists("faces.csv"):
+            os.remove("faces.csv")
+        # if os.path.exists(blurred_video_path):
+        #     os.remove(blurred_video_path)
+        return
+
+    rect_frames, rects = rects_with_frames[:, 0], rects_with_frames[:, 1:]
+
+    dp: VrsDataProvider = data_provider.create_vrs_data_provider(str(vrs_path))
+    device_calib = cast(DeviceCalibration, dp.get_device_calibration())
+
+    # Ego blur is run on the undistorted, rotated video, so we need to get the
+    # calibration for that video. This way, the unprojected 3D points will be in
+    # the correct space, and the transformation to the central pupil frame will be
+    # correct.
+    linear_camera_calib = undistort_transform._linear
+    linear_cw90_camera_calib = calibration.rotate_camera_calib_cw90deg(
+        linear_camera_calib
+    )
+
+    t_device_camera = cast(SE3, linear_cw90_camera_calib.get_transform_device_camera())
+    t_device_cpf = cast(SE3, device_calib.get_transform_device_cpf())
+    t_cpf_device = t_device_cpf.inverse()
+    # t_a_b @ t_b_c = t_a_c
+    t_cpf_camera = t_cpf_device @ t_device_camera
+
+    camera_id = StreamId("1201-1")
+    camera_config = dp.get_image_configuration(camera_id)
+    img_rate = camera_config.nominal_rate_hz
+    img_time_diff = 1 / img_rate
+
+    first_time = get_first_time_all(dp)
+    # The frames' times relative to the beginning of the VRS recording
+    rect_times = np.asarray([get_frame_time(dp, i, first_time) for i in rect_frames])
+
+    # Note to Blake: I can't remember why it was possible for some times to be
+    # negative but I definitely put this here for a reason. I think it might've
+    # been because the last frames in rects weren't in the VRS for some reason
+    # and so it returned -1 for those
+    if rect_times[0] < 0:
+        # Fall back to using the first frame's time (relative to the beginning
+        # of the video) as the time of the first rectangle
+        rect_times[0] = rect_frames[0] * img_time_diff
+    for j in np.where(rect_times < 0):
+        # rect_times[j - 1] will be positive since np.where returns indices
+        # in order and rect_times[0] must be positive from above
+        rect_times[j] = rect_times[j - 1] + img_time_diff
+
+    # The quaternion orientations nearest whose times are closest to the rectangles'
+    # times. Column 0 is the scalar part of the quaternion (w)
+    rect_quats = orientations[find_nearest(orientation_times, rect_times)]
+    # SO3 is *basically* projectaria_tools' special quaternion class
+    # from_quat takes the scalar part of the quaternion as the first argument and
+    # the vector part as the second argument
+    rect_so3 = cast(SO3, SO3.from_quat(rect_quats[:, 0], rect_quats[:, 1:]))  # type: ignore # noqa: E501
+
+    rect_centers3d = np.full((rects.shape[0], 3), np.nan, dtype=np.float64)
+    for j, (rect, quat) in enumerate(zip(rects.astype(np.float64), rect_so3)):  # type: ignore # noqa: E501
+        # Note: ego blur is run on the undistorted, rotated video, so we don't need
+        # to rotate the points back to the original image orientation
+        center2d = rect_center(rect)
+
+        try:
+            rect_centers3d[j] = (
+                quat @ transform(center2d, t_cpf_camera, linear_cw90_camera_calib)
+            ).T
+        except ValueError:
+            # If the center is outside the image bounds, we just leave it as NaN
+            pass
+
+    faces = [
+        Face(*t) for t in zip(range(len(rects)), rect_frames, rects, rect_centers3d)
+    ]
+    groups: list[Group] = []
+    for face in faces:
+        group_face(face, groups, 30, 7, 0.75, 7, var_dist=False)
+
+    continuous_rects = [[rects[face.index] for face in group] for group in groups]
+
+    group_colors = generate_colors(len(groups))
+
+    if output_video_path.exists():
+        os.remove(output_video_path)
+
+    draw_rects_to_video(
+        str(blurred_video_path),
+        groups,
+        str(output_video_path),
+        group_colors,
+    )
+
+    colors_path = (
+        data_dir / "faceBoxes" / parent_dir / f"{path.stem}_egoblur_colors.json"
+    )
+    if not os.path.exists(data_dir / "faceBoxes" / parent_dir):
+        os.makedirs(data_dir / "faceBoxes" / parent_dir)
+    if colors_path.exists():
+        os.remove(colors_path)
+    with open(colors_path, "w") as f:
+        json.dump(group_colors, f)
+
+    # Convert ndarray to list
+    continuous_rects_list = [
+        [arr.tolist() if isinstance(arr, np.ndarray) else arr for arr in sublist]
+        for sublist in continuous_rects
+    ]
+
+    continuous_rects_path = (
+        data_dir / "faceBoxes" / parent_dir / f"{path.stem}_egoblur_rects.json"
+    )
+    with open(continuous_rects_path, "w") as f:
+        json.dump(continuous_rects_list, f)
+
+    fps_path = data_dir / "faceBoxes" / parent_dir / f"{path.stem}_egoblur_fps.txt"
+    # Write the fps to fps.txt
+    with open(fps_path, "w") as f:
+        f.write(str(output_video_fps))
+
+    # Step 4: Remove all the files we made
+    if os.path.exists("faces.csv"):
+        os.remove("faces.csv")
+    if os.path.exists("grouping_log.txt"):
+        os.remove("grouping_log.txt")
+    if os.path.exists(blurred_video_path):
+        os.remove(blurred_video_path)
+    return
+
+
+def rect_center(rect: Rect) -> Point:
     """Returns the center of a rectangle.
 
     Parameters
@@ -261,43 +329,6 @@ def rect_center(rect: np.ndarray) -> np.ndarray:
     """
     split = len(rect) // 2
     return (rect[:split] + rect[split:]) / 2
-
-
-def rect_center_dist(rect1: np.ndarray, rect2: np.ndarray) -> np.floating:
-    """Returns the distance between the centers of two rectangles.
-
-    Parameters
-    ----------
-    rect1, rect2 : np.ndarray
-        The rectangles to get the distance between. Each rectangle is represented by a
-        1xN array of the top-left and bottom-right corners, where N is twice the number
-        of dimensions (see `rect_center`).
-    """
-    split = len(rect1) // 2
-    center1 = (rect1[:split] + rect1[split:]) / 2
-    center2 = (rect2[:split] + rect2[split:]) / 2
-    return np.linalg.norm(center1 - center2)
-
-
-def are_rects_close(
-    rect1: np.ndarray, rect2: np.ndarray, tol: float = 10
-) -> bool | np.bool_:
-    """Checks whether two rectangles' centers are within a certain distance of each
-    other.
-
-    Parameters
-    ----------
-    rect1, rect2 : np.ndarray
-        The rectangles to compare. Each rectangle is represented by a 1xN array of
-        the top-left and bottom-right corners, where N is twice the number of
-        dimensions (see `rect_center`).
-    """
-    return rect_center_dist(rect1, rect2) < tol
-
-
-def pt_dist(pt1: np.ndarray, pt2: np.ndarray) -> np.floating:
-    """Returns the distance between two points."""
-    return np.linalg.norm(pt1 - pt2)
 
 
 def generate_colors(n: int) -> list:
@@ -318,7 +349,7 @@ def recolor_frame(frame: np.ndarray) -> np.ndarray:
 
 def draw_rects_to_video(
     video_path: str,
-    rect_groups: list[list[np.ndarray]],
+    rect_groups: list[Group],
     output_path: str,
     colors: list[list[int]] | None = None,
     font: int = cv2.FONT_HERSHEY_SIMPLEX,
@@ -329,7 +360,7 @@ def draw_rects_to_video(
     ----------
     video_path : str
         The path to the video file.
-    rect_groups : list[list[np.ndarray]]
+    rect_groups : list[Group]
         The rectangles to draw. Each list in rect_groups contains the rectangles for
         that group. Groups are drawn in different colors and with different labels. A
         rectangle is represented by a 1x5 array, with the first element being the frame
@@ -351,29 +382,26 @@ def draw_rects_to_video(
         frames_iter = video.iter_frames()
         frames = []
         for group, color, label in zip(rect_groups, colors, labels):
-            for rect_num, (frame_num, *rect) in enumerate(group):
-                if len(frames) <= frame_num:
-                    while len(frames) <= frame_num:
-                        frames.append(next(frames_iter))
-                frame = recolor_frame(frames[frame_num])
+            for rect_num, face in enumerate(group):
+                while len(frames) <= face.frame:
+                    frames.append(recolor_frame(next(frames_iter)))
+                frame = frames[face.frame]
 
                 text = f"{label}, {rect_num}"
-                org = (rect[0], rect[1] - 10)
+                org = (face.rect2d[0], face.rect2d[1] - 10)
                 cv2.putText(frame, text, org, font, 0.5, color, 2)
-                cv2.rectangle(frame, tuple(rect[:2]), tuple(rect[2:]), color, 2)
+                cv2.rectangle(
+                    frame, tuple(face.rect2d[:2]), tuple(face.rect2d[2:]), color, 2
+                )
 
-                frames[frame_num] = frame
+                frames[face.frame] = frame
 
         frames.extend(frames_iter)  # add the remaining frames
 
         with ImageSequenceClip(frames, fps=video.fps) as clip:
-            clip = clip.set_audio(
-                video.audio
-            )  # Set the audio of the clip to the audio of the original video
+            # Set the audio of the clip to the audio of the original video
+            clip = clip.set_audio(video.audio)
             clip.write_videofile(output_path, fps=video.fps)
-            clip.close()
-        video.close()
-        return
 
 
 def rot_point_90cw(
@@ -402,7 +430,7 @@ def rot_point_90cw(
         return (y, M - 1 - x)
 
 
-def get_first_time_all(dp: data_provider.VrsDataProvider) -> float:
+def get_first_time_all(dp: VrsDataProvider) -> float:
     """Gets the minimum first time of all streams."""
     return (
         min(
@@ -416,22 +444,27 @@ def get_first_time_all(dp: data_provider.VrsDataProvider) -> float:
 
 
 def get_frame_time(
-    dp: data_provider.VrsDataProvider, frame: int, from_beginning: bool = True
+    dp: VrsDataProvider,
+    frame: int,
+    first_time: float | None = None,
+    from_beginning: bool = True,
 ) -> float:
     """Gets the time of a frame in the VRS' IMU left camera stream.
 
     Parameters
     ----------
-    dp : data_provider.VrsDataProvider
+    dp : VrsDataProvider
         The data provider to use.
     frame : int
     from_beginning : bool, default=True
         If True, the time is relative to the beginning of the recording. If False, the
         time is the absolute time of the frame.
     """
+    if first_time is None:
+        first_time = get_first_time_all(dp)
     _, img_metadata = dp.get_image_data_by_index(StreamId("1201-1"), frame)
     img_time_s = img_metadata.capture_timestamp_ns / 1e9
-    return (img_time_s - get_first_time_all(dp)) if from_beginning else img_time_s
+    return (img_time_s - first_time) if from_beginning else img_time_s
 
 
 # https://stackoverflow.com/a/26026189
@@ -448,10 +481,10 @@ def find_nearest(array: np.ndarray, values: np.ndarray):
     return idx
 
 
-def transform(p, t_cpf_csl, csl_calib):
+def transform(p, t_cpf_camera: SE3, linear_cw90_camera_calib: CameraCalibration):
     # unproject turns a point (the pixel coordinates) into a 3D point vector in the
     # camera frame. We transform this point into the central pupil frame using the
-    # t_cpf_csl transform. I no_checks version of unproject because for some reason,
+    # t_cpf_camera transform. I no_checks version of unproject because for some reason,
     # the unproject was throwing an error about some points being outside the image
     # bounds (even though I'm fairly certain they weren't). Problem with this is tho
     # that it's probably valid for throwing because the unprojection of the points it
@@ -462,54 +495,68 @@ def transform(p, t_cpf_csl, csl_calib):
     # orientations are in the CPF and we need to rotate the points to that orientation,
     # but now I'm not so sure. The rectangle staying in the camera frame might make
     # more sense
-    return t_cpf_csl @ csl_calib.unproject_no_checks(p)
+    unprojected_camera_point = linear_cw90_camera_calib.unproject(p)
+    if unprojected_camera_point is None:
+        raise ValueError("Point is outside the image bounds")
+    # point_in_a = t_a_c @ point_in_c
+    return t_cpf_camera @ unprojected_camera_point
 
 
-# TODO: In _group, we should find the best group to add an array to, not the first group
-# that it's close to. (So like calculate the distance to all groups that are within the
-# frame tolerance and add it to the one with the smallest distance. A case for when
-# the array is on the same frame as the last array in the group should also be added
-# like in the current implementation.)
-def log(file, *msgs: str):
-    if file is not None:
-        file.write(", ".join(msgs) + "\n")
+def group_dist(
+    face: Face,
+    group: Group,
+    dtol2d: AnyFloat,
+    ftol2d: AnyFloat,
+    dtol3d: AnyFloat | None = None,
+    ftol3d: AnyFloat | None = None,
+) -> AnyFloat | None:
+    last_face = group[-1]
+    if last_face.frame == face.frame:
+        if len(group) < 2:
+            return None
+        last_face = group[-2]
+
+    if dtol3d is not None and ftol3d is not None:
+        try:
+            if face.is_close3d(last_face, dtol3d, ftol3d):
+                # Divide by dtol3d so that the distance is normalized to the distance
+                # tolerance. This allows us to compare 3D distances between faces with
+                # 2D distances between faces.
+                return face.dist3d(last_face) / dtol3d
+        except ValueError:
+            pass  # handled by the next block
+
+    if face.is_close2d(last_face, dtol2d, ftol2d):
+        return face.dist2d(last_face) / dtol2d
+
+    return None
 
 
-def _group(
-    arr_num: int,
-    arr: np.ndarray,
-    groups: list[list[tuple[int, np.ndarray]]],
-    frame_tol: int = 3,
-    dist_tol: float = 10,
-    dist_func: DistFunc | None = None,
+def group_face(
+    face: Face,
+    groups: list[Group],
+    dtol2d: AnyFloat,
+    ftol2d: AnyFloat,
+    dtol3d: AnyFloat | None = None,
+    ftol3d: AnyFloat | None = None,
     *,
     var_dist: bool = True,  # whether to allow more distance if frames closer in time
-    file=None,
 ):
-    """Groups arrays based on their distance and time difference.
+    """Groups faces based on their distance and frame difference.
 
     This function only does one iteration of grouping. It is meant to be called in a
-    loop over all arrays.
+    loop over all faces.
 
     Parameters
     ----------
-    arr_num : int
-        The index of the array in the original array list.
-    arr : np.ndarray
-        The array to group.
-    groups : list[list[tuple[int, np.ndarray]]]
-        The list of groups to add the array to. Each group is a list of tuples. The
-        first element of the tuple is the array's index in the original array list, and
-        the second element is the array itself. (So each element is `(arr_num, arr)`.)
-    frame_tol : int, default=3
-        The maximum number of frames that can separate two arrays for them to be
-        considered in the same group.
-    dist_tol : float, default=10
-        The maximum distance between two arrays for them to be considered in the same
-        group. The distance is calculated using `dist_func`.
-    dist_func : Callable[[np.ndarray, np.ndarray], np.floating]
-        The function to use to calculate the distance between two arrays. If None, an
-        error is raised.
+    face : Face
+        The face to group.
+    groups : list[Group]
+        The list of groups to add the face to. Each group is a list of Faces.
+    dtol2d, ftol2d, dtol3d, ftol3d : float | None
+        The distance and frame tolerances for grouping. dtol2d and ftol2d must be set
+        (since 3D grouping falls back to 2D grouping if the 3D center is None). If
+        either/both of the 3D tolerances are not provided, 3D grouping is not done.
     var_dist : bool, default=True
         If True, the distance tolerance is divided by the frame difference between the
         two arrays. This allows for more distance between arrays that are closer in
@@ -520,73 +567,31 @@ def _group(
         A file to write debug messages to. If None, no messages are written.
     """
 
-    if dist_func is None:
-        raise ValueError("dist_func must be provided")
+    tol = (dtol2d, ftol2d, dtol3d, ftol3d)
 
-    for i, group in enumerate(groups):
-        frame_diff = int(arr[0] - group[-1][1][0])
-        base_msg = f"{arr_num}, {i}, f diff = {frame_diff}"  # for logging
+    dists = [
+        (group, dist)
+        for group in groups
+        if (dist := group_dist(face, group, *tol)) is not None
+    ]
+    dists.sort(key=lambda x: x[1])
 
-        if frame_diff > frame_tol:  # if the array is too far in time
-            log(file, base_msg, "skipping")
-            continue
+    for group, dist in dists:
+        if group[-1].frame != face.frame:
+            group.append(face)
+            return
 
-        # If the array is on the same frame as the last array in the group, compare it
-        # to that array and possibly add it to the group (and regroup the other array)
-        if frame_diff == 0:
-            if len(group) < 2:
-                log(file, base_msg, f"len(group {i}) < 2")
-                continue
+        # len(group) is guaranteed >= 2 because of the check in group_dist
+        other_face = group[-1]
+        other_dist = group_dist(other_face, group, *tol)
+        # other_dist can't be None since it was in the group
+        if dist < other_dist:  # type: ignore
+            other_face = group.pop()
+            group.append(face)
+            group_face(other_face, groups, *tol, var_dist=var_dist)
+            return
 
-            # group[-2][1][1:] is the actual last arr in the group, since we're
-            # comparing the current arr to the one on the same frame (group[-1][1])
-            # Sorry this naming is confusing
-            last_arr = group[-2][1][1:]
-            current_arr_dist = dist_func(last_arr, arr[1:])
-            other_arr_dist = dist_func(last_arr, group[-1][1][1:])
-
-            if current_arr_dist < other_arr_dist:
-                log(file, base_msg, f"closer than {i}[{len(group) - 1}]")
-                other_arr = group.pop()
-                group.append((arr_num, arr))
-                # Find the next best group to add the other arr to
-                _group(
-                    *other_arr,
-                    groups,
-                    frame_tol,
-                    dist_tol,
-                    dist_func,
-                    var_dist=var_dist,
-                    file=file,
-                )
-                break
-            else:
-                log(file, base_msg, f"not closer than {i}[{len(group) - 1}]")
-                continue
-
-        d_tol = (dist_tol / frame_diff) if var_dist else dist_tol
-        compar_to = f"{i}[{len(group) - 1}]"  # for logging
-        dist = dist_func(group[-1][1][1:], arr[1:])
-        if dist < d_tol:
-            log(file, base_msg, f"close to {compar_to}, adding to group {i}")
-            group.append((arr_num, arr))
-            break
-        else:
-            log(file, base_msg, f"not close to {compar_to} ({dist} > {d_tol})")
-    # This runs if the loop doesn't break (i.e., the array wasn't added to any group)
-    else:
-        log(file, f"{arr_num}, new group ({len(groups)})")
-        groups.append([(arr_num, arr)])
-
-
-def group_rect(*args, **kwargs):
-    """Groups rectangles. See `_group`."""
-    _group(*args, **kwargs, dist_func=rect_center_dist)
-
-
-def group_pts(*args, **kwargs):
-    """Groups points. See `_group`."""
-    _group(*args, **kwargs, dist_func=pt_dist)
+    groups.append([face])
 
 
 def route_dir(dir: pathlib.Path, scan_dir: bool = True, **kwargs) -> None:
@@ -608,12 +613,12 @@ def route_file(*paths: pathlib.Path, scan_dir: bool = True, **kwargs) -> None:
 
     path = paths[0].absolute()  # paths[0] is--at this point--the only argument in paths
 
-    print(path.suffix.casefold())
+    logger.info(path.suffix.casefold())
 
     # if file.path is an audio or video file, process it
     if path.suffix.casefold() in {".vrs"}:
         box_pipeline(path, **kwargs)
-        print("after box_pipeline")
+        logger.info("after box_pipeline")
     # blur on every file in file.path if it is a dir and scan_dir is True
     elif path.is_dir() and scan_dir:
         # the data dir was passed so run on data/audio and data/video
@@ -643,7 +648,10 @@ if __name__ == "__main__":
             " file. If a directory, processes every audio file in the directory."
         ),
     )
+    log.add_log_level_argument(parser)
+
     args = vars(parser.parse_args())
+    log.setup_logging(args.pop("log_level"))
     route_file(*args.pop("path"), **args)
-    print("after route_file")
+    logger.info("after route_file")
     exit(0)
