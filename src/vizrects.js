@@ -398,6 +398,7 @@ var Visualizer = class Visualizer {
     return fetch("/graphical/output/faces_grouped.csv", { cache: "no-cache" })
       .then((response) => response.text())
       .then((csv) => {
+        console.log(csv);
         this.rectangles = Papa.parse(csv, {
           header: true,
           dynamicTyping: true,
