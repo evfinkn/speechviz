@@ -3,7 +3,7 @@ import os
 import pathlib
 import subprocess
 from collections import OrderedDict
-from datetime import datetime
+from datetime import UTC, datetime
 
 import librosa
 import numpy as np
@@ -13,9 +13,11 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 
 import log
 import sync_audios
+from constants import DATA_DIR
 from log import logger
 
 
+@logger.catch(reraise=True)
 def change_audio_sample_rate(video_file, output_file, target_sample_rate):
     cmd = [
         "ffmpeg",
@@ -28,7 +30,8 @@ def change_audio_sample_rate(video_file, output_file, target_sample_rate):
         "-y",  # Overwrite output file if it already exists
         str(output_file),
     ]
-    subprocess.run(cmd)
+    proc = subprocess.run(cmd, capture_output=True, check=True)
+    logger.debug("ffmpeg output: {}", proc.stdout.decode())
 
 
 def combine_audio_files(runs_folder, session_time_differences, video_folder):
@@ -87,6 +90,7 @@ def cut_video_into_runs(
     start_time,
     output_folder,
     run_number,
+    vrs,
     start_before=45,  # seconds
     chunk_duration=60,  # seconds
 ):
@@ -97,7 +101,7 @@ def cut_video_into_runs(
 
     video = VideoFileClip(str(video_file))
 
-    # start_times = []
+    run_times = []
     # Loop through time differences
     for time_difference in time_differences:
         if start_time > video.duration:
@@ -107,6 +111,7 @@ def cut_video_into_runs(
                 convert(start_time),
                 convert(video.duration),
             )
+            run_times.append((run_number, video.duration, video.duration, vrs))
             run_number += 1
             # We have to continue instead of breaking we need to increment
             # the run numbers. Otherwise, next session will be messed up
@@ -128,6 +133,8 @@ def cut_video_into_runs(
             )
             end_time = video.duration
 
+        run_times.append((run_number, start_time, end_time, vrs))
+
         # Define output path for the video chunk
         output_path = pathlib.Path(output_folder, f"run{run_number}.mp4")
 
@@ -137,7 +144,10 @@ def cut_video_into_runs(
         video_run.write_videofile(str(output_path))
         # Increment run number
         run_number += 1
-    return run_number
+
+    video.close()
+
+    return run_number, run_times
 
 
 def cut_video_into_runs_individually(
@@ -148,36 +158,69 @@ def cut_video_into_runs_individually(
     run_number,
     time_differences,
     bounds,
+    vrs,
     start_before=45,  # seconds
     chunk_duration=60,  # seconds
 ):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
+    video = VideoFileClip(str(input_video_path))
+
+    run_times = []
     # time_differences has the same length as the number of runs for this vrs
     for _ in time_differences:
-        audio_file = pathlib.Path(runs_folder, f"run{run_number}.wav")
-        audios, sr = sync_audios.load_audios([adjusted_input_video_path, audio_file])
-        lags = sync_audios.get_audios_lags(audios, bounds, threshold=float("inf"))
+        try:
+            audio_file = pathlib.Path(runs_folder, f"run{run_number}.wav")
+            audios, sr = sync_audios.load_audios(
+                [adjusted_input_video_path, audio_file]
+            )
+            lags = sync_audios.get_audios_lags(audios, bounds, threshold=float("inf"))
 
-        start_time_seconds = lags[1] / sr - start_before
-        # Define output path for the video chunk
-        output_path = pathlib.Path(output_folder, f"run{run_number}.mp4")
+            start_time_seconds = lags[1] / sr - start_before
+            # Define output path for the video chunk
+            output_path = pathlib.Path(output_folder, f"run{run_number}.mp4")
 
-        logger.debug(
-            "Processing run {} with start time: {}", run_number, start_time_seconds
-        )
+            logger.debug(
+                "Processing run {} with start time: {}", run_number, start_time_seconds
+            )
 
-        video_run = VideoFileClip(str(input_video_path)).subclip(
-            start_time_seconds, start_time_seconds + chunk_duration
-        )
+            end_time_seconds = start_time_seconds + chunk_duration
 
-        video_run.write_videofile(str(output_path))
-        # Increment run number
-        run_number += 1
-    return run_number
+            video_run = video.subclip(start_time_seconds, end_time_seconds)
+
+            run_times.append((run_number, start_time_seconds, end_time_seconds, vrs))
+
+            video_run.write_videofile(str(output_path))
+        except Exception as e:
+            logger.error("Error processing run {}", run_number)
+            logger.exception(e)
+        finally:
+            # Increment run number
+            run_number += 1
+
+    video.close()
+
+    return run_number, run_times
 
 
+def parse_datetime(value):
+    """Parse a datetime value from a string or a timestamp.
+
+    Parameters
+    ----------
+    value : str or numeric
+        The value to parse. If a string, it should be in the format "mm/dd/yy HH:MM".
+        If numeric, it should be a timestamp in milliseconds since the epoch.
+    """
+    if isinstance(value, str):
+        return datetime.strptime(value, "%m/%d/%y %H:%M")
+    else:
+        return datetime.fromtimestamp(value / 1000, tz=UTC)
+
+
+@log.Timer()
+@logger.catch(reraise=True)
 def main():
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
@@ -271,7 +314,7 @@ def main():
 
             if file in start_times:
                 continue
-            if run["eTime"] == "NAN":
+            if run["eTime"] == "NAN" or pd.isna(run["eTime"]):
                 raise ValueError(f"eTime required for run {run_num}")
 
             # Calculate the start time of the first run for the VRS file
@@ -280,13 +323,19 @@ def main():
                 logger.trace("Run {} is the first run for {}", run_num, file)
                 start_times[file] = start_time
             else:
-                if first_run["eTime"] == "NAN":
+                if first_run["eTime"] == "NAN" or pd.isna(first_run["eTime"]):
                     raise ValueError(f"eTime required for run {first_run['run']}")
                 run_date = pd.to_datetime(run["eTime"])
                 first_run_date = pd.to_datetime(first_run["eTime"])
+                log.log_vars(run=run_num, first_run=first_run["run"])
+                log.log_vars(run_date=run_date, first_run_date=first_run_date)
                 # Number of seconds between their start times
                 time_offset = (run_date - first_run_date).total_seconds()
                 start_times[file] = start_time - time_offset
+                log.log_vars(time_offset=time_offset, file_start_time=start_time)
+
+        if any(pd.isna(start_time) for start_time in start_times.values()):
+            raise ValueError("Start time required for all VRS files")
 
         for file in data["File"].unique():
             if file not in start_times:
@@ -316,11 +365,11 @@ def main():
         # Replace .vrs at the end with .mp4
         video_file = vrs[:-4] + ".mp4"
 
-        if not row["eTime"] == "NAN":
+        if row["eTime"] != "NAN" and not pd.isna(row["eTime"]):
             if prevTime is None:
-                prevTime = datetime.strptime(row["eTime"], "%m/%d/%y %H:%M")
+                prevTime = parse_datetime(row["eTime"])
             else:
-                currTime = datetime.strptime(row["eTime"], "%m/%d/%y %H:%M")
+                currTime = parse_datetime(row["eTime"])
                 time_difference = (currTime - prevTime).total_seconds()
 
                 # Check if session changed
@@ -370,6 +419,7 @@ def main():
     combine_audio_files(args.runs, session_time_differences, args.videos)
 
     run_number = 0
+    run_times = []
     # print(session_time_differences)
     for session, time_differences in session_time_differences.items():
         audio_file = pathlib.Path(args.videos, f"{session}.wav")
@@ -398,12 +448,13 @@ def main():
         # if args.start_times:
         if start_times is not None:
             logger.trace("Using calculated start times")
-            new_run_number = cut_video_into_runs(
+            new_run_number, new_run_times = cut_video_into_runs(
                 time_differences,
                 str(pathlib.Path(args.videos, f"{session}.mp4")),
                 start_times[session],
                 args.output_videos,
                 run_number,
+                session,
                 start_before,
                 chunk_duration,
             )
@@ -413,7 +464,7 @@ def main():
                 " the video each run is, accuracy will vary",
                 session,
             )
-            new_run_number = cut_video_into_runs_individually(
+            new_run_number, new_run_times = cut_video_into_runs_individually(
                 output_video,
                 input_video,
                 args.output_videos,
@@ -421,6 +472,7 @@ def main():
                 run_number,
                 time_differences,
                 [(0, 0), (0, (duration_seconds_video - 60) * sample_rate_audio)],
+                session,
                 start_before,
                 chunk_duration,
             )
@@ -444,19 +496,32 @@ def main():
                 threshold=float("inf"),
             )
 
-            new_run_number = cut_video_into_runs(
+            new_run_number, new_run_times = cut_video_into_runs(
                 time_differences,
                 str(pathlib.Path(args.videos, f"{session}.mp4")),
                 lags[1] / sample_rate_audio,
                 args.output_videos,
                 run_number,
+                session,
                 start_before,
                 chunk_duration,
             )
 
+        run_times.extend(new_run_times)
         run_number = new_run_number
         os.remove(str(pathlib.Path(args.videos, f"{session}.wav")))
         os.remove(str(pathlib.Path(args.videos, f"{session}_AUDIOADJUSTED.mp4")))
+
+    # Write run times to a CSV file
+    run_times_df = pd.DataFrame(
+        run_times, columns=["run_number", "start_time", "end_time", "vrs"]
+    )
+    face_boxes_dir = DATA_DIR / "faceBoxes" / args.videos.stem
+    face_boxes_dir.mkdir(parents=True, exist_ok=True)
+    logger.debug("Writing run times to {}", face_boxes_dir / "run_times.csv")
+    run_times_df.to_csv(
+        face_boxes_dir / "run_times.csv", index=False, float_format="%.3f"
+    )
 
 
 if __name__ == "__main__":
