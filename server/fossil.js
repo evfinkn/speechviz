@@ -162,7 +162,9 @@ function fossilCmd(args, { splitLines = false, removeNewline = false } = {}) {
   return new Promise((resolve, reject) => {
     // cwd has to be the directory containing the checkout of the fossil repo because
     // fossil leaves a .fslckout file in that directory to identify it
-    const fossil = spawn(fossilPath, args, { cwd: dataDir });
+    const fossil = spawn(fossilPath, ["--user", "developer", ...args], {
+      cwd: dataDir,
+    });
     let stdout = "";
     let stderr = ""; // store stderr in case need to create ProcessError
     fossil.stdout.on("data", (data) => (stdout += data));
