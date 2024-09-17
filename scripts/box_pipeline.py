@@ -2,9 +2,8 @@
 import argparse
 import colorsys
 import json
-import os
-import pathlib
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Literal, cast
 
 import cv2
@@ -21,7 +20,8 @@ from projectaria_tools.core.stream_id import StreamId
 from typing_extensions import Self
 
 import log
-from _types import AnyBool, AnyFloat, AnyInt, NpFloat
+from _types import AnyBool, AnyFloat, AnyInt, NpFloat, StrPath
+from constants import DATA_DIR, FACE_BOXES_DIR, GRAPHICAL_DIR, VIDEO_DIR, VRS_DIR
 from create_poses import create_poses
 from ego_blur_undistorted_video import get_device, visualize_video
 from log import logger
@@ -98,23 +98,15 @@ class Face:
 Group = list[Face]
 
 
-def box_pipeline(path: pathlib.Path, reprocess: bool = False):
-    for ancestor in path.parents:
-        if ancestor.name == "vrs":
-            if ancestor.parent.name == "data":
-                data_dir = ancestor.parent
-                parent_dir = path.parent.relative_to(ancestor)
-                break
-    # an else for a for loop is executed if break is never reached
-    else:
-        raise ValueError(
-            "Input file must be a descendant of data/audio, data/video, or data/views"
-        )
+def box_pipeline(path: Path, reprocess: bool = False):
+    try:
+        parent_dir = path.parent.relative_to(VRS_DIR)
+    except ValueError:
+        raise ValueError("Input file must be in a directory in data/vrs")
 
-    os.makedirs(data_dir / "video" / parent_dir, exist_ok=True)
-
-    blurred_video_path = data_dir / "video" / parent_dir / f"{path.stem}.mp4"
-    output_video_path = data_dir / "video" / parent_dir / f"{path.stem}_blurred.mp4"
+    (VIDEO_DIR / parent_dir).mkdir(parents=True, exist_ok=True)
+    blurred_video_path = VIDEO_DIR / parent_dir / f"{path.stem}.mp4"
+    output_video_path = VIDEO_DIR / parent_dir / f"{path.stem}_blurred.mp4"
     if not reprocess and output_video_path.exists():
         logger.info("{} already processed. Skipping.", path)
         return
@@ -122,21 +114,21 @@ def box_pipeline(path: pathlib.Path, reprocess: bool = False):
     # Step 1: Undistort unblurred vrs
     logger.info("Undistorting video...")
 
-    vrs_path = data_dir / "vrs" / parent_dir / f"{path.stem}.vrs"
+    vrs_path = VRS_DIR / parent_dir / f"{path.stem}.vrs"
 
     stream_id = StreamId("1201-1")
     with VrsVideoClip(vrs_path, stream_id, audio=True) as clip:
         fps = clip.fps
         undistort_transform = UndistortVrsVideoTransform.from_clip(clip)
         with clip.fl(undistort_transform) as undistorted_clip:
-            undistorted_clip.write_videofile(str(data_dir / "undistorted.mp4"))
+            undistorted_clip.write_videofile(str(DATA_DIR / "undistorted.mp4"))
 
     # Step 2: Run Ego Blur on undistorted unblurred video and store what bounding
     # boxes are on each frame
     logger.info("Running Ego Blur...")
 
-    face_model_path = pathlib.Path("scripts", "models", "ego_blur_face.jit")
-    input_video_path = data_dir / "undistorted.mp4"
+    face_model_path = Path("scripts", "models", "ego_blur_face.jit")
+    input_video_path = DATA_DIR / "undistorted.mp4"
     output_video_fps = fps
 
     face_detector = None
@@ -173,8 +165,8 @@ def box_pipeline(path: pathlib.Path, reprocess: bool = False):
     # TODO: find out why create_poses doesn't work on my end...
     create_poses(vrs_path, reprocess, headers=True, positions=False)
 
-    orientation_path = data_dir / "graphical" / parent_dir / f"{path.stem}" / "pose.csv"
-    faces_path = "faces.csv"
+    orientation_path = GRAPHICAL_DIR / parent_dir / f"{path.stem}" / "pose.csv"
+    faces_path = Path("faces.csv")
 
     orientations = np.loadtxt(orientation_path, delimiter=",", skiprows=1)
     orientation_times = orientations[:, 0]
@@ -188,10 +180,10 @@ def box_pipeline(path: pathlib.Path, reprocess: bool = False):
     )
     if rects_with_frames.size == 0:
         logger.warning("No faces detected in the video {}", path)
-        if os.path.exists("faces.csv"):
-            os.remove("faces.csv")
-        # if os.path.exists(blurred_video_path):
-        #     os.remove(blurred_video_path)
+        faces_path.unlink(missing_ok=True)
+        # Move the blurred video to the output video path so that the file won't be
+        # reprocessed if the script is run again (unless -r is passed)
+        blurred_video_path.rename(output_video_path)
         return
 
     rect_frames, rects = rects_with_frames[:, 0], rects_with_frames[:, 1:]
@@ -265,28 +257,22 @@ def box_pipeline(path: pathlib.Path, reprocess: bool = False):
     for face in faces:
         group_face(face, groups, 30, 7, 0.75, 7, var_dist=False)
 
-    continuous_rects = [[rects[face.index] for face in group] for group in groups]
+    continuous_rects = [
+        [rects_with_frames[face.index] for face in group] for group in groups
+    ]
 
     group_colors = generate_colors(len(groups))
 
-    if output_video_path.exists():
-        os.remove(output_video_path)
-
     draw_rects_to_video(
-        str(blurred_video_path),
+        blurred_video_path,
         groups,
-        str(output_video_path),
+        output_video_path,
         group_colors,
     )
 
-    colors_path = (
-        data_dir / "faceBoxes" / parent_dir / f"{path.stem}_egoblur_colors.json"
-    )
-    if not os.path.exists(data_dir / "faceBoxes" / parent_dir):
-        os.makedirs(data_dir / "faceBoxes" / parent_dir)
-    if colors_path.exists():
-        os.remove(colors_path)
-    with open(colors_path, "w") as f:
+    colors_path = FACE_BOXES_DIR / parent_dir / f"{path.stem}_egoblur_colors.json"
+    colors_path.parent.mkdir(parents=True, exist_ok=True)
+    with colors_path.open("w") as f:
         json.dump(group_colors, f)
 
     # Convert ndarray to list
@@ -296,24 +282,18 @@ def box_pipeline(path: pathlib.Path, reprocess: bool = False):
     ]
 
     continuous_rects_path = (
-        data_dir / "faceBoxes" / parent_dir / f"{path.stem}_egoblur_rects.json"
+        FACE_BOXES_DIR / parent_dir / f"{path.stem}_egoblur_rects.json"
     )
-    with open(continuous_rects_path, "w") as f:
+    with continuous_rects_path.open("w") as f:
         json.dump(continuous_rects_list, f)
 
-    fps_path = data_dir / "faceBoxes" / parent_dir / f"{path.stem}_egoblur_fps.txt"
+    fps_path = FACE_BOXES_DIR / parent_dir / f"{path.stem}_egoblur_fps.txt"
     # Write the fps to fps.txt
-    with open(fps_path, "w") as f:
-        f.write(str(output_video_fps))
+    fps_path.write_text(str(output_video_fps))
 
     # Step 4: Remove all the files we made
-    if os.path.exists("faces.csv"):
-        os.remove("faces.csv")
-    if os.path.exists("grouping_log.txt"):
-        os.remove("grouping_log.txt")
-    if os.path.exists(blurred_video_path):
-        os.remove(blurred_video_path)
-    return
+    faces_path.unlink(missing_ok=True)
+    blurred_video_path.unlink(missing_ok=True)
 
 
 def rect_center(rect: Rect) -> Point:
@@ -348,9 +328,9 @@ def recolor_frame(frame: np.ndarray) -> np.ndarray:
 
 
 def draw_rects_to_video(
-    video_path: str,
+    video_path: StrPath,
     rect_groups: list[Group],
-    output_path: str,
+    output_path: StrPath,
     colors: list[list[int]] | None = None,
     font: int = cv2.FONT_HERSHEY_SIMPLEX,
 ):
@@ -358,7 +338,7 @@ def draw_rects_to_video(
 
     Parameters
     ----------
-    video_path : str
+    video_path : str | Path
         The path to the video file.
     rect_groups : list[Group]
         The rectangles to draw. Each list in rect_groups contains the rectangles for
@@ -366,7 +346,7 @@ def draw_rects_to_video(
         rectangle is represented by a 1x5 array, with the first element being the frame
         number and the remaining four elements being the top-left and bottom-right
         corners (i.e., [frame, x1, y1, x2, y2]).
-    output_path : str
+    output_path : str | Path
         The path to save the output video.
     colors : list[list[int]] | None, optional
         The colors to use for each group. If None, colors are generated automatically.
@@ -374,7 +354,7 @@ def draw_rects_to_video(
         A cv2 font constant to use for the labels.
     """
 
-    with VideoFileClip(video_path) as video:
+    with VideoFileClip(str(video_path)) as video:
         if colors is None:
             colors = generate_colors(len(rect_groups))
         labels = [str(i) for i in range(len(rect_groups))]
@@ -401,7 +381,7 @@ def draw_rects_to_video(
         with ImageSequenceClip(frames, fps=video.fps) as clip:
             # Set the audio of the clip to the audio of the original video
             clip = clip.set_audio(video.audio)
-            clip.write_videofile(output_path, fps=video.fps)
+            clip.write_videofile(str(output_path), fps=video.fps)
 
 
 def rot_point_90cw(
@@ -594,15 +574,15 @@ def group_face(
     groups.append([face])
 
 
-def route_dir(dir: pathlib.Path, scan_dir: bool = True, **kwargs) -> None:
+def route_dir(dir: Path, scan_dir: bool = True, **kwargs) -> None:
     for path in dir.iterdir():
         route_file(path, scan_dir=scan_dir, **kwargs)
 
 
-def route_file(*paths: pathlib.Path, scan_dir: bool = True, **kwargs) -> None:
+def route_file(*paths: Path, scan_dir: bool = True, **kwargs) -> None:
     if len(paths) == 0:
         # if no file or directory given, use directory script was called from
-        paths = (pathlib.Path.cwd(),)
+        paths = (Path.cwd(),)
     # if multiple files (or directories) given, run function on each one
     elif len(paths) > 1:
         for path in paths:
@@ -642,7 +622,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "path",
         nargs="*",
-        type=pathlib.Path,
+        type=Path,
         help=(
             "The path to the vrs file to process. If an audio file, processes the audio"
             " file. If a directory, processes every audio file in the directory."

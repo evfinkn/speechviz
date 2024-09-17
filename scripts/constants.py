@@ -8,6 +8,12 @@ DATA_DIR = SPEECHVIZ_DIR / "data"
 LOGS_DIR = SPEECHVIZ_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 
+AUDIO_DIR = DATA_DIR / "audio"
+VIDEO_DIR = DATA_DIR / "video"
+VRS_DIR = DATA_DIR / "vrs"
+GRAPHICAL_DIR = DATA_DIR / "graphical"
+FACE_BOXES_DIR = DATA_DIR / "faceBoxes"
+
 _fossil_name = "fossil.exe" if platform.system() == "Windows" else "fossil"
 FOSSIL_PATH = DATA_DIR / _fossil_name
 DATA_REPO = DATA_DIR / "speechviz.fossil"
