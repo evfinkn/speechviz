@@ -384,32 +384,6 @@ def draw_rects_to_video(
             clip.write_videofile(str(output_path), fps=video.fps)
 
 
-def rot_point_90cw(
-    x: AnyInt, y: AnyInt, M: AnyInt, N: AnyInt, k: int = 1
-) -> tuple[AnyInt, AnyInt]:
-    """Transforms an index to its corresponding index after a rotation.
-
-    Parameters
-    ----------
-    x, y : int
-        The original 2D index.
-    M, N : int
-        The array's shape before rotation.
-    k : int, default=1
-        The number of 90-degree clockwise rotations to apply. Negative values rotate
-        counterclockwise.
-    """
-    k %= 4
-    if k == 0:
-        return (x, y)
-    elif k == 1:
-        return (N - 1 - y, x)
-    elif k == 2:
-        return (M - 1 - x, N - 1 - y)
-    else:
-        return (y, M - 1 - x)
-
-
 def get_first_time_all(dp: VrsDataProvider) -> float:
     """Gets the minimum first time of all streams."""
     return (
