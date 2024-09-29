@@ -483,7 +483,7 @@ def run_and_log_subprocess(
         timer.time_taken,
     )
     # This has to be after the log line above this one because it resets the color
-    subprocess_logger.log(_level, "stdout=\n\033[0m{}", completed_process.stdout)
+    subprocess_logger.log(_level, "output=\n{}", completed_process.stdout)
 
     if check:
         completed_process.check_returncode()
