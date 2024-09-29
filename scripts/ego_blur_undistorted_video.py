@@ -23,6 +23,7 @@ import argparse
 import csv
 import os
 from functools import lru_cache
+from pathlib import Path
 from typing import List
 
 import cv2
@@ -31,6 +32,8 @@ import torch
 import torchvision
 from moviepy.editor import ImageSequenceClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
+
+from _types import StrPath
 
 
 def parse_args():
@@ -129,6 +132,14 @@ def parse_args():
         help="FPS for the output video",
     )
 
+    parser.add_argument(
+        "--faces_path",
+        required=False,
+        type=str,
+        default=None,
+        help="Absolute path where we want to store the faces csv",
+    )
+
     return parser.parse_args()
 
 
@@ -209,6 +220,10 @@ def validate_inputs(args: argparse.Namespace) -> argparse.Namespace:
         os.path.dirname(args.output_video_path)
     ):
         create_output_directory(args.output_video_path)
+    if args.faces_path is not None and not os.path.exists(
+        os.path.dirname(args.faces_path)
+    ):
+        create_output_directory(args.faces_path)
 
     # check we have write permissions on output paths
     if args.output_image_path is not None and not os.access(
@@ -223,6 +238,13 @@ def validate_inputs(args: argparse.Namespace) -> argparse.Namespace:
     ):
         raise ValueError(
             f"You don't have permissions to write to {args.output_video_path}. Please"
+            " grant adequate permissions, or provide a different output path."
+        )
+    if args.faces_path is not None and not os.access(
+        os.path.dirname(args.faces_path), os.W_OK
+    ):
+        raise ValueError(
+            f"You don't have permissions to write to {args.faces_path}. Please"
             " grant adequate permissions, or provide a different output path."
         )
 
@@ -443,15 +465,16 @@ def visualize_image(
 
 
 def visualize_video(
-    input_video_path: str,
-    face_detector: torch.jit._script.RecursiveScriptModule,
-    lp_detector: torch.jit._script.RecursiveScriptModule,
+    input_video_path: StrPath,
+    face_detector: torch.jit._script.RecursiveScriptModule | None,
+    lp_detector: torch.jit._script.RecursiveScriptModule | None,
     face_model_score_threshold: float,
     lp_model_score_threshold: float,
     nms_iou_threshold: float,
-    output_video_path: str,
+    output_video_path: StrPath,
     scale_factor_detections: float,
     output_video_fps: int,
+    faces_path: StrPath,
 ):
     """
     parameter input_video_path: absolute path to the input video
@@ -471,9 +494,14 @@ def visualize_video(
     """
     frame_number = 0
     visualized_images = []
-    faces_list = []
-    faces_dict = {}
-    with VideoFileClip(input_video_path) as video_reader_clip:
+    faces_path = Path(faces_path)
+    faces_path.parent.mkdir(parents=True, exist_ok=True)
+    with (
+        VideoFileClip(str(input_video_path)) as video_reader_clip,
+        faces_path.open("w", newline="") as csvfile,
+    ):
+        writer = csv.writer(csvfile)
+        writer.writerow(["frameNum", "x1", "y1", "x2", "y2"])
         for frame in video_reader_clip.iter_frames():
             if frame_number % 100 == 0:
                 print(
@@ -513,10 +541,8 @@ def visualize_video(
                 scale_factor_detections,
             )
             visualized_images.append(visualize_image_results[0])
-            for image in visualize_image_results[1]:
-                faces_list.append(visualize_image_results[1])
-            faces_list.append(visualize_image_results[1])
-            faces_dict[frame_number] = visualize_image_results[2]
+            for box in visualize_image_results[2]:
+                writer.writerow([frame_number, box[0], box[1], box[2], box[3]])
             frame_number += 1
 
         if visualized_images:
@@ -525,22 +551,8 @@ def visualize_video(
             ) as video_writer_clip:
                 video_writer_clip = video_writer_clip.set_audio(video_reader_clip.audio)
                 video_writer_clip.write_videofile(
-                    output_video_path, fps=output_video_fps
+                    str(output_video_path), fps=output_video_fps
                 )
-                video_writer_clip.close()
-        video_reader_clip.close()
-
-    if faces_dict:
-        # make csv file
-        if os.path.exists("faces.csv"):
-            os.remove("faces.csv")
-        with open("faces.csv", "w", newline="") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(["frameNum", "x1", "y1", "x2", "y2"])
-
-            for frameNum, boxes in faces_dict.items():
-                for box in boxes:
-                    writer.writerow([frameNum, box[0], box[1], box[2], box[3]])
 
 
 if __name__ == "__main__":
@@ -584,4 +596,5 @@ if __name__ == "__main__":
             args.output_video_path,
             args.scale_factor_detections,
             args.output_video_fps,
+            args.faces_path,
         )

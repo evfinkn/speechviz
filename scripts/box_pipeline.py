@@ -130,6 +130,7 @@ def box_pipeline(path: Path, reprocess: bool = False):
     face_model_path = Path("scripts", "models", "ego_blur_face.jit")
     input_video_path = DATA_DIR / "undistorted.mp4"
     output_video_fps = fps
+    faces_path = GRAPHICAL_DIR / parent_dir / f"{path.stem}" / "faces.csv"
 
     face_detector = None
     face_detector = torch.jit.load(face_model_path, map_location="cpu").to(get_device())
@@ -137,7 +138,7 @@ def box_pipeline(path: Path, reprocess: bool = False):
 
     # visualize_video wil create the output video with
     # the bounding boxes drawn on it, and
-    # a csv with the boxes for faces called faces.csv
+    # a csv with the boxes for faces
     visualize_video(
         input_video_path=str(input_video_path),
         face_detector=face_detector,
@@ -148,6 +149,7 @@ def box_pipeline(path: Path, reprocess: bool = False):
         output_video_path=str(blurred_video_path),
         scale_factor_detections=1,
         output_video_fps=output_video_fps,  # type: ignore
+        faces_path=str(faces_path),
     )
 
     # Remove the unblurred video now that the blurred videos are made
@@ -166,7 +168,6 @@ def box_pipeline(path: Path, reprocess: bool = False):
     create_poses(vrs_path, reprocess, headers=True, positions=False)
 
     orientation_path = GRAPHICAL_DIR / parent_dir / f"{path.stem}" / "pose.csv"
-    faces_path = Path("faces.csv")
 
     orientations = np.loadtxt(orientation_path, delimiter=",", skiprows=1)
     orientation_times = orientations[:, 0]
@@ -180,7 +181,6 @@ def box_pipeline(path: Path, reprocess: bool = False):
     )
     if rects_with_frames.size == 0:
         logger.warning("No faces detected in the video {}", path)
-        faces_path.unlink(missing_ok=True)
         # Move the blurred video to the output video path so that the file won't be
         # reprocessed if the script is run again (unless -r is passed)
         blurred_video_path.rename(output_video_path)
@@ -292,7 +292,6 @@ def box_pipeline(path: Path, reprocess: bool = False):
     fps_path.write_text(str(output_video_fps))
 
     # Step 4: Remove all the files we made
-    faces_path.unlink(missing_ok=True)
     blurred_video_path.unlink(missing_ok=True)
 
 
