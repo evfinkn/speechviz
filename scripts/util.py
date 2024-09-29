@@ -219,6 +219,8 @@ def ffmpeg(
     *,
     input_options: Sequence[StrOrBytesPath] | None = None,
     output_options: Sequence[StrOrBytesPath] | None = None,
+    hide_banner: bool = True,
+    stats: bool = False,
     check: bool = True,
 ) -> subprocess.CompletedProcess:
     """Wrapper for the `ffmpeg` command.
@@ -235,6 +237,12 @@ def ffmpeg(
         `ffmpeg` options to apply to the input file.
     output_options : list of str, optional
         `ffmpeg` options to apply to the output file.
+    hide_banner : bool, default=True
+        Whether to hide the banner when running the command. The banner is the
+        information about the `ffmpeg` version and configuration that is printed
+        at the beginning of the command output by default.
+    stats : bool, default=False
+        Whether to print encoding progress/statistics.
     check : bool, default=True
         Whether to raise an exception if the command fails.
 
@@ -246,6 +254,11 @@ def ffmpeg(
     args: list[StrOrBytesPath] = ["ffmpeg", "-y"]
     if input_options:
         args.extend(input_options)
+    # Don't add -hide_banner if it's already in the input options
+    if hide_banner and "-hide_banner" not in args:
+        args.append("-hide_banner")
+    if not stats and "-nostats" not in args:
+        args.append("-nostats")
     args.extend(["-i", input])
     if output_options:
         args.extend(output_options)
@@ -258,6 +271,7 @@ def audiowaveform(
     output: StrOrBytesPath,
     *,
     split_channels: bool = False,
+    quiet: bool = True,
     options: Sequence[StrOrBytesPath] | None = None,
     check: bool = True,
 ) -> subprocess.CompletedProcess:
@@ -272,6 +286,8 @@ def audiowaveform(
         exists, it will be overwritten.
     split_channels : boolean, default=False
         Generate a waveform for each channel instead of merging into 1 waveform.
+    quiet : bool, default=True
+        Whether to suppress status messages from the command.
     options : list of str, optional
         Additional options to pass in.
     check : bool, default=True
@@ -290,10 +306,15 @@ def audiowaveform(
         "-b",
         "8",
     ]
-    if split_channels:
+    # Make sure options isn't None so that we can easily check if an option is in it.
+    # We could just do it like in the ffmpeg function, but args has more in it already
+    # than in that function (tl;dr this is more efficient)
+    options = options or ()
+    args.extend(options)
+    if split_channels and "--split-channels" not in options:
         args.append("--split-channels")
-    if options:
-        args.extend(options)
+    if quiet and not ("--quiet" in options or "-q" in options):
+        args.append("--quiet")
     return run_and_log_subprocess(args, check=check)
 
 
