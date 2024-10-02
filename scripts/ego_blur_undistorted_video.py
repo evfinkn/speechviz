@@ -546,10 +546,12 @@ def visualize_video(
             frame_number += 1
 
         if visualized_images:
-            with ImageSequenceClip(
-                visualized_images, fps=output_video_fps
-            ) as video_writer_clip:
-                video_writer_clip = video_writer_clip.set_audio(video_reader_clip.audio)
+            with (
+                ImageSequenceClip(
+                    visualized_images, fps=output_video_fps
+                ) as image_seq_clip,
+                image_seq_clip.set_audio(video_reader_clip.audio) as video_writer_clip,
+            ):
                 video_writer_clip.write_videofile(
                     str(output_video_path), fps=output_video_fps
                 )
