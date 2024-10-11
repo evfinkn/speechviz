@@ -1,0 +1,25 @@
+[tool.ruff]
+# Have to set the src field to the directory our files are in so that Ruff can
+# differentiate between first- and third-party files when sorting imports.
+src = ["scripts"]
+extend-exclude = ["data", "docs"]
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I", # isort
+    # Flags "noqa" comments that can be removed because they aren't
+    # suppressing any errors.
+    "RUF100",
+]
+ignore = [
+    # These are rules that conflict with Ruff's formatter.
+    # See https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "E111",
+    "E114",
+    "E117",
+]
